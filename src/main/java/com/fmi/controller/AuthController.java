@@ -1,6 +1,7 @@
 package com.fmi.controller;
 
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.security.JwtTokenProvider;
 import com.fmi.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -21,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임/이름 등을 입력해 회원을 생성합니다. 비밀번호는 8자 이상, 대/소문자·숫자·특수문자를 포함해야 합니다.")
@@ -47,7 +49,12 @@ public class AuthController {
     @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인합니다. 인증 실패 시 AUTH401-INVALID_CREDENTIALS가 반환됩니다.")
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         var user = authService.authenticate(request.getEmail(), request.getPassword());
-        return ApiResponse.onSuccess(new LoginResponse(user.getUserId()));
+        var claims = new java.util.HashMap<String, Object>();
+        claims.put("userId", user.getUserId());
+        claims.put("role", user.getRole().name());
+        String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), claims);
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+        return ApiResponse.onSuccess(new LoginResponse(user.getUserId(), accessToken, refreshToken));
     }
 
     @Data
@@ -112,6 +119,8 @@ public class AuthController {
     @AllArgsConstructor
     public static class LoginResponse {
         private Long userId;
+        private String accessToken;
+        private String refreshToken;
     }
 }
 

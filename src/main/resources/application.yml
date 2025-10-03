@@ -34,3 +34,9 @@ logging:
     org.hibernate.SQL: info
     org.springframework.web: info
 
+jwt:
+  secret: ${JWT_SECRET:change-me-please-change-me-please-change-me-please}
+  issuer: fmi
+  access-token-validity-ms: 900000 # 15분
+  refresh-token-validity-ms: 1209600000 # 14일
+
