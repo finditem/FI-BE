@@ -3,13 +3,13 @@ package com.fmi.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 
@@ -30,7 +30,7 @@ public class JwtTokenProvider {
         byte[] keyBytes;
         // allow base64 or raw string
         try {
-            keyBytes = Decoders.BASE64.decode(secret);
+            keyBytes = Base64.getDecoder().decode(secret);
         } catch (IllegalArgumentException ex) {
             keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         }
@@ -63,6 +63,10 @@ public class JwtTokenProvider {
                 .setExpiration(expiry)
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public Date getExpiration(String token) {
+        return getAllClaims(token).getExpiration();
     }
 
     public boolean validateToken(String token) {

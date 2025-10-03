@@ -39,4 +39,8 @@ jwt:
   issuer: fmi
   access-token-validity-ms: 900000 # 15분
   refresh-token-validity-ms: 1209600000 # 14일
+  cookie:
+    name: refresh_token
+    secure: false         # 로컬 개발은 false, 배포는 true 권장
+    same-site: Lax        # 동일 도메인이면 Lax/Strict, 크로스 도메인이면 None
 

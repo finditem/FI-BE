@@ -8,7 +8,7 @@ import java.util.Map;
 @RestController
 public class HealthController {
 
-    @GetMapping("/api/health")
+    @GetMapping("/health")
     public Map<String, Object> health() {
         return Map.of("status", "UP");
     }

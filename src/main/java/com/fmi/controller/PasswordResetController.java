@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/api/auth/reset")
+@RequestMapping("/auth/reset")
 @RequiredArgsConstructor
 @Tag(name = "Auth-Reset", description = "비밀번호 재설정 API")
 public class PasswordResetController {
