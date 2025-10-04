@@ -38,8 +38,8 @@ public class User {
     @Column(name = "email_verified")
     private boolean email_verified;
 
-    @Column(name = "phone_number")
-    private String phone_number;
+    @Column(name = "phone_number", unique = true)
+    private String phoneNumber;
 
     @Column(name = "phone_verified")
     private boolean phone_verified;

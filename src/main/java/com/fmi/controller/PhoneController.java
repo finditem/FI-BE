@@ -2,7 +2,6 @@ package com.fmi.controller;
 
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.service.PhoneVerificationService;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,7 +28,7 @@ public class PhoneController {
     @PostMapping("/verify")
     @Operation(summary = "휴대폰 인증 코드 검증", description = "코드 검증 후 사용자의 휴대폰 인증을 true로 설정합니다.")
     public ApiResponse<VerifyResponse> verify(@RequestBody VerifyRequest req) {
-        boolean ok = service.verifyAndMark(req.getPhone(), req.getCode(), req.getEmail());
+        boolean ok = service.verifyAndMark(req.getPhone(), req.getCode());
         return ApiResponse.onSuccess(new VerifyResponse(ok));
     }
 
@@ -45,8 +44,6 @@ public class PhoneController {
         private String phone;
         @NotBlank
         private String code;
-        @Email @NotBlank
-        private String email; // 어느 사용자에 대해 인증 처리할지 명시
     }
 
     @Data

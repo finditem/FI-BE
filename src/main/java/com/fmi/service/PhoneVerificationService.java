@@ -36,7 +36,7 @@ public class PhoneVerificationService {
     }
 
     @Transactional
-    public boolean verifyAndMark(String phone, String code, String email) {
+    public boolean verifyAndMark(String phone, String code) {
         String cached = redis.opsForValue().get(redisKey(phone));
         if (cached == null || !cached.equals(code)) {
             return false;
@@ -44,10 +44,12 @@ public class PhoneVerificationService {
         // 사용 즉시 폐기
         redis.delete(redisKey(phone));
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
-        user.setPhone_verified(true);
-        user.setPhone_number(phone);
+        // 가입 이전일 수도 있으므로: 있으면 바로 마킹, 없으면 가입 시 사용하도록 플래그 저장(30분 유효)
+        userRepository.findByPhoneNumber(phone).ifPresentOrElse(u -> {
+            u.setPhone_verified(true);
+        }, () -> {
+            redis.opsForValue().set("phone:verified:" + phone, "true", java.time.Duration.ofMinutes(30));
+        });
         return true;
     }
 }
