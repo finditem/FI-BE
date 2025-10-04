@@ -1,5 +1,5 @@
--- Users table (간단 버전)
-CREATE TABLE IF NOT EXISTS users (
+-- User table (간단 버전)
+CREATE TABLE IF NOT EXISTS `user` (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS items (
     lost_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     user_id BIGINT,
-    CONSTRAINT fk_items_user FOREIGN KEY (user_id) REFERENCES users(id)
+    CONSTRAINT fk_items_user FOREIGN KEY (user_id) REFERENCES `user`(id)
 );
 
 

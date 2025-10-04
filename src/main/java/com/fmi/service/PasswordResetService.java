@@ -1,18 +1,13 @@
 package com.fmi.service;
 
-import com.fmi.domain.PasswordResetToken;
 import com.fmi.domain.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.repository.PasswordResetTokenRepository;
 import com.fmi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -20,43 +15,26 @@ import java.util.UUID;
 public class PasswordResetService {
 
     private final UserRepository userRepository;
-    private final PasswordResetTokenRepository tokenRepository;
+    private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public String requestReset(String email) {
+    public void issueTemporaryPassword(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
-        String token = UUID.randomUUID().toString();
-        PasswordResetToken prt = PasswordResetToken.builder()
-                .user(user)
-                .token(token)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusMinutes(15))
-                .build();
-        tokenRepository.save(prt);
-        return token; // 실제 환경에서는 이메일 전송
+        String temp = generateTempPassword();
+        user.setPassword(passwordEncoder.encode(temp));
+        emailService.sendEmail(email, "Temporary password", "임시 비밀번호: " + temp + "\n로그인 후 비밀번호를 변경하세요.");
     }
 
-    @Transactional
-    public void confirmReset(String token, String newPassword) {
-        PasswordResetToken prt = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._RESET_TOKEN_INVALID));
-        if (prt.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new GeneralException(ErrorStatus._RESET_TOKEN_EXPIRED);
+    private String generateTempPassword() {
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*";
+        StringBuilder sb = new StringBuilder();
+        java.util.Random r = new java.util.Random();
+        for (int i = 0; i < 12; i++) {
+            sb.append(chars.charAt(r.nextInt(chars.length())));
         }
-        User user = prt.getUser();
-        String pw = newPassword == null ? "" : newPassword;
-        boolean valid = pw.length() >= 8 && pw.length() <= 16
-                && pw.matches(".*[A-Z].*")
-                && pw.matches(".*[a-z].*")
-                && pw.matches(".*[0-9].*")
-                && pw.matches(".*[!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?].*");
-        if (!valid) {
-            throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
-        }
-        user.setPassword(passwordEncoder.encode(newPassword));
-        tokenRepository.delete(prt);
+        return sb.toString();
     }
 }
 

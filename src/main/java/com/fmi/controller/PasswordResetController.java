@@ -10,9 +10,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -24,20 +22,14 @@ public class PasswordResetController {
     private final PasswordResetService resetService;
 
     @PostMapping("/request")
-    @Operation(summary = "비밀번호 재설정 토큰 발급",
-            description = "이메일을 입력하면 재설정 토큰을 발급합니다. 실제 서비스에서는 이메일로 재설정 링크를 전송합니다.")
-    public ApiResponse<RequestResponse> request(@Valid @RequestBody RequestDto dto) {
-        String token = resetService.requestReset(dto.getEmail());
-        return ApiResponse.onSuccess(new RequestResponse(token));
-    }
-
-    @PostMapping("/confirm")
-    @Operation(summary = "비밀번호 재설정 확정",
-            description = "발급받은 토큰과 새 비밀번호를 제출하면 비밀번호를 변경합니다.")
-    public ApiResponse<Void> confirm(@Valid @RequestBody ConfirmDto dto) {
-        resetService.confirmReset(dto.getToken(), dto.getNewPassword());
+    @Operation(summary = "임시 비밀번호 발급",
+            description = "이메일을 입력하면 임시 비밀번호를 발급하여 이메일로 전송합니다.")
+    public ApiResponse<Void> request(@Valid @RequestBody RequestDto dto) {
+        resetService.issueTemporaryPassword(dto.getEmail());
         return ApiResponse.onSuccess(null);
     }
+
+    // 토큰 기반 확정 API는 임시 비밀번호 방식으로 대체되어 비활성화
 
     @Data
     public static class RequestDto {
