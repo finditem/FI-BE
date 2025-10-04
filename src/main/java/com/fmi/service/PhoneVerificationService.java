@@ -1,8 +1,5 @@
 package com.fmi.service;
 
-import com.fmi.domain.User;
-import com.fmi.global.apiPayload.code.status.ErrorStatus;
-import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
