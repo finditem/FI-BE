@@ -15,6 +15,12 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000
 
 server:
   port: 8080
@@ -43,4 +49,5 @@ jwt:
     name: refresh_token
     secure: false         # 로컬 개발은 false, 배포는 true 권장
     same-site: Lax        # 동일 도메인이면 Lax/Strict, 크로스 도메인이면 None
+
 
