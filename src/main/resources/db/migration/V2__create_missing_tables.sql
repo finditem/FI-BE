@@ -78,8 +78,40 @@ CREATE TABLE IF NOT EXISTS post_image (
     CONSTRAINT fk_postimage_post FOREIGN KEY (post) REFERENCES post(post_id)
 );
 
--- user constraints/indexes
-CREATE UNIQUE INDEX IF NOT EXISTS ux_user_email ON `user`(email);
-CREATE UNIQUE INDEX IF NOT EXISTS ux_user_phone_number ON `user`(phone_number);
+-- user constraints/indexes (guarded for idempotency)
+-- ensure missing column exists (MySQL may not support IF NOT EXISTS for ADD COLUMN)
+SET @__col := (
+  SELECT COUNT(1)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'user'
+    AND COLUMN_NAME = 'phone_number'
+);
+SET @__sql := IF(@__col = 0,
+                 'ALTER TABLE `user` ADD COLUMN `phone_number` VARCHAR(255) NULL',
+                 'SELECT 1');
+PREPARE __stmt FROM @__sql; EXECUTE __stmt; DEALLOCATE PREPARE __stmt;
+
+-- email index
+SET @__exists := (SELECT COUNT(1)
+                  FROM information_schema.statistics
+                  WHERE table_schema = DATABASE()
+                    AND table_name = 'user'
+                    AND index_name = 'ux_user_email');
+SET @__sql := IF(@__exists = 0,
+                 'CREATE UNIQUE INDEX ux_user_email ON `user`(email)',
+                 'SELECT 1');
+PREPARE __stmt FROM @__sql; EXECUTE __stmt; DEALLOCATE PREPARE __stmt;
+
+-- phone_number index
+SET @__exists := (SELECT COUNT(1)
+                  FROM information_schema.statistics
+                  WHERE table_schema = DATABASE()
+                    AND table_name = 'user'
+                    AND index_name = 'ux_user_phone_number');
+SET @__sql := IF(@__exists = 0,
+                 'CREATE UNIQUE INDEX ux_user_phone_number ON `user`(phone_number)',
+                 'SELECT 1');
+PREPARE __stmt FROM @__sql; EXECUTE __stmt; DEALLOCATE PREPARE __stmt;
 
 

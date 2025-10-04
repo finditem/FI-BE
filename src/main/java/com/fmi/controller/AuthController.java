@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Schema;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
 
 @RestController
 @RequestMapping("/auth")
@@ -154,17 +155,23 @@ public class AuthController {
     }
 
     @GetMapping("/check-email")
-    @Operation(summary = "이메일 중복 확인", description = "이메일 사용 가능 여부를 반환합니다.")
-    public ApiResponse<CheckResponse> checkEmail(@RequestParam("email") @Email String email) {
+    @Operation(summary = "이메일 중복 확인", description = "중복이면 409와 에러 코드를 반환합니다.")
+    public ResponseEntity<ApiResponse<?>> checkEmail(@RequestParam("email") @Email String email) {
         boolean exists = authService.emailExists(email);
-        return ApiResponse.onSuccess(new CheckResponse(!exists));
+        if (exists) {
+            return ResponseEntity.status(409).body(ApiResponse.onFailure(ErrorStatus._EMAIL_DUPLICATED));
+        }
+        return ResponseEntity.ok(ApiResponse.onSuccess(new CheckResponse(true)));
     }
 
     @GetMapping("/check-nickname")
-    @Operation(summary = "닉네임 중복 확인", description = "닉네임 사용 가능 여부를 반환합니다.")
-    public ApiResponse<CheckResponse> checkNickname(@RequestParam("nickname") @NotBlank String nickname) {
+    @Operation(summary = "닉네임 중복 확인", description = "중복이면 409와 에러 코드를 반환합니다.")
+    public ResponseEntity<ApiResponse<?>> checkNickname(@RequestParam("nickname") @NotBlank String nickname) {
         boolean exists = authService.nicknameExists(nickname);
-        return ApiResponse.onSuccess(new CheckResponse(!exists));
+        if (exists) {
+            return ResponseEntity.status(409).body(ApiResponse.onFailure(ErrorStatus._NICKNAME_DUPLICATED));
+        }
+        return ResponseEntity.ok(ApiResponse.onSuccess(new CheckResponse(true)));
     }
 
     @Data
