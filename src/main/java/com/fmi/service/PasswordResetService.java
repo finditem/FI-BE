@@ -46,6 +46,15 @@ public class PasswordResetService {
             throw new GeneralException(ErrorStatus._RESET_TOKEN_EXPIRED);
         }
         User user = prt.getUser();
+        String pw = newPassword == null ? "" : newPassword;
+        boolean valid = pw.length() >= 8 && pw.length() <= 16
+                && pw.matches(".*[A-Z].*")
+                && pw.matches(".*[a-z].*")
+                && pw.matches(".*[0-9].*")
+                && pw.matches(".*[!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?].*");
+        if (!valid) {
+            throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
+        }
         user.setPassword(passwordEncoder.encode(newPassword));
         tokenRepository.delete(prt);
     }

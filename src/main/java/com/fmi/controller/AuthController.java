@@ -153,6 +153,26 @@ public class AuthController {
         private String accessToken;
     }
 
+    @GetMapping("/check-email")
+    @Operation(summary = "이메일 중복 확인", description = "이메일 사용 가능 여부를 반환합니다.")
+    public ApiResponse<CheckResponse> checkEmail(@RequestParam("email") @Email String email) {
+        boolean exists = authService.emailExists(email);
+        return ApiResponse.onSuccess(new CheckResponse(!exists));
+    }
+
+    @GetMapping("/check-nickname")
+    @Operation(summary = "닉네임 중복 확인", description = "닉네임 사용 가능 여부를 반환합니다.")
+    public ApiResponse<CheckResponse> checkNickname(@RequestParam("nickname") @NotBlank String nickname) {
+        boolean exists = authService.nicknameExists(nickname);
+        return ApiResponse.onSuccess(new CheckResponse(!exists));
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class CheckResponse {
+        private boolean available;
+    }
+
     @PostMapping("/refresh")
     @Operation(summary = "토큰 리프레시", description = "쿠키의 refresh_token(JWT)으로 액세스 토큰을 갱신합니다.")
     public ResponseEntity<ApiResponse<LoginResponse>> refresh(HttpServletRequest request,

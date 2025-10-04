@@ -28,7 +28,7 @@ public class AuthService {
         }
         // 비밀번호 규칙: 8자 이상, 대문자/소문자/숫자/특수문자 포함
         String pw = rawPassword == null ? "" : rawPassword;
-        boolean valid = pw.length() >= 8
+        boolean valid = pw.length() >= 8 && pw.length() <= 16
                 && pw.matches(".*[A-Z].*")
                 && pw.matches(".*[a-z].*")
                 && pw.matches(".*[0-9].*")
@@ -61,6 +61,14 @@ public class AuthService {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
         return user;
+    }
+
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    public boolean nicknameExists(String nickname) {
+        return userRepository.existsByNickname(nickname);
     }
 }
 
