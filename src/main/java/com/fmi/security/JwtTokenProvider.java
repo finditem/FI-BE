@@ -65,6 +65,19 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    public String createRefreshToken(String subject, String jti) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + refreshTokenValidityMs);
+        return Jwts.builder()
+                .setSubject(subject)
+                .setId(jti)
+                .setIssuer(issuer)
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     public Date getExpiration(String token) {
         return getAllClaims(token).getExpiration();
     }
@@ -88,6 +101,10 @@ public class JwtTokenProvider {
 
     public String getSubject(String token) {
         return getAllClaims(token).getSubject();
+    }
+
+    public String getJti(String token) {
+        return getAllClaims(token).getId();
     }
 }
 

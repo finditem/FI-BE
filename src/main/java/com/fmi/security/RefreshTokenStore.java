@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -15,7 +14,6 @@ public class RefreshTokenStore {
         String hashedToken;
         String userEmail;
         Instant expiresAt;
-        String jti;
     }
 
     public static class TokenMeta {
@@ -33,13 +31,11 @@ public class RefreshTokenStore {
 
     private final Map<String, Entry> jtiToEntry = new ConcurrentHashMap<>();
 
-    public String issue(String userEmail, String hashedToken, Instant expiresAt) {
-        String jti = UUID.randomUUID().toString();
+    public String issue(String jti, String userEmail, String hashedToken, Instant expiresAt) {
         Entry e = new Entry();
         e.hashedToken = hashedToken;
         e.userEmail = userEmail;
         e.expiresAt = expiresAt;
-        e.jti = jti;
         jtiToEntry.put(jti, e);
         return jti;
     }

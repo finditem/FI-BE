@@ -5,6 +5,8 @@ import com.fmi.security.JwtTokenProvider;
 import com.fmi.security.RefreshTokenStore;
 import com.fmi.service.AuthService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -12,6 +14,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import com.fmi.domain.Enum.Role;
 import org.springframework.http.ResponseCookie;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +30,13 @@ public class AuthController {
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenStore refreshTokenStore;
+
+    @Value("${jwt.cookie.name:refresh_token}")
+    private String refreshCookieName;
+    @Value("${jwt.cookie.secure:false}")
+    private boolean refreshCookieSecure;
+    @Value("${jwt.cookie.same-site:Lax}")
+    private String refreshCookieSameSite;
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임/이름 등을 입력해 회원을 생성합니다. 비밀번호는 8자 이상, 대/소문자·숫자·특수문자를 포함해야 합니다.")
@@ -57,17 +67,18 @@ public class AuthController {
         claims.put("userId", user.getUserId());
         claims.put("role", user.getRole().name());
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), claims);
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+        String jti = java.util.UUID.randomUUID().toString();
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), jti);
 
-        // refresh token 저장 (해시) 및 쿠키 설정
+        // refresh token 저장 (해시) 및 쿠키 설정 (쿠키 값은 리프레시 JWT)
         String refreshHash = sha256Hex(refreshToken);
         java.util.Date refreshExp = jwtTokenProvider.getExpiration(refreshToken);
-        String jti = refreshTokenStore.issue(user.getEmail(), refreshHash, refreshExp.toInstant());
+        refreshTokenStore.issue(jti, user.getEmail(), refreshHash, refreshExp.toInstant());
 
-        ResponseCookie cookie = ResponseCookie.from("refresh_token", jti)
+        ResponseCookie cookie = ResponseCookie.from(refreshCookieName, refreshToken)
                 .httpOnly(true)
-                .secure(false) // 배포 환경에서 true로
-                .sameSite("Lax")
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite)
                 .path("/")
                 .maxAge(java.time.Duration.between(java.time.Instant.now(), refreshExp.toInstant()))
                 .build();
@@ -143,20 +154,27 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    @Operation(summary = "토큰 리프레시", description = "쿠키의 refresh_token(jti)로 액세스 토큰을 갱신합니다.")
-    public ResponseEntity<ApiResponse<LoginResponse>> refresh(@CookieValue(name = "refresh_token", required = false) String jti,
+    @Operation(summary = "토큰 리프레시", description = "쿠키의 refresh_token(JWT)으로 액세스 토큰을 갱신합니다.")
+    public ResponseEntity<ApiResponse<LoginResponse>> refresh(HttpServletRequest request,
                                                               @RequestHeader(value = "X-CSRF-Token", required = false) String csrfHeader) {
-        if (jti == null || jti.isEmpty()) {
+        String refreshJwt = getCookieValue(request, refreshCookieName);
+        if (refreshJwt == null || refreshJwt.isEmpty()) {
             return ResponseEntity.status(401).body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "리프레시 토큰 없음", null));
         }
-        var metaOpt = refreshTokenStore.getMeta(jti);
-        if (metaOpt.isEmpty()) {
+
+        if (!jwtTokenProvider.validateToken(refreshJwt)) {
             return ResponseEntity.status(401).body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "유효하지 않은 리프레시", null));
         }
-        var meta = metaOpt.get();
-        if (java.time.Instant.now().isAfter(meta.getExpiresAt())) {
-            refreshTokenStore.revoke(jti);
-            return ResponseEntity.status(401).body(ApiResponse.onFailure("AUTH401-EXPIRED_REFRESH", "만료된 리프레시", null));
+
+        String email = jwtTokenProvider.getSubject(refreshJwt);
+        String jti = jwtTokenProvider.getJti(refreshJwt);
+        if (jti == null || jti.isEmpty()) {
+            return ResponseEntity.status(401).body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "유효하지 않은 리프레시(jti 없음)", null));
+        }
+
+        String hash = sha256Hex(refreshJwt);
+        if (!refreshTokenStore.validate(jti, hash, email)) {
+            return ResponseEntity.status(401).body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "유효하지 않은 리프레시(대조 실패)", null));
         }
 
         // RTR: 기존 리프레시 폐기, 새 리프레시/쿠키 발급
@@ -164,16 +182,18 @@ public class AuthController {
 
         var claims = new java.util.HashMap<String, Object>();
         claims.put("purpose", "refresh");
-        String accessToken = jwtTokenProvider.createAccessToken(meta.getUserEmail(), claims);
-        String newRefresh = jwtTokenProvider.createRefreshToken(meta.getUserEmail());
+        String accessToken = jwtTokenProvider.createAccessToken(email, claims);
+
+        String newJti = java.util.UUID.randomUUID().toString();
+        String newRefresh = jwtTokenProvider.createRefreshToken(email, newJti);
         String newHash = sha256Hex(newRefresh);
         java.util.Date exp = jwtTokenProvider.getExpiration(newRefresh);
-        String newJti = refreshTokenStore.issue(meta.getUserEmail(), newHash, exp.toInstant());
+        refreshTokenStore.issue(newJti, email, newHash, exp.toInstant());
 
-        ResponseCookie cookie = ResponseCookie.from("refresh_token", newJti)
+        ResponseCookie cookie = ResponseCookie.from(refreshCookieName, newRefresh)
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite)
                 .path("/")
                 .maxAge(java.time.Duration.between(java.time.Instant.now(), exp.toInstant()))
                 .build();
@@ -196,20 +216,36 @@ public class AuthController {
 
     @PostMapping("/logout")
     @Operation(summary = "로그아웃", description = "쿠키의 refresh_token(jti)을 폐기하고 쿠키를 제거합니다.")
-    public ResponseEntity<ApiResponse<String>> logout(@CookieValue(name = "refresh_token", required = false) String jti) {
-        if (jti != null && !jti.isEmpty()) {
-            refreshTokenStore.revoke(jti);
+    public ResponseEntity<ApiResponse<String>> logout(HttpServletRequest request) {
+        String refreshJwt = getCookieValue(request, refreshCookieName);
+        if (refreshJwt != null && !refreshJwt.isEmpty()) {
+            if (jwtTokenProvider.validateToken(refreshJwt)) {
+                String jti = jwtTokenProvider.getJti(refreshJwt);
+                if (jti != null && !jti.isEmpty()) {
+                    refreshTokenStore.revoke(jti);
+                }
+            }
         }
-        ResponseCookie remove = ResponseCookie.from("refresh_token", "")
+        ResponseCookie remove = ResponseCookie.from(refreshCookieName, "")
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite)
                 .path("/")
                 .maxAge(0)
                 .build();
         return ResponseEntity.ok()
                 .header("Set-Cookie", remove.toString())
                 .body(ApiResponse.onSuccess("OK"));
+    }
+
+    private static String getCookieValue(HttpServletRequest request, String name) {
+        if (request == null || request.getCookies() == null) return null;
+        for (Cookie c : request.getCookies()) {
+            if (name.equals(c.getName())) {
+                return c.getValue();
+            }
+        }
+        return null;
     }
 }
 
