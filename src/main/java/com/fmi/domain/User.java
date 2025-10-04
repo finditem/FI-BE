@@ -17,11 +17,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
+@Table(name = "user")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @Column(name = "id")
     private Long userId;
 
     @Column(name = "name", nullable = false)
@@ -37,8 +38,8 @@ public class User {
     @Column(name = "email_verified")
     private boolean email_verified;
 
-    @Column(name = "phone_number")
-    private String phone_number;
+    @Column(name = "phone_number", unique = true)
+    private String phoneNumber;
 
     @Column(name = "phone_verified")
     private boolean phone_verified;

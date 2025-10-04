@@ -1,6 +1,5 @@
 package com.fmi.domain;
 
-import com.fmi.domain.Enum.Role;
 import jakarta.persistence.*;
 import lombok.*;
 

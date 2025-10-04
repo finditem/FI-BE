@@ -67,7 +67,7 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(value = GeneralException.class)
-    public ResponseEntity onThrowException(GeneralException generalException, HttpServletRequest request) {
+    public ResponseEntity<Object> onThrowException(GeneralException generalException, HttpServletRequest request) {
         ErrorReasonDTO errorReasonHttpStatus = generalException.getErrorReasonHttpStatus();
         return handleExceptionInternal(generalException,errorReasonHttpStatus,null,request);
     }
@@ -103,18 +103,6 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
     private ResponseEntity<Object> handleExceptionInternalArgs(Exception e, HttpHeaders headers, ErrorStatus errorCommonStatus,
                                                                WebRequest request, Map<String, String> errorArgs) {
         ApiResponse<Object> body = ApiResponse.onFailure(errorCommonStatus.getCode(),errorCommonStatus.getMessage(),errorArgs);
-        return super.handleExceptionInternal(
-                e,
-                body,
-                headers,
-                errorCommonStatus.getHttpStatus(),
-                request
-        );
-    }
-
-    private ResponseEntity<Object> handleExceptionInternalConstraint(Exception e, ErrorStatus errorCommonStatus,
-                                                                     HttpHeaders headers, WebRequest request) {
-        ApiResponse<Object> body = ApiResponse.onFailure(errorCommonStatus.getCode(), errorCommonStatus.getMessage(), null);
         return super.handleExceptionInternal(
                 e,
                 body,
