@@ -29,7 +29,16 @@ public enum ErrorStatus implements BaseErrorCode {
     _INVALID_FILE_EXTENSION(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "FILE415-EXT_UNSUPPORTED", "허용되지 않는 확장자입니다."),
     _INVALID_URL_FORMAT(HttpStatus.BAD_REQUEST, "FILE400-URL_INVALID", "잘못된 URL 형식입니다."),
     _IO_EXCEPTION_UPLOAD_FILE(HttpStatus.INTERNAL_SERVER_ERROR, "FILE500-UPLOAD_IO", "업로드 중 오류가 발생했습니다."),
-    _IO_EXCEPTION_DELETE_FILE(HttpStatus.INTERNAL_SERVER_ERROR, "FILE500-DELETE_IO", "파일을 삭제할 수 없습니다.");
+    _IO_EXCEPTION_DELETE_FILE(HttpStatus.INTERNAL_SERVER_ERROR, "FILE500-DELETE_IO", "파일을 삭제할 수 없습니다."),
+
+    // 회원 관련 응답
+    _USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER404-_NOT_FOUND", "존재하지 않는 회원입니다."),
+
+    // 게시글 관련 응답
+    _POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST404_NOT_FOUND", "존재하지 않는 게시글입니다."),
+
+    // 채팅 관련 응답
+    _CHATROOM_NOT_ALLOWED(HttpStatus.FORBIDDEN, "CHATROOM403_NOT_ALLOWED", "자신의 글에는 채팅할 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
