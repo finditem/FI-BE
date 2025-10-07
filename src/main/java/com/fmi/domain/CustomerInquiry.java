@@ -25,8 +25,10 @@ public class CustomerInquiry {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    @Enumerated(EnumType.STRING)
     private InquiryType inquiryType; // 문의 종류: 1:1 문의, 전체문의
 
+    @Enumerated(EnumType.STRING)
     private InquiryStatus answer_status; // 처리 상태: 대기중, 처리완료
 
     private LocalDateTime createdAt;
