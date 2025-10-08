@@ -1,5 +1,6 @@
-package com.fmi.domain;
+package com.fmi.domain.chatmessage.data;
 
+import com.fmi.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
 
