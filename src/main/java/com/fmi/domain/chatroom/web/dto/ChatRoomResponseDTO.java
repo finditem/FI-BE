@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 public class ChatRoomResponseDTO {
 
     @Builder
@@ -37,5 +40,35 @@ public class ChatRoomResponseDTO {
         private Long postId;
         private Type postType;
         private String title;
+    }
+
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class MyPostChatListDTO {
+        private List<ChatRoomSummaryDTO> chatRooms;
+        private Long nextCursor;
+    }
+
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class ChatRoomSummaryDTO {
+        private Long roomId;
+        private ContactUserDTO contactUser;
+        private String lastMessage;
+        private LocalDateTime lastMessageSentAt;
+    }
+
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class ContactUserDTO {
+        private Long userId;
+        private String nickname;
+        private String profileImageUrl;
     }
 }

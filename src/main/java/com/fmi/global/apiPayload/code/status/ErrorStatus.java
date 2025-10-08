@@ -32,13 +32,15 @@ public enum ErrorStatus implements BaseErrorCode {
     _IO_EXCEPTION_DELETE_FILE(HttpStatus.INTERNAL_SERVER_ERROR, "FILE500-DELETE_IO", "파일을 삭제할 수 없습니다."),
 
     // 회원 관련 응답
-    _USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER404-_NOT_FOUND", "존재하지 않는 회원입니다."),
+    _USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER404-NOT_FOUND", "존재하지 않는 회원입니다."),
 
     // 게시글 관련 응답
-    _POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST404_NOT_FOUND", "존재하지 않는 게시글입니다."),
+    _POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST404-NOT_FOUND", "존재하지 않는 게시글입니다."),
 
     // 채팅 관련 응답
-    _CHATROOM_NOT_ALLOWED(HttpStatus.FORBIDDEN, "CHATROOM403_NOT_ALLOWED", "자신의 글에는 채팅할 수 없습니다.");
+    _CHATROOM_NOT_ALLOWED(HttpStatus.FORBIDDEN, "CHATROOM403-NOT_ALLOWED", "자신의 글에는 채팅할 수 없습니다."),
+    _CHATROOM_FORBIDDEN(HttpStatus.FORBIDDEN, "CHATROOM403-FORBIDDEN", "본인의 게시글에 대한 채팅 목록만 조회할 수 있습니다."),
+    _INVALID_CURSOR(HttpStatus.BAD_REQUEST, "CHATROOM400-INVALID_CURSOR", "유효하지 않은 커서입니다. cursor 값을 확인해주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;

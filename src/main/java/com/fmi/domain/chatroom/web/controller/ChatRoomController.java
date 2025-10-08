@@ -2,6 +2,7 @@ package com.fmi.domain.chatroom.web.controller;
 
 import com.fmi.domain.User;
 import com.fmi.domain.chatroom.service.ChatRoomService;
+import com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
 import com.fmi.security.CustomUserDetailsService;
@@ -9,9 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResultDTO;
 
@@ -39,6 +38,20 @@ public class ChatRoomController {
             return ApiResponse.of(SuccessStatus._CHATROOM_FOUND, responseDTO);
         }
 
+    }
+
+    @GetMapping("/posts/{postId}/my-chats")
+    public ApiResponse<ChatRoomResponseDTO.MyPostChatListDTO> getMyPostChatRooms(
+            @PathVariable Long postId,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = customUserDetailsService.findUser(userDetails.getUsername());
+        Long ownerId = user.getUserId();
+
+        ChatRoomResponseDTO.MyPostChatListDTO responseDTO = chatRoomService.getMyPostChatRooms(postId, ownerId, cursor, size);
+        return ApiResponse.onSuccess(responseDTO);
     }
 
 }
