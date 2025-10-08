@@ -30,8 +30,6 @@ Thumbs.db
 logs/
 *.log
 
-# Local data
-data/
 
 # Spring Boot
 *.pid
