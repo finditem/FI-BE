@@ -37,10 +37,13 @@ public enum ErrorStatus implements BaseErrorCode {
     // 게시글 관련 응답
     _POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST404-NOT_FOUND", "존재하지 않는 게시글입니다."),
 
-    // 채팅 관련 응답
+    // 목록 관련 응답
+    _INVALID_CURSOR(HttpStatus.BAD_REQUEST, "LIST400-INVALID_CURSOR", "유효하지 않은 커서입니다. cursor 값을 확인해주세요."),
+
+    // 채팅방 관련 응답
     _CHATROOM_NOT_ALLOWED(HttpStatus.FORBIDDEN, "CHATROOM403-NOT_ALLOWED", "자신의 글에는 채팅할 수 없습니다."),
     _CHATROOM_FORBIDDEN(HttpStatus.FORBIDDEN, "CHATROOM403-FORBIDDEN", "본인의 게시글에 대한 채팅 목록만 조회할 수 있습니다."),
-    _INVALID_CURSOR(HttpStatus.BAD_REQUEST, "CHATROOM400-INVALID_CURSOR", "유효하지 않은 커서입니다. cursor 값을 확인해주세요.");
+    _CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHATROOM404-NOT_FOUND", "존재하지 않는 채팅방입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
