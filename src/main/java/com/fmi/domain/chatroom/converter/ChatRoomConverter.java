@@ -13,42 +13,50 @@ public class ChatRoomConverter {
     public static ChatRoomResultDTO toChatRoomResultDTO(ChatRoom chatRoom, User user, Post post) {
 
         var opponentUser = opponentUserDTO.builder()
-                .opponentUserId(user.getUserId())
+                .opponentUserId(user.getId())
                 .nickname(user.getNickname())
                 .profileImageUrl(user.getProfile_img())
                 .emailVerified(user.isEmail_verified())
                 .build();
 
         var postInfo = PostInfoDTO.builder()
-                .postId(post.getPostId())
+                .postId(post.getId())
                 .postType(post.getPost_type())
                 .title(post.getTitle())
                 .build();
 
         return ChatRoomResultDTO.builder()
-                .roomId(chatRoom.getChatroom_id())
+                .roomId(chatRoom.getId())
                 .opponentUser(opponentUser)
                 .postInfo(postInfo)
                 .build();
     }
 
-    public static List<ChatRoomSummaryDTO> toChatRoomSummaryListDTO(List<ChatRoom> chatRooms) {
+    public static List<ChatRoomSummaryDTO> toChatRoomSummaryListDTO(List<ChatRoom> chatRooms, Long currentUserId) {
         return chatRooms.stream()
-                .map(ChatRoomConverter::toChatRoomSummaryDTO)
+                .map(chatRoom -> toChatRoomSummaryDTO(chatRoom, currentUserId))
                 .collect(Collectors.toList());
     }
 
-    public static ChatRoomSummaryDTO toChatRoomSummaryDTO(ChatRoom chatRoom) {
-        User contactUser = chatRoom.getUser();
+    public static ChatRoomSummaryDTO toChatRoomSummaryDTO(ChatRoom chatRoom, Long currentUserId) {
+        User postOwner = chatRoom.getPost().getUser();
+        User chatRequester = chatRoom.getUser();
+        User contactUser;
+
+        if (postOwner.getId().equals(currentUserId)) {
+            contactUser = chatRequester;
+        } else {
+            contactUser = postOwner;
+        }
 
         ContactUserDTO contactUserDTO = ContactUserDTO.builder()
-                .userId(contactUser.getUserId())
+                .userId(contactUser.getId())
                 .nickname(contactUser.getNickname())
                 .profileImageUrl(contactUser.getProfile_img())
                 .build();
 
         return ChatRoomSummaryDTO.builder()
-                .roomId(chatRoom.getChatroom_id())
+                .roomId(chatRoom.getId())
                 .contactUser(contactUserDTO)
                 .lastMessage(chatRoom.getLastMessage())
                 .lastMessageSentAt(chatRoom.getUpdatedAt())

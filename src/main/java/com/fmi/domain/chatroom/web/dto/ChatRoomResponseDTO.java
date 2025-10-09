@@ -46,7 +46,7 @@ public class ChatRoomResponseDTO {
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
-    public static class MyPostChatListDTO {
+    public static class MyChatListDTO {
         private List<ChatRoomSummaryDTO> chatRooms;
         private Long nextCursor;
     }

@@ -37,13 +37,13 @@ public class ChatRoomService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
 
         // 게시글 작성자의 ID와 채팅을 요청한 사용자의 ID가 같은지 확인
-        if (post.getUser().getUserId().equals(contactUserId)) {
+        if (post.getUser().getId().equals(contactUserId)) {
             // 같다면, 본인 글에 대한 채팅 시도이므로 예외 발생
             throw new GeneralException(ErrorStatus._CHATROOM_NOT_ALLOWED);
         }
 
         // 기존 채팅방이 있는지 조회
-        Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findByPost_PostIdAndUser_UserId(postId, contactUserId);
+        Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findByPostIdAndUserId(postId, contactUserId);
 
         User opponentUser = post.getUser();
 
@@ -72,44 +72,37 @@ public class ChatRoomService {
         }
     }
 
-    public MyPostChatListDTO getMyPostChatRooms(Long postId, Long ownerId, Long cursorId, int size) {
-
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
-
-        if (!post.getUser().getUserId().equals(ownerId)) {
-            throw new GeneralException(ErrorStatus._CHATROOM_FORBIDDEN);
-        }
+    public MyChatListDTO getMyPostChatRooms(Long userId, Long cursorId, int size) {
 
         Slice<ChatRoom> chatRoomSlice;
 
         // 커서 ID가 없으면 첫 페이지이므로, 간단한 쿼리 호출
         if (cursorId == null) {
-            chatRoomSlice = chatRoomRepository.findMyPostChatRoomsFirstPage(
-                    postId, PageRequest.of(0, size));
+            chatRoomSlice = chatRoomRepository.findMyChatRoomsFirstPage(
+                    userId, PageRequest.of(0, size));
         } else {
             // 커서 ID가 있으면, 해당 ID의 updatedAt을 기준으로 다음 페이지를 조회
             ChatRoom cursorRoom = chatRoomRepository.findById(cursorId)
                     .orElseThrow(() -> new GeneralException(ErrorStatus._INVALID_CURSOR));
 
-            chatRoomSlice = chatRoomRepository.findMyPostChatRoomsWithCursor(
-                    postId, cursorRoom.getUpdatedAt(), cursorId, PageRequest.of(0, size));
+            chatRoomSlice = chatRoomRepository.findMyChatRoomsWithCursor(
+                    userId, cursorRoom.getUpdatedAt(), cursorId, PageRequest.of(0, size));
         }
 
-        return buildChatListResponse(chatRoomSlice);
+        return buildChatListResponse(chatRoomSlice, userId);
     }
 
     // DTO 변환 및 다음 커서 계산 메서드
-    private MyPostChatListDTO buildChatListResponse(Slice<ChatRoom> chatRoomSlice) {
+    private MyChatListDTO buildChatListResponse(Slice<ChatRoom> chatRoomSlice, Long userId) {
         List<ChatRoom> chatRooms = chatRoomSlice.getContent();
 
-        List<ChatRoomSummaryDTO> summaryDTOs = ChatRoomConverter.toChatRoomSummaryListDTO(chatRooms);
+        List<ChatRoomSummaryDTO> summaryDTOs = ChatRoomConverter.toChatRoomSummaryListDTO(chatRooms, userId);
 
         Long nextCursor = null;
         if (!chatRooms.isEmpty() && chatRoomSlice.hasNext()) {
-            nextCursor = chatRooms.get(chatRooms.size() - 1).getChatroom_id();
+            nextCursor = chatRooms.get(chatRooms.size() - 1).getId();
         }
 
-        return new MyPostChatListDTO(summaryDTOs, nextCursor);
+        return new MyChatListDTO(summaryDTOs, nextCursor);
     }
 }
