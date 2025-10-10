@@ -76,7 +76,7 @@ public class PostService {
             List<PostImage> oldImages = postImageRepository.findByPost(post);
 
             List<PostImage> imagesToDelete = oldImages.stream()
-                    .filter(img -> request.getDeleteImageIds().contains(img.getPostimage_id()))
+                    .filter(img -> request.getDeleteImageIds().contains(img.getId()))
                     .toList();
 
             if (!imagesToDelete.isEmpty()) {

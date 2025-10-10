@@ -39,6 +39,10 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
+    @GetMapping("/")
+    @Operation(summary = "게시글 조회")
+    public ResponseEntity<ApiResponse<PostResponse>> search
+
     @PutMapping("/{postId}")
     @Operation(summary = "게시글 수정")
     public ResponseEntity<ApiResponse<PostResponse>> updatePost(

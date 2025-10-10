@@ -41,7 +41,7 @@ public class PostConverter {
         for (String url : imageUrls) {
             postImages.add(PostImage.builder()
                     .post(post)
-                    .img_url(url)
+                    .imgUrl(url)
                     .displayOrder(order++)
                     .build());
         }
@@ -67,12 +67,12 @@ public class PostConverter {
     public PostResponse toPostResponse(Post post) {
         List<String> imageUrls = post.getImages() != null ?
                 post.getImages().stream()
-                        .map(PostImage::getImg_url)
+                        .map(PostImage::getImgUrl)
                         .toList() :
                 List.of();
 
         return PostResponse.builder()
-                .postId(post.getPostId())
+                .postId(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .address(post.getAddress())
