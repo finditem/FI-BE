@@ -25,7 +25,6 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
-    private final PostConverter postConverter;
 
     @PostMapping(value = "/")
     @Operation(summary = "게시글 생성")
@@ -39,9 +38,11 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @GetMapping("/")
-    @Operation(summary = "게시글 조회")
-    public ResponseEntity<ApiResponse<PostResponse>> search
+//    @GetMapping("/")
+//    @Operation(summary = "게시글 조회")
+//    public ResponseEntity<ApiResponse<PostResponse>> search(){
+//
+//    }
 
     @PutMapping("/{postId}")
     @Operation(summary = "게시글 수정")

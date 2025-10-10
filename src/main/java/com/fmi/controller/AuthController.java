@@ -65,7 +65,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         var user = authService.authenticate(request.getEmail(), request.getPassword());
         var claims = new java.util.HashMap<String, Object>();
-        claims.put("userId", user.getUserId());
+        claims.put("userId", user.getId());
         claims.put("role", user.getRole().name());
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), claims);
         String jti = java.util.UUID.randomUUID().toString();
@@ -86,7 +86,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", cookie.toString())
-                .body(ApiResponse.onSuccess(new LoginResponse(user.getUserId(), accessToken)));
+                .body(ApiResponse.onSuccess(new LoginResponse(user.getId(), accessToken)));
     }
 
     @Data

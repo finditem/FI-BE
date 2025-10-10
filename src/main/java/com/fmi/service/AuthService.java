@@ -63,7 +63,7 @@ public class AuthService {
                 .email_verified(Boolean.TRUE.equals(emailVerified))
                 .phone_verified(preVerified || Boolean.TRUE.equals(phoneVerified))
                 .build();
-        return userRepository.save(user).getUserId();
+        return userRepository.save(user).getId();
     }
 
     public User authenticate(String email, String rawPassword) {
