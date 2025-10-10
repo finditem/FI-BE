@@ -40,8 +40,9 @@ public class PostController {
 
 //    @GetMapping("/")
 //    @Operation(summary = "게시글 조회")
-//    public ResponseEntity<ApiResponse<PostResponse>> search(){
-//
+//    public ResponseEntity<ApiResponse<List<PostResponse>>> getpost(){
+//        List<PostResponse> posts = postService.getAllPosts();
+//        return ResponseEntity.ok(ApiResponse.onSuccess(posts));
 //    }
 
     @PutMapping("/{postId}")
