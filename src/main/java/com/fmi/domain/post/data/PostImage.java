@@ -1,4 +1,4 @@
-package com.fmi.domain;
+package com.fmi.domain.post.data;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,11 +13,10 @@ public class PostImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "postimage_id")
-    private Long postimage_id;
+    private Long id;
 
     @Column(name = "img_url", nullable = false)
-    private String img_url;
+    private String imgUrl;
 
     @Column(name = "displayOrder", nullable = false)
     private int displayOrder;
