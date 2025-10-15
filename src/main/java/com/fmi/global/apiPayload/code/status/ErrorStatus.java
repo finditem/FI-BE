@@ -22,6 +22,8 @@ public enum ErrorStatus implements BaseErrorCode {
     _WEAK_PASSWORD(HttpStatus.BAD_REQUEST, "AUTH400-WEAK_PASSWORD", "비밀번호 규칙을 만족하지 않습니다. 대소문자/특수문자 포함 8자 이상이어야 합니다."),
     _RESET_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "AUTH400-RESET_TOKEN_INVALID", "유효하지 않은 재설정 토큰입니다."),
     _RESET_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "AUTH400-RESET_TOKEN_EXPIRED", "재설정 토큰이 만료되었습니다."),
+    _INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH400-INVALID_TOKEN", "토큰이 유효하지 않습니다."),
+    _TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH400-NOT_FOUND", "Authorization 헤더가 없거나 형식이 잘못되었습니다."),
 
     // s3 관련 응답
     _NOT_EXIST_FILE (HttpStatus.NOT_FOUND, "FILE404-NOT_FOUND", "존재하지 않는 파일입니다."),
@@ -42,8 +44,10 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // 채팅방 관련 응답
     _CHATROOM_NOT_ALLOWED(HttpStatus.FORBIDDEN, "CHATROOM403-NOT_ALLOWED", "자신의 글에는 채팅할 수 없습니다."),
-    _CHATROOM_FORBIDDEN(HttpStatus.FORBIDDEN, "CHATROOM403-FORBIDDEN", "본인의 게시글에 대한 채팅 목록만 조회할 수 있습니다."),
-    _CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHATROOM404-NOT_FOUND", "존재하지 않는 채팅방입니다.");
+    _CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHATROOM404-NOT_FOUND", "존재하지 않는 채팅방입니다."),
+
+    //채팅 관련 응답
+    _IMAGE_NOT_PROVIDED(HttpStatus.BAD_REQUEST, "IMAGE400-NOT_PROVIDED", "전송할 이미지가 없습니다.");;
 
     private final HttpStatus httpStatus;
     private final String code;
