@@ -1,10 +1,11 @@
 package com.fmi.domain.post.web.controller;
 
-import com.fmi.domain.post.converter.PostConverter;
-import com.fmi.domain.post.data.Post;
+import com.fmi.domain.Enum.Type;
+import com.fmi.domain.post.response.PostListResponse;
 import com.fmi.domain.post.response.PostResponse;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.post.web.dto.CreatePostDto;
+import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,12 +39,25 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-//    @GetMapping("/")
-//    @Operation(summary = "게시글 조회")
-//    public ResponseEntity<ApiResponse<List<PostResponse>>> getpost(){
-//        List<PostResponse> posts = postService.getAllPosts();
-//        return ResponseEntity.ok(ApiResponse.onSuccess(posts));
-//    }
+    @GetMapping("/")
+    @Operation(summary = "전체 게시글 조회")
+    public ResponseEntity<ApiResponse<List<PostListResponse>>> getAllPosts(
+            @RequestParam Type type,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ){
+        List<PostListResponse> posts = postService.getAllPosts(type, page, size);
+        return ResponseEntity.ok(ApiResponse.onSuccess(posts));
+    }
+
+    @GetMapping("/{postId}")
+    @Operation(summary = "게시글 상세 조회")
+    public ResponseEntity<ApiResponse<PostResponse>> getPost(
+            @PathVariable Long postId
+    ){
+        PostResponse post = postService.getPost(postId);
+        return ResponseEntity.ok(ApiResponse.onSuccess(post));
+    }
 
     @PutMapping("/{postId}")
     @Operation(summary = "게시글 수정")
@@ -69,12 +83,35 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess("게시글 삭제 완료"));
     }
 
+    @PostMapping("/draft")
+    @Operation(summary = "게시글 임시 저장")
+    public ResponseEntity<ApiResponse<Void>> saveTemporaryPost(
 
-    @PostMapping("/test-username")
-    @Operation(summary = "userDetail.username 체크")
-    public ResponseEntity<String> checkUsername(@AuthenticationPrincipal UserDetails userDetails) {
-        log.info("현재 로그인한 유저 username: {}", userDetails.getUsername());
-        return ResponseEntity.ok("로그 확인");
+            @RequestPart("request") TemporaryPostDto request,
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
+    ) {
+        postService.saveTemporaryPost(request, userDetails, images);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+    }
+
+    @GetMapping("/draft")
+    @Operation(summary = "임시 저장 조회")
+    public ResponseEntity<ApiResponse<PostResponse>> getTemporaryPost(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        PostResponse post = postService.getTemporaryPost(userDetails);
+        return ResponseEntity.ok(ApiResponse.onSuccess(post));
+    }
+
+    @DeleteMapping("/draft")
+    @Operation(summary = "임시 저장 삭제")
+    public ResponseEntity<ApiResponse<String>> deleteTemporaryPost(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        postService.deleteTemporaryPost(userDetails);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess("임시 게시글 삭제 완료"));
     }
 
 }
