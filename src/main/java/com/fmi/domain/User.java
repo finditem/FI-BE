@@ -2,6 +2,7 @@ package com.fmi.domain;
 
 
 import com.fmi.domain.Enum.Role;
+import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;
@@ -9,6 +10,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -66,6 +69,9 @@ public class User {
     private boolean termsOfServiceAgreed;      // 서비스 이용약관 동의
     private boolean privacyPolicyAgreed;       // 개인정보 처리방침 동의
     private boolean marketingConsent;           // 마케팅 수신 동의
+
+    @OneToMany(mappedBy = "user")
+    private List<ChatRoomParticipant> chatRoomParticipants = new ArrayList<>();
 
     public void updateUserInfo(String name, String email) {
         if (name != null) {
