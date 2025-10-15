@@ -23,6 +23,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
     @Query("SELECT cr FROM ChatRoom cr JOIN cr.participants p WHERE p.user.id = :userId " +
             "AND (cr.updatedAt < :cursorUpdatedAt OR (cr.updatedAt = :cursorUpdatedAt AND cr.id < :cursorId)) " +
+            "AND cr.lastMessage IS NOT NULL " +
             "ORDER BY cr.updatedAt DESC, cr.id DESC")
     Slice<ChatRoom> findMyChatRoomsWithCursor(
             @Param("userId") Long userId,
@@ -31,7 +32,9 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
             Pageable pageable
     );
 
-    @Query("SELECT cr FROM ChatRoom cr JOIN cr.participants p WHERE p.user.id = :userId ORDER BY cr.updatedAt DESC, cr.id DESC")
+    @Query("SELECT cr FROM ChatRoom cr JOIN cr.participants p WHERE p.user.id = :userId " +
+            "AND cr.lastMessage IS NOT NULL " +
+            "ORDER BY cr.updatedAt DESC, cr.id DESC")
     Slice<ChatRoom> findMyChatRoomsFirstPage(
             @Param("userId") Long userId,
             Pageable pageable);
