@@ -39,15 +39,8 @@ public class ChatRoomConverter {
     }
 
     public static ChatRoomSummaryDTO toChatRoomSummaryDTO(ChatRoom chatRoom, Long currentUserId) {
-        User postOwner = chatRoom.getPost().getUser();
-        User chatRequester = chatRoom.getUser();
-        User contactUser;
 
-        if (postOwner.getId().equals(currentUserId)) {
-            contactUser = chatRequester;
-        } else {
-            contactUser = postOwner;
-        }
+        User contactUser = chatRoom.getOtherParticipant(currentUserId);
 
         ContactUserDTO contactUserDTO = ContactUserDTO.builder()
                 .userId(contactUser.getId())

@@ -13,16 +13,17 @@ import java.util.Optional;
 
 @Repository
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
-    Optional<ChatRoom> findByPostIdAndUserId(Long postId, Long contactUserId);
+    //Optional<ChatRoom> findByPostIdAndUserId(Long postId, Long contactUserId);
 
-    @Query("select cr from ChatRoom cr " +
-            "join fetch cr.user " +
-            "join fetch cr.post p " +
-            "join fetch p.user " +
-            "where (cr.user.id = :userId or p.user.id = :userId) " +
-            "and cr.lastMessage is not null " +
-            "and (cr.updatedAt < :cursorUpdatedAt or (cr.updatedAt = :cursorUpdatedAt and cr.id < :cursorId)) " +
-            "order by cr.updatedAt desc, cr.id desc")
+    @Query("SELECT cr FROM ChatRoom cr JOIN cr.participants p1 JOIN cr.participants p2 " +
+            "WHERE cr.post.id = :postId AND p1.user.id = :userId1 AND p2.user.id = :userId2")
+    Optional<ChatRoom> findChatRoomByPostAndUsers(@Param("postId") Long postId,
+                                                  @Param("userId1") Long userId1,
+                                                  @Param("userId2") Long userId2);
+
+    @Query("SELECT cr FROM ChatRoom cr JOIN cr.participants p WHERE p.user.id = :userId " +
+            "AND (cr.updatedAt < :cursorUpdatedAt OR (cr.updatedAt = :cursorUpdatedAt AND cr.id < :cursorId)) " +
+            "ORDER BY cr.updatedAt DESC, cr.id DESC")
     Slice<ChatRoom> findMyChatRoomsWithCursor(
             @Param("userId") Long userId,
             @Param("cursorUpdatedAt") LocalDateTime cursorUpdatedAt,
@@ -30,13 +31,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
             Pageable pageable
     );
 
-    @Query("select cr from ChatRoom cr " +
-            "join fetch cr.user " +
-            "join fetch cr.post p " +
-            "join fetch p.user " +
-            "where (cr.user.id = :userId or p.user.id = :userId) " +
-            "and cr.lastMessage is not null " +
-            "order by cr.updatedAt desc, cr.id desc")
+    @Query("SELECT cr FROM ChatRoom cr JOIN cr.participants p WHERE p.user.id = :userId ORDER BY cr.updatedAt DESC, cr.id DESC")
     Slice<ChatRoom> findMyChatRoomsFirstPage(
             @Param("userId") Long userId,
             Pageable pageable);

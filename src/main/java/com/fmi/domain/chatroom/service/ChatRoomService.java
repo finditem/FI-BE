@@ -3,6 +3,7 @@ package com.fmi.domain.chatroom.service;
 import com.fmi.domain.User;
 import com.fmi.domain.chatroom.converter.ChatRoomConverter;
 import com.fmi.domain.chatroom.data.ChatRoom;
+import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
@@ -43,7 +44,7 @@ public class ChatRoomService {
         }
 
         // 기존 채팅방이 있는지 조회
-        Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findByPostIdAndUserId(postId, contactUserId);
+        Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findChatRoomByPostAndUsers(postId, post.getUser().getId(), contactUserId);
 
         User opponentUser = post.getUser();
 
@@ -58,12 +59,23 @@ public class ChatRoomService {
         else {
             User user = userRepository.findById(contactUserId)
                     .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
+            User postAuthor = post.getUser();
             ChatRoom newRoom = ChatRoom.builder()
                     .post(post)
-                    .user(user)
                     .createdAt(LocalDateTime.now())
                     .build();
+
+            // 두 명의 참여자(게시글 작성자, 연락한 사람)에 대한 ChatRoomParticipant 엔티티를 생성
+            ChatRoomParticipant authorParticipant = ChatRoomParticipant.builder()
+                    .user(postAuthor)
+                    .build();
+
+            ChatRoomParticipant contactUserParticipant = ChatRoomParticipant.builder()
+                    .user(user)
+                    .build();
+
+            newRoom.addParticipant(authorParticipant);
+            newRoom.addParticipant(contactUserParticipant);
 
             chatRoomRepository.save(newRoom);
 
