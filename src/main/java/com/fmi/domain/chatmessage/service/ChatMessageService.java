@@ -43,6 +43,11 @@ public class ChatMessageService {
         var room = chatRoomRepository.findById(roomId).orElseThrow(
                 () -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
         var sender = userRepository.getReferenceById(senderId);
+
+        if (!room.isParticipant(sender)) {
+            throw new GeneralException(ErrorStatus._FORBIDDEN);
+        }
+
         var recipient = room.getOtherParticipant(sender.getId());
 
         var chatMessage = chatMessageRepository.save(ChatMessage.builder()
@@ -70,6 +75,10 @@ public class ChatMessageService {
 
         User sender = userRepository.getReferenceById(userId);
         ChatRoom room = chatRoomRepository.getReferenceById(roomId);
+
+        if (!room.isParticipant(sender)) {
+            throw new GeneralException(ErrorStatus._FORBIDDEN);
+        }
 
         User recipient = room.getOtherParticipant(sender.getId());
 
