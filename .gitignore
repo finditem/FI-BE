@@ -30,7 +30,6 @@ Thumbs.db
 logs/
 *.log
 
-
 # Spring Boot
 *.pid
 *.h2.db

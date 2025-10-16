@@ -21,7 +21,7 @@ public class ChatRoomConverter {
 
         var postInfo = PostInfoDTO.builder()
                 .postId(post.getId())
-                .postType(post.getPost_type())
+                .postType(post.getPostType())
                 .title(post.getTitle())
                 .build();
 
