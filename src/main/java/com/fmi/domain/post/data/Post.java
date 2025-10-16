@@ -1,5 +1,6 @@
 package com.fmi.domain.post.data;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.User;
@@ -51,11 +52,8 @@ public class Post {
     @Column(name = "content", nullable = false)
     private String content;
 
-    @Column(name = "p_content", nullable = false)
-    private String pContent;
-
-    @Column(name = "temporarySave",nullable = false)
-    private Boolean temporarySave;
+    @Column(name = "temporary_save",nullable = false)
+    private boolean temporarySave;
 
     @Column(name = "date")
     private LocalDate date;
@@ -70,6 +68,7 @@ public class Post {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
     private List<PostImage> images = new ArrayList<>();
 
 }

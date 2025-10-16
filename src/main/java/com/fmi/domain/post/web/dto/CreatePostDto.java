@@ -21,7 +21,8 @@ public class CreatePostDto {
     private double latitude;
     private double longitude;
     private String content;
-    private List<String> imageUrls; // S3의 URL
-    private boolean temporarySave;
     private double radius;
+
+    private boolean temporarySave;
+
 }

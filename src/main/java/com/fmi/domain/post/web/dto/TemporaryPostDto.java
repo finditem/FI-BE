@@ -12,8 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class UpdatePostDto {
-
+public class TemporaryPostDto {
     private Type postType;
     private String title;
     private Status itemStatus;
@@ -22,8 +21,8 @@ public class UpdatePostDto {
     private double latitude;
     private double longitude;
     private String content;
-    private boolean temporarySave;
     private double radius;
+    private boolean temporary_save;
 
     private List<Long> deleteImageIds;
 }
