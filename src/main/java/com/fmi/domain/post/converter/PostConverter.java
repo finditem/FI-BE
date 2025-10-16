@@ -57,7 +57,15 @@ public class PostConverter {
 
     public List<PostImage> toPostImageEntities(Post post, List<String> imageUrls) {
         List<PostImage> postImages = new ArrayList<>();
-        int order = 1;
+
+        int maxOrder = 0;
+        for (PostImage img : post.getImages()) {
+            if (img.getDisplayOrder() > maxOrder) {
+                maxOrder = img.getDisplayOrder();
+            }
+        }
+        int order = maxOrder + 1;
+
         for (String url : imageUrls) {
             postImages.add(PostImage.builder()
                     .post(post)
@@ -67,6 +75,7 @@ public class PostConverter {
         }
         return postImages;
     }
+
 
     public void updatePostFromDto(Post post, UpdatePostDto dto) {
         if (dto.getPostType() != null) post.setPostType(dto.getPostType());
