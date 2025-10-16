@@ -1,6 +1,5 @@
 package com.fmi.domain.post.data;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.User;
@@ -48,6 +47,7 @@ public class Post {
     private Status itemStatus;
 
     @Column(name = "post_type")
+    @Enumerated(EnumType.STRING)
     private Type postType;
 
     @Column(name = "content", nullable = false)
