@@ -64,4 +64,12 @@ public class ChatRoom {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * 사용자가 채팅방의 참여자인지 확인하는 메서드
+     */
+    public boolean isParticipant(User user) {
+        return this.participants.stream()
+                .anyMatch(p -> p.getUser().getId().equals(user.getId()));
+    }
+
 }
