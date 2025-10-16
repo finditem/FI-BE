@@ -28,6 +28,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/actuator/health", "/actuator/info", "/ws/**", "/error", "/health").permitAll()
                         .requestMatchers("/auth/login", "/auth/signup", "/auth/refresh", "/auth/logout",
                                 "/auth/check-email", "/auth/check-nickname", "/auth/reset/**", "/s3/**").permitAll()
+                        .requestMatchers("/auth/kakao/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/email/**", "/phone/**").permitAll()
                         .anyRequest().authenticated()
                 )
