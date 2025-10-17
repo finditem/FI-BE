@@ -40,6 +40,8 @@ public class ChatRoomResponseDTO {
         private Long postId;
         private Type postType;
         private String title;
+        private String address;
+        private String thumbnailUrl;
     }
 
     @Builder
