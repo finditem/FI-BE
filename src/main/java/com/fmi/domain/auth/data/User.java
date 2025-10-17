@@ -1,4 +1,4 @@
-package com.fmi.domain;
+package com.fmi.domain.auth.data;
 
 
 import com.fmi.domain.Enum.Role;
@@ -82,3 +82,4 @@ public class User {
         }
     }
 }
+

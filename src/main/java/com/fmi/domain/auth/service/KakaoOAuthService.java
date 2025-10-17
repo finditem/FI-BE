@@ -1,4 +1,4 @@
-package com.fmi.service;
+package com.fmi.domain.auth.service;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

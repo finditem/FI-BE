@@ -1,4 +1,4 @@
-package com.fmi.domain;
+package com.fmi.domain.auth.data;
 
 import com.fmi.domain.Enum.Provider;
 import jakarta.persistence.*;
@@ -38,3 +38,4 @@ public class SocialAccounts {
 
 
 }
+

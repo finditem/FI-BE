@@ -1,6 +1,6 @@
-package com.fmi.repository;
+package com.fmi.domain.auth.repository;
 
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,25 +1,26 @@
-package com.fmi.controller;
+package com.fmi.domain.auth.web.controller;
 
+import com.fmi.domain.auth.response.CheckResponse;
+import com.fmi.domain.auth.response.LoginResponse;
+import com.fmi.domain.auth.response.SignupResponse;
+import com.fmi.domain.auth.service.AuthService;
+import com.fmi.domain.auth.web.dto.LoginRequest;
+import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.JwtTokenProvider;
 import com.fmi.security.RefreshTokenStore;
-import com.fmi.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import com.fmi.domain.Enum.Role;
 import org.springframework.http.ResponseCookie;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.media.Schema;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 
 @RestController
@@ -89,71 +90,6 @@ public class AuthController {
                 .body(ApiResponse.onSuccess(new LoginResponse(user.getId(), accessToken)));
     }
 
-    @Data
-    public static class SignupRequest {
-        @Schema(description = "이메일", example = "user@example.com")
-        @Email
-        @NotBlank
-        private String email;
-        @Schema(description = "비밀번호(규칙 충족)", example = "Abcd1234!")
-        @NotBlank
-        private String password;
-        @Schema(description = "닉네임", example = "johnny")
-        @NotBlank
-        private String nickname;
-        @Schema(description = "이름", example = "John Doe")
-        @NotBlank
-        private String name;
-
-        // 선택/부가 정보
-        @Schema(description = "전화번호", example = "+82-10-1234-5678")
-        private String phoneNumber;
-        @Schema(description = "프로필 이미지 URL", example = "https://example.com/images/johndoe.png")
-        private String profileImg;
-        @Schema(description = "역할", example = "USER")
-        private Role role; // 기본값 USER (null이면 서버에서 설정)
-
-        // 동의 항목
-        @Schema(description = "이용약관 동의", example = "true")
-        private Boolean termsOfServiceAgreed;
-        @Schema(description = "개인정보 처리방침 동의", example = "true")
-        private Boolean privacyPolicyAgreed;
-        @Schema(description = "마케팅 수신 동의", example = "false")
-        private Boolean marketingConsent;
-
-        // 검증/점수(옵션)
-        @Schema(description = "신뢰 점수", example = "75")
-        private Long trustScore;
-        @Schema(description = "이메일 인증 여부", example = "true")
-        private Boolean emailVerified;
-        @Schema(description = "전화번호 인증 여부", example = "true")
-        private Boolean phoneVerified;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class SignupResponse {
-        private Long id;
-    }
-
-    @Data
-    public static class LoginRequest {
-        @Schema(description = "이메일", example = "user@example.com")
-        @Email
-        @NotBlank
-        private String email;
-        @Schema(description = "비밀번호", example = "Abcd1234!")
-        @NotBlank
-        private String password;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class LoginResponse {
-        private Long userId;
-        private String accessToken;
-    }
-
     @GetMapping("/check-email")
     @Operation(summary = "이메일 중복 확인", description = "중복이면 409와 에러 코드를 반환합니다.")
     public ResponseEntity<ApiResponse<?>> checkEmail(@RequestParam("email") @Email String email) {
@@ -172,12 +108,6 @@ public class AuthController {
             return ResponseEntity.status(409).body(ApiResponse.onFailure(ErrorStatus._NICKNAME_DUPLICATED));
         }
         return ResponseEntity.ok(ApiResponse.onSuccess(new CheckResponse(true)));
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class CheckResponse {
-        private boolean available;
     }
 
     @PostMapping("/refresh")
