@@ -70,6 +70,7 @@ public class Post {
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
+    @Builder.Default
     private List<PostImage> images = new ArrayList<>();
 
 }
