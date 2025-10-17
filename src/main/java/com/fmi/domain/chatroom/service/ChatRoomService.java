@@ -1,6 +1,6 @@
 package com.fmi.domain.chatroom.service;
 
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.converter.ChatRoomConverter;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
@@ -9,7 +9,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.repository.UserRepository;
+import com.fmi.domain.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;

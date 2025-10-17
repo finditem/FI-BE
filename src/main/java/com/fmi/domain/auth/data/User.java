@@ -71,6 +71,7 @@ public class User {
     private boolean marketingConsent;           // 마케팅 수신 동의
 
     @OneToMany(mappedBy = "user")
+    @Builder.Default
     private List<ChatRoomParticipant> chatRoomParticipants = new ArrayList<>();
 
     public void updateUserInfo(String name, String email) {

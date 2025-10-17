@@ -1,6 +1,6 @@
 package com.fmi.domain.chatroom.web.controller;
 
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.service.ChatRoomService;
 import com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;

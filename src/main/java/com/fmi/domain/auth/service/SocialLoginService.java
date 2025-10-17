@@ -1,5 +1,6 @@
 package com.fmi.domain.auth.service;
 
+import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.SocialAccounts;
@@ -34,20 +35,13 @@ public class SocialLoginService {
                     // 사용자 존재 여부 확인(이메일 기준)
                     User user = userRepository.findByEmail(effectiveEmail)
                             .orElseGet(() -> {
-                                User u = User.builder()
-                                        .email(effectiveEmail)
-                                        .password(passwordEncoder.encode("{noop}-" + providerId)) // 소셜계정: 사용 안 함
-                                        .nickname(nickname != null ? nickname : ("kakao_" + providerId))
-                                        .name(nickname != null ? nickname : ("kakao_" + providerId))
-                                        .profile_img(profileImageUrl != null ? profileImageUrl : "")
-                                        .role(Role.USER)
-                                        .email_verified(true)
-                                        .phone_verified(false)
-                                        .termsOfServiceAgreed(false)
-                                        .privacyPolicyAgreed(false)
-                                        .marketingConsent(false)
-                                        .trust_score(0L)
-                                        .build();
+                                User u = AuthConverter.toSocialUserEntity(
+                                        kakaoId,
+                                        email,
+                                        nickname,
+                                        profileImageUrl,
+                                        passwordEncoder.encode("{noop}-" + providerId)
+                                );
                                 return userRepository.save(u);
                             });
 

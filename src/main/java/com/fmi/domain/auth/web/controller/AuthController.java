@@ -1,5 +1,6 @@
 package com.fmi.domain.auth.web.controller;
 
+import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.response.CheckResponse;
 import com.fmi.domain.auth.response.LoginResponse;
 import com.fmi.domain.auth.response.SignupResponse;
@@ -43,22 +44,8 @@ public class AuthController {
     @PostMapping("/signup")
     @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임/이름 등을 입력해 회원을 생성합니다. 비밀번호는 8자 이상, 대/소문자·숫자·특수문자를 포함해야 합니다.")
     public ApiResponse<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
-        Long id = authService.signup(
-                request.getEmail(),
-                request.getPassword(),
-                request.getNickname(),
-                request.getName(),
-                request.getPhoneNumber(),
-                request.getProfileImg(),
-                request.getRole(),
-                request.getTermsOfServiceAgreed(),
-                request.getPrivacyPolicyAgreed(),
-                request.getMarketingConsent(),
-                request.getTrustScore(),
-                request.getEmailVerified(),
-                request.getPhoneVerified()
-        );
-        return ApiResponse.onSuccess(new SignupResponse(id));
+        Long id = authService.signup(request);
+        return ApiResponse.onSuccess(AuthConverter.toSignupResponse(id));
     }
 
     @PostMapping("/login")
@@ -87,7 +74,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", cookie.toString())
-                .body(ApiResponse.onSuccess(new LoginResponse(user.getId(), accessToken)));
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), accessToken)));
     }
 
     @GetMapping("/check-email")
@@ -97,7 +84,7 @@ public class AuthController {
         if (exists) {
             return ResponseEntity.status(409).body(ApiResponse.onFailure(ErrorStatus._EMAIL_DUPLICATED));
         }
-        return ResponseEntity.ok(ApiResponse.onSuccess(new CheckResponse(true)));
+        return ResponseEntity.ok(ApiResponse.onSuccess(AuthConverter.toCheckResponse(true)));
     }
 
     @GetMapping("/check-nickname")
@@ -117,7 +104,7 @@ public class AuthController {
             );
         }
         
-        return ResponseEntity.ok(ApiResponse.onSuccess(new CheckResponse(true)));
+        return ResponseEntity.ok(ApiResponse.onSuccess(AuthConverter.toCheckResponse(true)));
     }
 
     @PostMapping("/refresh")
@@ -167,7 +154,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", cookie.toString())
-                .body(ApiResponse.onSuccess(new LoginResponse(null, accessToken)));
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(null, accessToken)));
     }
 
     private static String sha256Hex(String value) {

@@ -1,6 +1,6 @@
 package com.fmi.domain.chatmessage.web.controller;
 
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.service.ChatMessageService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;

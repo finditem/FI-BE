@@ -1,5 +1,6 @@
 package com.fmi.domain.auth.web.controller;
 
+import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.response.PhoneVerifyResponse;
 import com.fmi.domain.auth.service.PhoneVerificationService;
 import com.fmi.domain.auth.web.dto.PhoneSendRequest;
@@ -29,7 +30,7 @@ public class PhoneController {
     @Operation(summary = "휴대폰 인증 코드 검증", description = "코드 검증 후 사용자의 휴대폰 인증을 true로 설정합니다.")
     public ApiResponse<PhoneVerifyResponse> verify(@RequestBody PhoneVerifyRequest req) {
         boolean ok = service.verifyAndMark(req.getPhone(), req.getCode());
-        return ApiResponse.onSuccess(new PhoneVerifyResponse(ok));
+        return ApiResponse.onSuccess(AuthConverter.toPhoneVerifyResponse(ok));
     }
 }
 

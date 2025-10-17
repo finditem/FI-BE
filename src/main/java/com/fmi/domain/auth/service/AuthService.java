@@ -1,7 +1,9 @@
 package com.fmi.domain.auth.service;
 
+import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.Enum.Role;
+import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.domain.auth.repository.UserRepository;
@@ -23,15 +25,13 @@ public class AuthService {
     private final NicknameValidationService nicknameValidationService;
 
     @Transactional
-    public Long signup(String email, String rawPassword, String nickname, String name,
-                       String phoneNumber, String profileImg, Role role,
-                       Boolean termsOfServiceAgreed, Boolean privacyPolicyAgreed, Boolean marketingConsent,
-                       Long trustScore, Boolean emailVerified, Boolean phoneVerified) {
-        if (userRepository.existsByEmail(email)) {
+    public Long signup(SignupRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new GeneralException(ErrorStatus._EMAIL_DUPLICATED);
         }
+        
         // 비밀번호 규칙: 8자 이상, 대문자/소문자/숫자/특수문자 포함
-        String pw = rawPassword == null ? "" : rawPassword;
+        String pw = request.getPassword() == null ? "" : request.getPassword();
         boolean valid = pw.length() >= 8 && pw.length() <= 16
                 && pw.matches(".*[A-Z].*")
                 && pw.matches(".*[a-z].*")
@@ -40,31 +40,22 @@ public class AuthService {
         if (!valid) {
             throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
         }
-        // 휴대폰 인증 선행 여부를 Redis 플래그로 확인(있으면 true로 설정)
+        
+        // 휴대폰 인증 선행 여부를 Redis 플래그로 확인
         boolean preVerified = false;
-        if (phoneNumber != null && !phoneNumber.isEmpty()) {
-            String flag = redis.opsForValue().get("phone:verified:" + phoneNumber);
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().isEmpty()) {
+            String flag = redis.opsForValue().get("phone:verified:" + request.getPhoneNumber());
             preVerified = "true".equals(flag);
             if (preVerified) {
-                redis.delete("phone:verified:" + phoneNumber);
+                redis.delete("phone:verified:" + request.getPhoneNumber());
             }
         }
 
-        User user = User.builder()
-                .email(email)
-                .password(passwordEncoder.encode(rawPassword))
-                .nickname(nickname)
-                .name(name)
-                .phoneNumber(phoneNumber)
-                .profile_img(profileImg != null ? profileImg : "")
-                .role(role != null ? role : Role.USER)
-                .termsOfServiceAgreed(Boolean.TRUE.equals(termsOfServiceAgreed))
-                .privacyPolicyAgreed(Boolean.TRUE.equals(privacyPolicyAgreed))
-                .marketingConsent(Boolean.TRUE.equals(marketingConsent))
-                .trust_score(trustScore != null ? trustScore : 0L)
-                .email_verified(Boolean.TRUE.equals(emailVerified))
-                .phone_verified(preVerified || Boolean.TRUE.equals(phoneVerified))
-                .build();
+        User user = AuthConverter.toUserEntity(
+                request, 
+                passwordEncoder.encode(request.getPassword()), 
+                preVerified
+        );
         return userRepository.save(user).getId();
     }
 

@@ -1,6 +1,6 @@
 package com.fmi.domain.chatmessage.data;
 
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import jakarta.persistence.*;

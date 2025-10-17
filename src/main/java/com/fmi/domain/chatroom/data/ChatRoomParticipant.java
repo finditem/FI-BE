@@ -1,6 +1,6 @@
 package com.fmi.domain.chatroom.data;
 
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

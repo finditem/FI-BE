@@ -1,5 +1,6 @@
 package com.fmi.domain.auth.web.controller;
 
+import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.response.EmailVerifyResponse;
 import com.fmi.domain.auth.service.EmailVerificationService;
 import com.fmi.domain.auth.web.dto.EmailSendRequest;
@@ -29,7 +30,7 @@ public class EmailController {
     @Operation(summary = "인증 코드 검증", description = "이메일과 인증번호가 일치하고 유효기간 내인지 확인합니다.")
     public ApiResponse<EmailVerifyResponse> verify(@RequestBody EmailVerifyRequest req) {
         boolean ok = service.verify(req.getEmail(), req.getCode());
-        return ApiResponse.onSuccess(new EmailVerifyResponse(ok));
+        return ApiResponse.onSuccess(AuthConverter.toEmailVerifyResponse(ok));
     }
 }
 

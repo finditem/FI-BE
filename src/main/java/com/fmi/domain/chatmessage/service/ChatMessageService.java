@@ -1,6 +1,6 @@
 package com.fmi.domain.chatmessage.service;
 
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.data.MessageImage;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
@@ -10,7 +10,7 @@ import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
-import com.fmi.repository.UserRepository;
+import com.fmi.domain.auth.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
