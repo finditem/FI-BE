@@ -1,11 +1,11 @@
-package com.fmi.service;
+package com.fmi.domain.auth.service;
 
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.Role;
-import com.fmi.domain.SocialAccounts;
-import com.fmi.domain.User;
-import com.fmi.repository.SocialAccountsRepository;
-import com.fmi.repository.UserRepository;
+import com.fmi.domain.auth.data.SocialAccounts;
+import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

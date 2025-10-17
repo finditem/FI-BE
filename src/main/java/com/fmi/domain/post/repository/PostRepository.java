@@ -1,7 +1,7 @@
 package com.fmi.domain.post.repository;
 
 import com.fmi.domain.Enum.Type;
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

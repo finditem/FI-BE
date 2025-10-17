@@ -1,17 +1,15 @@
-package com.fmi.controller;
+package com.fmi.domain.auth.web.controller;
 
+import com.fmi.domain.auth.service.KakaoOAuthService;
+import com.fmi.domain.auth.service.KakaoOAuthService.KakaoToken;
+import com.fmi.domain.auth.service.KakaoOAuthService.KakaoUser;
+import com.fmi.domain.auth.service.SocialLoginService;
+import com.fmi.domain.auth.web.dto.KakaoLoginRequest;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.JwtTokenProvider;
 import com.fmi.security.RefreshTokenStore;
-import com.fmi.service.KakaoOAuthService;
-import com.fmi.service.KakaoOAuthService.KakaoToken;
-import com.fmi.service.KakaoOAuthService.KakaoUser;
-import com.fmi.service.SocialLoginService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
@@ -105,16 +103,6 @@ public class KakaoAuthController {
         } catch (java.security.NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
         }
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class KakaoLoginRequest {
-        @NotBlank(message = "grantType 필수")
-        private String grantType; // authorization_code | access_token
-        private String code;
-        private String redirectUri;
-        private String accessToken;
     }
 }
 

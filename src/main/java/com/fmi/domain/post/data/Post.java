@@ -3,7 +3,7 @@ package com.fmi.domain.post.data;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -69,6 +69,7 @@ public class Post {
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
+    @Builder.Default
     private List<PostImage> images = new ArrayList<>();
 
 }

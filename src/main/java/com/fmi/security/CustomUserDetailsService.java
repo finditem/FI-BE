@@ -1,7 +1,7 @@
 package com.fmi.security;
 
-import com.fmi.domain.User;
-import com.fmi.repository.UserRepository;
+import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

@@ -1,6 +1,7 @@
 package com.fmi.domain;
 
 
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.Enum.InquiryStatus;
 import com.fmi.domain.Enum.InquiryType;
 import jakarta.persistence.*;
