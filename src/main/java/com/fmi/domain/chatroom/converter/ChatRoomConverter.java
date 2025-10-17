@@ -52,9 +52,23 @@ public class ChatRoomConverter {
                 .profileImageUrl(contactUser.getProfile_img())
                 .build();
 
+        Post post = chatRoom.getPost();
+
+        String thumbnailUrl = post.getImages().isEmpty() ? null : post.getImages().get(0).getImgUrl();
+
+        PostInfoDTO postInfoDTO = PostInfoDTO.builder()
+                .postId(post.getId())
+                .postType(post.getPostType())
+                .title(post.getTitle())
+                .address(post.getAddress())
+                .thumbnailUrl(thumbnailUrl)
+                .build();
+
+
         return ChatRoomSummaryDTO.builder()
                 .roomId(chatRoom.getId())
                 .contactUser(contactUserDTO)
+                .postInfo(postInfoDTO)
                 .lastMessage(chatRoom.getLastMessage())
                 .lastMessageSentAt(chatRoom.getUpdatedAt())
                 .build();
