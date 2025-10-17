@@ -101,12 +101,22 @@ public class AuthController {
     }
 
     @GetMapping("/check-nickname")
-    @Operation(summary = "닉네임 중복 확인", description = "중복이면 409와 에러 코드를 반환합니다.")
+    @Operation(summary = "닉네임 유효성 및 중복 확인", 
+            description = "닉네임 길이(2-10자), 금칙어, 중복 여부를 확인합니다. 부적절하거나 중복이면 400과 에러 메시지를 반환합니다.")
     public ResponseEntity<ApiResponse<?>> checkNickname(@RequestParam("nickname") @NotBlank String nickname) {
-        boolean exists = authService.nicknameExists(nickname);
-        if (exists) {
-            return ResponseEntity.status(409).body(ApiResponse.onFailure(ErrorStatus._NICKNAME_DUPLICATED));
+        var result = authService.checkNickname(nickname);
+        
+        if (!result.isAvailable()) {
+            // 부적절한 닉네임 또는 중복된 닉네임
+            return ResponseEntity.status(400).body(
+                ApiResponse.onFailure(
+                    "NICKNAME_" + result.getErrorType(), 
+                    result.getMessage(), 
+                    null
+                )
+            );
         }
+        
         return ResponseEntity.ok(ApiResponse.onSuccess(new CheckResponse(true)));
     }
 

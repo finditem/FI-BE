@@ -5,6 +5,7 @@ import com.fmi.domain.Enum.Role;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.domain.auth.repository.UserRepository;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,6 +20,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final StringRedisTemplate redis;
+    private final NicknameValidationService nicknameValidationService;
 
     @Transactional
     public Long signup(String email, String rawPassword, String nickname, String name,
@@ -79,8 +81,48 @@ public class AuthService {
         return userRepository.existsByEmail(email);
     }
 
-    public boolean nicknameExists(String nickname) {
-        return userRepository.existsByNickname(nickname);
+    /**
+     * 닉네임 유효성 및 중복 검사
+     * @return NicknameCheckResult (available, errorType, message)
+     */
+    public NicknameCheckResult checkNickname(String nickname) {
+        // 1단계: 유효성 검증 (길이, 금칙어)
+        NicknameValidationService.ValidationResult validationResult = nicknameValidationService.validate(nickname);
+        if (!validationResult.isValid()) {
+            return NicknameCheckResult.invalid("부적절한 닉네임입니다");
+        }
+
+        // 2단계: 중복 검사
+        if (userRepository.existsByNickname(nickname.trim())) {
+            return NicknameCheckResult.duplicate("중복된 닉네임입니다");
+        }
+
+        return NicknameCheckResult.available();
+    }
+
+    @Data
+    public static class NicknameCheckResult {
+        private final boolean available;
+        private final String errorType; // "INVALID" or "DUPLICATE"
+        private final String message;
+
+        private NicknameCheckResult(boolean available, String errorType, String message) {
+            this.available = available;
+            this.errorType = errorType;
+            this.message = message;
+        }
+
+        public static NicknameCheckResult available() {
+            return new NicknameCheckResult(true, null, null);
+        }
+
+        public static NicknameCheckResult invalid(String message) {
+            return new NicknameCheckResult(false, "INVALID", message);
+        }
+
+        public static NicknameCheckResult duplicate(String message) {
+            return new NicknameCheckResult(false, "DUPLICATE", message);
+        }
     }
 }
 
