@@ -40,6 +40,8 @@ public class ChatRoomResponseDTO {
         private Long postId;
         private Type postType;
         private String title;
+        private String address;
+        private String thumbnailUrl;
     }
 
     @Builder
@@ -58,6 +60,7 @@ public class ChatRoomResponseDTO {
     public static class ChatRoomSummaryDTO {
         private Long roomId;
         private ContactUserDTO contactUser;
+        private PostInfoDTO postInfo;
         private String lastMessage;
         private LocalDateTime lastMessageSentAt;
     }

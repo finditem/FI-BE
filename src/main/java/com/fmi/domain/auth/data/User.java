@@ -53,7 +53,7 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "profile_img", nullable = false)
+    @Column(name = "profile_img")
     private String profile_img;
 
     @CreatedDate

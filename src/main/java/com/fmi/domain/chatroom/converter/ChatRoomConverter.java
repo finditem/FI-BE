@@ -12,10 +12,12 @@ import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.*;
 public class ChatRoomConverter {
     public static ChatRoomResultDTO toChatRoomResultDTO(ChatRoom chatRoom, User user, Post post) {
 
+        String thumbnailUrl = post.getImages().isEmpty() ? null : post.getImages().get(0).getImgUrl();
+
         var opponentUser = opponentUserDTO.builder()
                 .opponentUserId(user.getId())
                 .nickname(user.getNickname())
-                .profileImageUrl(user.getProfile_img())
+                .profileImageUrl(user.getProfile_img() == null ? null : user.getProfile_img())
                 .emailVerified(user.isEmail_verified())
                 .build();
 
@@ -23,6 +25,8 @@ public class ChatRoomConverter {
                 .postId(post.getId())
                 .postType(post.getPostType())
                 .title(post.getTitle())
+                .address(post.getAddress())
+                .thumbnailUrl(thumbnailUrl)
                 .build();
 
         return ChatRoomResultDTO.builder()
@@ -48,9 +52,23 @@ public class ChatRoomConverter {
                 .profileImageUrl(contactUser.getProfile_img())
                 .build();
 
+        Post post = chatRoom.getPost();
+
+        String thumbnailUrl = post.getImages().isEmpty() ? null : post.getImages().get(0).getImgUrl();
+
+        PostInfoDTO postInfoDTO = PostInfoDTO.builder()
+                .postId(post.getId())
+                .postType(post.getPostType())
+                .title(post.getTitle())
+                .address(post.getAddress())
+                .thumbnailUrl(thumbnailUrl)
+                .build();
+
+
         return ChatRoomSummaryDTO.builder()
                 .roomId(chatRoom.getId())
                 .contactUser(contactUserDTO)
+                .postInfo(postInfoDTO)
                 .lastMessage(chatRoom.getLastMessage())
                 .lastMessageSentAt(chatRoom.getUpdatedAt())
                 .build();
