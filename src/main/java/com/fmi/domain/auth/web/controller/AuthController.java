@@ -1,25 +1,27 @@
-package com.fmi.controller;
+package com.fmi.domain.auth.web.controller;
 
+import com.fmi.domain.auth.converter.AuthConverter;
+import com.fmi.domain.auth.response.CheckResponse;
+import com.fmi.domain.auth.response.LoginResponse;
+import com.fmi.domain.auth.response.SignupResponse;
+import com.fmi.domain.auth.service.AuthService;
+import com.fmi.domain.auth.web.dto.LoginRequest;
+import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.JwtTokenProvider;
 import com.fmi.security.RefreshTokenStore;
-import com.fmi.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import com.fmi.domain.Enum.Role;
 import org.springframework.http.ResponseCookie;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.media.Schema;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 
 @RestController
@@ -42,22 +44,8 @@ public class AuthController {
     @PostMapping("/signup")
     @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임/이름 등을 입력해 회원을 생성합니다. 비밀번호는 8자 이상, 대/소문자·숫자·특수문자를 포함해야 합니다.")
     public ApiResponse<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
-        Long id = authService.signup(
-                request.getEmail(),
-                request.getPassword(),
-                request.getNickname(),
-                request.getName(),
-                request.getPhoneNumber(),
-                request.getProfileImg(),
-                request.getRole(),
-                request.getTermsOfServiceAgreed(),
-                request.getPrivacyPolicyAgreed(),
-                request.getMarketingConsent(),
-                request.getTrustScore(),
-                request.getEmailVerified(),
-                request.getPhoneVerified()
-        );
-        return ApiResponse.onSuccess(new SignupResponse(id));
+        Long id = authService.signup(request);
+        return ApiResponse.onSuccess(AuthConverter.toSignupResponse(id));
     }
 
     @PostMapping("/login")
@@ -86,72 +74,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", cookie.toString())
-                .body(ApiResponse.onSuccess(new LoginResponse(user.getId(), accessToken)));
-    }
-
-    @Data
-    public static class SignupRequest {
-        @Schema(description = "이메일", example = "user@example.com")
-        @Email
-        @NotBlank
-        private String email;
-        @Schema(description = "비밀번호(규칙 충족)", example = "Abcd1234!")
-        @NotBlank
-        private String password;
-        @Schema(description = "닉네임", example = "johnny")
-        @NotBlank
-        private String nickname;
-        @Schema(description = "이름", example = "John Doe")
-        @NotBlank
-        private String name;
-
-        // 선택/부가 정보
-        @Schema(description = "전화번호", example = "+82-10-1234-5678")
-        private String phoneNumber;
-        @Schema(description = "프로필 이미지 URL", example = "https://example.com/images/johndoe.png")
-        private String profileImg;
-        @Schema(description = "역할", example = "USER")
-        private Role role; // 기본값 USER (null이면 서버에서 설정)
-
-        // 동의 항목
-        @Schema(description = "이용약관 동의", example = "true")
-        private Boolean termsOfServiceAgreed;
-        @Schema(description = "개인정보 처리방침 동의", example = "true")
-        private Boolean privacyPolicyAgreed;
-        @Schema(description = "마케팅 수신 동의", example = "false")
-        private Boolean marketingConsent;
-
-        // 검증/점수(옵션)
-        @Schema(description = "신뢰 점수", example = "75")
-        private Long trustScore;
-        @Schema(description = "이메일 인증 여부", example = "true")
-        private Boolean emailVerified;
-        @Schema(description = "전화번호 인증 여부", example = "true")
-        private Boolean phoneVerified;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class SignupResponse {
-        private Long id;
-    }
-
-    @Data
-    public static class LoginRequest {
-        @Schema(description = "이메일", example = "user@example.com")
-        @Email
-        @NotBlank
-        private String email;
-        @Schema(description = "비밀번호", example = "Abcd1234!")
-        @NotBlank
-        private String password;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class LoginResponse {
-        private Long userId;
-        private String accessToken;
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), accessToken)));
     }
 
     @GetMapping("/check-email")
@@ -161,23 +84,27 @@ public class AuthController {
         if (exists) {
             return ResponseEntity.status(409).body(ApiResponse.onFailure(ErrorStatus._EMAIL_DUPLICATED));
         }
-        return ResponseEntity.ok(ApiResponse.onSuccess(new CheckResponse(true)));
+        return ResponseEntity.ok(ApiResponse.onSuccess(AuthConverter.toCheckResponse(true)));
     }
 
     @GetMapping("/check-nickname")
-    @Operation(summary = "닉네임 중복 확인", description = "중복이면 409와 에러 코드를 반환합니다.")
+    @Operation(summary = "닉네임 유효성 및 중복 확인", 
+            description = "닉네임 길이(2-10자), 금칙어, 중복 여부를 확인합니다. 부적절하거나 중복이면 400과 에러 메시지를 반환합니다.")
     public ResponseEntity<ApiResponse<?>> checkNickname(@RequestParam("nickname") @NotBlank String nickname) {
-        boolean exists = authService.nicknameExists(nickname);
-        if (exists) {
-            return ResponseEntity.status(409).body(ApiResponse.onFailure(ErrorStatus._NICKNAME_DUPLICATED));
+        var result = authService.checkNickname(nickname);
+        
+        if (!result.isAvailable()) {
+            // 부적절한 닉네임 또는 중복된 닉네임
+            return ResponseEntity.status(400).body(
+                ApiResponse.onFailure(
+                    "NICKNAME_" + result.getErrorType(), 
+                    result.getMessage(), 
+                    null
+                )
+            );
         }
-        return ResponseEntity.ok(ApiResponse.onSuccess(new CheckResponse(true)));
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class CheckResponse {
-        private boolean available;
+        
+        return ResponseEntity.ok(ApiResponse.onSuccess(AuthConverter.toCheckResponse(true)));
     }
 
     @PostMapping("/refresh")
@@ -227,7 +154,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", cookie.toString())
-                .body(ApiResponse.onSuccess(new LoginResponse(null, accessToken)));
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(null, accessToken)));
     }
 
     private static String sha256Hex(String value) {

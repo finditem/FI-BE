@@ -1,6 +1,6 @@
 package com.fmi.domain.chatroom.converter;
 
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.post.data.Post;
 

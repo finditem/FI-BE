@@ -10,4 +10,4 @@ CREATE TABLE IF NOT EXISTS customer_inquiry (
   PRIMARY KEY (id),
   CONSTRAINT fk_customer_inquiry_user
     FOREIGN KEY (user_id) REFERENCES `user`(id)
-)
+);

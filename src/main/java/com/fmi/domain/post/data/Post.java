@@ -2,7 +2,7 @@ package com.fmi.domain.post.data;
 
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,6 +1,7 @@
-package com.fmi.service;
+package com.fmi.domain.auth.service;
 
-import com.fmi.repository.UserRepository;
+import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.service.SmsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;

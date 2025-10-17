@@ -1,7 +1,7 @@
 package com.fmi.domain.post.service;
 
 import com.fmi.domain.Enum.Type;
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
@@ -13,7 +13,7 @@ import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
 import com.fmi.global.service.S3Service;
-import com.fmi.repository.UserRepository;
+import com.fmi.domain.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

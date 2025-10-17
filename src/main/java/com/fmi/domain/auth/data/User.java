@@ -1,4 +1,4 @@
-package com.fmi.domain;
+package com.fmi.domain.auth.data;
 
 
 import com.fmi.domain.Enum.Role;
@@ -71,6 +71,7 @@ public class User {
     private boolean marketingConsent;           // 마케팅 수신 동의
 
     @OneToMany(mappedBy = "user")
+    @Builder.Default
     private List<ChatRoomParticipant> chatRoomParticipants = new ArrayList<>();
 
     public void updateUserInfo(String name, String email) {
@@ -82,3 +83,4 @@ public class User {
         }
     }
 }
+

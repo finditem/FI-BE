@@ -1,5 +1,6 @@
 package com.fmi.domain;
 
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import jakarta.persistence.*;
 import lombok.*;

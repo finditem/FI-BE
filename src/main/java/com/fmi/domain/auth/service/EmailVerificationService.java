@@ -1,9 +1,10 @@
-package com.fmi.service;
+package com.fmi.domain.auth.service;
 
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.repository.UserRepository;
+import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
 package com.fmi.domain.post.converter;
 
-import com.fmi.domain.User;
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.response.PostListResponse;
