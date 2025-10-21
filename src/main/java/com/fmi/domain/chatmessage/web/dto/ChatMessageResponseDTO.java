@@ -44,7 +44,7 @@ public class ChatMessageResponseDTO {
     @Getter
     public static class MessageSliceResponseDTO {
         private List<MessageDTO> messages;
-        private boolean hasNext;
+        private Long nextCursor;
     }
 
     @Builder
