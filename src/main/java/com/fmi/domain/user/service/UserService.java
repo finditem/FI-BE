@@ -1,0 +1,150 @@
+package com.fmi.domain.user.service;
+
+import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.user.converter.UserConverter;
+import com.fmi.domain.user.response.ImageUploadResponse;
+import com.fmi.domain.user.response.UserProfileResponse;
+import com.fmi.domain.user.web.dto.PasswordChangeRequest;
+import com.fmi.domain.user.web.dto.ProfileImageUpdateRequest;
+import com.fmi.domain.user.web.dto.UserUpdateRequest;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.global.service.S3Service;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final S3Service s3Service;
+
+    /**
+     * 내 정보 조회
+     */
+    @Transactional(readOnly = true)
+    public UserProfileResponse getMyProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        
+        return UserConverter.toUserProfileResponse(user);
+    }
+
+    /**
+     * 내 정보 수정 (닉네임만 수정 가능)
+     */
+    public UserProfileResponse updateMyProfile(String email, UserUpdateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        // 닉네임 중복 체크 (본인의 닉네임이 아닌 경우만)
+        if (request.getNickname() != null && !request.getNickname().equals(user.getNickname())) {
+            if (userRepository.existsByNickname(request.getNickname())) {
+                throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
+            }
+        }
+
+        // User 닉네임 업데이트
+        UserConverter.updateUserFromRequest(user, request);
+        user.setUpdatedAt(LocalDateTime.now());
+        
+        User updatedUser = userRepository.save(user);
+        return UserConverter.toUserProfileResponse(updatedUser);
+    }
+
+    /**
+     * 프로필 이미지 업데이트 및 삭제
+     */
+    public UserProfileResponse updateProfileImage(String email, ProfileImageUpdateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        // 기존 이미지 삭제 (S3에서)
+        if (user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
+            try {
+                s3Service.delete(List.of(user.getProfile_img()));
+            } catch (Exception e) {
+                log.warn("기존 프로필 이미지 삭제 실패: {}", e.getMessage());
+            }
+        }
+
+        // 새 이미지 설정 (null이면 삭제, 값이 있으면 업데이트)
+        user.setProfile_img(request.getProfileImageUrl());
+        user.setUpdatedAt(LocalDateTime.now());
+        
+        User updatedUser = userRepository.save(user);
+        return UserConverter.toUserProfileResponse(updatedUser);
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    public void changePassword(String email, PasswordChangeRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        // 현재 비밀번호 확인
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
+        }
+
+        // 새 비밀번호와 확인 일치 여부
+        if (!request.getNewPassword().equals(request.getNewPasswordConfirm())) {
+            throw new GeneralException(ErrorStatus._PASSWORD_CONFIRMATION_MISMATCH);
+        }
+
+        // 비밀번호 변경
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    /**
+     * 회원 탈퇴 (Soft Delete 방식)
+     * 실제로는 deletedAt을 설정하고 계정을 비활성화
+     * 현재 User 엔티티에 deletedAt이 없으므로 Hard Delete로 구현
+     * 필요시 User 엔티티에 deletedAt 필드를 추가하고 Soft Delete로 변경
+     */
+    public void deleteAccount(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        // 프로필 이미지가 있다면 S3에서 삭제
+        if (user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
+            try {
+                s3Service.delete(List.of(user.getProfile_img()));
+            } catch (Exception e) {
+                log.warn("프로필 이미지 삭제 실패: {}", e.getMessage());
+            }
+        }
+
+        // Hard Delete (실제 삭제)
+        // TODO: Soft Delete로 변경 필요시 User 엔티티에 deletedAt 필드 추가
+        userRepository.delete(user);
+    }
+
+    /**
+     * 이미지 업로드 (여러 장)
+     */
+    public ImageUploadResponse uploadImages(List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            throw new GeneralException(ErrorStatus._NOT_EXIST_FILE);
+        }
+
+        List<String> imageUrls = s3Service.upload(files);
+        return UserConverter.toImageUploadResponse(imageUrls);
+    }
+}
+
