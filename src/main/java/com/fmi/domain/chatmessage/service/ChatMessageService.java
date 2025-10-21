@@ -1,32 +1,39 @@
 package com.fmi.domain.chatmessage.service;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.chatmessage.converter.ChatMessageConverter;
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.data.MessageImage;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatmessage.repositiory.ChatMessageRepository;
+import com.fmi.domain.chatmessage.repositiory.MessageImageRepository;
 import com.fmi.domain.chatroom.data.ChatRoom;
+import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
-import com.fmi.domain.auth.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.fmi.domain.chatmessage.converter.ChatMessageConverter.messageImageResponseDTO;
 import static com.fmi.domain.chatmessage.converter.ChatMessageConverter.messageResponseDTO;
 import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendImageRequestDTO;
 import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessageRequestDTO;
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.MessageImageResponseDTO;
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.MessageResponseDTO;
+import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.*;
 
 @Service
 @Transactional
@@ -37,6 +44,8 @@ public class ChatMessageService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
+    private final ChatRoomParticipantRepository chatRoomParticipantRepository;
+    private final MessageImageRepository messageImageRepository;
     private final S3Service s3Service;
 
     public MessageResponseDTO sendMessage(Long roomId, Long senderId, SendMessageRequestDTO req) {
@@ -110,5 +119,66 @@ public class ChatMessageService {
         broker.convertAndSendToUser(recipient.getEmail(), "/queue/messages", responseDTO);
         broker.convertAndSendToUser(sender.getEmail(), "/queue/messages", responseDTO);
         return responseDTO;
+    }
+
+    @Transactional(readOnly = true)
+    public MessageSliceResponseDTO messageSlice(Long roomId, Long senderId, Long cursorId) {
+
+        if (!chatRoomParticipantRepository.existsByUser_IdAndChatRoom_Id(senderId, roomId)) {
+            throw new GeneralException(ErrorStatus._MESSAGE_NOT_ALLOWED);
+        }
+
+        final int pageSize = 20;
+        PageRequest pageable = PageRequest.of(0, pageSize);
+
+        // 메인 메시지 조회 (이미지 조인 X)
+        Slice<ChatMessage> messagesSlice;
+        if (cursorId== null) {
+            messagesSlice = chatMessageRepository.findByChatRoomIdOrderByIdDesc(roomId, pageable);
+        } else {
+            messagesSlice = chatMessageRepository.findByRoomIdWithCursor(roomId, cursorId, pageable);
+        }
+
+        List<ChatMessage> finalMessages = messagesSlice.getContent();
+
+        // 메시지 ID 목록 추출
+        List<Long> imageMessageIds = finalMessages.stream()
+                .filter(m -> m.getMessageType() == MessageType.IMAGE)
+                .map(ChatMessage::getId)
+                .toList();
+
+        // 이미지 메시지가 있을 경우에만, 이미지 목록을 IN 쿼리로 한방에 조회
+        Map<Long, List<String>> imagesMap = Collections.emptyMap();
+        if (!imageMessageIds.isEmpty()) {
+            List<MessageImage> images = messageImageRepository.findAllByChatMessage_IdIn(imageMessageIds);
+
+            // (메시지 ID)별로 (이미지 URL 리스트)를 그룹핑
+            imagesMap = images.stream()
+                    .collect(Collectors.groupingBy(
+                            image -> image.getChatMessage().getId(), // 부모 메시지 ID로 그룹핑
+                            Collectors.mapping(MessageImage::getImageUrl, Collectors.toList()) // URL을 List로
+                    ));
+        }
+
+        // DTO로 변환
+        Map<Long, List<String>> finalImagesMap = imagesMap;
+        List<MessageDTO> messageDtos = finalMessages.stream()
+                .map(message -> {
+                    // 맵에서 해당 메시지의 이미지 리스트를 찾음 (없으면 빈 리스트)
+                    List<String> imageUrls = finalImagesMap.getOrDefault(message.getId(), Collections.emptyList());
+                    return ChatMessageConverter.fromEntity(message, imageUrls);
+                })
+                .toList();
+
+        Long nextCursorId = null;
+        // 다음 페이지가 있고, 현재 조회된 메시지가 실제로 있을 때
+        if (messagesSlice.hasNext() && !finalMessages.isEmpty()) {
+            nextCursorId = finalMessages.get(finalMessages.size() - 1).getId();
+        }
+
+        return MessageSliceResponseDTO.builder()
+                .messages(messageDtos)
+                .nextCursor(nextCursorId)
+                .build();
     }
 }
