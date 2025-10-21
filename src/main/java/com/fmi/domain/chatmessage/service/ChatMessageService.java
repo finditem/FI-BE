@@ -166,7 +166,7 @@ public class ChatMessageService {
                 .map(message -> {
                     // 맵에서 해당 메시지의 이미지 리스트를 찾음 (없으면 빈 리스트)
                     List<String> imageUrls = finalImagesMap.getOrDefault(message.getId(), Collections.emptyList());
-                    return ChatMessageConverter.fromEntity(message, imageUrls);
+                    return ChatMessageConverter.GetMessageResponseDTO(message, imageUrls);
                 })
                 .toList();
 

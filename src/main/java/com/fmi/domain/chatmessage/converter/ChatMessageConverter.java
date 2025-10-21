@@ -38,7 +38,7 @@ public class ChatMessageConverter {
                 .build();
     }
 
-    public static ChatMessageResponseDTO.MessageDTO fromEntity(ChatMessage message, List<String> imageUrls) {
+    public static ChatMessageResponseDTO.MessageDTO GetMessageResponseDTO(ChatMessage message, List<String> imageUrls) {
 
         return ChatMessageResponseDTO.MessageDTO.builder()
                 .messageId(message.getId())
