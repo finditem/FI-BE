@@ -4,7 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.service.ChatMessageService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
-import com.fmi.service.UserService;
+import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -25,7 +25,7 @@ import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessa
 public class ChatMessageController {
 
     private final ChatMessageService chatMessageService;
-    private final UserService userService;
+    private final UserQueryService userService;
 
     @MessageMapping("/{roomId}/send")
     public void sendMessage(@DestinationVariable Long roomId, Principal principal, @Payload SendMessageRequestDTO requestDTO) {
