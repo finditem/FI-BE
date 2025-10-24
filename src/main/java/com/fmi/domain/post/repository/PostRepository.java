@@ -25,4 +25,6 @@ public interface PostRepository extends JpaRepository<Post,Long> {
 
     Optional<Post> deleteByUserAndTemporarySaveTrue(User user);
 
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.images WHERE p.user.email = :email AND p.temporarySave = true")
+    Optional<Post> findByUserEmailAndTemporarySaveTrue(@Param("email") String email);
 }
