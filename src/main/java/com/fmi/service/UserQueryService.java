@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserService {
+public class UserQueryService {
 
     private final UserRepository userRepository;
 
@@ -21,3 +21,4 @@ public class UserService {
                 () -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
     }
 }
+

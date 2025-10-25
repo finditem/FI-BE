@@ -5,7 +5,7 @@ import com.fmi.domain.chatroom.service.ChatRoomService;
 import com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
-import com.fmi.service.UserService;
+import com.fmi.service.UserQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -22,7 +22,7 @@ import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResult
 @RequiredArgsConstructor
 public class ChatRoomController {
 
-    private final UserService userService;
+    private final UserQueryService userService;
     private final ChatRoomService chatRoomService;
 
     @Operation(summary = "채팅방 생성/조회", description = "특정 게시글에 대해 1:1 채팅방을 생성하거나 기존 채팅방을 조회합니다.")
