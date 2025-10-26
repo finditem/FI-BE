@@ -66,14 +66,11 @@ public class PostService {
     @Transactional
     public PostResponse updatePost(Long postId, UpdatePostDto request, UserDetails userDetails, List<MultipartFile> images) {
 
-        String email = userDetails.getUsername();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("해당 유저를 찾을 수 없습니다."));
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
-        if (!post.getUser().getId().equals(user.getId())) {
+        if (!post.getUser().getEmail().equals(userDetails.getUsername())) {
             throw new RuntimeException("작성자만 수정할 수 있습니다.");
         }
 
@@ -111,14 +108,10 @@ public class PostService {
     @Transactional
     public Post deletePost(Long postId, UserDetails userDetails){
 
-        String email = userDetails.getUsername();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자 찾을 수 없습니다."));
-
         Post post = postRepository.findById(postId)
-                .orElseThrow(()-> new RuntimeException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
-        if(!post.getUser().getId().equals(user.getId())){
+        if (!post.getUser().getEmail().equals(userDetails.getUsername())) {
             throw new RuntimeException("작성자만 삭제할 수 있습니다.");
         }
 
@@ -203,13 +196,8 @@ public class PostService {
     @Transactional(readOnly = true)
     public PostResponse getTemporaryPost(UserDetails userDetails){
 
-        String email = userDetails.getUsername();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자 찾을 수 없습니다."));
-
-        Post post = postRepository.findByUserAndTemporarySaveTrue(user)
-                .orElseThrow(()-> new RuntimeException("사용자의 임시 게시글을 찾을 수 없습니다."));
+        Post post = postRepository.findByUserEmailAndTemporarySaveTrue(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("사용자의 임시 게시글을 찾을 수 없습니다."));
 
         return postConverter.toPostResponse(post);
     }
@@ -217,12 +205,8 @@ public class PostService {
     @Transactional
     public Post deleteTemporaryPost(UserDetails userDetails){
 
-        String email = userDetails.getUsername();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자 찾을 수 없습니다."));
-
-        Post post = postRepository.findByUserAndTemporarySaveTrue(user)
-                .orElseThrow(()-> new RuntimeException("임시 게시글이 없습니다."));
+        Post post = postRepository.findByUserEmailAndTemporarySaveTrue(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("사용자의 임시 게시글을 찾을 수 없습니다."));
 
         List<String> s3Urls = post.getImages().stream()
                 .map(PostImage::getImgUrl)
@@ -232,7 +216,7 @@ public class PostService {
             s3Service.delete(s3Urls);
         }
 
-        postRepository.deleteByUserAndTemporarySaveTrue(user);
+        postRepository.delete(post);
 
         return post;
     }

@@ -28,8 +28,8 @@ public class SecurityConfig {
                         .requestMatchers("/", "/actuator/health", "/actuator/info", "/ws/**", "/error", "/health").permitAll()
                         .requestMatchers("/auth/login", "/auth/signup", "/auth/refresh", "/auth/logout",
                                 "/auth/check-email", "/auth/check-nickname", "/auth/reset/**", "/s3/**", "/chat-test.html").permitAll()
-                        .requestMatchers("/auth/kakao/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/email/**", "/phone/**").permitAll()
+                        .requestMatchers("/auth/kakao/**", "/auth/email/**", "/auth/phone/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(h -> h.disable());

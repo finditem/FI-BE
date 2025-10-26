@@ -35,6 +35,9 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // 회원 관련 응답
     _USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER404-NOT_FOUND", "존재하지 않는 회원입니다."),
+    _CURRENT_PASSWORD_INCORRECT(HttpStatus.BAD_REQUEST, "USER400-PASSWORD_INCORRECT", "현재 비밀번호가 일치하지 않습니다."),
+    _PASSWORD_CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "USER400-PASSWORD_MISMATCH", "새 비밀번호와 확인이 일치하지 않습니다."),
+    _PHONE_DUPLICATED(HttpStatus.CONFLICT, "USER409-PHONE_DUPLICATED", "이미 사용 중인 전화번호입니다."),
 
     // 게시글 관련 응답
     _POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST404-NOT_FOUND", "존재하지 않는 게시글입니다."),
