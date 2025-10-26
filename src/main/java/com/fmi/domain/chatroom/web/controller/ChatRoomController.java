@@ -72,6 +72,10 @@ public class ChatRoomController {
         return ApiResponse.of(SuccessStatus._CHATROOM_LIST_FETCHED, responseDTO);
     }
 
+    @Operation(summary = "채팅방 나가기", description = "채팅방을 나가면 그 시점부터 나간 사용자에게 대화 내역이 보이지 않고, 내 채팅 목록에도 사라집니다. 다시 채팅이 시작되면 그 나간 이후 시점부터 내역이 보입니다. (나가지 않은 사용자에겐 적용x)")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM_LIST_FETCHED: 채팅 목록 조회 성공")
+    })
     @PatchMapping("/chats/{roomId}/leave")
     public ApiResponse<Void> leftChatRoom(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
