@@ -9,6 +9,7 @@ import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatmessage.repositiory.ChatMessageRepository;
 import com.fmi.domain.chatmessage.repositiory.MessageImageRepository;
 import com.fmi.domain.chatroom.data.ChatRoom;
+import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -20,7 +21,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -67,7 +67,7 @@ public class ChatMessageService {
                 .createdAt(LocalDateTime.now())
                 .build());
 
-        room.updateLastMessage((req.getContent()));
+        updateParticipantsOnNewMessage(room.getId(), chatMessage);
 
         MessageResponseDTO responseDTO = messageResponseDTO(chatMessage);
         broker.convertAndSendToUser(recipient.getEmail(), "/queue/messages", responseDTO);
@@ -107,18 +107,22 @@ public class ChatMessageService {
 
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
 
-        if (!StringUtils.hasText(savedMessage.getContent())) {
-            room.updateLastMessage("사진을 보냈습니다.");
-        }
-        else {
-            room.updateLastMessage(requestDTO.getContent());
-        }
+        updateParticipantsOnNewMessage(room.getId(), savedMessage);
 
         // DTO로 변환하여 WebSocket 브로드캐스팅
         MessageImageResponseDTO responseDTO = messageImageResponseDTO(savedMessage);
         broker.convertAndSendToUser(recipient.getEmail(), "/queue/messages", responseDTO);
         broker.convertAndSendToUser(sender.getEmail(), "/queue/messages", responseDTO);
         return responseDTO;
+    }
+
+    private void updateParticipantsOnNewMessage(Long roomId, ChatMessage newMessage) {
+        List<ChatRoomParticipant> allParticipants = chatRoomParticipantRepository.findAllByChatRoom_Id(roomId);
+
+        for (ChatRoomParticipant pt : allParticipants) {
+            // 메시지 갱신 및 ACTIVE 설정
+            pt.updateLastMessage(newMessage);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -128,15 +132,20 @@ public class ChatMessageService {
             throw new GeneralException(ErrorStatus._MESSAGE_NOT_ALLOWED);
         }
 
+        ChatRoomParticipant me = chatRoomParticipantRepository.findByChatRoom_IdAndUser_Id(roomId, senderId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+
+        Long cutoff = me.getVisibleFromMessageId();
+
         final int pageSize = 20;
         PageRequest pageable = PageRequest.of(0, pageSize);
 
         // 메인 메시지 조회 (이미지 조인 X)
         Slice<ChatMessage> messagesSlice;
         if (cursorId== null) {
-            messagesSlice = chatMessageRepository.findByChatRoomIdOrderByIdDesc(roomId, pageable);
+            messagesSlice = chatMessageRepository.findByChatRoomIdOrderByIdDesc(roomId, cutoff, pageable);
         } else {
-            messagesSlice = chatMessageRepository.findByRoomIdWithCursor(roomId, cursorId, pageable);
+            messagesSlice = chatMessageRepository.findByRoomIdWithCursor(roomId, cursorId, cutoff, pageable);
         }
 
         List<ChatMessage> finalMessages = messagesSlice.getContent();
