@@ -68,8 +68,16 @@ public class ChatRoomController {
     ) {
         User user = userService.findUser(userDetails.getUsername());
 
-        ChatRoomResponseDTO.MyChatListDTO responseDTO = chatRoomService.getMyPostChatRooms(user.getId(), cursor, size);
+        ChatRoomResponseDTO.MyChatListDTO responseDTO = chatRoomService.getMyPostChatRooms(user, cursor, size);
         return ApiResponse.of(SuccessStatus._CHATROOM_LIST_FETCHED, responseDTO);
+    }
+
+    @PatchMapping("/chats/{roomId}/leave")
+    public ApiResponse<Void> leftChatRoom(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        User user = userService.findUser(email);
+        chatRoomService.leftChatRoom(roomId, user.getId());
+        return ApiResponse.of(SuccessStatus._CHATROOM_LEFT);
     }
 
 }
