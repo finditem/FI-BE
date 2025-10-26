@@ -1,7 +1,10 @@
 package com.fmi.domain.chatroom.converter;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.chatmessage.data.ChatMessage;
+import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatroom.data.ChatRoom;
+import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.post.data.Post;
 
 import java.util.List;
@@ -36,15 +39,18 @@ public class ChatRoomConverter {
                 .build();
     }
 
-    public static List<ChatRoomSummaryDTO> toChatRoomSummaryListDTO(List<ChatRoom> chatRooms, Long currentUserId) {
-        return chatRooms.stream()
-                .map(chatRoom -> toChatRoomSummaryDTO(chatRoom, currentUserId))
+    public static List<ChatRoomSummaryDTO> toChatRoomSummaryListDTO(List<ChatRoomParticipant> participants, User currentUser) {
+        return participants.stream()
+                .map(pt -> {
+                    User contactUser = pt.getChatRoom().getOtherParticipant(currentUser.getId());
+
+                    return toChatRoomSummaryDTO(pt, contactUser);
+                })
                 .collect(Collectors.toList());
     }
 
-    public static ChatRoomSummaryDTO toChatRoomSummaryDTO(ChatRoom chatRoom, Long currentUserId) {
 
-        User contactUser = chatRoom.getOtherParticipant(currentUserId);
+    public static ChatRoomSummaryDTO toChatRoomSummaryDTO(ChatRoomParticipant participant, User contactUser) {
 
         ContactUserDTO contactUserDTO = ContactUserDTO.builder()
                 .userId(contactUser.getId())
@@ -52,8 +58,7 @@ public class ChatRoomConverter {
                 .profileImageUrl(contactUser.getProfile_img())
                 .build();
 
-        Post post = chatRoom.getPost();
-
+        Post post = participant.getChatRoom().getPost();
         String thumbnailUrl = post.getImages().isEmpty() ? null : post.getImages().get(0).getImgUrl();
 
         PostInfoDTO postInfoDTO = PostInfoDTO.builder()
@@ -64,14 +69,26 @@ public class ChatRoomConverter {
                 .thumbnailUrl(thumbnailUrl)
                 .build();
 
+        ChatMessage lastMessage = participant.getLastMessage();
+        String preview = null;
+        if (lastMessage != null) {
+            if (lastMessage.getContent() != null && !lastMessage.getContent().isBlank()) {
+                preview = lastMessage.getContent();
+            } else if (isImageMessage(lastMessage)) {
+                preview = "사진을 보냈습니다.";
+            }
+        }
 
         return ChatRoomSummaryDTO.builder()
-                .roomId(chatRoom.getId())
+                .roomId(participant.getChatRoom().getId())
                 .contactUser(contactUserDTO)
                 .postInfo(postInfoDTO)
-                .lastMessage(chatRoom.getLastMessage())
-                .lastMessageSentAt(chatRoom.getUpdatedAt())
+                .lastMessage(preview)
+                .lastMessageSentAt(participant.getLastMessageSentAt())
                 .build();
     }
 
+    private static boolean isImageMessage(ChatMessage message) {
+        return message.getMessageType() == MessageType.IMAGE;
+    }
 }
