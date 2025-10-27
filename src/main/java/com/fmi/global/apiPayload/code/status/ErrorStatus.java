@@ -68,7 +68,11 @@ public enum ErrorStatus implements BaseErrorCode {
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404-NOT_FOUND", "존재하지 않는 신고입니다."),
     
     // 댓글 관련 응답
-    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404-NOT_FOUND", "존재하지 않는 댓글입니다.");
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404-NOT_FOUND", "존재하지 않는 댓글입니다."),
+    
+    // 알림 관련 응답
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION404-NOT_FOUND", "존재하지 않는 알림입니다."),
+    NOTIFICATION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "NOTIFICATION403-ACCESS_DENIED", "해당 알림에 접근할 권한이 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

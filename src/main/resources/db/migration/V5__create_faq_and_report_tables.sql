@@ -104,6 +104,74 @@ INSERT INTO faq (question, answer, category, order_num, created_at, updated_at) 
 ('비밀번호를 잊어버렸어요.', '로그인 화면에서 "비밀번호 찾기"를 클릭하여 가입한 이메일로 비밀번호 재설정 링크를 받으실 수 있습니다.', 'ACCOUNT', 2, NOW(), NOW()),
 ('신고는 어떻게 하나요?', '부적절한 게시글이나 댓글 우측의 신고 버튼을 클릭하여 신고 사유를 작성하시면 됩니다. 신고된 내용은 관리자가 검토 후 조치합니다.', 'REPORT', 1, NOW(), NOW());
 
+-- 알림 설정 테이블 생성
+CREATE TABLE IF NOT EXISTS notification_settings (
+    settings_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE,
+    comment_enabled BOOLEAN DEFAULT TRUE COMMENT '댓글 알림',
+    chat_enabled BOOLEAN DEFAULT TRUE COMMENT '채팅 알림',
+    inquiry_reply_enabled BOOLEAN DEFAULT TRUE COMMENT '문의 답변 알림',
+    report_result_enabled BOOLEAN DEFAULT TRUE COMMENT '신고 처리 결과 알림',
+    favorite_enabled BOOLEAN DEFAULT TRUE COMMENT '좋아요 알림',
+    notice_enabled BOOLEAN DEFAULT TRUE COMMENT '공지사항 알림',
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NULL,
+    FOREIGN KEY (user_id) REFERENCES `user`(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Notification 테이블에 컬럼 추가 (없는 경우에만)
+SET @col_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'notification'
+      AND COLUMN_NAME = 'title'
+);
+
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE notification ADD COLUMN title VARCHAR(200) NOT NULL DEFAULT ''알림'' AFTER type',
+    'SELECT ''Column already exists'' AS msg');
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'notification'
+      AND COLUMN_NAME = 'reference_type'
+);
+
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE notification ADD COLUMN reference_type VARCHAR(50) AFTER message',
+    'SELECT ''Column already exists'' AS msg');
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'notification'
+      AND COLUMN_NAME = 'reference_id'
+);
+
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE notification ADD COLUMN reference_id BIGINT AFTER reference_type',
+    'SELECT ''Column already exists'' AS msg');
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- 기존 type 컬럼 크기 조정
+ALTER TABLE notification MODIFY COLUMN type VARCHAR(50);
+
 -- 초기 데이터 삽입 (Notice) - 이미 데이터가 있을 수 있으므로 중복 체크
 INSERT INTO notice (title, content, category, pinned, view_cnt, created_at, updated_at)
 SELECT * FROM (SELECT '서비스 이용 안내' AS title, '분실물/습득물 서비스를 이용해주셔서 감사합니다. 안전한 거래를 위해 신뢰할 수 있는 정보를 등록해주세요.' AS content, 'IMPORTANT' AS category, 1 AS pinned, 0 AS view_cnt, NOW() AS created_at, NOW() AS updated_at) AS tmp
