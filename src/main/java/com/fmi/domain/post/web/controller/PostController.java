@@ -117,9 +117,9 @@ public class PostController {
 
     @GetMapping("/{postId}/share")
     @Operation(summary = "게시글 공유")
-    public ResponseEntity<ApiResponse<PostShareResponse>> sharePost(@PathVariable Long postid){
+    public ResponseEntity<ApiResponse<PostShareResponse>> sharePost(@PathVariable Long postId){
 
-        PostShareResponse shareResponse = postService.getSharePost(postid);
+        PostShareResponse shareResponse = postService.getSharePost(postId);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(shareResponse));
     }

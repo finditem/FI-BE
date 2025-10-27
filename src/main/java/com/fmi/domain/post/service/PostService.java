@@ -222,6 +222,7 @@ public class PostService {
         return post;
     }
 
+    @Transactional
     public PostShareResponse getSharePost(Long postId) {
 
         Post post = postRepository.findById(postId)

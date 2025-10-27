@@ -162,7 +162,7 @@ public class PostConverter {
         return PostShareResponse.builder()
                 .title(post.getTitle())
                 .summary(createSummary(post,20))
-                .image(createThumbnail(post))
+                .thumbnailUrl(createThumbnail(post))
                 .url(BASE_URL+post.getId())
                 .build();
     }
