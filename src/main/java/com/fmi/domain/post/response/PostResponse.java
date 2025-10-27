@@ -13,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class PostResponse {
+
     private Long postId;
     private String title;
     private String content;
