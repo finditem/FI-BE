@@ -3,6 +3,7 @@ package com.fmi.domain.post.web.controller;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.post.response.PostListResponse;
 import com.fmi.domain.post.response.PostResponse;
+import com.fmi.domain.post.response.PostShareResponse;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
@@ -116,11 +117,11 @@ public class PostController {
 
     @GetMapping("/{postId}/share")
     @Operation(summary = "게시글 공유")
-    public ResponseEntity<ApiResponse<String>> sharePost(@PathVariable Long postid){
+    public ResponseEntity<ApiResponse<PostShareResponse>> sharePost(@PathVariable Long postid){
 
-        postService.getSharePost(postid);
+        PostShareResponse shareResponse = postService.getSharePost(postid);
 
-        return null;
+        return ResponseEntity.ok(ApiResponse.onSuccess(shareResponse));
     }
 
 }
