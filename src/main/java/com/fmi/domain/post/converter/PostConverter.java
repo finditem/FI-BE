@@ -5,6 +5,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.response.PostListResponse;
 import com.fmi.domain.post.response.PostResponse;
+import com.fmi.domain.post.response.PostShareResponse;
 import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
@@ -16,6 +17,9 @@ import java.util.List;
 
 @Component
 public class PostConverter {
+
+
+    private static final String BASE_URL = "https://fmi.com/post/";
 
     public Post toPostEntity(CreatePostDto request, User user) {
         return Post.builder()
@@ -147,4 +151,19 @@ public class PostConverter {
     }
 
 
+    public PostShareResponse toShareResponse(Post post) {
+
+        String thumbnailUrl = post.getImages().isEmpty() ? null : post.getImages().get(0).getImgUrl();
+
+        String summary = post.getContent() != null
+                ? (post.getContent().length() > 20 ? post.getContent().substring(0, 20) + "..." : post.getContent())
+                : null;
+
+        return PostShareResponse.builder()
+                .title(post.getTitle())
+                .summary(summary)
+                .image(thumbnailUrl)
+                .url(BASE_URL+post.getId())
+                .build();
+    }
 }

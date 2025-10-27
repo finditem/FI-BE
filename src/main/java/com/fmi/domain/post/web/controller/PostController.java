@@ -114,4 +114,13 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess("임시 게시글 삭제 완료"));
     }
 
+    @GetMapping("/{postId}/share")
+    @Operation(summary = "게시글 공유")
+    public ResponseEntity<ApiResponse<String>> sharePost(@PathVariable Long postid){
+
+        postService.getSharePost(postid);
+
+        return null;
+    }
+
 }
