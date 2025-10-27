@@ -38,4 +38,26 @@ public class ChatMessageResponseDTO {
         private LocalDateTime createdAt;
     }
 
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class MessageSliceResponseDTO {
+        private List<MessageDTO> messages;
+        private Long nextCursor;
+    }
+
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class MessageDTO {
+        private Long messageId;
+        private String messageType;
+        private Long senderId;
+        private String content;
+        private List<String> imageUrls;
+        private LocalDateTime createdAt;
+    }
+
 }

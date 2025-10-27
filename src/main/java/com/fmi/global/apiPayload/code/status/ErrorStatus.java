@@ -50,7 +50,8 @@ public enum ErrorStatus implements BaseErrorCode {
     _CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHATROOM404-NOT_FOUND", "존재하지 않는 채팅방입니다."),
 
     //채팅 관련 응답
-    _IMAGE_NOT_PROVIDED(HttpStatus.BAD_REQUEST, "IMAGE400-NOT_PROVIDED", "전송할 이미지가 없습니다.");;
+    _IMAGE_NOT_PROVIDED(HttpStatus.BAD_REQUEST, "IMAGE400-NOT_PROVIDED", "전송할 이미지가 없습니다."),
+    _MESSAGE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "MESSAGE-NOT_ALLOWED", "채팅 내역을 조회할 권한이 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
