@@ -2,9 +2,7 @@ package com.fmi.domain.report.service;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
-import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.repositiory.ChatMessageRepository;
-import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;

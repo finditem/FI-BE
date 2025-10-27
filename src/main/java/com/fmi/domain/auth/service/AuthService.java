@@ -2,7 +2,6 @@ package com.fmi.domain.auth.service;
 
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.data.User;
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
