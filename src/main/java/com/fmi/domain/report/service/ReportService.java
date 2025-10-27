@@ -1,6 +1,9 @@
 package com.fmi.domain.report.service;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.chatmessage.data.ChatMessage;
+import com.fmi.domain.chatmessage.repositiory.ChatMessageRepository;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.post.data.Post;
@@ -28,6 +31,8 @@ public class ReportService {
     private final ReportRepository reportRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final UserRepository userRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final ReportConverter reportConverter;
     
     /**
@@ -90,10 +95,12 @@ public class ReportService {
                         .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND));
                 break;
             case USER:
-                // UserRepository 조회 필요
+                userRepository.findById(targetId)
+                        .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
                 break;
             case CHAT:
-                // ChatMessage 조회 필요
+                chatMessageRepository.findById(targetId)
+                        .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND)); // ChatMessage 용 에러 추가 필요
                 break;
         }
     }
@@ -113,9 +120,13 @@ public class ReportService {
                             .map(comment -> comment.getContent().substring(0, Math.min(50, comment.getContent().length())) + "...")
                             .orElse("삭제된 댓글");
                 case USER:
-                    return "사용자 " + targetId;
+                    return userRepository.findById(targetId)
+                            .map(u -> u.getNickname() + " 사용자")
+                            .orElse("삭제된 사용자");
                 case CHAT:
-                    return "채팅 메시지";
+                    return chatMessageRepository.findById(targetId)
+                            .map(msg -> "채팅: " + msg.getContent().substring(0, Math.min(30, msg.getContent().length())) + "...")
+                            .orElse("삭제된 채팅");
                 default:
                     return "알 수 없음";
             }
