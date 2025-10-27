@@ -9,6 +9,7 @@ import com.fmi.domain.post.repository.PostImageRepository;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.response.PostListResponse;
 import com.fmi.domain.post.response.PostResponse;
+import com.fmi.domain.post.response.PostShareResponse;
 import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
@@ -58,6 +59,7 @@ public class PostService {
         List<PostImage> postImages = postConverter.toPostImageEntities(post, s3Urls);
         if (!postImages.isEmpty()) {
             postImageRepository.saveAll(postImages);
+            post.setImages(postImages);
         }
 
         return postConverter.toPostResponse(post);
@@ -221,5 +223,13 @@ public class PostService {
         return post;
     }
 
+    @Transactional
+    public PostShareResponse getSharePost(Long postId) {
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("게시글 없음"));
+
+        return postConverter.toShareResponse(post);
+    }
 
 }
