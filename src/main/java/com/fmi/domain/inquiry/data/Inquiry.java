@@ -42,7 +42,7 @@ public class Inquiry {
     @Enumerated(EnumType.STRING)
     @Column(name = "answer_status", nullable = false, length = 30)
     @Builder.Default
-    private InquiryStatus answerStatus = InquiryStatus.PENDING;
+    private InquiryStatus answerStatus = InquiryStatus.RECEIVED;
 
     @Column(length = 255)
     private String email;  // 비회원 문의 시 이메일
@@ -66,6 +66,10 @@ public class Inquiry {
 
     public void markAsAnswered() {
         this.answerStatus = InquiryStatus.ANSWERED;
+    }
+    
+    public void markAsPending() {
+        this.answerStatus = InquiryStatus.PENDING;
     }
 }
 

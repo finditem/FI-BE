@@ -4,9 +4,9 @@ import lombok.Getter;
 
 @Getter
 public enum InquiryStatus {
-    PENDING("답변 대기 중"),
-    ANSWERED("답변 완료"),
-    CLOSED("문의 종료");
+    RECEIVED("접수"),
+    PENDING("보류"),
+    ANSWERED("답변완료");
 
     private final String description;
 
