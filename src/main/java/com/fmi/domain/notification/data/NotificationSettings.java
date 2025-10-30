@@ -53,6 +53,11 @@ public class NotificationSettings {
     @Builder.Default
     private Boolean noticeEnabled = true;
 
+    // 키워드 알림
+    @Column(name = "keyword_enabled")
+    @Builder.Default
+    private Boolean keywordEnabled = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -73,13 +78,15 @@ public class NotificationSettings {
     // 설정 업데이트
     public void updateSettings(Boolean commentEnabled, Boolean chatEnabled, 
                                Boolean inquiryReplyEnabled, Boolean reportResultEnabled,
-                               Boolean favoriteEnabled, Boolean noticeEnabled) {
+                               Boolean favoriteEnabled, Boolean noticeEnabled,
+                               Boolean keywordEnabled) {
         if (commentEnabled != null) this.commentEnabled = commentEnabled;
         if (chatEnabled != null) this.chatEnabled = chatEnabled;
         if (inquiryReplyEnabled != null) this.inquiryReplyEnabled = inquiryReplyEnabled;
         if (reportResultEnabled != null) this.reportResultEnabled = reportResultEnabled;
         if (favoriteEnabled != null) this.favoriteEnabled = favoriteEnabled;
         if (noticeEnabled != null) this.noticeEnabled = noticeEnabled;
+        if (keywordEnabled != null) this.keywordEnabled = keywordEnabled;
     }
 }
 

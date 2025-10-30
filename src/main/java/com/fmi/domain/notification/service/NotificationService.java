@@ -21,6 +21,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.user.repository.UserKeywordRepository;
+import com.fmi.domain.user.data.UserKeyword;
+import com.fmi.domain.post.data.Post;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +35,7 @@ public class NotificationService {
     private final NotificationConverter notificationConverter;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final UserRepository userRepository;
+    private final UserKeywordRepository userKeywordRepository;
     
     /**
      * 내 알림 목록 조회
@@ -127,9 +131,22 @@ public class NotificationService {
                 request.getInquiryReplyEnabled(),
                 request.getReportResultEnabled(),
                 request.getFavoriteEnabled(),
-                request.getNoticeEnabled()
+                request.getNoticeEnabled(),
+                null
         );
         
+        NotificationSettings saved = notificationSettingsRepository.save(settings);
+        return notificationConverter.toSettingsDTO(saved);
+    }
+
+    /**
+     * 댓글/채팅/키워드 설정만 부분 업데이트
+     */
+    @Transactional
+    public NotificationSettingsDTO updateBasicSettings(User user, Boolean commentEnabled, Boolean chatEnabled, Boolean keywordEnabled) {
+        NotificationSettings settings = notificationSettingsRepository.findByUser(user)
+                .orElseGet(() -> createDefaultSettings(user));
+        settings.updateSettings(commentEnabled, chatEnabled, null, null, null, null, keywordEnabled);
         NotificationSettings saved = notificationSettingsRepository.save(settings);
         return notificationConverter.toSettingsDTO(saved);
     }
@@ -198,6 +215,26 @@ public class NotificationService {
             NotificationSettings settings = notificationSettingsRepository.findByUser(user).orElse(null);
             if (settings == null || Boolean.TRUE.equals(settings.getNoticeEnabled())) {
                 createNotification(user, NotificationType.NOTICE, title, message, "NOTICE", noticeId);
+            }
+        }
+    }
+
+    /**
+     * 게시글 생성 시 카테고리(Type) 기준 알림
+     * - 임시 정책: 텍스트 매칭 없이, 같은 카테고리에 키워드를 1개 이상 보유한 사용자에게 1회 발송
+     */
+    @Transactional
+    public void notifyKeywordsForPost(Post post) {
+        var keywords = userKeywordRepository.findAllByCategory(post.getPostType());
+        java.util.Set<Long> notifiedUserIds = new java.util.HashSet<>();
+        for (UserKeyword uk : keywords) {
+            Long uid = uk.getUser().getId();
+            if (notifiedUserIds.add(uid)) {
+                NotificationSettings settings = notificationSettingsRepository.findByUser(uk.getUser()).orElse(null);
+                if (settings == null || Boolean.TRUE.equals(settings.getKeywordEnabled())) {
+                    createNotification(uk.getUser(), NotificationType.KEYWORD,
+                            "키워드 알림", post.getTitle(), "POST", post.getId());
+                }
             }
         }
     }

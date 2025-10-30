@@ -128,5 +128,32 @@ public class NotificationController {
         NotificationSettingsDTO settings = notificationService.updateSettings(user, request);
         return ApiResponse.onSuccess(settings);
     }
+
+    /**
+     * 댓글/채팅/키워드 설정만 변경
+     * PATCH /notification/settings/basic
+     */
+    @PatchMapping("/settings/basic")
+    @Operation(summary = "댓글/채팅/키워드 설정만 변경")
+    public ApiResponse<NotificationSettingsDTO> updateBasicSettings(
+            @AuthenticationPrincipal User user,
+            @RequestBody BasicSettingsRequest request) {
+        NotificationSettingsDTO settings = notificationService.updateBasicSettings(user,
+                request.getCommentEnabled(), request.getChatEnabled(), request.getKeywordEnabled());
+        return ApiResponse.onSuccess(settings);
+    }
+
+    public static class BasicSettingsRequest {
+        private Boolean commentEnabled;
+        private Boolean chatEnabled;
+        private Boolean keywordEnabled;
+
+        public Boolean getCommentEnabled() { return commentEnabled; }
+        public void setCommentEnabled(Boolean commentEnabled) { this.commentEnabled = commentEnabled; }
+        public Boolean getChatEnabled() { return chatEnabled; }
+        public void setChatEnabled(Boolean chatEnabled) { this.chatEnabled = chatEnabled; }
+        public Boolean getKeywordEnabled() { return keywordEnabled; }
+        public void setKeywordEnabled(Boolean keywordEnabled) { this.keywordEnabled = keywordEnabled; }
+    }
 }
 
