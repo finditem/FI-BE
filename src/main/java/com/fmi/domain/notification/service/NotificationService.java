@@ -106,6 +106,43 @@ public class NotificationService {
     public void deleteAllNotifications(User user) {
         notificationRepository.deleteByUser(user);
     }
+
+    /**
+     * 알림 다건 읽음 처리
+     */
+    @Transactional
+    public int markAsReadBatch(User user, java.util.List<Long> notificationIds) {
+        if (notificationIds == null || notificationIds.isEmpty()) return 0;
+        java.util.List<Notification> list = notificationRepository.findAllById(notificationIds);
+        int updated = 0;
+        for (Notification n : list) {
+            if (n.getUser().getId().equals(user.getId()) && !Boolean.TRUE.equals(n.getIsRead())) {
+                n.markAsRead();
+                updated++;
+            }
+        }
+        if (updated > 0) notificationRepository.saveAll(list);
+        return updated;
+    }
+
+    /**
+     * 알림 다건 삭제
+     */
+    @Transactional
+    public int deleteBatch(User user, java.util.List<Long> notificationIds) {
+        if (notificationIds == null || notificationIds.isEmpty()) return 0;
+        java.util.List<Notification> list = notificationRepository.findAllById(notificationIds);
+        int deleted = 0;
+        java.util.List<Notification> toDelete = new java.util.ArrayList<>();
+        for (Notification n : list) {
+            if (n.getUser().getId().equals(user.getId())) {
+                toDelete.add(n);
+                deleted++;
+            }
+        }
+        if (!toDelete.isEmpty()) notificationRepository.deleteAll(toDelete);
+        return deleted;
+    }
     
     /**
      * 알림 설정 조회
