@@ -2,7 +2,6 @@ package com.fmi.domain.auth.service;
 
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.Enum.Provider;
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.SocialAccounts;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;

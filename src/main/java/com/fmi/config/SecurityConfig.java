@@ -25,11 +25,13 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/actuator/health", "/actuator/info", "/ws/**", "/error", "/health").permitAll()
+                        .requestMatchers("/", "/actuator/health", "/actuator/info", "/ws/**", "/error", "/health", "/api/health").permitAll()
                         .requestMatchers("/auth/login", "/auth/signup", "/auth/refresh", "/auth/logout",
                                 "/auth/check-email", "/auth/check-nickname", "/auth/reset/**", "/s3/**", "/chat-test.html").permitAll()
                         .requestMatchers("/auth/kakao/**", "/auth/email/**", "/auth/phone/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        // 공지사항, FAQ, 공개 문의 - 공개 API
+                        .requestMatchers("/api/notice/**", "/api/faq/**", "/api/inquiry/public/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(h -> h.disable());

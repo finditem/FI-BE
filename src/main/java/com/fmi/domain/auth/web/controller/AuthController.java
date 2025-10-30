@@ -1,7 +1,6 @@
 package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.auth.converter.AuthConverter;
-import com.fmi.domain.auth.response.CheckResponse;
 import com.fmi.domain.auth.response.LoginResponse;
 import com.fmi.domain.auth.response.SignupResponse;
 import com.fmi.domain.auth.service.AuthService;
