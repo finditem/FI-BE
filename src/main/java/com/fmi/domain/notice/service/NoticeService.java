@@ -6,6 +6,8 @@ import com.fmi.domain.notice.data.enums.NoticeCategory;
 import com.fmi.domain.notice.repository.NoticeRepository;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
+import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class NoticeService {
     
     private final NoticeRepository noticeRepository;
     private final NoticeConverter noticeConverter;
+    private final NotificationService notificationService;
     
     /**
      * 공지사항 목록 조회
@@ -50,6 +53,30 @@ public class NoticeService {
         notice.increaseViewCount();
         
         return noticeConverter.toResponseDTO(notice);
+    }
+
+    /**
+     * 공지 생성 (관리자)
+     */
+    @Transactional
+    public Long createNotice(NoticeCreateRequestDTO request) {
+        Notice notice = Notice.builder()
+                .title(request.getTitle())
+                .content(request.getContent())
+                .category(request.getCategory() == null ? NoticeCategory.GENERAL : request.getCategory())
+                .pinned(Boolean.TRUE.equals(request.getPinned()))
+                .build();
+
+        Notice saved = noticeRepository.save(notice);
+
+        // 전체 브로드캐스트(설정 반영)
+        notificationService.broadcastNotice(
+                request.getTitle(),
+                request.getContent(),
+                saved.getNoticeId()
+        );
+
+        return saved.getNoticeId();
     }
 }
 

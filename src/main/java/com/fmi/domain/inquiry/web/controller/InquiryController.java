@@ -22,7 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/inquiry")
+@RequestMapping("/inquiry")
 @RequiredArgsConstructor
 @Tag(name = "Inquiry", description = "문의 API")
 public class InquiryController {

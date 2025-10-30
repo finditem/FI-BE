@@ -15,7 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseCookie;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +27,6 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 @Tag(name = "Auth", description = "회원가입/로그인 API")
-@Slf4j
 public class AuthController {
 
     private final AuthService authService;
@@ -64,9 +62,6 @@ public class AuthController {
         String refreshHash = sha256Hex(refreshToken);
         java.util.Date refreshExp = jwtTokenProvider.getExpiration(refreshToken);
         refreshTokenStore.issue(jti, user.getEmail(), refreshHash, refreshExp.toInstant());
-        try {
-            log.info("[AuthController] login issued refresh jti={} email={} exp={}", jti, user.getEmail(), refreshExp.toInstant());
-        } catch (Exception ignore) {}
 
         ResponseCookie cookie = ResponseCookie.from(refreshCookieName, refreshToken)
                 .httpOnly(true)
@@ -137,9 +132,6 @@ public class AuthController {
 
         // RTR: 기존 리프레시 폐기, 새 리프레시/쿠키 발급
         refreshTokenStore.revoke(jti);
-        try {
-            log.info("[AuthController] refresh revoke old jti={} email={}", jti, email);
-        } catch (Exception ignore) {}
 
         var claims = new java.util.HashMap<String, Object>();
         claims.put("purpose", "refresh");
@@ -150,9 +142,6 @@ public class AuthController {
         String newHash = sha256Hex(newRefresh);
         java.util.Date exp = jwtTokenProvider.getExpiration(newRefresh);
         refreshTokenStore.issue(newJti, email, newHash, exp.toInstant());
-        try {
-            log.info("[AuthController] refresh issued new jti={} email={} exp={}", newJti, email, exp.toInstant());
-        } catch (Exception ignore) {}
 
         ResponseCookie cookie = ResponseCookie.from(refreshCookieName, newRefresh)
                 .httpOnly(true)
@@ -187,9 +176,6 @@ public class AuthController {
                 String jti = jwtTokenProvider.getJti(refreshJwt);
                 if (jti != null && !jti.isEmpty()) {
                     refreshTokenStore.revoke(jti);
-                    try {
-                        log.info("[AuthController] logout revoke jti={} ", jti);
-                    } catch (Exception ignore) {}
                 }
             }
         }

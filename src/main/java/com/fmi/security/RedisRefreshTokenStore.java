@@ -1,6 +1,4 @@
 package com.fmi.security;
-
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -12,7 +10,6 @@ import java.util.Optional;
 
 @Component
 @Primary
-@Slf4j
 public class RedisRefreshTokenStore implements RefreshTokenStore {
 
     private static final String KEY_PREFIX = "refresh:jti:";
@@ -36,9 +33,6 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
         h.put(k, "exp", String.valueOf(expiresAt.getEpochSecond()));
         long ttlSeconds = Math.max(1, expiresAt.getEpochSecond() - Instant.now().getEpochSecond());
         redis.expire(k, Duration.ofSeconds(ttlSeconds));
-        try {
-            log.info("[RedisRefreshTokenStore] issue jti={} email={} exp={} ttlSeconds={}", jti, userEmail, expiresAt, ttlSeconds);
-        } catch (Exception ignore) {}
         return jti;
     }
 
@@ -56,9 +50,6 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
     @Override
     public void revoke(String jti) {
         redis.delete(key(jti));
-        try {
-            log.info("[RedisRefreshTokenStore] revoke jti={}", jti);
-        } catch (Exception ignore) {}
     }
 
     @Override
@@ -78,11 +69,7 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
         if (!email.equals(userEmail)) return false;
         Instant expiresAt = Instant.ofEpochSecond(Long.parseLong(exp.toString()));
         if (Instant.now().isAfter(expiresAt)) return false;
-        boolean ok = hash.equals(hashedToken);
-        try {
-            log.info("[RedisRefreshTokenStore] validate jti={} email={} result={}", jti, userEmail, ok);
-        } catch (Exception ignore) {}
-        return ok;
+        return hash.equals(hashedToken);
     }
 }
 

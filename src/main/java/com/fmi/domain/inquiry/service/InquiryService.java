@@ -2,7 +2,6 @@ package com.fmi.domain.inquiry.service;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
-import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.data.InquiryReply;
 import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
@@ -20,6 +19,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fmi.domain.inquiry.data.Inquiry;
+import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.service.NotificationService;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +31,7 @@ public class InquiryService {
     private final InquiryRepository inquiryRepository;
     private final InquiryReplyRepository inquiryReplyRepository;
     private final InquiryConverter inquiryConverter;
+    private final NotificationService notificationService;
     
     /**
      * 공개 문의 작성
@@ -63,6 +66,37 @@ public class InquiryService {
         
         Inquiry saved = inquiryRepository.save(inquiry);
         return saved.getId();
+    }
+
+    /**
+     * 문의 답변 생성(관리자)
+     */
+    @Transactional
+    public Long addReply(Long inquiryId, String content, Long adminId) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new com.fmi.global.apiPayload.exception.GeneralException(com.fmi.global.apiPayload.code.status.ErrorStatus.INQUIRY_NOT_FOUND));
+
+        InquiryReply reply = InquiryReply.builder()
+                .inquiry(inquiry)
+                .adminId(adminId)
+                .content(content)
+                .build();
+
+        InquiryReply saved = inquiryReplyRepository.save(reply);
+
+        // 회원 문의인 경우에만 알림
+        if (inquiry.getUser() != null) {
+            notificationService.createNotification(
+                    inquiry.getUser(),
+                    NotificationType.INQUIRY_REPLY,
+                    "문의에 답변이 등록되었습니다",
+                    content,
+                    "INQUIRY",
+                    inquiry.getId()
+            );
+        }
+
+        return saved.getReplyId();
     }
     
     /**

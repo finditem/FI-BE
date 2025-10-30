@@ -17,6 +17,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import com.fmi.domain.auth.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +30,8 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationSettingsRepository notificationSettingsRepository;
     private final NotificationConverter notificationConverter;
+    private final SimpMessagingTemplate simpMessagingTemplate;
+    private final UserRepository userRepository;
     
     /**
      * 내 알림 목록 조회
@@ -161,6 +167,38 @@ public class NotificationService {
                     .build();
             
             notificationRepository.save(notification);
+
+            // 트랜잭션 커밋 이후 웹소켓 전송 (실패 시에도 DB 저장은 보장)
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        try {
+                            // 사용자별 큐로 푸시
+                            simpMessagingTemplate.convertAndSendToUser(
+                                    user.getId().toString(),
+                                    "/queue/notification",
+                                    notificationConverter.toListDTO(notification)
+                            );
+                        } catch (Exception ignored) {}
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * 공지 브로드캐스트: 설정이 켜진 사용자에게만 생성/전송
+     */
+    @Transactional
+    public void broadcastNotice(String title, String message, Long noticeId) {
+        // 단순 구현: 모든 사용자 순회
+        java.util.List<com.fmi.domain.auth.data.User> users = userRepository.findAll();
+        for (com.fmi.domain.auth.data.User user : users) {
+            NotificationSettings settings = notificationSettingsRepository.findByUser(user).orElse(null);
+            if (settings == null || Boolean.TRUE.equals(settings.getNoticeEnabled())) {
+                createNotification(user, NotificationType.NOTICE, title, message, "NOTICE", noticeId);
+            }
         }
     }
     

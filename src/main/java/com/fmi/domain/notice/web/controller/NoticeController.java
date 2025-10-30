@@ -15,7 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/notice")
+@RequestMapping("/notice")
 @RequiredArgsConstructor
 @Tag(name = "Notice", description = "공지사항 API")
 public class NoticeController {

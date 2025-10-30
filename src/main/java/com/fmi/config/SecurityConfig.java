@@ -30,8 +30,10 @@ public class SecurityConfig {
                                 "/auth/check-email", "/auth/check-nickname", "/auth/reset/**", "/s3/**", "/chat-test.html").permitAll()
                         .requestMatchers("/auth/kakao/**", "/auth/email/**", "/auth/phone/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        // 공지사항, FAQ, 공개 문의 - 공개 API
-                        .requestMatchers("/api/notice/**", "/api/faq/**", "/api/inquiry/public/**").permitAll()
+                        // 공지사항, FAQ, 공개 문의 - 공개 API (경로 개편)
+                        .requestMatchers("/notice/**", "/faq/**", "/inquiry/public/**").permitAll()
+                        // 관리자 전용 API 보호
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(h -> h.disable());
