@@ -15,6 +15,7 @@ import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
+import com.fmi.domain.userblock.service.BlockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -47,6 +48,7 @@ public class ChatMessageService {
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
     private final MessageImageRepository messageImageRepository;
     private final S3Service s3Service;
+    private final BlockService blockService;
 
     public MessageResponseDTO sendMessage(Long roomId, Long senderId, SendMessageRequestDTO req) {
         var room = chatRoomRepository.findById(roomId).orElseThrow(
@@ -58,6 +60,11 @@ public class ChatMessageService {
         }
 
         var recipient = room.getOtherParticipant(sender.getId());
+
+        // 차단 여부 검사(양방향 중 하나라도 차단이면 전송 금지)
+        if (blockService.isBlocked(sender.getId(), recipient.getId())) {
+            throw new GeneralException(ErrorStatus._MESSAGE_NOT_ALLOWED);
+        }
 
         var chatMessage = chatMessageRepository.save(ChatMessage.builder()
                 .chatRoom(room)
@@ -90,6 +97,10 @@ public class ChatMessageService {
         }
 
         User recipient = room.getOtherParticipant(sender.getId());
+
+        if (blockService.isBlocked(sender.getId(), recipient.getId())) {
+            throw new GeneralException(ErrorStatus._MESSAGE_NOT_ALLOWED);
+        }
 
         ChatMessage chatMessage = ChatMessage.builder()
                 .chatRoom(room)

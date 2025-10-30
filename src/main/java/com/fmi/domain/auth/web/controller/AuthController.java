@@ -108,8 +108,7 @@ public class AuthController {
 
     @PostMapping("/refresh")
     @Operation(summary = "토큰 리프레시", description = "쿠키의 refresh_token(JWT)으로 액세스 토큰을 갱신합니다.")
-    public ResponseEntity<ApiResponse<LoginResponse>> refresh(HttpServletRequest request,
-                                                              @RequestHeader(value = "X-CSRF-Token", required = false) String csrfHeader) {
+    public ResponseEntity<ApiResponse<LoginResponse>> refresh(HttpServletRequest request) {
         String refreshJwt = getCookieValue(request, refreshCookieName);
         if (refreshJwt == null || refreshJwt.isEmpty()) {
             return ResponseEntity.status(401).body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "리프레시 토큰 없음", null));
