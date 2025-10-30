@@ -12,14 +12,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/auth/reset")
 @RequiredArgsConstructor
-@Tag(name = "Auth-Reset", description = "비밀번호 재설정 API")
+@Tag(name = "Auth")
 public class PasswordResetController {
 
     private final PasswordResetService resetService;
 
     @PostMapping("/request")
     @Operation(summary = "임시 비밀번호 발급",
-            description = "이메일을 입력하면 임시 비밀번호를 발급하여 이메일로 전송합니다.")
+            description = "이메일을 입력하면 임시 비밀번호를 발급하여 이메일로 전송합니다. 로그인 후 비밀번호를 반드시 변경하세요.")
     public ApiResponse<Void> request(@Valid @RequestBody PasswordResetRequest dto) {
         resetService.issueTemporaryPassword(dto.getEmail());
         return ApiResponse.onSuccess(null);

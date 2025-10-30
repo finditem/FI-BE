@@ -10,6 +10,7 @@ import com.fmi.domain.inquiry.repository.InquiryReplyRepository;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.inquiry.web.dto.request.InquiryPrivateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.request.InquiryPublicRequestDTO;
+import com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -65,6 +66,42 @@ public class InquiryService {
                 .build();
         
         Inquiry saved = inquiryRepository.save(inquiry);
+        return saved.getId();
+    }
+
+    /**
+     * 단일 엔드포인트: 문의 생성 (PUBLIC/PRIVATE)
+     */
+    @Transactional
+    public Long createInquiry(InquiryCreateRequestDTO request, User user) {
+        InquiryType type = request.getInquiryType();
+        if (type == null) {
+            throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
+        Inquiry.InquiryBuilder builder = Inquiry.builder()
+                .title(request.getTitle())
+                .content(request.getContent())
+                .category(request.getCategory())
+                .inquiryType(type);
+
+        if (type == InquiryType.PUBLIC) {
+            // 공개 문의: 회원만 가능 + email 필수
+            if (user == null) {
+                throw new GeneralException(ErrorStatus.INQUIRY_ACCESS_DENIED);
+            }
+            if (request.getEmail() == null || request.getEmail().isBlank()) {
+                throw new GeneralException(ErrorStatus._BAD_REQUEST);
+            }
+            builder.user(user).email(request.getEmail());
+        } else {
+            // 1:1 문의: 비회원도 가능 (email은 정책에 따라 선택)
+            builder.user(user);
+            if (user == null && request.getEmail() != null && !request.getEmail().isBlank()) {
+                builder.email(request.getEmail());
+            }
+        }
+
+        Inquiry saved = inquiryRepository.save(builder.build());
         return saved.getId();
     }
 

@@ -25,7 +25,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/auth/kakao")
 @RequiredArgsConstructor
-@Tag(name = "Auth", description = "카카오 소셜 로그인(토큰 핸드오프)")
+@Tag(name = "Auth")
 public class KakaoAuthController {
 
     private final KakaoOAuthService kakaoOAuthService;

@@ -26,7 +26,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-@Tag(name = "Auth", description = "회원가입/로그인 API")
+@Tag(name = "Auth")
 public class AuthController {
 
     private final AuthService authService;
