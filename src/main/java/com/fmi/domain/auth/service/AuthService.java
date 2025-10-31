@@ -67,13 +67,42 @@ public class AuthService {
         return userRepository.save(user).getId();
     }
 
-    public User authenticate(String email, String rawPassword) {
+    /**
+     * 인증 및 임시 비밀번호 여부 확인
+     * @return AuthenticateResult (user, isTemporaryPassword)
+     */
+    public AuthenticateResult authenticate(String email, String rawPassword) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._UNAUTHORIZED));
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+        
+        boolean isTemporaryPassword = false;
+        boolean passwordMatches = false;
+        
+        // 일반 비밀번호 확인
+        if (passwordEncoder.matches(rawPassword, user.getPassword())) {
+            passwordMatches = true;
+        }
+        // 임시 비밀번호 확인 (만료되지 않은 경우)
+        else if (user.getTemporaryPassword() != null 
+                && user.getTemporaryPasswordExpiresAt() != null
+                && LocalDateTime.now().isBefore(user.getTemporaryPasswordExpiresAt())) {
+            if (passwordEncoder.matches(rawPassword, user.getTemporaryPassword())) {
+                passwordMatches = true;
+                isTemporaryPassword = true;
+            }
+        }
+        
+        if (!passwordMatches) {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
-        return user;
+        
+        return new AuthenticateResult(user, isTemporaryPassword);
+    }
+    
+    @Data
+    public static class AuthenticateResult {
+        private final User user;
+        private final boolean isTemporaryPassword;
     }
 
     public boolean emailExists(String email) {

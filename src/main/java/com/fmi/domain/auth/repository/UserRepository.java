@@ -41,6 +41,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 활성 사용자 ID로 조회 (deletedAt이 null인 사용자만)
     @Query("SELECT u FROM User u WHERE u.id = :id AND u.deletedAt IS NULL")
     Optional<User> findActiveById(@Param("id") Long id);
+    
+    // 만료된 임시 비밀번호가 있는 사용자 조회 (정리 스케줄러용)
+    @Query("SELECT u FROM User u WHERE u.temporaryPasswordExpiresAt IS NOT NULL AND u.temporaryPasswordExpiresAt < :now")
+    List<User> findUsersWithExpiredTemporaryPassword(@Param("now") LocalDateTime now);
 }
 
 
