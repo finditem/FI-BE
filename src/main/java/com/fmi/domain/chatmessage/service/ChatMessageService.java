@@ -12,6 +12,7 @@ import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
+import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
@@ -47,6 +48,7 @@ public class ChatMessageService {
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
     private final MessageImageRepository messageImageRepository;
     private final S3Service s3Service;
+    private final ChatRoomPresenceService presenceService;
 
     public MessageResponseDTO sendMessage(Long roomId, Long senderId, SendMessageRequestDTO req) {
         var room = chatRoomRepository.findById(roomId).orElseThrow(
@@ -118,11 +120,47 @@ public class ChatMessageService {
 
     private void updateParticipantsOnNewMessage(Long roomId, ChatMessage newMessage) {
         List<ChatRoomParticipant> allParticipants = chatRoomParticipantRepository.findAllByChatRoom_Id(roomId);
+        Long senderId = newMessage.getUser().getId();
 
         for (ChatRoomParticipant pt : allParticipants) {
             // 메시지 갱신 및 ACTIVE 설정
             pt.updateLastMessage(newMessage);
+
+            // 수신자의 카운트만 증가
+            if (!pt.getUser().getId().equals(senderId)) {
+                String email = pt.getUser().getEmail();
+                boolean isPresent = presenceService.isUserPresent(roomId, email);
+
+                if (isPresent) {
+                    // 방안에 있음 -> 즉시 읽음. DB unreadCount = 0
+                    pt.readMessages(newMessage.getId());
+                } else {
+                    // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
+                    pt.incrementUnreadCount();
+                }
+
+                // 갱신된 정보로 DTO 생성
+                ListUpdateDTO listUpdateDTO = ListUpdateDTO.builder()
+                        .roomId(roomId)
+                        .lastMessage(buildPreview(newMessage))
+                        .lastMessageSentAt(newMessage.getCreatedAt())
+                        .unreadCount(pt.getUnreadCount())
+                        .build();
+
+                broker.convertAndSendToUser(email, "/queue/list-updates", listUpdateDTO);
+            }
+
         }
+
+    }
+
+    private String buildPreview(ChatMessage message) {
+        if (message.getContent() != null && !message.getContent().isBlank()) {
+            return message.getContent();
+        } else if (message.getMessageType() == MessageType.IMAGE) {
+            return "사진을 보냈습니다.";
+        }
+        return null;
     }
 
     @Transactional(readOnly = true)
@@ -189,5 +227,17 @@ public class ChatMessageService {
                 .messages(messageDtos)
                 .nextCursor(nextCursorId)
                 .build();
+    }
+
+    public void readMessages(Long roomId, Long userId) {
+        Long lastMessageId = chatMessageRepository.findTopByChatRoom_IdOrderByIdDesc(roomId)
+                .map(ChatMessage::getId)
+                .orElse(0L);
+
+        ChatRoomParticipant chatRoomParticipant = chatRoomParticipantRepository.findByChatRoom_IdAndUser_Id(roomId, userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+
+        chatRoomParticipant.readMessages(lastMessageId);
+
     }
 }

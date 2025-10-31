@@ -65,4 +65,11 @@ public class ChatMessageController {
         ChatMessageResponseDTO.MessageSliceResponseDTO messageSliceResponseDTO = chatMessageService.messageSlice(roomId, user.getId(), cursor);
         return ApiResponse.of(SuccessStatus._MESSAGE_LIST_FETCHED,messageSliceResponseDTO);
     }
+
+    @PatchMapping("/{roomId}/read")
+    public ApiResponse<Void> readMessages(@PathVariable Long roomId, @AuthenticationPrincipal User user) {
+        chatMessageService.readMessages(roomId, user.getId());
+        return ApiResponse.of(SuccessStatus._MESSAGE_READ);
+    }
+
 }
