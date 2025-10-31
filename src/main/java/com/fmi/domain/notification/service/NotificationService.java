@@ -246,8 +246,8 @@ public class NotificationService {
      */
     @Transactional
     public void broadcastNotice(String title, String message, Long noticeId) {
-        // 단순 구현: 모든 사용자 순회
-        java.util.List<com.fmi.domain.auth.data.User> users = userRepository.findAll();
+        // 활성 사용자만 조회 (삭제된 사용자 제외)
+        java.util.List<com.fmi.domain.auth.data.User> users = userRepository.findAllActiveUsers();
         for (com.fmi.domain.auth.data.User user : users) {
             NotificationSettings settings = notificationSettingsRepository.findByUser(user).orElse(null);
             if (settings == null || Boolean.TRUE.equals(settings.getNoticeEnabled())) {

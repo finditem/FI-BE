@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -25,8 +27,15 @@ public class AuthService {
 
     @Transactional
     public Long signup(SignupRequest request) {
+        // 활성 사용자 이메일 중복 체크
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new GeneralException(ErrorStatus._EMAIL_DUPLICATED);
+        }
+        
+        // 일주일(7일) 이내 탈퇴한 이메일 재가입 방지
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+        if (userRepository.existsRecentlyDeletedByEmail(request.getEmail(), oneWeekAgo)) {
+            throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
         }
         
         // 비밀번호 규칙: 8자 이상, 대문자/소문자/숫자/특수문자 포함

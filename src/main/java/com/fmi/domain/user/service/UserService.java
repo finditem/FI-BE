@@ -113,9 +113,9 @@ public class UserService {
 
     /**
      * 회원 탈퇴 (Soft Delete 방식)
-     * 실제로는 deletedAt을 설정하고 계정을 비활성화
-     * 현재 User 엔티티에 deletedAt이 없으므로 Hard Delete로 구현
-     * 필요시 User 엔티티에 deletedAt 필드를 추가하고 Soft Delete로 변경
+     * deletedAt을 설정하여 소프트 삭제합니다.
+     * 30일 후 스케줄러에 의해 하드 삭제됩니다.
+     * 프로필 이미지는 즉시 S3에서 삭제됩니다.
      */
     public void deleteAccount(String email) {
         User user = userRepository.findByEmail(email)
@@ -130,9 +130,9 @@ public class UserService {
             }
         }
 
-        // Hard Delete (실제 삭제)
-        // TODO: Soft Delete로 변경 필요시 User 엔티티에 deletedAt 필드 추가
-        userRepository.delete(user);
+        // Soft Delete (deletedAt 설정)
+        user.setDeletedAt(LocalDateTime.now());
+        userRepository.save(user);
     }
 
     /**

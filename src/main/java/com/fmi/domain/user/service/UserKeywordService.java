@@ -22,13 +22,13 @@ public class UserKeywordService {
     private final UserKeywordRepository userKeywordRepository;
 
     public List<UserKeyword> list(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userRepository.findActiveById(userId).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         return userKeywordRepository.findAllByUser(user);
     }
 
     @Transactional
     public void add(Long userId, Type category, String keyword) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userRepository.findActiveById(userId).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         String normalized = keyword.trim();
         if (normalized.isEmpty()) throw new GeneralException(ErrorStatus._BAD_REQUEST);
         if (userKeywordRepository.existsByUserAndCategoryAndKeyword(user, category, normalized)) return; // idempotent
@@ -37,7 +37,7 @@ public class UserKeywordService {
 
     @Transactional
     public void remove(Long userId, Type category, String keyword) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userRepository.findActiveById(userId).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         userKeywordRepository.deleteByUserAndCategoryAndKeyword(user, category, keyword.trim());
     }
 }

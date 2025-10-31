@@ -25,9 +25,9 @@ public class BlockService {
         if (blockerUserId.equals(targetUserId)) {
             throw new GeneralException(ErrorStatus._USER_BLOCK_SELF);
         }
-        User blocker = userRepository.findById(blockerUserId)
+        User blocker = userRepository.findActiveById(blockerUserId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        User target = userRepository.findById(targetUserId)
+        User target = userRepository.findActiveById(targetUserId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         // 단방향이든 이미 있으면 넘어가되, 항상 양방향 상태가 되도록 맞춘다
@@ -49,9 +49,9 @@ public class BlockService {
 
     @Transactional
     public void unblock(Long blockerUserId, Long targetUserId) {
-        User blocker = userRepository.findById(blockerUserId)
+        User blocker = userRepository.findActiveById(blockerUserId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        User target = userRepository.findById(targetUserId)
+        User target = userRepository.findActiveById(targetUserId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         // 양방향 모두 해제 (없으면 무시: idempotent)
@@ -62,15 +62,15 @@ public class BlockService {
     }
 
     public List<BlockedUser> list(Long blockerUserId) {
-        User blocker = userRepository.findById(blockerUserId)
+        User blocker = userRepository.findActiveById(blockerUserId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         return blockedUserRepository.findAllByBlocker(blocker);
     }
 
     public boolean isBlocked(Long blockerUserId, Long otherUserId) {
-        User blocker = userRepository.findById(blockerUserId)
+        User blocker = userRepository.findActiveById(blockerUserId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        User other = userRepository.findById(otherUserId)
+        User other = userRepository.findActiveById(otherUserId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         // 양방향 중 하나라도 존재하면 차단된 것으로 간주
         return blockedUserRepository.existsByBlockerAndBlocked(blocker, other)

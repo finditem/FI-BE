@@ -96,7 +96,7 @@ public class ReportService {
                         .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND));
                 break;
             case USER:
-                userRepository.findById(targetId)
+                userRepository.findActiveById(targetId)
                         .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
                 break;
             case CHAT:
@@ -121,7 +121,7 @@ public class ReportService {
                             .map(comment -> comment.getContent().substring(0, Math.min(50, comment.getContent().length())) + "...")
                             .orElse("삭제된 댓글");
                 case USER:
-                    return userRepository.findById(targetId)
+                    return userRepository.findActiveById(targetId)
                             .map(u -> u.getNickname() + " 사용자")
                             .orElse("삭제된 사용자");
                 case CHAT:
