@@ -78,17 +78,30 @@ public class AuthService {
         boolean isTemporaryPassword = false;
         boolean passwordMatches = false;
         
-        // 일반 비밀번호 확인
-        if (passwordEncoder.matches(rawPassword, user.getPassword())) {
-            passwordMatches = true;
-        }
-        // 임시 비밀번호 확인 (만료되지 않은 경우)
-        else if (user.getTemporaryPassword() != null 
+        // 임시 비밀번호가 활성화되어 있는지 확인
+        boolean hasActiveTemporaryPassword = user.getTemporaryPassword() != null 
                 && user.getTemporaryPasswordExpiresAt() != null
-                && LocalDateTime.now().isBefore(user.getTemporaryPasswordExpiresAt())) {
+                && LocalDateTime.now().isBefore(user.getTemporaryPasswordExpiresAt());
+        
+        // 임시 비밀번호가 활성화되어 있으면 원래 비밀번호와 임시 비밀번호 모두 확인
+        if (hasActiveTemporaryPassword) {
+            // 임시 비밀번호 확인 (우선 확인)
             if (passwordEncoder.matches(rawPassword, user.getTemporaryPassword())) {
                 passwordMatches = true;
                 isTemporaryPassword = true;
+            }
+            // 원래 비밀번호 확인
+            else if (user.getOriginalPassword() != null 
+                    && passwordEncoder.matches(rawPassword, user.getOriginalPassword())) {
+                passwordMatches = true;
+                isTemporaryPassword = false;
+            }
+        }
+        // 임시 비밀번호가 없으면 일반 비밀번호만 확인
+        else {
+            if (passwordEncoder.matches(rawPassword, user.getPassword())) {
+                passwordMatches = true;
+                isTemporaryPassword = false;
             }
         }
         
