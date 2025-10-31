@@ -90,7 +90,8 @@ public class UserService {
 
     /**
      * 비밀번호 변경
-     * 임시 비밀번호로 로그인한 경우에도 사용 가능 (임시 비밀번호를 일반 비밀번호로 확인)
+     * 임시 비밀번호로 로그인한 경우에도 사용 가능 (임시 비밀번호를 현재 비밀번호로 확인)
+     * 원래 비밀번호로도 변경 가능
      */
     public void changePassword(String email, PasswordChangeRequest request) {
         User user = userRepository.findByEmail(email)
@@ -98,15 +99,30 @@ public class UserService {
 
         boolean passwordMatches = false;
         
-        // 일반 비밀번호 확인
-        if (passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            passwordMatches = true;
-        }
-        // 임시 비밀번호 확인 (만료되지 않은 경우)
-        else if (user.getTemporaryPassword() != null 
+        // 임시 비밀번호가 활성화되어 있는지 확인
+        boolean hasActiveTemporaryPassword = user.getTemporaryPassword() != null 
                 && user.getTemporaryPasswordExpiresAt() != null
-                && LocalDateTime.now().isBefore(user.getTemporaryPasswordExpiresAt())) {
+                && LocalDateTime.now().isBefore(user.getTemporaryPasswordExpiresAt());
+        
+        // 임시 비밀번호가 활성화되어 있으면 임시 비밀번호와 원래 비밀번호 모두 확인
+        if (hasActiveTemporaryPassword) {
+            // 임시 비밀번호 확인
             if (passwordEncoder.matches(request.getCurrentPassword(), user.getTemporaryPassword())) {
+                passwordMatches = true;
+            }
+            // 원래 비밀번호 확인
+            else if (user.getOriginalPassword() != null 
+                    && passwordEncoder.matches(request.getCurrentPassword(), user.getOriginalPassword())) {
+                passwordMatches = true;
+            }
+            // password 필드 확인 (임시 비밀번호로 설정되어 있을 수 있음)
+            else if (passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                passwordMatches = true;
+            }
+        }
+        // 임시 비밀번호가 없으면 일반 비밀번호만 확인
+        else {
+            if (passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
                 passwordMatches = true;
             }
         }
