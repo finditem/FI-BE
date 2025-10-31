@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomParticipant,Long> {
+public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomParticipant,Long>, ChatRoomParticipantRepositoryCustom {
     boolean existsByUser_IdAndChatRoom_Id(Long userId, Long roomId);
     Optional<ChatRoomParticipant> findByUser_IdAndChatRoom_Id(Long userId, Long roomId);
 
