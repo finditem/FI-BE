@@ -19,6 +19,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
@@ -32,6 +34,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ChatMessageServiceTest {
 
     @Mock
@@ -151,6 +154,37 @@ class ChatMessageServiceTest {
                 eq("/queue/list-updates"),
                 any(ChatMessageResponseDTO.ListUpdateDTO.class)
         );
+
+    }
+
+    @Test
+    @DisplayName("readMessages 호출 시, unreadCount가 3에서 0으로 바뀌어야 한다")
+    void testReadMessages() {
+
+        // given
+        Long roomId = 123L;
+        Long userId = 2L;
+
+        ChatRoomParticipant recipientPt2 = ChatRoomParticipant.builder()
+                .user(recipient)
+                .unreadCount(3L)
+                .build();
+
+        given(chatMessageRepository.findTopByChatRoom_IdOrderByIdDesc(roomId))
+                .willReturn(Optional.of(newMessage));
+
+        given(chatRoomParticipantRepository.findByChatRoom_IdAndUser_Id(roomId, userId))
+                .willReturn(Optional.of(recipientPt2));
+
+        given(chatRoomRepository.findById(roomId)).willReturn(Optional.of(mockRoom));
+        given(mockRoom.getOtherParticipant(userId)).willReturn(sender);
+
+        // when
+        chatMessageService.readMessages(roomId, userId);
+
+        // then
+        assertThat(recipientPt2.getUnreadCount()).isEqualTo(0L);
+        assertThat(recipientPt2.getLastReadMessageId()).isEqualTo(100L);
 
     }
 }
