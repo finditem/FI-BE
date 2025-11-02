@@ -120,7 +120,8 @@ public class ChatMessageService {
 
     private void updateParticipantsOnNewMessage(Long roomId, ChatMessage newMessage) {
         List<ChatRoomParticipant> allParticipants = chatRoomParticipantRepository.findAllByChatRoom_Id(roomId);
-        Long senderId = newMessage.getUser().getId();
+        User sender = newMessage.getUser();
+        Long senderId = sender.getId();
 
         for (ChatRoomParticipant pt : allParticipants) {
             // 메시지 갱신 및 ACTIVE 설정
@@ -134,6 +135,12 @@ public class ChatMessageService {
                 if (isPresent) {
                     // 방안에 있음 -> 즉시 읽음. DB unreadCount = 0
                     pt.readMessages(newMessage.getId());
+                    ReadReceiptDTO receiptDTO = ReadReceiptDTO.builder()
+                            .roomId(roomId)
+                            .readerEmail(email)
+                            .lastReadMessageId(newMessage.getId())
+                            .build();
+                    broker.convertAndSendToUser(sender.getEmail(), "/queue/read-receipts", receiptDTO);
                 } else {
                     // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
                     pt.incrementUnreadCount();
@@ -232,12 +239,28 @@ public class ChatMessageService {
     public void readMessages(Long roomId, Long userId) {
         Long lastMessageId = chatMessageRepository.findTopByChatRoom_IdOrderByIdDesc(roomId)
                 .map(ChatMessage::getId)
-                .orElse(0L);
+                .orElse(null);
+        if (lastMessageId == null) {
+            return;
+        }
 
         ChatRoomParticipant chatRoomParticipant = chatRoomParticipantRepository.findByChatRoom_IdAndUser_Id(roomId, userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
 
         chatRoomParticipant.readMessages(lastMessageId);
+
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+
+        User recipient = chatRoom.getOtherParticipant(userId);
+
+        ReadReceiptDTO receiptDTO = ReadReceiptDTO.builder()
+                .roomId(roomId)
+                .readerEmail(chatRoomParticipant.getUser().getEmail())
+                .lastReadMessageId(lastMessageId)
+                .build();
+
+        broker.convertAndSendToUser(recipient.getEmail(), "/queue/read-receipts", receiptDTO);
 
     }
 }
