@@ -30,6 +30,7 @@ public class NotificationConverter {
                 .reportResultEnabled(settings.getReportResultEnabled())
                 .favoriteEnabled(settings.getFavoriteEnabled())
                 .noticeEnabled(settings.getNoticeEnabled())
+                .keywordEnabled(settings.getKeywordEnabled())
                 .build();
     }
 }

@@ -26,7 +26,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-@Tag(name = "Auth", description = "회원가입/로그인 API")
+@Tag(name = "Auth")
 public class AuthController {
 
     private final AuthService authService;
@@ -48,12 +48,24 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인합니다. 인증 실패 시 AUTH401-INVALID_CREDENTIALS가 반환됩니다.")
+    @Operation(summary = "로그인", 
+               description = """
+                   이메일과 비밀번호로 로그인합니다. 
+                   - 일반 비밀번호 또는 임시 비밀번호로 로그인 가능합니다.
+                   - 임시 비밀번호로 로그인한 경우 isTemporaryPassword가 true로 반환되며, 프론트에서 비밀번호 변경 페이지로 리다이렉트해야 합니다.
+                   - 인증 실패 시 AUTH401-INVALID_CREDENTIALS가 반환됩니다.
+                   """)
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-        var user = authService.authenticate(request.getEmail(), request.getPassword());
+        var authResult = authService.authenticate(request.getEmail(), request.getPassword());
+        var user = authResult.getUser();
+        boolean isTemporaryPassword = authResult.isTemporaryPassword();
+        
         var claims = new java.util.HashMap<String, Object>();
         claims.put("userId", user.getId());
         claims.put("role", user.getRole().name());
+        if (isTemporaryPassword) {
+            claims.put("isTemporaryPassword", true);  // JWT에 임시 비밀번호 플래그 포함
+        }
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), claims);
         String jti = java.util.UUID.randomUUID().toString();
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), jti);
@@ -73,7 +85,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", cookie.toString())
-                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), accessToken)));
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), accessToken, isTemporaryPassword)));
     }
 
     @GetMapping("/check-email")
@@ -108,8 +120,7 @@ public class AuthController {
 
     @PostMapping("/refresh")
     @Operation(summary = "토큰 리프레시", description = "쿠키의 refresh_token(JWT)으로 액세스 토큰을 갱신합니다.")
-    public ResponseEntity<ApiResponse<LoginResponse>> refresh(HttpServletRequest request,
-                                                              @RequestHeader(value = "X-CSRF-Token", required = false) String csrfHeader) {
+    public ResponseEntity<ApiResponse<LoginResponse>> refresh(HttpServletRequest request) {
         String refreshJwt = getCookieValue(request, refreshCookieName);
         if (refreshJwt == null || refreshJwt.isEmpty()) {
             return ResponseEntity.status(401).body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "리프레시 토큰 없음", null));

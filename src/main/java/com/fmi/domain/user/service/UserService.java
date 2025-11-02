@@ -90,13 +90,44 @@ public class UserService {
 
     /**
      * 비밀번호 변경
+     * 임시 비밀번호로 로그인한 경우에도 사용 가능 (임시 비밀번호를 현재 비밀번호로 확인)
+     * 원래 비밀번호로도 변경 가능
      */
     public void changePassword(String email, PasswordChangeRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        // 현재 비밀번호 확인
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+        boolean passwordMatches = false;
+        
+        // 임시 비밀번호가 활성화되어 있는지 확인
+        boolean hasActiveTemporaryPassword = user.getTemporaryPassword() != null 
+                && user.getTemporaryPasswordExpiresAt() != null
+                && LocalDateTime.now().isBefore(user.getTemporaryPasswordExpiresAt());
+        
+        // 임시 비밀번호가 활성화되어 있으면 임시 비밀번호와 원래 비밀번호 모두 확인
+        if (hasActiveTemporaryPassword) {
+            // 임시 비밀번호 확인
+            if (passwordEncoder.matches(request.getCurrentPassword(), user.getTemporaryPassword())) {
+                passwordMatches = true;
+            }
+            // 원래 비밀번호 확인
+            else if (user.getOriginalPassword() != null 
+                    && passwordEncoder.matches(request.getCurrentPassword(), user.getOriginalPassword())) {
+                passwordMatches = true;
+            }
+            // password 필드 확인 (임시 비밀번호로 설정되어 있을 수 있음)
+            else if (passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                passwordMatches = true;
+            }
+        }
+        // 임시 비밀번호가 없으면 일반 비밀번호만 확인
+        else {
+            if (passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                passwordMatches = true;
+            }
+        }
+
+        if (!passwordMatches) {
             throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
         }
 
@@ -105,17 +136,23 @@ public class UserService {
             throw new GeneralException(ErrorStatus._PASSWORD_CONFIRMATION_MISMATCH);
         }
 
-        // 비밀번호 변경
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        // 비밀번호 변경: 새 비밀번호로 설정
+        String newPasswordHash = passwordEncoder.encode(request.getNewPassword());
+        user.setPassword(newPasswordHash);
+        
+        // 임시 비밀번호 관련 정보 제거
+        user.setOriginalPassword(null);  // originalPassword 제거
+        user.setTemporaryPassword(null);  // 임시 비밀번호 제거
+        user.setTemporaryPasswordExpiresAt(null);  // 만료 시간 제거
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
     }
 
     /**
      * 회원 탈퇴 (Soft Delete 방식)
-     * 실제로는 deletedAt을 설정하고 계정을 비활성화
-     * 현재 User 엔티티에 deletedAt이 없으므로 Hard Delete로 구현
-     * 필요시 User 엔티티에 deletedAt 필드를 추가하고 Soft Delete로 변경
+     * deletedAt을 설정하여 소프트 삭제합니다.
+     * 30일 후 스케줄러에 의해 하드 삭제됩니다.
+     * 프로필 이미지는 즉시 S3에서 삭제됩니다.
      */
     public void deleteAccount(String email) {
         User user = userRepository.findByEmail(email)
@@ -130,9 +167,9 @@ public class UserService {
             }
         }
 
-        // Hard Delete (실제 삭제)
-        // TODO: Soft Delete로 변경 필요시 User 엔티티에 deletedAt 필드 추가
-        userRepository.delete(user);
+        // Soft Delete (deletedAt 설정)
+        user.setDeletedAt(LocalDateTime.now());
+        userRepository.save(user);
     }
 
     /**

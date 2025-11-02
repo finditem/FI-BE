@@ -16,5 +16,6 @@ public class NotificationSettingsDTO {
     private Boolean reportResultEnabled;     // 신고 처리 결과 알림
     private Boolean favoriteEnabled;         // 좋아요 알림
     private Boolean noticeEnabled;           // 공지사항 알림
+    private Boolean keywordEnabled;          // 키워드 알림
 }
 

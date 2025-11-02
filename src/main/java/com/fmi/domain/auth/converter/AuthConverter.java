@@ -64,8 +64,15 @@ public class AuthConverter {
     /**
      * User + AccessToken → LoginResponse 변환
      */
+    public static LoginResponse toLoginResponse(Long userId, String accessToken, boolean isTemporaryPassword) {
+        return new LoginResponse(userId, accessToken, isTemporaryPassword);
+    }
+    
+    /**
+     * User + AccessToken → LoginResponse 변환 (임시 비밀번호 플래그 없음 - 하위 호환성)
+     */
     public static LoginResponse toLoginResponse(Long userId, String accessToken) {
-        return new LoginResponse(userId, accessToken);
+        return new LoginResponse(userId, accessToken, false);
     }
 
     /**

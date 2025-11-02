@@ -7,12 +7,10 @@ import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.comment.response.CommentResponse;
 import com.fmi.domain.comment.web.dto.CreateCommentDto;
-import com.fmi.domain.comment.web.dto.NotificationDto;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +29,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final CommentConverter commentConverter;
-    private final SimpMessagingTemplate simpMessagingTemplate;
+    private final com.fmi.domain.notification.service.NotificationService notificationService;
 
     @Transactional
     public CommentResponse createComment(CreateCommentDto dto, UserDetails userDetails, Long postId) {
@@ -47,13 +45,15 @@ public class CommentService {
         Comment savedComment = commentRepository.save(comment);
 
         if(!post.getUser().getId().equals(user.getId())){
-            NotificationDto notification = commentConverter.toCommentNotification(savedComment);
-            simpMessagingTemplate.convertAndSendToUser(
-                    post.getUser().getId().toString(),
-                    "/queue/comment",
-                    notification
+            // DB 저장 + 커밋 후 웹소켓 전송
+            notificationService.createNotification(
+                    post.getUser(),
+                    com.fmi.domain.notification.data.enums.NotificationType.COMMENT,
+                    "새 댓글이 달렸습니다",
+                    dto.getContent(),
+                    "POST",
+                    post.getId()
             );
-            log.info("알림 전송: {}", notification);// 닉네임, 생성일, 게시글아이디, 메세지(새댓글이도착)
         }
 
 

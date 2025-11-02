@@ -18,6 +18,7 @@ public enum ErrorStatus implements BaseErrorCode {
     // 인증/회원 관련
     _INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH401-INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다."),
     _EMAIL_DUPLICATED(HttpStatus.CONFLICT, "AUTH409-EMAIL_DUPLICATED", "이미 사용 중인 이메일입니다."),
+    _EMAIL_RECENTLY_DELETED(HttpStatus.CONFLICT, "AUTH409-EMAIL_RECENTLY_DELETED", "최근 탈퇴한 이메일입니다. 탈퇴 후 7일 이내 재가입할 수 없습니다."),
     _NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "AUTH409-NICKNAME_DUPLICATED", "이미 사용 중인 닉네임입니다."),
     _WEAK_PASSWORD(HttpStatus.BAD_REQUEST, "AUTH400-WEAK_PASSWORD", "비밀번호 규칙을 만족하지 않습니다. 대소문자/특수문자 포함 8자 이상이어야 합니다."),
     _RESET_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "AUTH400-RESET_TOKEN_INVALID", "유효하지 않은 재설정 토큰입니다."),
@@ -35,6 +36,9 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // 회원 관련 응답
     _USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER404-NOT_FOUND", "존재하지 않는 회원입니다."),
+    _USER_BLOCK_SELF(HttpStatus.BAD_REQUEST, "USER400-BLOCK_SELF", "자기 자신은 차단할 수 없습니다."),
+    _USER_ALREADY_BLOCKED(HttpStatus.CONFLICT, "USER409-ALREADY_BLOCKED", "이미 차단한 사용자입니다."),
+    _USER_NOT_BLOCKED(HttpStatus.NOT_FOUND, "USER404-NOT_BLOCKED", "차단되지 않은 사용자입니다."),
     _CURRENT_PASSWORD_INCORRECT(HttpStatus.BAD_REQUEST, "USER400-PASSWORD_INCORRECT", "현재 비밀번호가 일치하지 않습니다."),
     _PASSWORD_CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "USER400-PASSWORD_MISMATCH", "새 비밀번호와 확인이 일치하지 않습니다."),
     _PHONE_DUPLICATED(HttpStatus.CONFLICT, "USER409-PHONE_DUPLICATED", "이미 사용 중인 전화번호입니다."),

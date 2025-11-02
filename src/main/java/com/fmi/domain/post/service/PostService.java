@@ -16,6 +16,7 @@ import com.fmi.domain.post.web.dto.UpdatePostDto;
 import com.fmi.global.service.S3Service;
 import com.fmi.domain.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import com.fmi.domain.notification.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +41,7 @@ public class PostService {
     private final PostImageRepository postImageRepository;
     private final UserRepository userRepository;
     private final PostConverter postConverter;
+    private final NotificationService notificationService;
 
     @Transactional
     public PostResponse createPost(CreatePostDto request, UserDetails userDetails, List<MultipartFile> images) {
@@ -62,6 +64,10 @@ public class PostService {
             post.setImages(postImages);
         }
 
+        // 임시 저장이 아닌 경우에만 키워드 알림 트리거
+        if (!post.isTemporarySave()) {
+            notificationService.notifyKeywordsForPost(post);
+        }
         return postConverter.toPostResponse(post);
     }
 

@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -25,8 +27,15 @@ public class AuthService {
 
     @Transactional
     public Long signup(SignupRequest request) {
+        // 활성 사용자 이메일 중복 체크
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new GeneralException(ErrorStatus._EMAIL_DUPLICATED);
+        }
+        
+        // 일주일(7일) 이내 탈퇴한 이메일 재가입 방지
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+        if (userRepository.existsRecentlyDeletedByEmail(request.getEmail(), oneWeekAgo)) {
+            throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
         }
         
         // 비밀번호 규칙: 8자 이상, 대문자/소문자/숫자/특수문자 포함
@@ -58,13 +67,55 @@ public class AuthService {
         return userRepository.save(user).getId();
     }
 
-    public User authenticate(String email, String rawPassword) {
+    /**
+     * 인증 및 임시 비밀번호 여부 확인
+     * @return AuthenticateResult (user, isTemporaryPassword)
+     */
+    public AuthenticateResult authenticate(String email, String rawPassword) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._UNAUTHORIZED));
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+        
+        boolean isTemporaryPassword = false;
+        boolean passwordMatches = false;
+        
+        // 임시 비밀번호가 활성화되어 있는지 확인
+        boolean hasActiveTemporaryPassword = user.getTemporaryPassword() != null 
+                && user.getTemporaryPasswordExpiresAt() != null
+                && LocalDateTime.now().isBefore(user.getTemporaryPasswordExpiresAt());
+        
+        // 임시 비밀번호가 활성화되어 있으면 원래 비밀번호와 임시 비밀번호 모두 확인
+        if (hasActiveTemporaryPassword) {
+            // 임시 비밀번호 확인 (우선 확인)
+            if (passwordEncoder.matches(rawPassword, user.getTemporaryPassword())) {
+                passwordMatches = true;
+                isTemporaryPassword = true;
+            }
+            // 원래 비밀번호 확인
+            else if (user.getOriginalPassword() != null 
+                    && passwordEncoder.matches(rawPassword, user.getOriginalPassword())) {
+                passwordMatches = true;
+                isTemporaryPassword = false;
+            }
+        }
+        // 임시 비밀번호가 없으면 일반 비밀번호만 확인
+        else {
+            if (passwordEncoder.matches(rawPassword, user.getPassword())) {
+                passwordMatches = true;
+                isTemporaryPassword = false;
+            }
+        }
+        
+        if (!passwordMatches) {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
-        return user;
+        
+        return new AuthenticateResult(user, isTemporaryPassword);
+    }
+    
+    @Data
+    public static class AuthenticateResult {
+        private final User user;
+        private final boolean isTemporaryPassword;
     }
 
     public boolean emailExists(String email) {

@@ -20,6 +20,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.domain.notification.data.enums.NotificationType;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +34,7 @@ public class ReportService {
     private final UserRepository userRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ReportConverter reportConverter;
+    private final NotificationService notificationService;
     
     /**
      * 신고하기 (통합)
@@ -93,7 +96,7 @@ public class ReportService {
                         .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND));
                 break;
             case USER:
-                userRepository.findById(targetId)
+                userRepository.findActiveById(targetId)
                         .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
                 break;
             case CHAT:
@@ -118,7 +121,7 @@ public class ReportService {
                             .map(comment -> comment.getContent().substring(0, Math.min(50, comment.getContent().length())) + "...")
                             .orElse("삭제된 댓글");
                 case USER:
-                    return userRepository.findById(targetId)
+                    return userRepository.findActiveById(targetId)
                             .map(u -> u.getNickname() + " 사용자")
                             .orElse("삭제된 사용자");
                 case CHAT:
@@ -130,6 +133,41 @@ public class ReportService {
             }
         } catch (Exception e) {
             return "조회 실패";
+        }
+    }
+
+    /**
+     * 신고 상태 업데이트(관리자)
+     */
+    @Transactional
+    public void updateStatus(Long reportId, ReportStatus status, String adminNote) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.REPORT_NOT_FOUND));
+
+        switch (status) {
+            case RESOLVED:
+                report.resolve(adminNote);
+                break;
+            case REJECTED:
+                report.reject(adminNote);
+                break;
+            default:
+                throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
+
+        // 신고자에게 결과 알림
+        User reporter = report.getReporter();
+        if (reporter != null) {
+            String title = "신고 처리 결과: " + status.name();
+            String message = adminNote == null ? "" : adminNote;
+            notificationService.createNotification(
+                    reporter,
+                    NotificationType.REPORT_RESULT,
+                    title,
+                    message,
+                    "REPORT",
+                    report.getReportId()
+            );
         }
     }
 }

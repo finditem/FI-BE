@@ -53,6 +53,15 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Column(name = "original_password")
+    private String originalPassword;  // 임시 비밀번호 발급 시 원래 비밀번호 보관
+
+    @Column(name = "temporary_password")
+    private String temporaryPassword;  // 임시 비밀번호 (해시값)
+
+    @Column(name = "temporary_password_expires_at")
+    private LocalDateTime temporaryPasswordExpiresAt;  // 임시 비밀번호 만료 시간
+
     @Column(name = "profile_img")
     private String profile_img;
 
@@ -62,6 +71,9 @@ public class User {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @Column(name = "trust_score")
     private Long trust_score;

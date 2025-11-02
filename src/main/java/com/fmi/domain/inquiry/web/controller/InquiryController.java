@@ -4,8 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.service.InquiryService;
-import com.fmi.domain.inquiry.web.dto.request.InquiryPrivateRequestDTO;
-import com.fmi.domain.inquiry.web.dto.request.InquiryPublicRequestDTO;
+ 
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -22,7 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/inquiry")
+@RequestMapping("/inquiry")
 @RequiredArgsConstructor
 @Tag(name = "Inquiry", description = "문의 API")
 public class InquiryController {
@@ -33,30 +32,16 @@ public class InquiryController {
      * 공개 문의 작성
      * POST /api/inquiry/public
      */
-    @PostMapping("/public")
-    @Operation(summary = "공개 문의 작성", description = "모든 사용자가 볼 수 있는 문의를 작성합니다. 비회원도 작성 가능합니다.")
-    public ApiResponse<Long> createPublicInquiry(
-            @Valid @RequestBody InquiryPublicRequestDTO request,
+    @PostMapping
+    @Operation(summary = "문의 작성", description = "inquiryType=PUBLIC|PRIVATE 로 구분합니다. PUBLIC: 회원만 가능 + email 필수 / PRIVATE: 비회원 가능(필요 시 email 포함)")
+    public ApiResponse<Long> createInquiry(
+            @Valid @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO request,
             @AuthenticationPrincipal User user) {
-        
-        Long inquiryId = inquiryService.createPublicInquiry(request, user);
+        Long inquiryId = inquiryService.createInquiry(request, user);
         return ApiResponse.onSuccess(inquiryId);
     }
     
-    /**
-     * 1:1 개인 문의 작성
-     * POST /api/inquiry/private
-     */
-    @PostMapping("/private")
-    @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "1:1 문의 작성", description = "본인과 관리자만 볼 수 있는 비공개 문의를 작성합니다.")
-    public ApiResponse<Long> createPrivateInquiry(
-            @Valid @RequestBody InquiryPrivateRequestDTO request,
-            @AuthenticationPrincipal User user) {
-        
-        Long inquiryId = inquiryService.createPrivateInquiry(request, user);
-        return ApiResponse.onSuccess(inquiryId);
-    }
+    // 기존 /inquiry/public, /inquiry/private 엔드포인트는 제거되었습니다. 단일 POST /inquiry 를 사용하세요.
     
     /**
      * 공개 문의 목록 조회
