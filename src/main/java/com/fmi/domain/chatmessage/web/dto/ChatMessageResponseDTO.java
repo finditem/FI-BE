@@ -70,4 +70,14 @@ public class ChatMessageResponseDTO {
         private LocalDateTime lastMessageSentAt;
         private Long unreadCount; // DB에 저장된 값
     }
+
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class ReadReceiptDTO {
+        private Long roomId;
+        private String readerEmail;
+        private Long lastReadMessageId;
+    }
 }
