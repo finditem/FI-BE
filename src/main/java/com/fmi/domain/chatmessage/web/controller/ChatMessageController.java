@@ -67,7 +67,9 @@ public class ChatMessageController {
     }
 
     @PatchMapping("/{roomId}/read")
-    public ApiResponse<Void> readMessages(@PathVariable Long roomId, @AuthenticationPrincipal User user) {
+    public ApiResponse<Void> readMessages(@PathVariable Long roomId, @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        User user = userService.findUser(email);
         chatMessageService.readMessages(roomId, user.getId());
         return ApiResponse.of(SuccessStatus._MESSAGE_READ);
     }
