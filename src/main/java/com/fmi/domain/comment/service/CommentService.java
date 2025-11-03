@@ -18,7 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -61,8 +64,45 @@ public class CommentService {
             notifyPostOwner(post, user, dto);
         }
 
+        handleMentions(savedComment, dto);
+
         return commentConverter.toCommentResponse(savedComment);
     }
+
+    private void handleMentions(Comment comment, CreateCommentDto dto) {
+        List<String> mentionedNicknames = extractMentions(dto.getContent());
+
+        for (String nickname : mentionedNicknames) {
+            userRepository.findByNickname(nickname).ifPresent(mentionedUser -> {
+                if (!mentionedUser.getId().equals(comment.getUser().getId())) {
+                    notificationService.createNotification(
+                            mentionedUser,
+                            NotificationType.MENTION,
+                            comment.getUser().getNickname() + "님이 멘션했습니다",
+                            dto.getContent(),
+                            "COMMENT",
+                            comment.getId()
+                    );
+                }
+            });
+        }
+    }
+
+    private List<String> extractMentions(String content) {
+        List<String> mentions = new ArrayList<>();
+        if (content == null || content.isBlank()) return mentions;
+
+        // @뒤에 오는 닉네임 추출 (영문, 숫자, 한글, _, . 허용)
+        Pattern pattern = Pattern.compile("@([A-Za-z0-9가-힣_.]+)");
+        Matcher matcher = pattern.matcher(content);
+
+        while (matcher.find()) {
+            mentions.add(matcher.group(1));
+        }
+
+        return mentions;
+    }
+
 
     private void notifyPostOwner(Post post, User commenter, CreateCommentDto dto) {
         if (!post.getUser().getId().equals(commenter.getId())) {
@@ -131,3 +171,4 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 }
+
