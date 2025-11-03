@@ -47,7 +47,7 @@ public class CommentService {
             parentComment = commentRepository.findById(dto.getParentId())
                     .orElseThrow(() -> new IllegalArgumentException("부모 댓글이 존재하지 않습니다"));
         }
-0
+
         Comment comment = commentConverter.toCommentEntity(dto, user, post, parentComment);
         Comment savedComment = commentRepository.save(comment);
 
