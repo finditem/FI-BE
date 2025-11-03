@@ -18,8 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -74,7 +73,7 @@ public class CommentService {
 
         for (String nickname : mentionedNicknames) {
             userRepository.findByNickname(nickname).ifPresent(mentionedUser -> {
-                if (!mentionedUser.getId().equals(comment.getUser().getId())) {
+                if (!mentionedUser.getId().equals(comment.getUser().getId())) {//자신 거르기
                     notificationService.createNotification(
                             mentionedUser,
                             NotificationType.MENTION,
@@ -89,18 +88,21 @@ public class CommentService {
     }
 
     private List<String> extractMentions(String content) {
-        List<String> mentions = new ArrayList<>();
-        if (content == null || content.isBlank()) return mentions;
 
-        // @뒤에 오는 닉네임 추출 (영문, 숫자, 한글, _, . 허용)
-        Pattern pattern = Pattern.compile("@([A-Za-z0-9가-힣_.]+)");
+        if (content == null || content.isBlank() || !content.contains("@")) {
+            return Collections.emptyList();
+        }
+
+        Set<String> mentions = new HashSet<>();
+
+        Pattern pattern = Pattern.compile("(?<=\\s|^)@([A-Za-z0-9가-힣_.]+)(?=\\s|$)");
         Matcher matcher = pattern.matcher(content);
 
         while (matcher.find()) {
             mentions.add(matcher.group(1));
         }
 
-        return mentions;
+        return new ArrayList<>(mentions);
     }
 
 
