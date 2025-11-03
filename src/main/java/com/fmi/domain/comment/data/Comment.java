@@ -29,9 +29,6 @@ public class Comment {
     @Column(name = "content", nullable = false)
     private String content;
 
-//    @Column(name = "p_content")
-//    private String p_content;//대댓글 ?
-
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
