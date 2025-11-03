@@ -51,7 +51,7 @@ public class CommentService {
         Comment comment = commentConverter.toCommentEntity(dto, user, post, parentComment);
         Comment savedComment = commentRepository.save(comment);
 
-        if(!post.getUser().getId().equals(user.getId())){
+        if(parentComment == null && !post.getUser().getId().equals(user.getId())){
 
             // DB 저장 + 커밋 후 웹소켓 전송
             notificationService.createNotification(
@@ -75,6 +75,7 @@ public class CommentService {
                     post.getId()
             );
         }
+
 
 
         return commentConverter.toCommentResponse(savedComment);
