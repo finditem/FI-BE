@@ -8,6 +8,7 @@ import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.comment.response.CommentResponse;
 import com.fmi.domain.comment.web.dto.CreateCommentDto;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final CommentConverter commentConverter;
-    private final com.fmi.domain.notification.service.NotificationService notificationService;
+    private final NotificationService notificationService;
 
     @Transactional
     public CommentResponse createComment(CreateCommentDto dto, UserDetails userDetails, Long postId) {

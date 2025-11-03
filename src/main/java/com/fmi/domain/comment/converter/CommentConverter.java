@@ -33,12 +33,4 @@ public class CommentConverter {
         );
     }
 
-    public NotificationDto toCommentNotification(Comment comment) {
-        return NotificationDto.builder()
-                .message("새 댓글이 달렸습니다!")
-                .postId(comment.getPost().getId())
-                .commenterName(comment.getUser().getNickname())
-                .createdAt(LocalDateTime.now())
-                .build();
-    }
 }
