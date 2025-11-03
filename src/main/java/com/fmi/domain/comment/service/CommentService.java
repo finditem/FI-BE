@@ -45,6 +45,7 @@ public class CommentService {
         Comment savedComment = commentRepository.save(comment);
 
         if(!post.getUser().getId().equals(user.getId())){
+
             // DB 저장 + 커밋 후 웹소켓 전송
             notificationService.createNotification(
                     post.getUser(),
