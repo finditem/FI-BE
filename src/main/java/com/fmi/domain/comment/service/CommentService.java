@@ -35,6 +35,7 @@ public class CommentService {
     @Transactional
     public CommentResponse createComment(CreateCommentDto dto, UserDetails userDetails, Long postId) {
 
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다"));
 
@@ -51,9 +52,19 @@ public class CommentService {
         Comment comment = commentConverter.toCommentEntity(dto, user, post, parentComment);
         Comment savedComment = commentRepository.save(comment);
 
-        if(parentComment == null && !post.getUser().getId().equals(user.getId())){
+        boolean isReply = parentComment != null;
 
-            // DB 저장 + 커밋 후 웹소켓 전송
+        if (isReply) {
+            notifyReply(parentComment, user, dto, post);
+        } else {
+            notifyPostOwner(post, user, dto);
+        }
+
+        return commentConverter.toCommentResponse(savedComment);
+    }
+
+    private void notifyPostOwner(Post post, User commenter, CreateCommentDto dto) {
+        if (!post.getUser().getId().equals(commenter.getId())) {
             notificationService.createNotification(
                     post.getUser(),
                     NotificationType.COMMENT,
@@ -63,9 +74,10 @@ public class CommentService {
                     post.getId()
             );
         }
+    }
 
-        if (parentComment != null && !parentComment.getUser().getId().equals(user.getId())) {
-
+    private void notifyReply(Comment parentComment, User replier, CreateCommentDto dto, Post post) {
+        if (!parentComment.getUser().getId().equals(replier.getId())) {
             notificationService.createNotification(
                     parentComment.getUser(),
                     NotificationType.REPLY,
@@ -75,10 +87,6 @@ public class CommentService {
                     post.getId()
             );
         }
-
-
-
-        return commentConverter.toCommentResponse(savedComment);
     }
 
     @Transactional
