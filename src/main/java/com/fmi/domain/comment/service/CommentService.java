@@ -7,6 +7,7 @@ import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.comment.response.CommentResponse;
 import com.fmi.domain.comment.web.dto.CreateCommentDto;
+import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,8 +41,14 @@ public class CommentService {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다"));
 
+        Comment parentComment = null;
 
-        Comment comment = commentConverter.toCommentEntity(dto, user, post);
+        if (dto.getParentId() != null) {
+            parentComment = commentRepository.findById(dto.getParentId())
+                    .orElseThrow(() -> new IllegalArgumentException("부모 댓글이 존재하지 않습니다"));
+        }
+0
+        Comment comment = commentConverter.toCommentEntity(dto, user, post, parentComment);
         Comment savedComment = commentRepository.save(comment);
 
         if(!post.getUser().getId().equals(user.getId())){
@@ -49,8 +56,20 @@ public class CommentService {
             // DB 저장 + 커밋 후 웹소켓 전송
             notificationService.createNotification(
                     post.getUser(),
-                    com.fmi.domain.notification.data.enums.NotificationType.COMMENT,
+                    NotificationType.COMMENT,
                     "새 댓글이 달렸습니다",
+                    dto.getContent(),
+                    "POST",
+                    post.getId()
+            );
+        }
+
+        if (parentComment != null && !parentComment.getUser().getId().equals(user.getId())) {
+
+            notificationService.createNotification(
+                    parentComment.getUser(),
+                    NotificationType.REPLY,
+                    "댓글에 답글이 달렸습니다",
                     dto.getContent(),
                     "POST",
                     post.getId()
