@@ -42,6 +42,7 @@ public class Post {
     @Column(name = "view_cnt")
     private long viewCnt;
 
+
     @Column(name = "item_status")
     @Enumerated(EnumType.STRING)
     private Status itemStatus;
