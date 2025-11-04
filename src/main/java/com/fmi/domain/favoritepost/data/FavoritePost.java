@@ -1,4 +1,4 @@
-package com.fmi.domain;
+package com.fmi.domain.favoritepost.data;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
@@ -22,6 +22,9 @@ public class FavoritePost {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "isfavorite")
+    private boolean isFavorite;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
