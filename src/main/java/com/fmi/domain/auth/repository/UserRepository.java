@@ -45,6 +45,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 만료된 임시 비밀번호가 있는 사용자 조회 (정리 스케줄러용)
     @Query("SELECT u FROM User u WHERE u.temporaryPasswordExpiresAt IS NOT NULL AND u.temporaryPasswordExpiresAt < :now")
     List<User> findUsersWithExpiredTemporaryPassword(@Param("now") LocalDateTime now);
+
+    Optional<User> findByNickname(String nickname);
 }
 
 

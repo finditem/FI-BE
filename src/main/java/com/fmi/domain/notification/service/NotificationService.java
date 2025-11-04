@@ -13,6 +13,7 @@ import com.fmi.domain.notification.web.dto.response.NotificationSettingsDTO;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import com.fmi.domain.user.repository.UserKeywordRepository;
 import com.fmi.domain.user.data.UserKeyword;
 import com.fmi.domain.post.data.Post;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -222,6 +224,8 @@ public class NotificationService {
             
             notificationRepository.save(notification);
 
+            log.info(" 알림 저장 완료: {}", notification.getNotificationId());
+
             // 트랜잭션 커밋 이후 웹소켓 전송 (실패 시에도 DB 저장은 보장)
             if (TransactionSynchronizationManager.isSynchronizationActive()) {
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -297,5 +301,7 @@ public class NotificationService {
                 return true;
         }
     }
+
+    
 }
 
