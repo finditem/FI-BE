@@ -96,7 +96,7 @@ public class ChatRoomController {
         presenceService.enter(roomId, p.getName(), acc.getSessionId());
     }
 
-    @MessageMapping("/presence/ping/{roomId}")
+    @MessageMapping("/rooms/{roomId}/ping")
     public void pingOne(@DestinationVariable Long roomId, Principal p, StompHeaderAccessor acc) {
         presenceService.touchTTL(acc.getSessionId(), roomId, p.getName());
     }

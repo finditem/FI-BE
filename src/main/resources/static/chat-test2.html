@@ -156,7 +156,7 @@
         const roomId = document.getElementById('roomId').value;
         if (!roomId) { alert('Room ID를 입력하세요'); return; }
 
-        const destination = `/app/presence/ping/${roomId}`;
+        const destination = `/app/rooms/${roomId}/ping`;
         stompClient.publish({ destination: destination }); // ⭐️ v7 방식
         log(`➡️ [SEND] ${destination} (TTL 갱신)`);
     }
