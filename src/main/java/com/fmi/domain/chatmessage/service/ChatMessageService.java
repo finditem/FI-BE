@@ -137,7 +137,7 @@ public class ChatMessageService {
                     pt.readMessages(newMessage.getId());
                     ReadReceiptDTO receiptDTO = ReadReceiptDTO.builder()
                             .roomId(roomId)
-                            .readerEmail(email)
+                            .readerId(pt.getUser().getId())
                             .lastReadMessageId(newMessage.getId())
                             .build();
                     broker.convertAndSendToUser(sender.getEmail(), "/queue/read-receipts", receiptDTO);
@@ -256,7 +256,7 @@ public class ChatMessageService {
 
         ReadReceiptDTO receiptDTO = ReadReceiptDTO.builder()
                 .roomId(roomId)
-                .readerEmail(chatRoomParticipant.getUser().getEmail())
+                .readerId(chatRoomParticipant.getUser().getId())
                 .lastReadMessageId(lastMessageId)
                 .build();
 

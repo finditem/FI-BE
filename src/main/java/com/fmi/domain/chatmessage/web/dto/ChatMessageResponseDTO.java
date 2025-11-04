@@ -77,7 +77,7 @@ public class ChatMessageResponseDTO {
     @Getter
     public static class ReadReceiptDTO {
         private Long roomId;
-        private String readerEmail;
+        private Long readerId;
         private Long lastReadMessageId;
     }
 }
