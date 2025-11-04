@@ -27,7 +27,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/actuator/health", "/actuator/info", "/ws/**", "/error", "/health").permitAll()
                         .requestMatchers("/auth/login", "/auth/signup", "/auth/refresh", "/auth/logout",
-                                "/auth/check-email", "/auth/check-nickname", "/auth/reset/**", "/s3/**", "/chat-test.html").permitAll()
+                                "/auth/check-email", "/auth/check-nickname", "/auth/reset/**", "/s3/**", "/chat-test.html", "/chat-test2.html").permitAll()
                         .requestMatchers("/auth/kakao/**", "/auth/email/**", "/auth/phone/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         .anyRequest().authenticated()
