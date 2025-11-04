@@ -57,23 +57,26 @@ public class CommentService {
 
         boolean isReply = parentComment != null;
 
-        if (isReply) {
-            notifyReply(parentComment, user, dto, post);
-        } else {
-            notifyPostOwner(post, user, dto);
-        }
+        Set<Long> mentionedUserIds = handleMentions(savedComment, dto);
 
-        handleMentions(savedComment, dto);
+        if (isReply) {
+            notifyReply(parentComment, user, dto, post, mentionedUserIds);
+        } else {
+            notifyPostOwner(post, user, dto, mentionedUserIds);
+        }
 
         return commentConverter.toCommentResponse(savedComment);
     }
 
-    private void handleMentions(Comment comment, CreateCommentDto dto) {
+    private Set<Long> handleMentions(Comment comment, CreateCommentDto dto) {
         List<String> mentionedNicknames = extractMentions(dto.getContent());
+        Set<Long> mentionedUserIds = new HashSet<>();
 
         for (String nickname : mentionedNicknames) {
             userRepository.findByNickname(nickname).ifPresent(mentionedUser -> {
+//                log.info("멘션 대상 찾음: {}", mentionedUser.getNickname());
                 if (!mentionedUser.getId().equals(comment.getUser().getId())) {//자신 거르기
+
                     notificationService.createNotification(
                             mentionedUser,
                             NotificationType.MENTION,
@@ -82,9 +85,17 @@ public class CommentService {
                             "COMMENT",
                             comment.getId()
                     );
+
+                    mentionedUserIds.add(mentionedUser.getId());
+
+                    log.info("MENTION 알림 전송: to={}, type={}, commentId={}",
+                            mentionedUser.getNickname(),
+                            NotificationType.MENTION,
+                            comment.getId());
                 }
             });
         }
+        return mentionedUserIds;
     }
 
     private List<String> extractMentions(String content) {
@@ -106,30 +117,42 @@ public class CommentService {
     }
 
 
-    private void notifyPostOwner(Post post, User commenter, CreateCommentDto dto) {
-        if (!post.getUser().getId().equals(commenter.getId())) {
-            notificationService.createNotification(
-                    post.getUser(),
-                    NotificationType.COMMENT,
-                    "새 댓글이 달렸습니다",
-                    dto.getContent(),
-                    "POST",
-                    post.getId()
-            );
+    private void notifyPostOwner(Post post, User commenter, CreateCommentDto dto, Set<Long> mentionedUserIds) {
+
+        Long postOwnerId = post.getUser().getId();
+
+        if (postOwnerId.equals(commenter.getId()) || mentionedUserIds.contains(postOwnerId)) {
+            log.info("이미 맨션알림을 보냈거나 자기가 자기게시글에 단 댓글 알림 생략");
+            return;
         }
+
+        notificationService.createNotification(
+                post.getUser(),
+                NotificationType.COMMENT,
+                "새 댓글이 달렸습니다",
+                dto.getContent(),
+                "POST",
+                post.getId()
+        );
     }
 
-    private void notifyReply(Comment parentComment, User replier, CreateCommentDto dto, Post post) {
-        if (!parentComment.getUser().getId().equals(replier.getId())) {
-            notificationService.createNotification(
-                    parentComment.getUser(),
-                    NotificationType.REPLY,
-                    "댓글에 답글이 달렸습니다",
-                    dto.getContent(),
-                    "POST",
-                    post.getId()
-            );
+    private void notifyReply(Comment parentComment, User replier, CreateCommentDto dto, Post post, Set<Long> mentionedUserIds) {
+
+        Long parentOwnerId = parentComment.getUser().getId();
+
+        if (parentOwnerId.equals(replier.getId()) || mentionedUserIds.contains(parentOwnerId)) {
+            log.info("대댓 유저와 부모댓글 유저가 같거나, 이미 맨션 보냈을 때 생략");
+            return;
         }
+
+        notificationService.createNotification(
+                parentComment.getUser(),
+                NotificationType.REPLY,
+                "댓글에 답글이 달렸습니다",
+                dto.getContent(),
+                "POST",
+                post.getId()
+        );
     }
 
     @Transactional
