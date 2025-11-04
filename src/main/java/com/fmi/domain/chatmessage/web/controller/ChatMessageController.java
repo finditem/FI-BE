@@ -32,7 +32,7 @@ public class ChatMessageController {
     private final ChatMessageService chatMessageService;
     private final UserQueryService userService;
 
-    @MessageMapping("/{roomId}/send")
+    @MessageMapping("/chats/{roomId}/send")
     public void sendMessage(@DestinationVariable Long roomId, Principal principal, @Payload SendMessageRequestDTO requestDTO) {
         String email = principal.getName();
         User user = userService.findUser(email);
@@ -58,7 +58,7 @@ public class ChatMessageController {
             @Parameter(name = "roomId", description = "조회할 채팅방의 ID", required = true),
             @Parameter(name = "cursor", description = "이전 페이지 응답의 nextCursor 값. 첫 페이지 조회 시 생략.", required = false)
     })
-    @GetMapping("{roomId}/messages")
+    @GetMapping("/{roomId}/messages")
     public ApiResponse<ChatMessageResponseDTO.MessageSliceResponseDTO> listMessages(@PathVariable Long roomId, @AuthenticationPrincipal UserDetails userDetails, @RequestParam(required = false) Long cursor) {
         String email = userDetails.getUsername();
         User user = userService.findUser(email);
