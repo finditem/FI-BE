@@ -71,7 +71,7 @@ public class ChatRoomPresenceService {
     }
 
     /**
-     * TTL 연장 (Client가 /app/presence/ping/{roomId} 호출)
+     * TTL 연장 (Client가 /app/rooms/{roomId}/ping 호출)
      */
     public void touchTTL(String sessionId, Long roomId, String email) {
         redis.expire(roomKey(roomId), TTL);
