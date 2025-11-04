@@ -13,10 +13,11 @@ import java.time.LocalDateTime;
 @Component
 public class CommentConverter {
 
-    public Comment toCommentEntity(CreateCommentDto dto, User user, Post post) {
+    public Comment toCommentEntity(CreateCommentDto dto, User user, Post post, Comment parent) {
         return Comment.builder()
                 .user(user)
                 .post(post)
+                .parent(parent)
                 .content(dto.getContent())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -32,12 +33,4 @@ public class CommentConverter {
         );
     }
 
-    public NotificationDto toCommentNotification(Comment comment) {
-        return NotificationDto.builder()
-                .message("새 댓글이 달렸습니다!")
-                .postId(comment.getPost().getId())
-                .commenterName(comment.getUser().getNickname())
-                .createdAt(LocalDateTime.now())
-                .build();
-    }
 }

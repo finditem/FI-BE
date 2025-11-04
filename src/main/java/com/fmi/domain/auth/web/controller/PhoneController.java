@@ -14,7 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/auth/phone")
 @RequiredArgsConstructor
-@Tag(name = "Auth-Phone", description = "휴대폰 인증 코드 발송/검증 API")
+@Tag(name = "Auth")
 public class PhoneController {
 
     private final PhoneVerificationService service;

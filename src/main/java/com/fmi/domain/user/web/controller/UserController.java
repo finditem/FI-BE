@@ -82,7 +82,23 @@ public class UserController {
 
     @DeleteMapping("/me")
     @Operation(summary = "회원 탈퇴", 
-               description = "현재 로그인한 사용자의 계정을 삭제합니다. 프로필 이미지도 함께 삭제됩니다.")
+               description = """
+                   현재 로그인한 사용자의 계정을 소프트 삭제합니다.
+                   
+                   **삭제 방식:**
+                   - 즉시 소프트 삭제: 계정은 삭제 표시되지만 30일간 데이터가 보관됩니다
+                   - 프로필 이미지는 즉시 S3에서 삭제됩니다
+                   - 30일 후 자동으로 완전 삭제(하드 삭제)됩니다
+                   
+                   **복구 및 재가입:**
+                   - 30일 이내에는 복구가 가능합니다 (관리자 문의)
+                   - 탈퇴 후 7일 이내에는 동일한 이메일로 재가입할 수 없습니다
+                   - 7일 경과 후에는 동일한 이메일로 재가입이 가능합니다
+                   
+                   **주의사항:**
+                   - 탈퇴 후에는 로그인 및 서비스 이용이 불가능합니다
+                   - 작성한 게시글과 댓글은 자동으로 삭제되지 않으며, 익명화 처리될 수 있습니다
+                   """)
     public ApiResponse<Void> deleteAccount(
             @AuthenticationPrincipal UserDetails userDetails
     ) {

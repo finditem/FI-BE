@@ -63,7 +63,7 @@ public class ChatRoomService {
 
         // 채팅방이 존재하지 않는 경우 (새로 생성)
         else {
-            User user = userRepository.findById(contactUserId)
+            User user = userRepository.findActiveById(contactUserId)
                     .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
             User postAuthor = post.getUser();
             ChatRoom newRoom = ChatRoom.builder()
