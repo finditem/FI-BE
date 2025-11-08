@@ -1,10 +1,7 @@
 package com.fmi.domain.chatroom.web.dto;
 
 import com.fmi.domain.Enum.Type;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -63,6 +60,7 @@ public class ChatRoomResponseDTO {
         private PostInfoDTO postInfo;
         private String lastMessage;
         private LocalDateTime lastMessageSentAt;
+        private Long unreadCount;
     }
 
     @Builder

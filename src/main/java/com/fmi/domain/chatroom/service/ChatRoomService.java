@@ -92,23 +92,13 @@ public class ChatRoomService {
 
     public MyChatListDTO getMyPostChatRooms(User user, Long cursorId, int size) {
 
-        Slice<ChatRoomParticipant> participantSlice;
         PageRequest pageable = PageRequest.of(0, size);
 
-        if (cursorId == null) {
-            participantSlice = chatRoomParticipantRepository.findMyChatRoomsFirstPage(
-                    user.getId(), pageable);
-        } else {
-            // 커서의 기준이 'ChatRoomParticipant'의 ID가 됨
-            ChatRoomParticipant cursorParticipant = chatRoomParticipantRepository.findById(cursorId)
-                    .orElseThrow(() -> new GeneralException(ErrorStatus._INVALID_CURSOR));
-
-            participantSlice = chatRoomParticipantRepository.findMyChatRoomsWithCursor(
-                    user.getId(),
-                    cursorParticipant.getLastMessageSentAt(), // 커서 기준 (시간)
-                    cursorParticipant.getId(),                // 커서 기준 (ID)
-                    pageable);
-        }
+        Slice<ChatRoomParticipant> participantSlice = chatRoomParticipantRepository.findMyChatRooms(
+                user.getId(),
+                cursorId,
+                pageable
+        );
 
         return buildChatListResponse(participantSlice, user);
     }
