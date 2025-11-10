@@ -2,8 +2,14 @@ package com.fmi.domain.user.service;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.comment.repository.CommentRepository;
+import com.fmi.domain.post.converter.PostConverter;
+import com.fmi.domain.post.repository.PostRepository;
+import com.fmi.domain.post.response.PostListResponse;
 import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.domain.user.response.ImageUploadResponse;
+import com.fmi.domain.user.response.UserCommentSummaryResponse;
+import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.ProfileImageUpdateRequest;
@@ -30,6 +36,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final S3Service s3Service;
+    private final PostRepository postRepository;
+    private final PostConverter postConverter;
+    private final CommentRepository commentRepository;
 
     /**
      * 내 정보 조회
@@ -40,6 +49,25 @@ public class UserService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         
         return UserConverter.toUserProfileResponse(user);
+    }
+
+    /**
+     * 타인 페이지 조회
+     */
+    @Transactional(readOnly = true)
+    public UserOtherPageResponse getOtherUserPage(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        List<PostListResponse> posts = postRepository.findAllPublishedWithImagesByUser(user).stream()
+                .map(postConverter::toPostListResponse)
+                .toList();
+
+        List<UserCommentSummaryResponse> comments = commentRepository.findAllWithPostByUser(user).stream()
+                .map(UserConverter::toUserCommentSummaryResponse)
+                .toList();
+
+        return UserConverter.toUserOtherPageResponse(user, posts, comments);
     }
 
     /**

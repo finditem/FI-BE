@@ -32,4 +32,7 @@ public interface PostRepository extends JpaRepository<Post,Long> {
     // 특정 사용자의 게시글 조회 (익명화 처리용)
     @Query("SELECT p FROM Post p WHERE p.user = :user")
     List<Post> findByUser(@Param("user") User user);
+
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.images WHERE p.user = :user AND p.temporarySave = false")
+    List<Post> findAllPublishedWithImagesByUser(@Param("user") User user);
 }
