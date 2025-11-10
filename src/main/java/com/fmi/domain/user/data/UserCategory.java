@@ -8,18 +8,18 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_keyword", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_user_category_keyword", columnNames = {"user_id", "category", "keyword"})
+@Table(name = "user_category", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_user_category", columnNames = {"user_id", "category"})
 })
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserKeyword {
+public class UserCategory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_keyword_id")
+    @Column(name = "user_category_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -28,10 +28,7 @@ public class UserKeyword {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false, length = 50)
-    private Type category; // Post.postType과 동일 분류 사용
-
-    @Column(name = "keyword", nullable = false, length = 200)
-    private String keyword;
+    private Type category;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

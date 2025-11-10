@@ -59,16 +59,16 @@ public class NotificationController {
     }
     
     /**
-     * 알림 설정 변경(댓글/채팅/키워드만 변경 가능)
+     * 알림 설정 변경(댓글/채팅/카테고리만 변경 가능)
      * PUT /notification/settings
      */
     @PutMapping("/settings")
-    @Operation(summary = "알림 설정 변경", description = "댓글, 채팅, 키워드 설정만 변경 가능합니다.")
+    @Operation(summary = "알림 설정 변경", description = "댓글, 채팅, 카테고리 설정만 변경 가능합니다.")
     public ApiResponse<NotificationSettingsDTO> updateSettings(
             @AuthenticationPrincipal User user,
             @RequestBody BasicSettingsRequest request) {
         NotificationSettingsDTO settings = notificationService.updateBasicSettings(user,
-                request.getCommentEnabled(), request.getChatEnabled(), request.getKeywordEnabled());
+                request.getCommentEnabled(), request.getChatEnabled(), request.getCategoryEnabled());
         return ApiResponse.onSuccess(settings);
     }
 
@@ -77,14 +77,14 @@ public class NotificationController {
     public static class BasicSettingsRequest {
         private Boolean commentEnabled;
         private Boolean chatEnabled;
-        private Boolean keywordEnabled;
+        private Boolean categoryEnabled;
 
         public Boolean getCommentEnabled() { return commentEnabled; }
         public void setCommentEnabled(Boolean commentEnabled) { this.commentEnabled = commentEnabled; }
         public Boolean getChatEnabled() { return chatEnabled; }
         public void setChatEnabled(Boolean chatEnabled) { this.chatEnabled = chatEnabled; }
-        public Boolean getKeywordEnabled() { return keywordEnabled; }
-        public void setKeywordEnabled(Boolean keywordEnabled) { this.keywordEnabled = keywordEnabled; }
+        public Boolean getCategoryEnabled() { return categoryEnabled; }
+        public void setCategoryEnabled(Boolean categoryEnabled) { this.categoryEnabled = categoryEnabled; }
     }
 
     /**
