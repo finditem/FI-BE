@@ -1,7 +1,10 @@
 package com.fmi.domain.postfavorite.service;
 
+import com.fmi.domain.Enum.Status;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.response.PostListResponse;
 import com.fmi.domain.postfavorite.converter.PostFavoriteConverter;
@@ -27,7 +30,9 @@ public class PostFavoriteService {
     private final UserRepository userRepository;
     private final PostFavoriteConverter favoritePostConverter;
     private final PostConverter postConverter;
+    private final NotificationService notificationService;
 
+    //즐찾 추가
     @Transactional
     public boolean toggleFavorite(Long postId, UserDetails userDetails) {
         String email = userDetails.getUsername();
@@ -51,13 +56,14 @@ public class PostFavoriteService {
         return favorite.isFavorite();
     }
 
+    //즐찾 조회
     @Transactional(readOnly = true)
     public List<PostListResponse> getFavoritePost(UserDetails userDetails) {
 
         String email = userDetails.getUsername();
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("해당 유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         List<PostFavorite> favorites = favoriteRepository.findByUserAndIsFavoriteTrue(user);
 
@@ -68,4 +74,7 @@ public class PostFavoriteService {
     }
 
 
+
 }
+
+

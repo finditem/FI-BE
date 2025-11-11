@@ -1,7 +1,9 @@
 package com.fmi.domain.post.service;
 
+import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
@@ -13,6 +15,7 @@ import com.fmi.domain.post.response.PostShareResponse;
 import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
+import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.global.service.S3Service;
 import com.fmi.domain.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +45,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostConverter postConverter;
     private final NotificationService notificationService;
+    private final PostFavoriteRepository postFavoriteRepository;
 
     @Transactional
     public PostResponse createPost(CreatePostDto request, UserDetails userDetails, List<MultipartFile> images) {
@@ -82,6 +86,8 @@ public class PostService {
             throw new RuntimeException("작성자만 수정할 수 있습니다.");
         }
 
+        Status previousStatus = post.getItemStatus();
+
         postConverter.updatePostFromDto(post, request);
 
         if (request.getDeleteImageIds() != null && !request.getDeleteImageIds().isEmpty()) {
@@ -110,7 +116,42 @@ public class PostService {
             post.getImages().addAll(newImages);//추가
         }
 
+        if (!previousStatus.equals(post.getItemStatus())) {
+            notifyFavoritedUsers(post, post.getItemStatus());
+        }
+
         return postConverter.toPostResponse(post);
+    }
+
+    //즐찾 알림
+    private void notifyFavoritedUsers(Post post, Status newStatus) {
+
+        List<User> favoritedUsers = postFavoriteRepository.findUsersByPost(post);
+
+        if (favoritedUsers.isEmpty()) return;
+
+        String title = "즐겨찾기한 게시글 상태 변경";
+        String message = switch (newStatus) {
+            case FOUND -> String.format("[%s] 게시글이 '찾음' 상태로 변경되었습니다.", post.getTitle());
+            case SEARCHING -> String.format("[%s] 게시글이 '찾는중' 상태로 변경되었습니다.", post.getTitle());
+        };
+
+        Long postOwnerId = post.getUser().getId();
+
+        for (User user : favoritedUsers) {
+
+            if (user.getId().equals(postOwnerId)) continue;
+
+            notificationService.createNotification(
+                    user,
+                    NotificationType.FAVORITE,
+                    title,
+                    message,
+                    "POST",
+                    post.getId()
+            );
+            log.info("알림 생성: userId={}, postId={}, newStatus={}", user.getId(), post.getId(), newStatus);
+        }
     }
 
     @Transactional

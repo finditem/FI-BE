@@ -3,6 +3,7 @@ package com.fmi.domain.post.data;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.postfavorite.data.PostFavorite;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -42,7 +43,6 @@ public class Post {
     @Column(name = "view_cnt")
     private long viewCnt;
 
-
     @Column(name = "item_status")
     @Enumerated(EnumType.STRING)
     private Status itemStatus;
@@ -73,5 +73,12 @@ public class Post {
     @OrderBy("displayOrder ASC")
     @Builder.Default
     private List<PostImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostFavorite> favorites = new ArrayList<>();
+
+    public void changeStatus(Status newStatus) {
+        this.itemStatus = newStatus;
+    }
 
 }
