@@ -9,6 +9,8 @@ import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -31,10 +33,10 @@ public class PostFavoriteService {
         String email = userDetails.getUsername();
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("해당 유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("해당 게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
 
         PostFavorite favorite = favoriteRepository.findByUserAndPost(user, post)
                 .orElse(null);
