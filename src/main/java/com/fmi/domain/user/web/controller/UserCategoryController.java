@@ -1,7 +1,6 @@
 package com.fmi.domain.user.web.controller;
 
 import com.fmi.domain.Enum.Category;
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.user.service.UserCategoryService;
 import com.fmi.domain.user.web.dto.response.UserCategoryResponse;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -11,6 +10,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,9 +29,9 @@ public class UserCategoryController {
             summary = "내 카테고리 목록",
             description = "로그인한 사용자가 구독 중인 게시글 카테고리를 조회합니다."
     )
-    public ApiResponse<List<UserCategoryResponse>> list(@AuthenticationPrincipal User me) {
+    public ApiResponse<List<UserCategoryResponse>> list(@AuthenticationPrincipal UserDetails principal) {
         return ApiResponse.onSuccess(
-                categoryService.list(me.getId()).stream()
+                categoryService.list(principal.getUsername()).stream()
                         .map(UserCategoryResponse::from)
                         .toList()
         );
@@ -51,8 +51,8 @@ public class UserCategoryController {
             summary = "카테고리 추가",
             description = "요청 바디에 전달한 게시글 카테고리를 내 구독 목록에 추가합니다. 이미 존재하면 무시합니다."
     )
-    public ApiResponse<String> add(@AuthenticationPrincipal User me, @RequestBody CategoryRequest req) {
-        categoryService.add(me.getId(), req.getCategory());
+    public ApiResponse<String> add(@AuthenticationPrincipal UserDetails principal, @RequestBody CategoryRequest req) {
+        categoryService.add(principal.getUsername(), req.getCategory());
         return ApiResponse.onSuccess("OK");
     }
 
@@ -61,8 +61,8 @@ public class UserCategoryController {
             summary = "카테고리 삭제",
             description = "요청 바디에 전달한 게시글 카테고리를 내 구독 목록에서 제거합니다."
     )
-    public ApiResponse<String> remove(@AuthenticationPrincipal User me, @RequestBody CategoryRequest req) {
-        categoryService.remove(me.getId(), req.getCategory());
+    public ApiResponse<String> remove(@AuthenticationPrincipal UserDetails principal, @RequestBody CategoryRequest req) {
+        categoryService.remove(principal.getUsername(), req.getCategory());
         return ApiResponse.onSuccess("OK");
     }
 
