@@ -1,11 +1,11 @@
-package com.fmi.domain.postlike.web.controller;
+package com.fmi.domain.commentlike.web.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-public class PostLikeController {
+public class CommentController {
 
 
 }

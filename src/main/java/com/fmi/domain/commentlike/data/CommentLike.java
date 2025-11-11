@@ -1,4 +1,4 @@
-package com.fmi.domain.postlike.data;
+package com.fmi.domain.commentlike.data;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PostLike {
+public class CommentLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
