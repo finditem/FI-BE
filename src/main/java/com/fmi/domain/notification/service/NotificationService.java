@@ -22,8 +22,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import com.fmi.domain.auth.repository.UserRepository;
-import com.fmi.domain.user.repository.UserKeywordRepository;
-import com.fmi.domain.user.data.UserKeyword;
+import com.fmi.domain.user.repository.UserCategoryRepository;
 import com.fmi.domain.post.data.Post;
 
 @Slf4j
@@ -37,7 +36,7 @@ public class NotificationService {
     private final NotificationConverter notificationConverter;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final UserRepository userRepository;
-    private final UserKeywordRepository userKeywordRepository;
+    private final UserCategoryRepository userCategoryRepository;
     
     /**
      * 내 알림 목록 조회
@@ -171,7 +170,7 @@ public class NotificationService {
                 request.getReportResultEnabled(),
                 request.getFavoriteEnabled(),
                 request.getNoticeEnabled(),
-                null
+                request.getCategoryEnabled()
         );
         
         NotificationSettings saved = notificationSettingsRepository.save(settings);
@@ -179,13 +178,13 @@ public class NotificationService {
     }
 
     /**
-     * 댓글/채팅/키워드 설정만 부분 업데이트
+     * 댓글/채팅/카테고리 설정만 부분 업데이트
      */
     @Transactional
-    public NotificationSettingsDTO updateBasicSettings(User user, Boolean commentEnabled, Boolean chatEnabled, Boolean keywordEnabled) {
+    public NotificationSettingsDTO updateBasicSettings(User user, Boolean commentEnabled, Boolean chatEnabled, Boolean categoryEnabled) {
         NotificationSettings settings = notificationSettingsRepository.findByUser(user)
                 .orElseGet(() -> createDefaultSettings(user));
-        settings.updateSettings(commentEnabled, chatEnabled, null, null, null, null, keywordEnabled);
+        settings.updateSettings(commentEnabled, chatEnabled, null, null, null, null, categoryEnabled);
         NotificationSettings saved = notificationSettingsRepository.save(settings);
         return notificationConverter.toSettingsDTO(saved);
     }
@@ -262,22 +261,16 @@ public class NotificationService {
 
     /**
      * 게시글 생성 시 카테고리(Type) 기준 알림
-     * - 임시 정책: 텍스트 매칭 없이, 같은 카테고리에 키워드를 1개 이상 보유한 사용자에게 1회 발송
+     * - 임시 정책: 동일 카테고리를 구독한 사용자에게 1회 발송
      */
     @Transactional
-    public void notifyKeywordsForPost(Post post) {
-        var keywords = userKeywordRepository.findAllByCategory(post.getPostType());
-        java.util.Set<Long> notifiedUserIds = new java.util.HashSet<>();
-        for (UserKeyword uk : keywords) {
-            Long uid = uk.getUser().getId();
-            if (notifiedUserIds.add(uid)) {
-                NotificationSettings settings = notificationSettingsRepository.findByUser(uk.getUser()).orElse(null);
-                if (settings == null || Boolean.TRUE.equals(settings.getKeywordEnabled())) {
-                    createNotification(uk.getUser(), NotificationType.KEYWORD,
-                            "키워드 알림", post.getTitle(), "POST", post.getId());
-                }
-            }
+    public void notifyCategoriesForPost(Post post) {
+        long subscribedCount = userCategoryRepository.count();
+        if (subscribedCount == 0) {
+            return;
         }
+        // TODO: 게시글 Category 필드가 도입되면 구독 사용자 선별 및 알림 전송 로직을 구현합니다.
+        log.debug("카테고리 기반 알림은 게시글 Category 연동 후 지원됩니다. postId={}, subscribedCount={}", post.getId(), subscribedCount);
     }
     
     /**
@@ -297,6 +290,8 @@ public class NotificationService {
                 return Boolean.TRUE.equals(settings.getFavoriteEnabled());
             case NOTICE:
                 return Boolean.TRUE.equals(settings.getNoticeEnabled());
+            case CATEGORY:
+                return Boolean.TRUE.equals(settings.getCategoryEnabled());
             default:
                 return true;
         }

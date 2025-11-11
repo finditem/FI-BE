@@ -1,0 +1,122 @@
+package com.fmi.domain.admin.service;
+
+import com.fmi.domain.Enum.Category;
+import com.fmi.domain.admin.dto.AdminInquiryResponse;
+import com.fmi.domain.admin.dto.AdminReportResponse;
+import com.fmi.domain.admin.dto.AdminUserDetailResponse;
+import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.comment.repository.CommentRepository;
+import com.fmi.domain.inquiry.data.Inquiry;
+import com.fmi.domain.inquiry.data.enums.InquiryCategory;
+import com.fmi.domain.inquiry.data.enums.InquiryStatus;
+import com.fmi.domain.inquiry.data.enums.InquiryType;
+import com.fmi.domain.inquiry.repository.InquiryReplyRepository;
+import com.fmi.domain.inquiry.repository.InquiryRepository;
+import com.fmi.domain.post.repository.PostRepository;
+import com.fmi.domain.report.data.Report;
+import com.fmi.domain.report.data.enums.ReportStatus;
+import com.fmi.domain.report.data.enums.ReportTargetType;
+import com.fmi.domain.report.repository.ReportRepository;
+import com.fmi.domain.user.data.UserCategory;
+import com.fmi.domain.user.repository.UserCategoryRepository;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class AdminService {
+
+    private final InquiryRepository inquiryRepository;
+    private final InquiryReplyRepository inquiryReplyRepository;
+    private final ReportRepository reportRepository;
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
+    private final UserCategoryRepository userCategoryRepository;
+
+    public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
+                                                     InquiryStatus status,
+                                                     InquiryCategory category,
+                                                     Pageable pageable) {
+        Page<Inquiry> inquiries = inquiryRepository.findAllForAdmin(type, status, category, pageable);
+        return inquiries.map(inquiry -> AdminInquiryResponse.builder()
+                .inquiryId(inquiry.getId())
+                .title(inquiry.getTitle())
+                .inquiryType(inquiry.getInquiryType())
+                .category(inquiry.getCategory())
+                .status(inquiry.getAnswerStatus())
+                .hasReply(inquiryReplyRepository.existsByInquiry(inquiry))
+                .createdAt(inquiry.getCreatedAt())
+                .userId(inquiry.getUser() != null ? inquiry.getUser().getId() : null)
+                .userNickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
+                .userEmail(inquiry.getEmail() != null ? inquiry.getEmail() :
+                        inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
+                .build());
+    }
+
+    public Page<AdminReportResponse> getReportPage(ReportStatus status,
+                                                   ReportTargetType targetType,
+                                                   Pageable pageable) {
+        Page<Report> reports = reportRepository.findAllForAdmin(status, targetType, pageable);
+        return reports.map(report -> AdminReportResponse.builder()
+                .reportId(report.getReportId())
+                .targetType(report.getTargetType())
+                .targetId(report.getTargetId())
+                .reportType(report.getReportType())
+                .status(report.getStatus())
+                .reason(report.getReason())
+                .adminNote(report.getAdminNote())
+                .createdAt(report.getCreatedAt())
+                .updatedAt(report.getUpdatedAt())
+                .resolvedAt(report.getResolvedAt())
+                .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
+                .reporterNickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
+                .reporterEmail(report.getReporter() != null ? report.getReporter().getEmail() : null)
+                .build());
+    }
+
+    public AdminUserDetailResponse getUserDetail(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        long postCount = postRepository.countByUser(user);
+        long commentCount = commentRepository.countByUser(user);
+        long reportCount = reportRepository.countByReporter(user);
+        List<Category> categories = userCategoryRepository.findAllByUser(user).stream()
+                .map(UserCategory::getCategory)
+                .toList();
+
+        return AdminUserDetailResponse.builder()
+                .userId(user.getId())
+                .name(user.getName())
+                .nickname(user.getNickname())
+                .email(user.getEmail())
+                .emailVerified(user.isEmail_verified())
+                .phoneNumber(user.getPhoneNumber())
+                .phoneVerified(user.isPhone_verified())
+                .role(user.getRole())
+                .profileImg(user.getProfile_img())
+                .trustScore(user.getTrust_score())
+                .termsOfServiceAgreed(user.isTermsOfServiceAgreed())
+                .privacyPolicyAgreed(user.isPrivacyPolicyAgreed())
+                .marketingConsent(user.isMarketingConsent())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .deletedAt(user.getDeletedAt())
+                .postCount(postCount)
+                .commentCount(commentCount)
+                .reportCount(reportCount)
+                .subscribedCategories(categories)
+                .build();
+    }
+}
+

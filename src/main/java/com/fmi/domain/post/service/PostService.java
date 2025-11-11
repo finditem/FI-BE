@@ -64,9 +64,9 @@ public class PostService {
             post.setImages(postImages);
         }
 
-        // 임시 저장이 아닌 경우에만 키워드 알림 트리거
+        // 임시 저장이 아닌 경우에만 카테고리 알림 트리거
         if (!post.isTemporarySave()) {
-            notificationService.notifyKeywordsForPost(post);
+            notificationService.notifyCategoriesForPost(post);
         }
         return postConverter.toPostResponse(post);
     }

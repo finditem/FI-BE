@@ -1,6 +1,7 @@
 package com.fmi.domain.user.web.controller;
 
 import com.fmi.domain.user.response.ImageUploadResponse;
+import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.service.UserService;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
@@ -42,6 +43,15 @@ public class UserController {
     ) {
         String email = userDetails.getUsername();
         UserProfileResponse response = userService.getMyProfile(email);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/{userId}/page")
+    @Operation(summary = "타인 페이지 조회", description = "다른 사용자의 닉네임, 프로필 이미지, 게시글, 작성 댓글 목록을 조회합니다.")
+    public ApiResponse<UserOtherPageResponse> getUserOtherPage(
+            @PathVariable Long userId
+    ) {
+        UserOtherPageResponse response = userService.getOtherUserPage(userId);
         return ApiResponse.onSuccess(response);
     }
 
