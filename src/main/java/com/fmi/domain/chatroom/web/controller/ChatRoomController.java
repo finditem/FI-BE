@@ -1,6 +1,7 @@
 package com.fmi.domain.chatroom.web.controller;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.domain.chatroom.service.ChatRoomService;
 import com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -12,9 +13,14 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResultDTO;
 
@@ -24,6 +30,7 @@ public class ChatRoomController {
 
     private final UserQueryService userService;
     private final ChatRoomService chatRoomService;
+    private final ChatRoomPresenceService presenceService;
 
     @Operation(summary = "채팅방 생성/조회", description = "특정 게시글에 대해 1:1 채팅방을 생성하거나 기존 채팅방을 조회합니다.")
     @ApiResponses({
@@ -82,6 +89,21 @@ public class ChatRoomController {
         User user = userService.findUser(email);
         chatRoomService.leftChatRoom(roomId, user.getId());
         return ApiResponse.of(SuccessStatus._CHATROOM_LEFT);
+    }
+
+    @MessageMapping("/rooms/{roomId}/enter")
+    public void enter(@DestinationVariable Long roomId, Principal p, StompHeaderAccessor acc) {
+        presenceService.enter(roomId, p.getName(), acc.getSessionId());
+    }
+
+    @MessageMapping("/rooms/{roomId}/ping")
+    public void pingOne(@DestinationVariable Long roomId, Principal p, StompHeaderAccessor acc) {
+        presenceService.touchTTL(acc.getSessionId(), roomId, p.getName());
+    }
+
+    @MessageMapping("/rooms/{roomId}/leave")
+    public void leave(@DestinationVariable Long roomId, Principal p, StompHeaderAccessor acc) {
+        presenceService.leave(roomId, p.getName(), acc.getSessionId());
     }
 
 }

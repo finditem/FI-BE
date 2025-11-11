@@ -85,6 +85,7 @@ public class ChatRoomConverter {
                 .postInfo(postInfoDTO)
                 .lastMessage(preview)
                 .lastMessageSentAt(participant.getLastMessageSentAt())
+                .unreadCount(participant.getUnreadCount())
                 .build();
     }
 

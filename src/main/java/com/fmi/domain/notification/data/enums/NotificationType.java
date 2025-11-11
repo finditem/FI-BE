@@ -11,7 +11,7 @@ public enum NotificationType {
     INQUIRY_REPLY("문의 답변"),
     REPORT_RESULT("신고 처리 결과"),
     FAVORITE("좋아요"),
-    KEYWORD("키워드"),
+    CATEGORY("카테고리"),
     NOTICE("공지사항"),
     SYSTEM("시스템");
 

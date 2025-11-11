@@ -24,7 +24,8 @@ public enum SuccessStatus implements BaseCode {
     _IMAGE_UPLOAD_SUCCESS(HttpStatus.OK, "IMAGE200-UPLOAD", "이미지 업로드에 성공하였습니다."),
 
     // 메세지 관련 응답
-    _MESSAGE_LIST_FETCHED(HttpStatus.OK, "MESSAGE200-LIST", "이전 채팅 내역 조회를 성공했습니다.");
+    _MESSAGE_LIST_FETCHED(HttpStatus.OK, "MESSAGE200-LIST", "이전 채팅 내역 조회를 성공했습니다."),
+    _MESSAGE_READ(HttpStatus.OK, "MESSAGE200-READ", "메세지 읽음을 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

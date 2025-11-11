@@ -44,6 +44,13 @@ public class ChatRoomParticipant {
     // 목록 정렬용
     private LocalDateTime lastMessageSentAt;
 
+    @Column(name = "last_read_message_id")
+    private Long lastReadMessageId;
+
+    @Column(name = "unread_count")
+    @Builder.Default
+    private Long unreadCount = 0L;
+
     void setChatRoom(ChatRoom chatRoom) {
         this.chatRoom = chatRoom;
     }
@@ -66,6 +73,26 @@ public class ChatRoomParticipant {
         this.participantState = ParticipantState.ACTIVE;
         this.lastMessage = message;
         this.lastMessageSentAt = message.getCreatedAt();
+    }
+
+    /**
+     * 메시지 읽음 처리 (카운트 0으로 초기화)
+     */
+    public void readMessages(Long lastReadId) {
+        if (this.lastReadMessageId == null || lastReadId > this.lastReadMessageId) {
+            this.lastReadMessageId = lastReadId;
+        }
+        this.unreadCount = 0L;
+    }
+
+    /**
+     * 안 읽은 개수 1 증가
+     */
+    public void incrementUnreadCount() {
+        if (this.unreadCount == null) {
+            this.unreadCount = 0L;
+        }
+        this.unreadCount += 1;
     }
 
 }

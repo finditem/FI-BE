@@ -32,7 +32,7 @@ public class ChatMessageController {
     private final ChatMessageService chatMessageService;
     private final UserQueryService userService;
 
-    @MessageMapping("/{roomId}/send")
+    @MessageMapping("/chats/{roomId}/send")
     public void sendMessage(@DestinationVariable Long roomId, Principal principal, @Payload SendMessageRequestDTO requestDTO) {
         String email = principal.getName();
         User user = userService.findUser(email);
@@ -58,11 +58,30 @@ public class ChatMessageController {
             @Parameter(name = "roomId", description = "조회할 채팅방의 ID", required = true),
             @Parameter(name = "cursor", description = "이전 페이지 응답의 nextCursor 값. 첫 페이지 조회 시 생략.", required = false)
     })
-    @GetMapping("{roomId}/messages")
+    @GetMapping("/{roomId}/messages")
     public ApiResponse<ChatMessageResponseDTO.MessageSliceResponseDTO> listMessages(@PathVariable Long roomId, @AuthenticationPrincipal UserDetails userDetails, @RequestParam(required = false) Long cursor) {
         String email = userDetails.getUsername();
         User user = userService.findUser(email);
         ChatMessageResponseDTO.MessageSliceResponseDTO messageSliceResponseDTO = chatMessageService.messageSlice(roomId, user.getId(), cursor);
         return ApiResponse.of(SuccessStatus._MESSAGE_LIST_FETCHED,messageSliceResponseDTO);
     }
+
+    @Operation(summary = "채팅방 메시지 읽음 처리",
+            description = "유저가 특정 채팅방에 입장할 때 호출하여 쌓인 메시지를 모두 읽음 처리합니다. \n" +
+                    "1. 해당 유저의 unreadCount를 0으로 갱신하고 lastReadMessageId를 최신으로 업데이트합니다. \n" +
+                    "2. (WebSocket) 상대방에게는 '/queue/read-receipts'로 실시간 읽음 확인 이벤트를 전송합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "MESSAGE200-READ, 메세지 읽음을 성공했습니다.")
+    })
+    @Parameters({
+            @Parameter(name = "roomId", description = "읽을 채팅방의 ID", required = true)
+    })
+    @PatchMapping("/{roomId}/read")
+    public ApiResponse<Void> readMessages(@PathVariable Long roomId, @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        User user = userService.findUser(email);
+        chatMessageService.readMessages(roomId, user.getId());
+        return ApiResponse.of(SuccessStatus._MESSAGE_READ);
+    }
+
 }
