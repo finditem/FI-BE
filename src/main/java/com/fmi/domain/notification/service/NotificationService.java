@@ -22,7 +22,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import com.fmi.domain.auth.repository.UserRepository;
-import com.fmi.domain.user.data.UserCategory;
 import com.fmi.domain.user.repository.UserCategoryRepository;
 import com.fmi.domain.post.data.Post;
 
@@ -266,18 +265,12 @@ public class NotificationService {
      */
     @Transactional
     public void notifyCategoriesForPost(Post post) {
-        var categories = userCategoryRepository.findAllByCategory(post.getPostType());
-        java.util.Set<Long> notifiedUserIds = new java.util.HashSet<>();
-        for (UserCategory uc : categories) {
-            Long uid = uc.getUser().getId();
-            if (notifiedUserIds.add(uid)) {
-                NotificationSettings settings = notificationSettingsRepository.findByUser(uc.getUser()).orElse(null);
-                if (settings == null || Boolean.TRUE.equals(settings.getCategoryEnabled())) {
-                    createNotification(uc.getUser(), NotificationType.CATEGORY,
-                            "카테고리 알림", post.getTitle(), "POST", post.getId());
-                }
-            }
+        long subscribedCount = userCategoryRepository.count();
+        if (subscribedCount == 0) {
+            return;
         }
+        // TODO: 게시글 Category 필드가 도입되면 구독 사용자 선별 및 알림 전송 로직을 구현합니다.
+        log.debug("카테고리 기반 알림은 게시글 Category 연동 후 지원됩니다. postId={}, subscribedCount={}", post.getId(), subscribedCount);
     }
     
     /**

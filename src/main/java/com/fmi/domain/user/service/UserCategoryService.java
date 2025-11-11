@@ -1,6 +1,6 @@
 package com.fmi.domain.user.service;
 
-import com.fmi.domain.Enum.Type;
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.user.data.UserCategory;
@@ -28,7 +28,7 @@ public class UserCategoryService {
     }
 
     @Transactional
-    public void add(Long userId, Type category) {
+    public void add(Long userId, Category category) {
         User user = userRepository.findActiveById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         if (userCategoryRepository.existsByUserAndCategory(user, category)) {
@@ -41,7 +41,7 @@ public class UserCategoryService {
     }
 
     @Transactional
-    public void remove(Long userId, Type category) {
+    public void remove(Long userId, Category category) {
         User user = userRepository.findActiveById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         userCategoryRepository.deleteByUserAndCategory(user, category);

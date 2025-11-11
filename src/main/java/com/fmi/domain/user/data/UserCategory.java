@@ -1,6 +1,6 @@
 package com.fmi.domain.user.data;
 
-import com.fmi.domain.Enum.Type;
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.auth.data.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,7 +28,7 @@ public class UserCategory {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false, length = 50)
-    private Type category;
+    private Category category;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -38,5 +38,3 @@ public class UserCategory {
         createdAt = LocalDateTime.now();
     }
 }
-
-

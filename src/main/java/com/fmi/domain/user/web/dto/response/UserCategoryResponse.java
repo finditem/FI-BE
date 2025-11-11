@@ -1,6 +1,6 @@
 package com.fmi.domain.user.web.dto.response;
 
-import com.fmi.domain.Enum.Type;
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.user.data.UserCategory;
 import lombok.Builder;
 import lombok.Value;
@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 public class UserCategoryResponse {
 
     Long id;
-    Type category;
+    Category category;
     LocalDateTime createdAt;
 
     public static UserCategoryResponse from(UserCategory category) {

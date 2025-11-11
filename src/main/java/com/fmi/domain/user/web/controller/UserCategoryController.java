@@ -1,6 +1,6 @@
 package com.fmi.domain.user.web.controller;
 
-import com.fmi.domain.Enum.Type;
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.user.service.UserCategoryService;
 import com.fmi.domain.user.web.dto.response.UserCategoryResponse;
@@ -42,8 +42,8 @@ public class UserCategoryController {
             summary = "전체 카테고리 목록",
             description = "게시글 작성 및 구독에 사용할 수 있는 모든 카테고리(Type) 값을 반환합니다."
     )
-    public ApiResponse<List<Type>> availableCategories() {
-        return ApiResponse.onSuccess(List.of(Type.values()));
+    public ApiResponse<List<Category>> availableCategories() {
+        return ApiResponse.onSuccess(List.of(Category.values()));
     }
 
     @PostMapping
@@ -68,7 +68,7 @@ public class UserCategoryController {
 
     @Data
     public static class CategoryRequest {
-        private Type category;
+        private Category category;
     }
 }
 
