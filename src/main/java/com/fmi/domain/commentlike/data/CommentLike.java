@@ -1,7 +1,7 @@
 package com.fmi.domain.commentlike.data;
 
 import com.fmi.domain.auth.data.User;
-import com.fmi.domain.post.data.Post;
+import com.fmi.domain.comment.data.Comment;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,7 +23,7 @@ public class CommentLike {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private Post post;
+    private Comment comment;
 
     private boolean isLiked = true;
 
