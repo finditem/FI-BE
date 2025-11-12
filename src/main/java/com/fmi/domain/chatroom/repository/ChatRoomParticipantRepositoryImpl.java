@@ -1,5 +1,6 @@
 package com.fmi.domain.chatroom.repository;
 
+import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.QUser;
 import com.fmi.domain.chatmessage.data.QChatMessage;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
@@ -7,6 +8,7 @@ import com.fmi.domain.chatroom.data.QChatRoom;
 import com.fmi.domain.chatroom.data.QChatRoomParticipant;
 import com.fmi.domain.chatroom.data.enums.ParticipantState;
 import com.fmi.domain.post.data.QPost;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -27,7 +29,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
     }
 
     @Override
-    public Slice<ChatRoomParticipant> findMyChatRooms(Long userId, Long cursorId, Pageable pageable) {
+    public Slice<ChatRoomParticipant> findMyChatRooms(Long userId, Long cursorId, Pageable pageable, Type type) {
 
         QChatRoomParticipant pt = QChatRoomParticipant.chatRoomParticipant;
         QChatRoom cr = QChatRoom.chatRoom;
@@ -48,7 +50,9 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
                         pt.user.id.eq(userId),
                         otherPt.user.id.ne(userId),
                         pt.participantState.eq(ParticipantState.ACTIVE),
-                        pt.lastMessage.isNotNull()
+                        pt.lastMessage.isNotNull(),
+
+                        typeEq(type)
                 );
 
         // 커서 조건
@@ -80,5 +84,9 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
         }
 
         return new SliceImpl<>(participants, pageable, hasNext);
+    }
+
+    private BooleanExpression typeEq(Type type) {
+        return type != null ? QPost.post.postType.eq(type) : null;
     }
 }
