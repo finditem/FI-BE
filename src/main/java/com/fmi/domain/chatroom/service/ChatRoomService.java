@@ -91,14 +91,15 @@ public class ChatRoomService {
         }
     }
 
-    public MyChatListDTO getMyPostChatRooms(User user, Long cursorId, int size, Type type) {
+    public MyChatListDTO getMyPostChatRooms(User user, Long cursorId, int size, Type type, String address) {
 
         PageRequest pageable = PageRequest.of(0, size);
 
         Slice<ChatRoomParticipant> participantSlice = chatRoomParticipantRepository.findMyChatRooms(
                 user.getId(),
                 cursorId,
-                pageable, type
+                pageable,
+                type, address
         );
 
         return buildChatListResponse(participantSlice, user);

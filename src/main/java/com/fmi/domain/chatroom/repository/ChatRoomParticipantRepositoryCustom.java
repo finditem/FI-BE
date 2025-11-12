@@ -6,5 +6,5 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 
 public interface ChatRoomParticipantRepositoryCustom {
-    Slice<ChatRoomParticipant> findMyChatRooms(Long userId, Long cursorId, Pageable pageable, Type type);
+    Slice<ChatRoomParticipant> findMyChatRooms(Long userId, Long cursorId, Pageable pageable, Type type, String address);
 }

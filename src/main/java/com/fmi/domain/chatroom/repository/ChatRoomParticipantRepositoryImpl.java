@@ -29,7 +29,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
     }
 
     @Override
-    public Slice<ChatRoomParticipant> findMyChatRooms(Long userId, Long cursorId, Pageable pageable, Type type) {
+    public Slice<ChatRoomParticipant> findMyChatRooms(Long userId, Long cursorId, Pageable pageable, Type type, String address) {
 
         QChatRoomParticipant pt = QChatRoomParticipant.chatRoomParticipant;
         QChatRoom cr = QChatRoom.chatRoom;
@@ -52,7 +52,8 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
                         pt.participantState.eq(ParticipantState.ACTIVE),
                         pt.lastMessage.isNotNull(),
 
-                        typeEq(type)
+                        typeEq(type),
+                        addressEq(address)
                 );
 
         // 커서 조건
@@ -88,5 +89,9 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
 
     private BooleanExpression typeEq(Type type) {
         return type != null ? QPost.post.postType.eq(type) : null;
+    }
+
+    private BooleanExpression addressEq(String address) {
+        return address != null ? QPost.post.address.startsWith(address) : null;
     }
 }
