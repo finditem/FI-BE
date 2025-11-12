@@ -15,12 +15,14 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +37,7 @@ public class CommentLikeService {
     private final CommentLikeRepository commentLikeRepository;
     private final NotificationService notificationService;
     private final StringRedisTemplate redisTemplate;
-
+    private final TaskScheduler taskScheduler; // Spring TaskScheduler 주입
     private final UserRepository userRepository;
     private final CommentLikeConverter commentLikeConverter;
 
@@ -57,7 +59,7 @@ public class CommentLikeService {
         if (status == null || !status.isLiked()) {
             // 좋아요 추가
             if (status == null) {
-                commentLikeRepository.save(commentLikeConverter.toTrueEntity(user, comment));\
+                commentLikeRepository.save(commentLikeConverter.toTrueEntity(user, comment));
                 isLikedNow = true;
             } else {
                 status.setLiked(true);
@@ -85,13 +87,51 @@ public class CommentLikeService {
                 );
             } else {
                 redisTemplate.opsForSet().add(key, String.valueOf(user.getId()));
+
+                taskScheduler.schedule(() -> sendAccumulatedLikeNotification(commentId),
+                        Instant.now().plus(Duration.ofMinutes(3)));
             }
-            redisTemplate.expire(key, Duration.ofMinutes(3));
+//            redisTemplate.expire(key, Duration.ofMinutes(3));
         }
 
         return isLikedNow;
     }
 
 
+    private void sendAccumulatedLikeNotification(Long commentId) {
 
+        String key = LIKE_QUEUE_KEY + commentId;
+        Set<String> userIds = redisTemplate.opsForSet().members(key);
+        if (userIds == null || userIds.isEmpty()) return;
+
+        Comment comment = commentRepository.findById(commentId).orElse(null);
+        if (comment == null) {
+            redisTemplate.delete(key);
+            return;
+        }
+
+        List<String> nicknames = userIds.stream()
+                .map(id -> userRepository.findById(Long.parseLong(id))
+                        .map(User::getNickname).orElse("알 수 없는 사용자"))
+                .toList();
+
+        String message;
+        if (nicknames.size() == 1) {
+            message = String.format("%s님이 회원님의 댓글을 좋아했습니다.", nicknames.get(0));
+        } else {
+            message = String.format("%s님 외 %d명이 회원님의 댓글을 좋아했습니다.",
+                    nicknames.get(0), nicknames.size() - 1);
+        }
+
+        notificationService.createNotification(
+                comment.getUser(),
+                NotificationType.LIKE,
+                "댓글에 좋아요가 달렸습니다.",
+                message,
+                "COMMENT",
+                comment.getId()
+        );
+
+        redisTemplate.delete(key);
+    }
 }
