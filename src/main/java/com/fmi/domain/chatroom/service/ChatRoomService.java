@@ -1,5 +1,6 @@
 package com.fmi.domain.chatroom.service;
 
+import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
@@ -91,7 +92,7 @@ public class ChatRoomService {
         }
     }
 
-    public MyChatListDTO getMyPostChatRooms(User user, Long cursorId, int size, Type type, String address) {
+    public MyChatListDTO getMyPostChatRooms(User user, Long cursorId, int size, Type type, String address, SortType sort) {
 
         PageRequest pageable = PageRequest.of(0, size);
 
@@ -99,7 +100,7 @@ public class ChatRoomService {
                 user.getId(),
                 cursorId,
                 pageable,
-                type, address
+                type, address, sort
         );
 
         return buildChatListResponse(participantSlice, user);
