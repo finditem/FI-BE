@@ -67,7 +67,11 @@ public class ChatRoomController {
     })
     @Parameters({
             @Parameter(name = "cursor", description = "이전 페이지 응답의 nextCursor 값. 첫 페이지 조회 시 생략.", required = false),
-            @Parameter(name = "size", description = "한 페이지에 조회할 개수. (기본값: 10)", required = false)
+            @Parameter(name = "size", description = "한 페이지에 조회할 개수. (기본값: 10)", required = false),
+            @Parameter(name = "type", description = "습득물/분실물(FOUND/LOST) 타입", required = false),
+            @Parameter(name = "address", description = "지역(ex.서울시 동작구) 필터", required = false),
+            @Parameter(name = "sort", description = "최신순/오래된순(NEWEST/OLDEST) 정렬. 기본값 : 최신순(NEWEST)", required = false),
+
     })
     @GetMapping("/users/me/chats")
     public ApiResponse<ChatRoomResponseDTO.MyChatListDTO> getMyPostChatRooms(
