@@ -30,6 +30,12 @@ public class EmailVerificationService {
 
     @Transactional
     public void sendCode(String email) {
+        // 이메일 중복 검사
+        if (userRepository.existsByEmail(email)) {
+            throw new GeneralException(ErrorStatus._EMAIL_DUPLICATED);
+        }
+        
+        // 중복이 아니면 인증번호 발송
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
         redis.opsForValue().set(key(email), code, Duration.ofMinutes(5));
         emailService.sendEmail(email, "Your verification code", "인증번호: " + code + " (5분 유효)");

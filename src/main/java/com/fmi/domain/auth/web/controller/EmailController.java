@@ -20,7 +20,7 @@ public class EmailController {
     private final EmailVerificationService service;
 
     @PostMapping("/send-code")
-    @Operation(summary = "email 인증 코드 발송", description = "이메일로 6자리 인증번호를 발송합니다.")
+    @Operation(summary = "email 인증 코드 발송", description = "이메일 중복 검사를 수행하고, 중복이 아니면 이메일로 6자리 인증번호를 발송합니다. 중복이면 409 에러를 반환합니다.")
     public ApiResponse<Void> send(@RequestBody EmailSendRequest req) {
         service.sendCode(req.getEmail());
         return ApiResponse.onSuccess(null);
