@@ -1,4 +1,4 @@
-package com.fmi.domain.chatmessage.repositiory;
+package com.fmi.domain.chatmessage.repository;
 
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import org.springframework.data.domain.Pageable;

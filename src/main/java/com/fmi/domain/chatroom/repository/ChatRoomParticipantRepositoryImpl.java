@@ -1,5 +1,7 @@
 package com.fmi.domain.chatroom.repository;
 
+import com.fmi.domain.Enum.SortType;
+import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.QUser;
 import com.fmi.domain.chatmessage.data.QChatMessage;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
@@ -7,6 +9,7 @@ import com.fmi.domain.chatroom.data.QChatRoom;
 import com.fmi.domain.chatroom.data.QChatRoomParticipant;
 import com.fmi.domain.chatroom.data.enums.ParticipantState;
 import com.fmi.domain.post.data.QPost;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -27,7 +30,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
     }
 
     @Override
-    public Slice<ChatRoomParticipant> findMyChatRooms(Long userId, Long cursorId, Pageable pageable) {
+    public Slice<ChatRoomParticipant> findMyChatRooms(Long userId, Long cursorId, Pageable pageable, Type type, String address, SortType sort) {
 
         QChatRoomParticipant pt = QChatRoomParticipant.chatRoomParticipant;
         QChatRoom cr = QChatRoom.chatRoom;
@@ -48,28 +51,46 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
                         pt.user.id.eq(userId),
                         otherPt.user.id.ne(userId),
                         pt.participantState.eq(ParticipantState.ACTIVE),
-                        pt.lastMessage.isNotNull()
+                        pt.lastMessage.isNotNull(),
+
+                        typeEq(type),
+                        addressEq(address)
                 );
 
+        ChatRoomParticipant cursor = null;
         // 커서 조건
         if (cursorId != null) {
             // 커서의 시간/ID를 가져옴
-            ChatRoomParticipant cursor = queryFactory.selectFrom(pt)
+            cursor = queryFactory.selectFrom(pt)
                     .where(pt.id.eq(cursorId)).fetchOne();
 
-            if (cursor != null) {
-                // 커서 조건 추가
-                query.where(
-                        pt.lastMessageSentAt.lt(cursor.getLastMessageSentAt())
-                                .or(pt.lastMessageSentAt.eq(cursor.getLastMessageSentAt())
-                                        .and(pt.id.lt(cursor.getId())))
-                );
-            }
         }
+
+       if(sort == SortType.OLDEST) {
+           if (cursor != null) {
+               // 커서 조건 추가
+               query.where(
+                       pt.lastMessageSentAt.gt(cursor.getLastMessageSentAt())
+                               .or(pt.lastMessageSentAt.eq(cursor.getLastMessageSentAt())
+                                       .and(pt.id.gt(cursor.getId())))
+               );
+           }
+           query.orderBy(pt.lastMessageSentAt.asc(), pt.id.asc());
+       }
+       else {
+           if (cursor != null) {
+               // 커서 조건 추가
+               query.where(
+                       pt.lastMessageSentAt.lt(cursor.getLastMessageSentAt())
+                               .or(pt.lastMessageSentAt.eq(cursor.getLastMessageSentAt())
+                                       .and(pt.id.lt(cursor.getId())))
+               );
+           }
+           query.orderBy(pt.lastMessageSentAt.desc(), pt.id.desc());
+       }
 
         // 정렬 및 페이징 (+1 기법)
         List<ChatRoomParticipant> participants = query
-                .orderBy(pt.lastMessageSentAt.desc(), pt.id.desc())
                 .limit(pageable.getPageSize() + 1)
                 .fetch();
 
@@ -80,5 +101,13 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
         }
 
         return new SliceImpl<>(participants, pageable, hasNext);
+    }
+
+    private BooleanExpression typeEq(Type type) {
+        return type != null ? QPost.post.postType.eq(type) : null;
+    }
+
+    private BooleanExpression addressEq(String address) {
+        return address != null ? QPost.post.address.startsWith(address) : null;
     }
 }
