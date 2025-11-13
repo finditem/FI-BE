@@ -5,7 +5,7 @@ import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.data.ChatMessage;
-import com.fmi.domain.chatmessage.repositiory.ChatMessageRepository;
+import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
 import com.fmi.domain.chatroom.converter.ChatRoomConverter;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
