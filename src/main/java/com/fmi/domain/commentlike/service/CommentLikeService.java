@@ -13,21 +13,16 @@ import com.fmi.domain.commentlike.repository.CommentLikeRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,8 +31,8 @@ public class CommentLikeService {
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
     private final NotificationService notificationService;
-    private final StringRedisTemplate redisTemplate;
-    private final TaskScheduler taskScheduler; // Spring TaskScheduler 주입
+    private final StringRedisTemplate stringRedisTemplate;
+    private final TaskScheduler taskScheduler;
     private final UserRepository userRepository;
     private final CommentLikeConverter commentLikeConverter;
 
@@ -73,7 +68,7 @@ public class CommentLikeService {
 
         String key = "comment:like:queue:" + commentId;
         // 이미 Redis에 key가 있는지 확인
-        boolean exists = Boolean.TRUE.equals(redisTemplate.hasKey(key));
+        boolean exists = Boolean.TRUE.equals(stringRedisTemplate.hasKey(key));
 
         if (!comment.getUser().getId().equals(user.getId())) {
             if (!exists) {
@@ -88,10 +83,10 @@ public class CommentLikeService {
                 taskScheduler.schedule(() -> sendAccumulatedLikeNotification(commentId),
                         Instant.now().plus(Duration.ofMinutes(3)));
 
-                redisTemplate.opsForSet().add(key, "_init");
+                stringRedisTemplate.opsForSet().add(key, "_init");
 
             } else {
-                redisTemplate.opsForSet().add(key, String.valueOf(user.getId()));
+                stringRedisTemplate.opsForSet().add(key, String.valueOf(user.getId()));
 
             }
 //            redisTemplate.expire(key, Duration.ofMinutes(3));
@@ -104,14 +99,14 @@ public class CommentLikeService {
     private void sendAccumulatedLikeNotification(Long commentId) {
 
         String key = LIKE_QUEUE_KEY + commentId;
-        Set<String> userIds = redisTemplate.opsForSet().members(key);
+        Set<String> userIds = stringRedisTemplate.opsForSet().members(key);
         if (userIds == null || userIds.isEmpty()) return;
 
         userIds.remove("_init");
 
         Comment comment = commentRepository.findById(commentId).orElse(null);
         if (comment == null) {
-            redisTemplate.delete(key);
+            stringRedisTemplate.delete(key);
             return;
         }
 
@@ -137,6 +132,6 @@ public class CommentLikeService {
                 comment.getId()
         );
 
-        redisTemplate.delete(key);
+        stringRedisTemplate.delete(key);
     }
 }
