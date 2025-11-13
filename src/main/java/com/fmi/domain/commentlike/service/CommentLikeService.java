@@ -85,11 +85,14 @@ public class CommentLikeService {
                         "COMMENT",
                         comment.getId()
                 );
+                taskScheduler.schedule(() -> sendAccumulatedLikeNotification(commentId),
+                        Instant.now().plus(Duration.ofMinutes(3)));
+
+                redisTemplate.opsForSet().add(key, "_init");
+
             } else {
                 redisTemplate.opsForSet().add(key, String.valueOf(user.getId()));
 
-                taskScheduler.schedule(() -> sendAccumulatedLikeNotification(commentId),
-                        Instant.now().plus(Duration.ofMinutes(3)));
             }
 //            redisTemplate.expire(key, Duration.ofMinutes(3));
         }
@@ -103,6 +106,8 @@ public class CommentLikeService {
         String key = LIKE_QUEUE_KEY + commentId;
         Set<String> userIds = redisTemplate.opsForSet().members(key);
         if (userIds == null || userIds.isEmpty()) return;
+
+        userIds.remove("_init");
 
         Comment comment = commentRepository.findById(commentId).orElse(null);
         if (comment == null) {
