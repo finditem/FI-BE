@@ -87,11 +87,8 @@ public class CommentLikeService {
 
             } else {
                 stringRedisTemplate.opsForSet().add(key, String.valueOf(user.getId()));
-
             }
-//            redisTemplate.expire(key, Duration.ofMinutes(3));
         }
-
         return isLikedNow;
     }
 
