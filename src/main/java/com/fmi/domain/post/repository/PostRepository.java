@@ -6,11 +6,13 @@ import com.fmi.domain.post.data.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -38,6 +40,12 @@ public interface PostRepository extends JpaRepository<Post,Long> {
 
     long countByUser(User user);
 
-    @Query("update Post p set p.viewCnt = p.viewCnt + :count where p.id = :postId")
-    void incrementViewCount(@Param("postId") Long postId, @Param("count") Long count);
+
+    @Modifying
+    @Query(value = """
+    UPDATE Post p SET p.viewCnt = p.viewCnt + :#{#counts[p.id]} 
+    WHERE p.id IN :#{#counts.keySet()}
+""")
+    void batchIncrementViewCounts(@Param("counts") Map<Long, Long> counts);
+
 }

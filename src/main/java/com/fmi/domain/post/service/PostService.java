@@ -37,9 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -315,19 +313,32 @@ public class PostService {
     }
 
 
-    @Scheduled(cron = "0 0 * * * *") // 매시간 정각
+    @Scheduled(cron = "0 0 * * * *")
     public void syncViewCountsToDb() {
         ScanOptions options = ScanOptions.scanOptions().match("post:view:count:*").build();
         try (Cursor<byte[]> cursor = stringRedisTemplate.getConnectionFactory().getConnection().scan(options)) {
 
+            Map<Long, Long> viewCountMap = new HashMap<>();
+
             while (cursor.hasNext()) {
                 String key = new String(cursor.next());
                 Long postId = Long.parseLong(key.substring("post:view:count:".length()));
-                Long count = Long.parseLong(stringRedisTemplate.opsForValue().get(key));
+                Long count = Optional.ofNullable(stringRedisTemplate.opsForValue().get(key))
+                        .map(Long::parseLong)
+                        .orElse(0L);
 
-                postRepository.incrementViewCount(postId, count);
+                if (count > 0) {
+                    viewCountMap.put(postId, count);
+                }
                 stringRedisTemplate.delete(key);
+
             }
+
+            if (!viewCountMap.isEmpty()) {
+                postRepository.batchIncrementViewCounts(viewCountMap);
+            }
+
+
         }
     }
 
