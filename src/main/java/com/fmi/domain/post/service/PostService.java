@@ -296,15 +296,11 @@ public class PostService {
         String viewSetKey = "post:view:set:" + postId;      // 어떤 유저가 조회했는지
         String viewCountKey = "post:view:count:" + postId;  // 게시글 조회수 누적
 
-        //redis에 해당 유저 키가 있으면 True /없으면 False
-//        Boolean newViewer = Boolean.TRUE.equals(stringRedisTemplate.opsForSet().add(viewSetKey, email));
-
         Long added = stringRedisTemplate.opsForSet().add(viewSetKey, email);
         boolean newViewer = added != null && added > 0;
         if (newViewer) {
             stringRedisTemplate.opsForValue().increment(viewCountKey);
         }
-
         stringRedisTemplate.expire(viewSetKey, Duration.ofHours(1));
 
         Long currentViewCount = Optional.ofNullable(stringRedisTemplate.opsForValue().get(viewCountKey))
