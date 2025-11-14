@@ -289,15 +289,13 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
 
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        Long userId = user.getId();
+        String email=userDetails.getUsername();
 
         String viewSetKey = "post:view:set:" + postId;      // 어떤 유저가 조회했는지
         String viewCountKey = "post:view:count:" + postId;  // 게시글 조회수 누적
 
         //redis에 해당 유저 키가 있으면 True /없으면 False
-        Boolean newViewer = Boolean.TRUE.equals(stringRedisTemplate.opsForSet().add(viewSetKey, String.valueOf(userId)));
+        Boolean newViewer = Boolean.TRUE.equals(stringRedisTemplate.opsForSet().add(viewSetKey, email));
 
         if (newViewer) {
             stringRedisTemplate.opsForValue().increment(viewCountKey);
