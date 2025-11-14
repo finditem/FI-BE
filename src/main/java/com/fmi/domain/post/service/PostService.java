@@ -12,6 +12,7 @@ import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.response.PostListResponse;
 import com.fmi.domain.post.response.PostResponse;
 import com.fmi.domain.post.response.PostShareResponse;
+import com.fmi.domain.post.response.ViewResponse;
 import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
@@ -52,6 +53,7 @@ public class PostService {
     private final NotificationService notificationService;
     private final PostFavoriteRepository postFavoriteRepository;
     private final StringRedisTemplate stringRedisTemplate;
+
 
     @Transactional
     public PostResponse createPost(CreatePostDto request, UserDetails userDetails, List<MultipartFile> images) {
@@ -284,7 +286,7 @@ public class PostService {
         return postConverter.toShareResponse(post);
     }
 
-    public long getPostView(Long postId, UserDetails userDetails) {
+    public ViewResponse getPostView(Long postId, UserDetails userDetails) {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
@@ -295,8 +297,10 @@ public class PostService {
         String viewCountKey = "post:view:count:" + postId;  // 게시글 조회수 누적
 
         //redis에 해당 유저 키가 있으면 True /없으면 False
-        Boolean newViewer = Boolean.TRUE.equals(stringRedisTemplate.opsForSet().add(viewSetKey, email));
+//        Boolean newViewer = Boolean.TRUE.equals(stringRedisTemplate.opsForSet().add(viewSetKey, email));
 
+        Long added = stringRedisTemplate.opsForSet().add(viewSetKey, email);
+        boolean newViewer = added != null && added > 0;
         if (newViewer) {
             stringRedisTemplate.opsForValue().increment(viewCountKey);
         }
@@ -307,7 +311,8 @@ public class PostService {
                 .map(Long::parseLong)
                 .orElse(post.getViewCnt());
 
-        return currentViewCount;
+        return postConverter.toViewResponse(postId,currentViewCount);
+
     }
 
 

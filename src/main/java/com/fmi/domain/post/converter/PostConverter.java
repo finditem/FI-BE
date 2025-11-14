@@ -6,6 +6,7 @@ import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.response.PostListResponse;
 import com.fmi.domain.post.response.PostResponse;
 import com.fmi.domain.post.response.PostShareResponse;
+import com.fmi.domain.post.response.ViewResponse;
 import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
@@ -165,5 +166,13 @@ public class PostConverter {
                 .thumbnailUrl(createThumbnail(post))
                 .url(BASE_URL+post.getId())
                 .build();
+    }
+
+    public ViewResponse toViewResponse(long postId, long viewcnt){
+        return ViewResponse.builder()
+                .postId(postId)
+                .viewCount(viewcnt)
+                .build();
+
     }
 }
