@@ -17,7 +17,7 @@ public class CommentLikeController {
 
     private final CommentLikeService commentLikeService;
 
-    @Operation(summary = "좋아요 알림 토글형식")
+    @Operation(summary = "좋아요 알림 토글형식", description = "true 좋아요, false 좋아요 취소")
     @PostMapping("/{commentId}/like")
     public ResponseEntity<ApiResponse<Boolean>> toggleLike(
             @PathVariable Long commentId,

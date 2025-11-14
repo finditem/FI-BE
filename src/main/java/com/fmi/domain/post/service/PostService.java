@@ -16,6 +16,8 @@ import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import com.fmi.domain.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,11 +27,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -46,11 +53,12 @@ public class PostService {
     private final PostConverter postConverter;
     private final NotificationService notificationService;
     private final PostFavoriteRepository postFavoriteRepository;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Transactional
     public PostResponse createPost(CreatePostDto request, UserDetails userDetails, List<MultipartFile> images) {
 
-        String email= userDetails.getUsername();
+        String email = userDetails.getUsername();
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("해당 유저를 찾을 수 없습니다."));
@@ -155,7 +163,7 @@ public class PostService {
     }
 
     @Transactional
-    public Post deletePost(Long postId, UserDetails userDetails){
+    public Post deletePost(Long postId, UserDetails userDetails) {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
@@ -211,8 +219,7 @@ public class PostService {
 
             postRepository.save(newTempPost);
 
-        }
-        else {
+        } else {
             Post tempPost = existingTempPost.get();
             postConverter.temporaryPostFromDto(tempPost, request);
             tempPost.setTemporarySave(true);
@@ -243,7 +250,7 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostResponse getTemporaryPost(UserDetails userDetails){
+    public PostResponse getTemporaryPost(UserDetails userDetails) {
 
         Post post = postRepository.findByUserEmailAndTemporarySaveTrue(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("사용자의 임시 게시글을 찾을 수 없습니다."));
@@ -252,7 +259,7 @@ public class PostService {
     }
 
     @Transactional
-    public Post deleteTemporaryPost(UserDetails userDetails){
+    public Post deleteTemporaryPost(UserDetails userDetails) {
 
         Post post = postRepository.findByUserEmailAndTemporarySaveTrue(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("사용자의 임시 게시글을 찾을 수 없습니다."));
@@ -277,6 +284,51 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("게시글 없음"));
 
         return postConverter.toShareResponse(post);
+    }
+
+    public long getPostView(Long postId, UserDetails userDetails) {
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
+
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        Long userId = user.getId();
+
+        String viewSetKey = "post:view:set:" + postId;      // 어떤 유저가 조회했는지
+        String viewCountKey = "post:view:count:" + postId;  // 게시글 조회수 누적
+
+        //redis에 해당 유저 키가 있으면 True /없으면 False
+        Boolean newViewer = Boolean.TRUE.equals(stringRedisTemplate.opsForSet().add(viewSetKey, String.valueOf(userId)));
+
+        if (newViewer) {
+            stringRedisTemplate.opsForValue().increment(viewCountKey);
+        }
+
+        stringRedisTemplate.expire(viewSetKey, Duration.ofHours(1));
+
+        Long currentViewCount = Optional.ofNullable(stringRedisTemplate.opsForValue().get(viewCountKey))
+                .map(Long::parseLong)
+                .orElse(post.getViewCnt());
+
+        return currentViewCount;
+    }
+
+
+    @Scheduled(cron = "0 0 * * * *") // 매시간 정각
+    public void syncViewCountsToDb() {
+        ScanOptions options = ScanOptions.scanOptions().match("post:view:count:*").build();
+        try (Cursor<byte[]> cursor = stringRedisTemplate.getConnectionFactory().getConnection().scan(options)) {
+
+            while (cursor.hasNext()) {
+                String key = new String(cursor.next());
+                Long postId = Long.parseLong(key.substring("post:view:count:".length()));
+                Long count = Long.parseLong(stringRedisTemplate.opsForValue().get(key));
+
+                postRepository.incrementViewCount(postId, count);
+                stringRedisTemplate.delete(key);
+            }
+        }
     }
 
 }

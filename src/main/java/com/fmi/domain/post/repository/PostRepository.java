@@ -37,4 +37,7 @@ public interface PostRepository extends JpaRepository<Post,Long> {
     List<Post> findAllPublishedWithImagesByUser(@Param("user") User user);
 
     long countByUser(User user);
+
+    @Query("update Post p set p.viewCnt = p.viewCnt + :count where p.id = :postId")
+    void incrementViewCount(@Param("postId") Long postId, @Param("count") Long count);
 }

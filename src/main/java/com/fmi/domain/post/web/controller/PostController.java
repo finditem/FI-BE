@@ -124,4 +124,14 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess(shareResponse));
     }
 
+    @GetMapping("/views/{postId}")
+    public ResponseEntity<ApiResponse<Long>> getPostView(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        Long viewcnt = postService.getPostView(postId, userDetails);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(viewcnt));
+    }
+
 }
