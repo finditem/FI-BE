@@ -10,10 +10,11 @@ public enum NotificationType {
     CHAT("채팅"),
     INQUIRY_REPLY("문의 답변"),
     REPORT_RESULT("신고 처리 결과"),
-    FAVORITE("좋아요"),
+    FAVORITE("즐겨찾기"),
     CATEGORY("카테고리"),
     NOTICE("공지사항"),
-    SYSTEM("시스템");
+    SYSTEM("시스템"),
+    LIKE("좋아요");
 
 
     private final String description;

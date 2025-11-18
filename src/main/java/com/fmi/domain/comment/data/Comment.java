@@ -1,6 +1,7 @@
 package com.fmi.domain.comment.data;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.commentlike.data.CommentLike;
 import com.fmi.domain.post.data.Post;
 import jakarta.persistence.*;
 import lombok.*;
@@ -45,5 +46,10 @@ public class Comment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post post;
+
+    private int likeCount = 0;
+
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommentLike> likes = new ArrayList<>();
 
 }

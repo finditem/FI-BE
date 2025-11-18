@@ -4,6 +4,7 @@ import com.fmi.domain.Enum.Type;
 import com.fmi.domain.post.response.PostListResponse;
 import com.fmi.domain.post.response.PostResponse;
 import com.fmi.domain.post.response.PostShareResponse;
+import com.fmi.domain.post.response.ViewResponse;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
@@ -122,6 +123,17 @@ public class PostController {
         PostShareResponse shareResponse = postService.getSharePost(postId);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(shareResponse));
+    }
+
+    @GetMapping("/views/{postId}")
+    @Operation(summary = "게시글 조회수 증가",description = "한 유저당 시간 당 1 조회수로 제한")
+    public ResponseEntity<ApiResponse<ViewResponse>> getPostView(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        ViewResponse response = postService.getPostView(postId, userDetails);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
 }
