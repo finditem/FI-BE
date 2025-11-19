@@ -133,14 +133,14 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @GetMapping("/filter")
-    @Operation(summary = "게시글 필터",description = "지역, 카테고리, 정렬, 찾음여부, 기간")
-    public ResponseEntity<ApiResponse<FilterResponse>> getFilter(
-
-    ){
-
-
-        return ResponseEntity.ok(ApiResponse.onSuccess());
-    }
+//    @GetMapping("/filter")
+//    @Operation(summary = "게시글 필터",description = "지역, 카테고리, 정렬, 찾음여부, 기간")
+//    public ResponseEntity<ApiResponse<FilterResponse>> getFilter(
+//
+//    ){
+//
+//
+//        return ResponseEntity.ok(ApiResponse.onSuccess());
+//    }
 
 }

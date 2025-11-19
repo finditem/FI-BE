@@ -68,7 +68,7 @@ public class Post {
     private double radius;
 
     @Column(name="favorite_count")
-    private int favoriteCount;
+    private Integer favoriteCount = 0;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

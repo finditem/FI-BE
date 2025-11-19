@@ -53,7 +53,9 @@ public class PostFavoriteService {
         }
 
         boolean newStatus = favorite.toggle();
-        post.setFavoriteCount(post.getFavoriteCount() + (newStatus ? 1 : -1));
+
+        int currentCount = post.getFavoriteCount() != null ? post.getFavoriteCount() : 0;
+        post.setFavoriteCount(currentCount + (newStatus ? 1 : -1));
 
         return favorite.isFavorite();
     }
