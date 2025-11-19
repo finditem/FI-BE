@@ -26,9 +26,6 @@ public class PostFavorite {
     @Column(name = "isfavorite")
     private boolean isFavorite;
 
-    @Column(name="favorite_count")
-    private int favoriteCount;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -37,7 +34,9 @@ public class PostFavorite {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    public void toggle() {
+    public boolean toggle() {
         this.isFavorite = !this.isFavorite;
+
+        return isFavorite;
     }
 }
