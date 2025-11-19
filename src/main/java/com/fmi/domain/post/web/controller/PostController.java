@@ -1,10 +1,7 @@
 package com.fmi.domain.post.web.controller;
 
 import com.fmi.domain.Enum.Type;
-import com.fmi.domain.post.response.PostListResponse;
-import com.fmi.domain.post.response.PostResponse;
-import com.fmi.domain.post.response.PostShareResponse;
-import com.fmi.domain.post.response.ViewResponse;
+import com.fmi.domain.post.response.*;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
@@ -134,6 +131,16 @@ public class PostController {
         ViewResponse response = postService.getPostView(postId, userDetails);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @GetMapping("/filter")
+    @Operation(summary = "게시글 필터",description = "지역, 카테고리, 정렬, 찾음여부, 기간")
+    public ResponseEntity<ApiResponse<FilterResponse>> getFilter(
+
+    ){
+
+
+        return ResponseEntity.ok(ApiResponse.onSuccess());
     }
 
 }
