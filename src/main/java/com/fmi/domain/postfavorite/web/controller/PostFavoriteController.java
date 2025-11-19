@@ -22,7 +22,7 @@ public class PostFavoriteController {
 
     private final PostFavoriteService postFavoriteService;
 
-    @Operation(summary = "즐겨찾기 토글형식",description = " true면 즐겨찾기 추가, false면 해제")
+    @Operation(summary = "즐겨찾기 추가",description = "토글형식 - true: 즐겨찾기 추가, false: 해제")
     @PostMapping("/{postId}/favorite")
     public ResponseEntity<ApiResponse<PostFavoriteResponse>> toggleFavorite(@PathVariable Long postId,
                                                               @AuthenticationPrincipal UserDetails userDetails) {
