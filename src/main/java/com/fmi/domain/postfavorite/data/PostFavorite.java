@@ -26,6 +26,9 @@ public class PostFavorite {
     @Column(name = "isfavorite")
     private boolean isFavorite;
 
+    @Column(name="favorite_count")
+    private int favoriteCount;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

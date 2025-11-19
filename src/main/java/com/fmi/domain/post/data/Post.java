@@ -1,5 +1,6 @@
 package com.fmi.domain.post.data;
 
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
@@ -50,6 +51,9 @@ public class Post {
     @Column(name = "post_type")
     @Enumerated(EnumType.STRING)
     private Type postType;
+
+    @Enumerated(EnumType.STRING)
+    private Category category;
 
     @Column(name = "content", nullable = false)
     private String content;
