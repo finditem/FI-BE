@@ -51,6 +51,7 @@ public class ChatMessageService {
     private final S3Service s3Service;
     private final ChatRoomPresenceService presenceService;
     private final BlockService blockService;
+    private final ChatNotificationService chatNotificationService;
 
     public MessageResponseDTO sendMessage(Long roomId, Long senderId, SendMessageRequestDTO req) {
         var room = chatRoomRepository.findById(roomId).orElseThrow(
@@ -155,6 +156,8 @@ public class ChatMessageService {
                 } else {
                     // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
                     pt.incrementUnreadCount();
+                    User receiver = pt.getUser();
+                    chatNotificationService.saveOrUpdateNewChatNotification(receiver, roomId, newMessage.getContent());
                 }
 
                 // 갱신된 정보로 DTO 생성
