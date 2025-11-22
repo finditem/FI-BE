@@ -45,6 +45,7 @@ public class PostConverter {
                 .viewCnt(0)
                 .date(request.getDate())
                 .radius(request.getRadius())
+                .category(request.getCategory())
                 .temporarySave(request.isTemporarySave())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -138,6 +139,7 @@ public class PostConverter {
                 .imageUrls(imageUrls)
                 .itemStatus(post.getItemStatus())
                 .postType(post.getPostType())
+                .category(post.getCategory())
                 .build();
     }
 
