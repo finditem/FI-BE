@@ -14,8 +14,11 @@ public class PostFilterDto {
 
     private Category category;   // 카테고리
     private String address;     // 지역
-    private Status itemStatus;       // 물건 찾는중/찾음 상태
-    private LocalDate StartDate; // 시작일
-    private LocalDate EndDate;   // 종료일
-    private SortType sortType;   // 정렬
+    private LocalDate startDate; // 시작일
+    private LocalDate endDate;   // 종료일
+
+    @Builder.Default
+    private Status itemStatus = Status.SEARCHING;// 물건 찾는중/찾음 상태
+    @Builder.Default
+    private SortType sortType = SortType.LATEST;
 }

@@ -4,12 +4,15 @@ import com.fmi.domain.Enum.Type;
 import com.fmi.domain.post.response.*;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.post.web.dto.CreatePostDto;
+import com.fmi.domain.post.web.dto.PostFilterDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -133,14 +136,15 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-//    @GetMapping("/filter")
-//    @Operation(summary = "게시글 필터",description = "지역, 카테고리, 정렬, 찾음여부, 기간")
-//    public ResponseEntity<ApiResponse<FilterResponse>> getFilter(
-//
-//    ){
-//
-//
-//        return ResponseEntity.ok(ApiResponse.onSuccess());
-//    }
+    @PostMapping("/filter")
+    @Operation(summary = "게시글 필터",description = "지역, 카테고리, 정렬, 찾음여부, 기간")
+    public ResponseEntity<ApiResponse<FilterResponse>> getFilter(@RequestBody PostFilterDto dto,
+                                                                 @RequestParam(required = false) Long cursor,
+                                                                 @PageableDefault(size = 20) Pageable pageable){
+
+        FilterResponse response = postService.getPostsByFilter(dto, pageable, cursor);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
 
 }

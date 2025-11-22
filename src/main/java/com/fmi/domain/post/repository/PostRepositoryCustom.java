@@ -8,5 +8,5 @@ import org.springframework.data.domain.Slice;
 
 public interface PostRepositoryCustom {
 
-    Slice<Post> findPostsByFilters(PostFilterDto filter, Pageable pageable);
+    Slice<Post> findPostsByFilters(PostFilterDto filter, Pageable pageable, Long cursorId);
 }

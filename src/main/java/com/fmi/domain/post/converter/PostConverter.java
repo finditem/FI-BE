@@ -3,13 +3,11 @@ package com.fmi.domain.post.converter;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
-import com.fmi.domain.post.response.PostListResponse;
-import com.fmi.domain.post.response.PostResponse;
-import com.fmi.domain.post.response.PostShareResponse;
-import com.fmi.domain.post.response.ViewResponse;
+import com.fmi.domain.post.response.*;
 import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -175,4 +173,19 @@ public class PostConverter {
                 .build();
 
     }
+
+    public FilterResponse toFilterResponse(Slice<Post> slice) {
+        List<PostListResponse> postDtos = slice.getContent()
+                .stream()
+                .map(this::toPostListResponse)
+                .toList();
+
+        Long nextCursor = slice.hasNext()
+                ? slice.getContent().get(slice.getContent().size() - 1).getId()
+                : null;
+
+        return new FilterResponse(postDtos, slice.hasNext(), nextCursor);
+    }
+
+
 }
