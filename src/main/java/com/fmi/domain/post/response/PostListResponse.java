@@ -25,6 +25,7 @@ public class PostListResponse {
     private Status itemStatus;
     private Type postType;
     private Category category;//전자기기 , 지갑 등
+    private Integer favoriteCount;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

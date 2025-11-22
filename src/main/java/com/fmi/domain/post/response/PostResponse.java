@@ -25,5 +25,6 @@ public class PostResponse {
     private List<String> imageUrls;
     private double radius;
     private Category category;
+    private Integer favoriteCount;
 
 }

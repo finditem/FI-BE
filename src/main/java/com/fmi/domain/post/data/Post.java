@@ -67,6 +67,7 @@ public class Post {
     @Column(name = "radius")
     private double radius;
 
+    @Builder.Default
     @Column(name="favorite_count")
     private Integer favoriteCount = 0;
 

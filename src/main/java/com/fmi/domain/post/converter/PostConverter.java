@@ -104,6 +104,7 @@ public class PostConverter {
         if (dto.getLongitude() != 0) post.setLongitude(dto.getLongitude());
         if (dto.getRadius() != 0) post.setRadius(dto.getRadius());
         if (dto.getContent() != null) post.setContent(dto.getContent());
+        if (dto.getCategory() != null) post.setCategory(dto.getCategory());
 
         post.setUpdatedAt(LocalDateTime.now());
     }
@@ -142,6 +143,7 @@ public class PostConverter {
                 .itemStatus(post.getItemStatus())
                 .postType(post.getPostType())
                 .category(post.getCategory())
+                .favoriteCount(post.getFavoriteCount())
                 .build();
     }
 
@@ -155,6 +157,7 @@ public class PostConverter {
                 .address(post.getAddress())
                 .itemStatus(post.getItemStatus())
                 .postType(post.getPostType())
+                .favoriteCount(post.getFavoriteCount())
                 .category(post.getCategory())
                 .createdAt(post.getCreatedAt())
                 .build();
