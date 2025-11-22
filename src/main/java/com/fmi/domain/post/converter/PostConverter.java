@@ -153,6 +153,7 @@ public class PostConverter {
                 .address(post.getAddress())
                 .itemStatus(post.getItemStatus())
                 .postType(post.getPostType())
+                .category(post.getCategory())
                 .createdAt(post.getCreatedAt())
                 .build();
     }

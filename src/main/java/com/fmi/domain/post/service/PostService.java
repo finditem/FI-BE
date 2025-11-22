@@ -179,6 +179,7 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public List<PostListResponse> getAllPosts(Type type, int page, int size) {
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Post> postPage = postRepository.findByTemporarySaveFalseAndPostType(type, pageable);
 
