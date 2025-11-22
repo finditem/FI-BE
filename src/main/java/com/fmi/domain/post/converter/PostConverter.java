@@ -66,6 +66,7 @@ public class PostConverter {
                 .radius(request.getRadius())
                 .viewCnt(0)
                 .date(request.getDate())
+                .category(request.getCategory())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -117,6 +118,7 @@ public class PostConverter {
         if (dto.getLongitude() != 0) post.setLongitude(dto.getLongitude());
         if (dto.getRadius() != 0) post.setRadius(dto.getRadius());
         if (dto.getContent() != null) post.setContent(dto.getContent());
+        if (dto.getCategory() != null) post.setCategory(dto.getCategory());
 
         post.setUpdatedAt(LocalDateTime.now());
     }
