@@ -6,6 +6,7 @@ import com.fmi.domain.comment.converter.CommentConverter;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.comment.response.CommentResponse;
+import com.fmi.domain.comment.response.CommentSliceResponse;
 import com.fmi.domain.comment.web.dto.CreateCommentDto;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
@@ -13,6 +14,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -186,14 +188,28 @@ public class CommentService {
         return commentConverter.toCommentResponse(comment);
     }
 
-    @Transactional
-    public List<CommentResponse> getComment(Long postId) {
 
-        List<Comment> comments = commentRepository.findByPostId(postId);
+    @Transactional(readOnly = true)
+    public CommentSliceResponse getComments(Long postId, Long cursor, int size) {
 
-        return comments.stream()
+        List<Comment> comments;
+
+        if (cursor == null) {
+            comments = commentRepository.findTopByPostIdOrderByIdDesc(postId, Pageable.ofSize(size + 1));
+        } else {
+            comments = commentRepository.findByPostIdAndIdLessThanOrderByIdDesc(postId, cursor, Pageable.ofSize(size + 1));
+        }
+
+        boolean hasNext = comments.size() > size;
+        Long nextCursor = hasNext ? comments.get(size - 1).getId() : null;
+
+        List<CommentResponse> result = comments.stream()
+                .limit(size)
                 .map(commentConverter::toCommentResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return new CommentSliceResponse(result, hasNext, nextCursor);
     }
+
 }
 
