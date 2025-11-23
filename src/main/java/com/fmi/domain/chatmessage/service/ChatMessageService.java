@@ -143,7 +143,7 @@ public class ChatMessageService {
             if (!pt.getUser().getId().equals(senderId)) {
                 String email = pt.getUser().getEmail();
                 boolean isPresent = presenceService.isUserPresent(roomId, email);
-
+                String preview = buildPreview(newMessage);
                 if (isPresent) {
                     // 방안에 있음 -> 즉시 읽음. DB unreadCount = 0
                     pt.readMessages(newMessage.getId());
@@ -157,13 +157,13 @@ public class ChatMessageService {
                     // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
                     pt.incrementUnreadCount();
                     User receiver = pt.getUser();
-                    chatNotificationService.saveOrUpdateNewChatNotification(receiver, roomId, newMessage.getContent());
+                    chatNotificationService.saveOrUpdateNewChatNotification(receiver, roomId, preview);
                 }
 
                 // 갱신된 정보로 DTO 생성
                 ListUpdateDTO listUpdateDTO = ListUpdateDTO.builder()
                         .roomId(roomId)
-                        .lastMessage(buildPreview(newMessage))
+                        .lastMessage(preview)
                         .lastMessageSentAt(newMessage.getCreatedAt())
                         .unreadCount(pt.getUnreadCount())
                         .build();
