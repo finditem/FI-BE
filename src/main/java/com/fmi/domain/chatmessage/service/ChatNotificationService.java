@@ -34,7 +34,7 @@ public class ChatNotificationService {
         }
 
         String title = (type == NotificationType.CHAT_REMINDER)
-                ? "읽지 않은 메시지 알림"
+                ? "확인하지 않은 채팅이 있어요."
                 : "새로운 채팅이 도착했어요.";
 
         Optional<Notification> notification =
