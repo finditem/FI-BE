@@ -20,8 +20,8 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
     @Query("SELECT cp FROM ChatRoomParticipant cp " +
            "JOIN FETCH cp.user u " +
            "LEFT JOIN FETCH u.notificationSettings " +
-           "WHERE cp.unread > 0 " +
-           "AND cp.firstUnreadAt <= :threshold" +
+           "WHERE cp.unreadCount > 0 " +
+           "AND cp.firstUnreadAt <= :threshold " +
            "AND cp.lastRemindedAt IS NULL")
     List<ChatRoomParticipant> findParticipantsForReminder(@Param("threshold") LocalDateTime threshold);
 }
