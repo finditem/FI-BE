@@ -1,6 +1,7 @@
 package com.fmi.domain.notification.service;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notification.converter.NotificationConverter;
 import com.fmi.domain.notification.data.Notification;
 import com.fmi.domain.notification.data.NotificationSettings;
@@ -10,20 +11,19 @@ import com.fmi.domain.notification.repository.NotificationSettingsRepository;
 import com.fmi.domain.notification.web.dto.request.NotificationSettingsUpdateDTO;
 import com.fmi.domain.notification.web.dto.response.NotificationListDTO;
 import com.fmi.domain.notification.web.dto.response.NotificationSettingsDTO;
+import com.fmi.domain.post.data.Post;
+import com.fmi.domain.user.repository.UserCategoryRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import com.fmi.domain.auth.repository.UserRepository;
-import com.fmi.domain.user.repository.UserCategoryRepository;
-import com.fmi.domain.post.data.Post;
 
 @Slf4j
 @Service
@@ -297,6 +297,29 @@ public class NotificationService {
         }
     }
 
+    /**
+     * 새로운 알림 갱신 (채팅 알림 갱신용)
+     */
+    @Transactional
+    public void updateChatNotification(Notification notification, String newMessage) {
+        notification.updateContent(newMessage);
+        log.info(" 알림 갱신 완료: {}", notification.getNotificationId());
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        simpMessagingTemplate.convertAndSendToUser(
+                                notification.getUser().getId().toString(),
+                                "/queue/notification",
+                                notificationConverter.toListDTO(notification)
+                        );
+                    } catch (Exception ignored) {}
+                }
+            });
+        }
+    }
     
 }
 
