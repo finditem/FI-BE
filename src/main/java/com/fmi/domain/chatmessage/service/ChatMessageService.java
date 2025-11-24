@@ -13,6 +13,7 @@ import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
+import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
@@ -155,9 +156,8 @@ public class ChatMessageService {
                     broker.convertAndSendToUser(sender.getEmail(), "/queue/read-receipts", receiptDTO);
                 } else {
                     // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
-                    pt.incrementUnreadCount();
-                    User receiver = pt.getUser();
-                    chatNotificationService.saveOrUpdateNewChatNotification(receiver, roomId, preview);
+                    pt.onNewMessageArrived(newMessage);
+                    chatNotificationService.saveOrUpdateChatNotification(pt.getUser(), roomId, preview, NotificationType.CHAT);
                 }
 
                 // 갱신된 정보로 DTO 생성
