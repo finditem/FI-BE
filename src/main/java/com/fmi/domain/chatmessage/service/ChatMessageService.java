@@ -144,7 +144,7 @@ public class ChatMessageService {
             if (!pt.getUser().getId().equals(senderId)) {
                 String email = pt.getUser().getEmail();
                 boolean isPresent = presenceService.isUserPresent(roomId, email);
-                String preview = buildPreview(newMessage);
+                String preview = newMessage.getPreviewContent();
                 if (isPresent) {
                     // 방안에 있음 -> 즉시 읽음. DB unreadCount = 0
                     pt.readMessages(newMessage.getId());
@@ -173,15 +173,6 @@ public class ChatMessageService {
 
         }
 
-    }
-
-    private String buildPreview(ChatMessage message) {
-        if (message.getContent() != null && !message.getContent().isBlank()) {
-            return message.getContent();
-        } else if (message.getMessageType() == MessageType.IMAGE) {
-            return "사진을 보냈습니다.";
-        }
-        return null;
     }
 
     @Transactional(readOnly = true)
