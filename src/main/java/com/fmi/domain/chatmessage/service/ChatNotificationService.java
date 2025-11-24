@@ -22,10 +22,10 @@ public class ChatNotificationService {
     private final NotificationService notificationService;
 
     /**
-     * 새로운 채팅 알림을 갱신하거나 새로 생성합니다.
+     * 채팅 알림을 갱신하거나 새로 생성합니다.
      * 채팅방당 하나의 알림 블록만 유지합니다.
      */
-    public void saveOrUpdateNewChatNotification(User receiver, Long roomId, String content) {
+    public void saveOrUpdateChatNotification(User receiver, Long roomId, String content, NotificationType type) {
 
         Optional<NotificationSettings> notificationSettings = notificationSettingsRepository.findByUser(receiver);
 
@@ -33,11 +33,13 @@ public class ChatNotificationService {
             return;
         }
 
-        String newTitle = "새로운 채팅이 도착했어요.";
+        String title = (type == NotificationType.CHAT_REMINDER)
+                ? "읽지 않은 메시지 알림"
+                : "새로운 채팅이 도착했어요.";
 
         Optional<Notification> notification =
                 notificationRepository.findByUserAndReferenceIdAndType(
-                        receiver, roomId, NotificationType.CHAT
+                        receiver, roomId, type
                 );
 
         if (notification.isPresent()) {
@@ -48,8 +50,8 @@ public class ChatNotificationService {
         } else {
             notificationService.createNotification(
                     receiver,
-                    NotificationType.CHAT,
-                    newTitle,
+                    type,
+                    title,
                     content,
                     "CHAT",
                     roomId
