@@ -8,6 +8,7 @@ public enum NotificationType {
     REPLY("대댓글"),
     MENTION("맨션"),
     CHAT("채팅"),
+    CHAT_REMINDER("채팅 리마인더"),
     INQUIRY_REPLY("문의 답변"),
     REPORT_RESULT("신고 처리 결과"),
     FAVORITE("즐겨찾기"),
