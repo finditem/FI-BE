@@ -45,7 +45,7 @@ public class ChatReminderService {
                 User receiver = pt.getUser();
                 Long roomId = pt.getChatRoom().getId();
 
-                String content = pt.getLastMessage().getContent();
+                String content = pt.getLastMessage().getPreviewContent();
 
                 chatNotificationService.saveOrUpdateChatNotification(
                         receiver,
