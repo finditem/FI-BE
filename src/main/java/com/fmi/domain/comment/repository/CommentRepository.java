@@ -23,9 +23,9 @@ public interface CommentRepository extends JpaRepository<Comment,Long> {
     long countByUser(User user);
 
     @Query("select c from Comment c where c.post.id = :postId order by c.id desc")
-    List<Comment> findTopByPostIdOrderByIdDesc(@Param("postId") Long postId, Pageable pageable);
+    Slice<Comment> findTopByPostIdOrderByIdDesc(@Param("postId") Long postId, Pageable pageable);
 
     @Query("select c from Comment c where c.post.id = :postId and c.id < :cursor order by c.id desc")
-    List<Comment> findByPostIdAndIdLessThanOrderByIdDesc(@Param("postId") Long postId, @Param("cursor") Long cursor, Pageable pageable);
+    Slice<Comment> findByPostIdAndIdLessThanOrderByIdDesc(@Param("postId") Long postId, @Param("cursor") Long cursor, Pageable pageable);
 
 }

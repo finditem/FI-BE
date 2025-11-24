@@ -15,6 +15,7 @@ import com.fmi.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -192,23 +193,25 @@ public class CommentService {
     @Transactional(readOnly = true)
     public CommentSliceResponse getComments(Long postId, Long cursor, int size) {
 
-        List<Comment> comments;
+        Slice<Comment> comments;
 
         if (cursor == null) {
-            comments = commentRepository.findTopByPostIdOrderByIdDesc(postId, Pageable.ofSize(size + 1));
+            comments = commentRepository.findTopByPostIdOrderByIdDesc(postId, Pageable.ofSize(size));
         } else {
-            comments = commentRepository.findByPostIdAndIdLessThanOrderByIdDesc(postId, cursor, Pageable.ofSize(size + 1));
+            comments = commentRepository.findByPostIdAndIdLessThanOrderByIdDesc(postId, cursor, Pageable.ofSize(size));
         }
 
-        boolean hasNext = comments.size() > size;
-        Long nextCursor = hasNext ? comments.get(size - 1).getId() : null;
+        Long nextCursor  = comments.hasNext()
+                ? comments.getContent().get(comments.getContent().size() - 1).getId()
+                : null;
+
 
         List<CommentResponse> result = comments.stream()
                 .limit(size)
                 .map(commentConverter::toCommentResponse)
                 .toList();
 
-        return new CommentSliceResponse(result, hasNext, nextCursor);
+        return new CommentSliceResponse(result, comments.hasNext(), nextCursor);
     }
 
 }
