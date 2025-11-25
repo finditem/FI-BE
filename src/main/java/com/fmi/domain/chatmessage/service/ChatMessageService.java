@@ -81,8 +81,8 @@ public class ChatMessageService {
         updateParticipantsOnNewMessage(room.getId(), chatMessage);
 
         MessageResponseDTO responseDTO = messageResponseDTO(chatMessage);
-        broker.convertAndSendToUser(recipient.getEmail(), "/queue/messages", responseDTO);
-        broker.convertAndSendToUser(sender.getEmail(), "/queue/messages", responseDTO);
+        broker.convertAndSendToUser(recipient.getId().toString(), "/queue/messages", responseDTO);
+        broker.convertAndSendToUser(sender.getId().toString(), "/queue/messages", responseDTO);
         return responseDTO;
     }
 
@@ -126,8 +126,8 @@ public class ChatMessageService {
 
         // DTO로 변환하여 WebSocket 브로드캐스팅
         MessageImageResponseDTO responseDTO = messageImageResponseDTO(savedMessage);
-        broker.convertAndSendToUser(recipient.getEmail(), "/queue/messages", responseDTO);
-        broker.convertAndSendToUser(sender.getEmail(), "/queue/messages", responseDTO);
+        broker.convertAndSendToUser(recipient.getId().toString(), "/queue/messages", responseDTO);
+        broker.convertAndSendToUser(sender.getId().toString(), "/queue/messages", responseDTO);
         return responseDTO;
     }
 
@@ -142,8 +142,8 @@ public class ChatMessageService {
 
             // 수신자의 카운트만 증가
             if (!pt.getUser().getId().equals(senderId)) {
-                String email = pt.getUser().getEmail();
-                boolean isPresent = presenceService.isUserPresent(roomId, email);
+                Long userId = pt.getUser().getId();
+                boolean isPresent = presenceService.isUserPresent(roomId, pt.getUser().getId());
                 String preview = newMessage.getPreviewContent();
                 if (isPresent) {
                     // 방안에 있음 -> 즉시 읽음. DB unreadCount = 0
@@ -153,7 +153,7 @@ public class ChatMessageService {
                             .readerId(pt.getUser().getId())
                             .lastReadMessageId(newMessage.getId())
                             .build();
-                    broker.convertAndSendToUser(sender.getEmail(), "/queue/read-receipts", receiptDTO);
+                    broker.convertAndSendToUser(sender.getId().toString(), "/queue/read-receipts", receiptDTO);
                 } else {
                     // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
                     pt.onNewMessageArrived(newMessage);
@@ -168,7 +168,7 @@ public class ChatMessageService {
                         .unreadCount(pt.getUnreadCount())
                         .build();
 
-                broker.convertAndSendToUser(email, "/queue/list-updates", listUpdateDTO);
+                broker.convertAndSendToUser(userId.toString(), "/queue/list-updates", listUpdateDTO);
             }
 
         }
@@ -265,7 +265,7 @@ public class ChatMessageService {
                 .lastReadMessageId(lastMessageId)
                 .build();
 
-        broker.convertAndSendToUser(recipient.getEmail(), "/queue/read-receipts", receiptDTO);
+        broker.convertAndSendToUser(recipient.getId().toString(), "/queue/read-receipts", receiptDTO);
 
     }
 }

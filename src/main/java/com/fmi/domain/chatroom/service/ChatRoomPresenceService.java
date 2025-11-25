@@ -17,28 +17,30 @@ public class ChatRoomPresenceService {
     private static final Duration TTL = Duration.ofSeconds(45);
 
     private String roomKey(Long roomId) { return ROOM_KEY + roomId; }
-    private String userKey(String email) { return USER_KEY + email; }
+    private String userKey(Long userId) { return USER_KEY + userId; }
     private String sessKey(String sessionId){ return SESS_KEY + sessionId; }
 
     /**
      * 방 입장 (Client가 /app/rooms/{roomId}/enter 호출)
      */
-    public void enter(Long roomId, String email, String sessionId) {
-        redis.opsForSet().add(roomKey(roomId), email);
-        redis.opsForSet().add(userKey(email), String.valueOf(roomId));
+    public void enter(Long roomId, Long userId, String sessionId) {
+        redis.opsForSet().add(roomKey(roomId), userId.toString());
+        redis.opsForSet().add(userKey(userId), String.valueOf(roomId));
         // 세션 ↔ 방 매핑
-        redis.opsForHash().put(sessKey(sessionId), "email", email);
+        redis.opsForHash().put(sessKey(sessionId), "userId", userId.toString());
         redis.opsForSet().add(sessKey(sessionId) + ":rooms", String.valueOf(roomId));
-        touchTTL(sessionId, roomId, email);
+        touchTTL(sessionId, roomId, userId);
     }
 
     /**
      * 방 퇴장 (Client가 /app/rooms/{roomId}/leave 호출)
      */
-    public void leave(Long roomId, String email, String sessionId) {
+    public void leave(Long roomId, Long userId, String sessionId) {
         String sRoomId = String.valueOf(roomId);
-        redis.opsForSet().remove(roomKey(roomId), email);
-        redis.opsForSet().remove(userKey(email), sRoomId);
+        String sUserId = String.valueOf(userId);
+
+        redis.opsForSet().remove(roomKey(roomId), sUserId);
+        redis.opsForSet().remove(userKey(userId), sRoomId);
         redis.opsForSet().remove(sessKey(sessionId) + ":rooms", sRoomId);
     }
 
@@ -47,15 +49,16 @@ public class ChatRoomPresenceService {
      */
     public void disconnect(String sessionId) {
         var h = redis.opsForHash();
-        String email = (String) h.get(sessKey(sessionId), "email");
+        String sUserId = (String) h.get(sessKey(sessionId), "userId");
 
-        if (email != null) {
+        if (sUserId != null) {
+            Long userId = Long.valueOf(sUserId);
             var rooms = redis.opsForSet().members(sessKey(sessionId) + ":rooms");
             if (rooms != null) {
                 for (String r : rooms) {
                     Long roomId = Long.valueOf(r);
-                    redis.opsForSet().remove(roomKey(roomId), email);
-                    redis.opsForSet().remove(userKey(email), r);
+                    redis.opsForSet().remove(roomKey(roomId), sUserId);
+                    redis.opsForSet().remove(userKey(userId), r);
                 }
             }
         }
@@ -66,16 +69,16 @@ public class ChatRoomPresenceService {
     /**
      * 유저가 방안에 있는지 확인
      */
-    public boolean isUserPresent(Long roomId, String email) {
-        return Boolean.TRUE.equals(redis.opsForSet().isMember(roomKey(roomId), email));
+    public boolean isUserPresent(Long roomId, Long userId) {
+        return Boolean.TRUE.equals(redis.opsForSet().isMember(roomKey(roomId), userId.toString()));
     }
 
     /**
      * TTL 연장 (Client가 /app/rooms/{roomId}/ping 호출)
      */
-    public void touchTTL(String sessionId, Long roomId, String email) {
+    public void touchTTL(String sessionId, Long roomId, Long userId) {
         redis.expire(roomKey(roomId), TTL);
-        redis.expire(userKey(email), TTL);
+        redis.expire(userKey(userId), TTL);
         redis.expire(sessKey(sessionId), TTL);
         redis.expire(sessKey(sessionId) + ":rooms", TTL);
     }
