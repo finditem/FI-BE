@@ -8,6 +8,7 @@ import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.commentlike.converter.CommentLikeConverter;
 import com.fmi.domain.commentlike.data.CommentLike;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.commentlike.repository.CommentLikeRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -77,7 +78,7 @@ public class CommentLikeService {
                         NotificationType.LIKE,
                         "댓글에 좋아요가 달렸습니다.",
                         String.format("%s님이 회원님의 댓글을 좋아했습니다.", user.getNickname()),
-                        "COMMENT",
+                        ReferenceType.COMMENT,
                         comment.getId()
                 );
                 taskScheduler.schedule(() -> sendAccumulatedLikeNotification(commentId),
@@ -125,7 +126,7 @@ public class CommentLikeService {
                 NotificationType.LIKE,
                 "댓글에 좋아요가 달렸습니다.",
                 message,
-                "COMMENT",
+                ReferenceType.COMMENT,
                 comment.getId()
         );
 

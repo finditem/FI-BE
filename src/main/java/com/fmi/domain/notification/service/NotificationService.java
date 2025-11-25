@@ -6,6 +6,7 @@ import com.fmi.domain.notification.converter.NotificationConverter;
 import com.fmi.domain.notification.data.Notification;
 import com.fmi.domain.notification.data.NotificationSettings;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.repository.NotificationRepository;
 import com.fmi.domain.notification.repository.NotificationSettingsRepository;
 import com.fmi.domain.notification.web.dto.request.NotificationSettingsUpdateDTO;
@@ -205,8 +206,8 @@ public class NotificationService {
      * 알림 생성 (내부 사용 - 다른 Service에서 호출)
      */
     @Transactional
-    public void createNotification(User user, NotificationType type, String title, 
-                                   String message, String referenceType, Long referenceId) {
+    public void createNotification(User user, NotificationType type, String title,
+                                   String message, ReferenceType referenceType, Long referenceId) {
         // 알림 설정 확인
         NotificationSettings settings = notificationSettingsRepository.findByUser(user).orElse(null);
         
@@ -254,7 +255,7 @@ public class NotificationService {
         for (com.fmi.domain.auth.data.User user : users) {
             NotificationSettings settings = notificationSettingsRepository.findByUser(user).orElse(null);
             if (settings == null || Boolean.TRUE.equals(settings.getNoticeEnabled())) {
-                createNotification(user, NotificationType.NOTICE, title, message, "NOTICE", noticeId);
+                createNotification(user, NotificationType.NOTICE, title, message, ReferenceType.NOTICE, noticeId);
             }
         }
     }

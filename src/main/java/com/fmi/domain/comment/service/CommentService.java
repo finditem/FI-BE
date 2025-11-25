@@ -8,6 +8,7 @@ import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.comment.response.CommentResponse;
 import com.fmi.domain.comment.web.dto.CreateCommentDto;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
@@ -82,7 +83,7 @@ public class CommentService {
                             NotificationType.MENTION,
                             comment.getUser().getNickname() + "님이 멘션했습니다",
                             dto.getContent(),
-                            "COMMENT",
+                            ReferenceType.COMMENT,
                             comment.getId()
                     );
 
@@ -131,7 +132,7 @@ public class CommentService {
                 NotificationType.COMMENT,
                 "새 댓글이 달렸습니다",
                 dto.getContent(),
-                "POST",
+                ReferenceType.POST,
                 post.getId()
         );
     }
@@ -150,7 +151,7 @@ public class CommentService {
                 NotificationType.REPLY,
                 "댓글에 답글이 달렸습니다",
                 dto.getContent(),
-                "POST",
+                ReferenceType.POST,
                 post.getId()
         );
     }
