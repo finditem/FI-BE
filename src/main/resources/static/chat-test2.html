@@ -25,6 +25,7 @@
     <hr>
     <p><b>구독된 개인 큐:</b></p>
     <ul style="font-size: 14px;">
+        <li>/user/queue/notification (🔔 <b>알림: 새 채팅 / 리마인더</b>)</li>
         <li>/user/queue/messages (메인 채팅)</li>
         <li>/user/queue/list-updates (목록 갱신용)</li>
         <li>/user/queue/read-receipts (읽음 확인용)</li>
@@ -98,10 +99,25 @@
                 log('✅ CONNECTED: ' + frame.headers['user-name']);
                 setConnected(true);
 
+                //  알림 구독 로직 (/user/queue/notification)
+                stompClient.subscribe('/user/queue/notification', (message) => {
+                    const body = JSON.parse(message.body);
+                    let prefix = '🔔 [알림]';
+
+                    // 리마인더와 일반 채팅 구분해서 로그 찍기
+                    if (body.type === 'CHAT_REMINDER') {
+                        prefix = '⏰ [리마인더]';
+                    } else if (body.type === 'CHAT') {
+                        prefix = '💬 [새 채팅]';
+                    }
+
+                    log(`${prefix} ${body.title}\n내용: ${body.message}\n(RefId: ${body.referenceId})`);
+                });
+                // -------------------------------------------------------
+
                 stompClient.subscribe('/user/queue/messages', (message) => {
                     log('📬 /user/queue/messages (메인 메시지 수신):\n' + message.body);
                 });
-
 
                 stompClient.subscribe('/user/queue/list-updates', (message) => {
                     log('🔄 /user/queue/list-updates (목록 갱신):\n' + message.body);
