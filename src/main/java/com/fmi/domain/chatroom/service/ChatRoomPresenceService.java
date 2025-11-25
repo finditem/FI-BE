@@ -70,7 +70,7 @@ public class ChatRoomPresenceService {
      * 유저가 방안에 있는지 확인
      */
     public boolean isUserPresent(Long roomId, Long userId) {
-        return Boolean.TRUE.equals(redis.opsForSet().isMember(roomKey(roomId), userId.toString()));
+        return Boolean.TRUE.equals(redis.opsForSet().isMember(userKey(userId), roomId.toString()));
     }
 
     /**
