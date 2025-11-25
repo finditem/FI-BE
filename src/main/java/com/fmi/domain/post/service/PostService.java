@@ -9,11 +9,9 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.repository.PostImageRepository;
 import com.fmi.domain.post.repository.PostRepository;
-import com.fmi.domain.post.response.PostListResponse;
-import com.fmi.domain.post.response.PostResponse;
-import com.fmi.domain.post.response.PostShareResponse;
-import com.fmi.domain.post.response.ViewResponse;
+import com.fmi.domain.post.response.*;
 import com.fmi.domain.post.web.dto.CreatePostDto;
+import com.fmi.domain.post.web.dto.PostFilterDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
@@ -24,10 +22,7 @@ import com.fmi.domain.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import com.fmi.domain.notification.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -311,6 +306,13 @@ public class PostService {
 
     }
 
+    @Transactional(readOnly = true)
+    public FilterResponse getPostsByFilter(PostFilterDto dto, Pageable pageable, Long cursorId) {
+
+        Slice<Post> slice = postRepository.findPostsByFilters(dto, pageable, cursorId);
+
+        return postConverter.toFilterResponse(slice);
+    }
 
     @Scheduled(cron = "0 0 * * * *")
     public void syncViewCountsToDb() {

@@ -48,10 +48,14 @@ public class PostFavoriteService {
 
         if (favorite == null) {
             favoriteRepository.save(favoritePostConverter.toFavoriteEntity(user,post));
+            post.setFavoriteCount(post.getFavoriteCount() + 1);
             return true;
         }
 
-        favorite.toggle();
+        boolean newStatus = favorite.toggle();
+
+        int currentCount = post.getFavoriteCount() != null ? post.getFavoriteCount() : 0;
+        post.setFavoriteCount(currentCount + (newStatus ? 1 : -1));
 
         return favorite.isFavorite();
     }

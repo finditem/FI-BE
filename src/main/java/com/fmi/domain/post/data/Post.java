@@ -1,5 +1,6 @@
 package com.fmi.domain.post.data;
 
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
@@ -51,6 +52,9 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private Type postType;
 
+    @Enumerated(EnumType.STRING)
+    private Category category;
+
     @Column(name = "content", nullable = false)
     private String content;
 
@@ -62,6 +66,9 @@ public class Post {
 
     @Column(name = "radius")
     private double radius;
+
+    @Column(name="favorite_count")
+    private Integer favoriteCount = 0;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
