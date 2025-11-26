@@ -4,6 +4,7 @@ import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
+import com.fmi.domain.auth.service.EmailVerificationService;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.domain.auth.repository.UserRepository;
@@ -23,6 +24,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final NicknameValidationService nicknameValidationService;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public Long signup(SignupRequest request) {
@@ -48,9 +50,19 @@ public class AuthService {
             throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
         }
 
+        // 보안: 프론트엔드에서 보낸 emailVerified 값은 무시하고, Redis에서 실제 인증 여부 확인
+        boolean isEmailVerified = emailVerificationService.isEmailVerified(request.getEmail());
+        if (!isEmailVerified) {
+            throw new GeneralException(ErrorStatus._EMAIL_NOT_VERIFIED);
+        }
+
+        // 인증 플래그 소비 (한 번만 사용되도록)
+        emailVerificationService.consumeEmailVerification(request.getEmail());
+
         User user = AuthConverter.toUserEntity(
                 request, 
-                passwordEncoder.encode(request.getPassword())
+                passwordEncoder.encode(request.getPassword()),
+                true // 백엔드에서 검증한 인증 여부 사용
         );
         return userRepository.save(user).getId();
     }

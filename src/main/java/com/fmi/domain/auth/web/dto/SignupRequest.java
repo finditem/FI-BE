@@ -26,8 +26,6 @@ public class SignupRequest {
     @Schema(description = "마케팅 수신 동의", example = "false")
     private Boolean marketingConsent;
 
-    // 검증(옵션)
-    @Schema(description = "이메일 인증 여부", example = "true")
-    private Boolean emailVerified;
+    // 이메일 인증은 백엔드에서 Redis를 통해 관리하므로 프론트엔드에서 전송 불필요
 }
 
