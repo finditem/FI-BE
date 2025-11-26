@@ -1,6 +1,8 @@
 package com.fmi.domain.admin.service;
 
 import com.fmi.domain.Enum.Category;
+import com.fmi.domain.Enum.WithdrawalReason;
+import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
 import com.fmi.domain.admin.dto.AdminInquiryResponse;
 import com.fmi.domain.admin.dto.AdminReportResponse;
 import com.fmi.domain.admin.dto.AdminUserDetailResponse;
@@ -18,8 +20,15 @@ import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.repository.ReportRepository;
+import com.fmi.domain.inquiry.converter.InquiryConverter;
+import com.fmi.domain.inquiry.data.InquiryReply;
+import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
+import com.fmi.domain.report.converter.ReportConverter;
+import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
 import com.fmi.domain.user.data.UserCategory;
 import com.fmi.domain.user.repository.UserCategoryRepository;
+import com.fmi.domain.user.service.UserService;
+import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -37,11 +46,14 @@ public class AdminService {
 
     private final InquiryRepository inquiryRepository;
     private final InquiryReplyRepository inquiryReplyRepository;
+    private final InquiryConverter inquiryConverter;
     private final ReportRepository reportRepository;
+    private final ReportConverter reportConverter;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserCategoryRepository userCategoryRepository;
+    private final UserService userService;
 
     public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
                                                      InquiryStatus status,
@@ -113,6 +125,62 @@ public class AdminService {
                 .reportCount(reportCount)
                 .subscribedCategories(categories)
                 .build();
+    }
+
+    /**
+     * 문의 상세 조회 (관리자용 - 비공개 문의도 조회 가능)
+     */
+    public InquiryDetailDTO getInquiryDetail(Long inquiryId) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.INQUIRY_NOT_FOUND));
+        
+        // 답변 조회
+        InquiryReply reply = inquiryReplyRepository.findByInquiry(inquiry).orElse(null);
+        
+        return inquiryConverter.toDetailDTO(inquiry, reply);
+    }
+
+    /**
+     * 신고 상세 조회 (관리자용)
+     */
+    public ReportResponseDTO getReportDetail(Long reportId) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.REPORT_NOT_FOUND));
+        
+        return reportConverter.toResponseDTO(report);
+    }
+
+    /**
+     * 현재 비밀번호 검증 (기존 UserService 사용)
+     */
+    public boolean verifyPassword(User admin, String currentPassword) {
+        return userService.verifyPassword(admin.getEmail(), currentPassword);
+    }
+
+    /**
+     * 관리자 비밀번호 변경 (기존 UserService 사용)
+     */
+    @Transactional
+    public void changePassword(User admin, PasswordChangeRequest request) {
+        userService.changePassword(admin.getEmail(), request);
+    }
+
+    /**
+     * 탈퇴 유저 목록 조회
+     */
+    public Page<AdminDeletedUserResponse> getDeletedUsers(WithdrawalReason reason, Pageable pageable) {
+        Page<User> deletedUsers = userRepository.findDeletedUsers(reason, pageable);
+        
+        return deletedUsers.map(user -> AdminDeletedUserResponse.builder()
+                .userId(user.getId())
+                .nickname(user.getNickname())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .createdAt(user.getCreatedAt())
+                .deletedAt(user.getDeletedAt())
+                .withdrawalReason(user.getWithdrawalReason())
+                .withdrawalOtherReason(user.getWithdrawalOtherReason())
+                .build());
     }
 }
 

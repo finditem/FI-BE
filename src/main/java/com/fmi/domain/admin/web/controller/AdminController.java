@@ -1,24 +1,30 @@
 package com.fmi.domain.admin.web.controller;
 
+import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
 import com.fmi.domain.admin.dto.AdminInquiryResponse;
 import com.fmi.domain.admin.dto.AdminReportResponse;
 import com.fmi.domain.admin.dto.AdminUserDetailResponse;
 import com.fmi.domain.admin.service.AdminService;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
+import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.response.SignupResponse;
 import com.fmi.domain.auth.service.AuthService;
+import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.inquiry.service.InquiryService;
 import com.fmi.domain.inquiry.web.dto.InquiryReplyCreateRequestDTO;
+import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.notice.service.NoticeService;
 import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.service.ReportService;
 import com.fmi.domain.report.web.dto.ReportStatusUpdateRequestDTO;
+import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,7 +34,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -63,6 +71,13 @@ public class AdminController {
         return ApiResponse.onSuccess(response);
     }
 
+    @GetMapping("/inquiries/{inquiryId}")
+    @Operation(summary = "관리자 문의 상세 조회", description = "문의 상세 정보를 조회합니다. 관리자는 비공개 문의도 조회 가능합니다.")
+    public ApiResponse<InquiryDetailDTO> getInquiryDetail(@PathVariable Long inquiryId) {
+        InquiryDetailDTO response = adminService.getInquiryDetail(inquiryId);
+        return ApiResponse.onSuccess(response);
+    }
+
     @GetMapping("/reports")
     @Operation(summary = "관리자 신고 내역 조회", description = "신고 상태/대상 유형 기준으로 신고 내역을 조회합니다.")
     public ApiResponse<Page<AdminReportResponse>> getReports(
@@ -73,6 +88,13 @@ public class AdminController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<AdminReportResponse> response = adminService.getReportPage(status, targetType, pageable);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/reports/{reportId}")
+    @Operation(summary = "관리자 신고 상세 조회", description = "신고 상세 정보를 조회합니다.")
+    public ApiResponse<ReportResponseDTO> getReportDetail(@PathVariable Long reportId) {
+        ReportResponseDTO response = adminService.getReportDetail(reportId);
         return ApiResponse.onSuccess(response);
     }
 
@@ -111,6 +133,38 @@ public class AdminController {
     public ApiResponse<SignupResponse> adminSignup(@Valid @RequestBody AdminSignupRequest request) {
         Long id = authService.adminSignup(request);
         return ApiResponse.onSuccess(AuthConverter.toSignupResponse(id));
+    }
+
+    @GetMapping("/users/deleted")
+    @Operation(summary = "탈퇴 유저 목록 조회", description = "탈퇴한 사용자 목록을 조회합니다. 탈퇴 사유로 필터링할 수 있습니다.")
+    public ApiResponse<Page<AdminDeletedUserResponse>> getDeletedUsers(
+            @RequestParam(required = false) WithdrawalReason reason,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "deletedAt"));
+        Page<AdminDeletedUserResponse> response = adminService.getDeletedUsers(reason, pageable);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @PostMapping("/password/verify")
+    @Operation(summary = "현재 비밀번호 검증", description = "관리자의 현재 비밀번호를 검증합니다.")
+    public ApiResponse<Boolean> verifyPassword(
+            @AuthenticationPrincipal User admin,
+            @RequestBody PasswordChangeRequest request
+    ) {
+        boolean isValid = adminService.verifyPassword(admin, request.getCurrentPassword());
+        return ApiResponse.onSuccess(isValid);
+    }
+
+    @PatchMapping("/password")
+    @Operation(summary = "관리자 비밀번호 변경", description = "관리자의 비밀번호를 변경합니다.")
+    public ApiResponse<String> changePassword(
+            @AuthenticationPrincipal User admin,
+            @Valid @RequestBody PasswordChangeRequest request
+    ) {
+        adminService.changePassword(admin, request);
+        return ApiResponse.onSuccess("OK");
     }
 }
 
