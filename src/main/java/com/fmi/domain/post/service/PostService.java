@@ -319,12 +319,12 @@ public class PostService {
     @Scheduled(cron = "0 0 * * * *")
     public void syncViewCountsToDb() {
         ScanOptions options = ScanOptions.scanOptions().match("post:view:count:*").build();
-        try (Cursor<byte[]> cursor = stringRedisTemplate.getConnectionFactory().getConnection().scan(options)) {
+        try (Cursor<String> cursor = stringRedisTemplate.scan(options)) {
 
             Map<Long, Long> viewCountMap = new HashMap<>();
 
             while (cursor.hasNext()) {
-                String key = new String(cursor.next());
+                String key = cursor.next();
                 Long postId = Long.parseLong(key.substring("post:view:count:".length()));
                 Long count = Optional.ofNullable(stringRedisTemplate.opsForValue().get(key))
                         .map(Long::parseLong)
