@@ -101,8 +101,6 @@ public class AdminService {
                 .nickname(user.getNickname())
                 .email(user.getEmail())
                 .emailVerified(user.isEmail_verified())
-                .phoneNumber(user.getPhoneNumber())
-                .phoneVerified(user.isPhone_verified())
                 .role(user.getRole())
                 .profileImg(user.getProfile_img())
                 .trustScore(user.getTrust_score())

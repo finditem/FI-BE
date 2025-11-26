@@ -20,12 +20,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.nickname = :nickname AND u.deletedAt IS NULL")
     boolean existsByNickname(@Param("nickname") String nickname);
     
-    @Query("SELECT u FROM User u WHERE u.phoneNumber = :phoneNumber AND u.deletedAt IS NULL")
-    Optional<User> findByPhoneNumber(@Param("phoneNumber") String phoneNumber);
-    
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.phoneNumber = :phoneNumber AND u.deletedAt IS NULL")
-    boolean existsByPhoneNumber(@Param("phoneNumber") String phoneNumber);
-    
     // 일주일(7일) 이내 탈퇴한 이메일 체크 (재가입 방지용)
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.email = :email AND u.deletedAt IS NOT NULL AND u.deletedAt >= :oneWeekAgo")
     boolean existsRecentlyDeletedByEmail(@Param("email") String email, @Param("oneWeekAgo") LocalDateTime oneWeekAgo);

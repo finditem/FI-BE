@@ -40,12 +40,6 @@ public class User {
     @Column(name = "email_verified")
     private boolean email_verified;
 
-    @Column(name = "phone_number", unique = true)
-    private String phoneNumber;
-
-    @Column(name = "phone_verified")
-    private boolean phone_verified;
-
     @Enumerated(EnumType.STRING) // 여기서 STRING으로 매핑
     @Column(name = "role", nullable = false)
     private Role role;

@@ -8,7 +8,6 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.domain.auth.repository.UserRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +21,6 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final StringRedisTemplate redis;
     private final NicknameValidationService nicknameValidationService;
 
     @Transactional
@@ -48,21 +46,10 @@ public class AuthService {
         if (!valid) {
             throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
         }
-        
-        // 휴대폰 인증 선행 여부를 Redis 플래그로 확인
-        boolean preVerified = false;
-        if (request.getPhoneNumber() != null && !request.getPhoneNumber().isEmpty()) {
-            String flag = redis.opsForValue().get("phone:verified:" + request.getPhoneNumber());
-            preVerified = "true".equals(flag);
-            if (preVerified) {
-                redis.delete("phone:verified:" + request.getPhoneNumber());
-            }
-        }
 
         User user = AuthConverter.toUserEntity(
                 request, 
-                passwordEncoder.encode(request.getPassword()), 
-                preVerified
+                passwordEncoder.encode(request.getPassword())
         );
         return userRepository.save(user).getId();
     }

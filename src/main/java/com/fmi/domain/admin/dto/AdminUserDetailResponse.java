@@ -21,8 +21,6 @@ public class AdminUserDetailResponse {
     private String nickname;
     private String email;
     private boolean emailVerified;
-    private String phoneNumber;
-    private boolean phoneVerified;
     private Role role;
     private String profileImg;
     private Long trustScore;

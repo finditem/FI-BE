@@ -12,21 +12,17 @@ public class AuthConverter {
     /**
      * SignupRequest → User Entity 변환
      */
-    public static User toUserEntity(SignupRequest request, String encodedPassword, boolean preVerifiedPhone) {
+    public static User toUserEntity(SignupRequest request, String encodedPassword) {
         return User.builder()
                 .email(request.getEmail())
                 .password(encodedPassword)
                 .nickname(request.getNickname())
-                .name(request.getName())
-                .phoneNumber(request.getPhoneNumber())
-                .profile_img(request.getProfileImg() != null ? request.getProfileImg() : "")
+                .name(request.getNickname()) // name은 nickname과 동일하게 설정
                 .role(request.getRole() != null ? request.getRole() : Role.USER)
                 .termsOfServiceAgreed(Boolean.TRUE.equals(request.getTermsOfServiceAgreed()))
                 .privacyPolicyAgreed(Boolean.TRUE.equals(request.getPrivacyPolicyAgreed()))
                 .marketingConsent(Boolean.TRUE.equals(request.getMarketingConsent()))
-                .trust_score(request.getTrustScore() != null ? request.getTrustScore() : 0L)
                 .email_verified(Boolean.TRUE.equals(request.getEmailVerified()))
-                .phone_verified(preVerifiedPhone || Boolean.TRUE.equals(request.getPhoneVerified()))
                 .build();
     }
 
@@ -46,7 +42,6 @@ public class AuthConverter {
                 .profile_img(profileImageUrl != null ? profileImageUrl : "")
                 .role(Role.USER)
                 .email_verified(true)
-                .phone_verified(false)
                 .termsOfServiceAgreed(false)
                 .privacyPolicyAgreed(false)
                 .marketingConsent(false)
@@ -89,11 +84,5 @@ public class AuthConverter {
         return new EmailVerifyResponse(verified);
     }
 
-    /**
-     * boolean → PhoneVerifyResponse 변환
-     */
-    public static PhoneVerifyResponse toPhoneVerifyResponse(boolean verified) {
-        return new PhoneVerifyResponse(verified);
-    }
 }
 
