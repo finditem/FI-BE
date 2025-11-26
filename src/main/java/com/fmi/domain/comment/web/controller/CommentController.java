@@ -1,6 +1,7 @@
 package com.fmi.domain.comment.web.controller;
 
 import com.fmi.domain.comment.response.CommentResponse;
+import com.fmi.domain.comment.response.CommentSliceResponse;
 import com.fmi.domain.comment.service.CommentService;
 import com.fmi.domain.comment.web.dto.CreateCommentDto;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -32,12 +33,14 @@ public class CommentController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @GetMapping(value = "/{postId}")
-    @Operation(summary = "게시글 별 댓글 조회")
-    public ResponseEntity<ApiResponse<List<CommentResponse>>> getAllComment(
-            @PathVariable Long postId) {
+    @GetMapping("/{postId}")
+    @Operation(summary = "게시글 댓글 조회 (커서 기반 무한스크롤)")
+    public ResponseEntity<ApiResponse<CommentSliceResponse>> getComments(
+            @PathVariable Long postId,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size) {
 
-        List<CommentResponse> response = commentService.getComment(postId);
+        CommentSliceResponse response = commentService.getComments(postId, cursor, size);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }

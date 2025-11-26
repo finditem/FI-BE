@@ -1,5 +1,6 @@
 package com.fmi.domain.post.web.dto;
 
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import lombok.Getter;
@@ -24,6 +25,7 @@ public class UpdatePostDto {
     private String content;
     private boolean temporarySave;
     private double radius;
+    private Category category;
 
     private List<Long> deleteImageIds;
 }

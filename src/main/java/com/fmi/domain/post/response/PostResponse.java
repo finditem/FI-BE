@@ -1,5 +1,6 @@
 package com.fmi.domain.post.response;
 
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import lombok.*;
@@ -23,5 +24,7 @@ public class PostResponse {
     private Status itemStatus;
     private List<String> imageUrls;
     private double radius;
+    private Category category;
+    private Integer favoriteCount;
 
 }

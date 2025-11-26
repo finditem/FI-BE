@@ -29,7 +29,8 @@ public class CommentConverter {
                 comment.getId(),
                 comment.getContent(),
                 comment.getUser().getNickname(),
-                comment.getCreatedAt()
+                comment.getCreatedAt(),
+                comment.getLikeCount()
         );
     }
 
