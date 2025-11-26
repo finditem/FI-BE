@@ -3,6 +3,7 @@ package com.fmi.domain.auth.web.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -18,16 +19,19 @@ public class SignupRequest {
     @NotBlank
     private String nickname;
 
-    // 동의 항목
+    // 동의 항목 (모두 필수 - 값은 반드시 전송해야 함)
     @Schema(description = "이용약관 동의", example = "true")
+    @NotNull(message = "이용약관 동의 값을 입력해주세요.")
     private Boolean termsOfServiceAgreed;
+    
     @Schema(description = "개인정보 처리방침 동의", example = "true")
+    @NotNull(message = "개인정보 처리방침 동의 값을 입력해주세요.")
     private Boolean privacyPolicyAgreed;
+    
     @Schema(description = "마케팅 수신 동의", example = "false")
+    @NotNull(message = "마케팅 수신 동의 값을 입력해주세요.")
     private Boolean marketingConsent;
 
-    // 검증(옵션)
-    @Schema(description = "이메일 인증 여부", example = "true")
-    private Boolean emailVerified;
+    // 이메일 인증은 백엔드에서 Redis를 통해 관리하므로 프론트엔드에서 전송 불필요
 }
 

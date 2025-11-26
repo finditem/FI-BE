@@ -1,6 +1,5 @@
 package com.fmi.domain.auth.service;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.domain.auth.repository.UserRepository;
@@ -50,10 +49,34 @@ public class EmailVerificationService {
         // 사용 즉시 폐기
         redis.delete(key(email));
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
-        user.setEmail_verified(true);
+        // 이메일 인증 완료 플래그를 Redis에 저장 (회원가입 시 검증용)
+        String verifiedKey = "email:verified:" + email;
+        redis.opsForValue().set(verifiedKey, "true", Duration.ofHours(24)); // 24시간 유효
+
+        // 이미 존재하는 사용자의 경우 이메일 인증 상태 업데이트
+        userRepository.findByEmail(email).ifPresent(user -> {
+            user.setEmail_verified(true);
+        });
         return true;
+    }
+
+    /**
+     * 이메일 인증 완료 여부 확인 (회원가입 시 사용)
+     * Redis에 저장된 인증 완료 플래그를 확인합니다.
+     */
+    public boolean isEmailVerified(String email) {
+        String verifiedKey = "email:verified:" + email;
+        String verified = redis.opsForValue().get(verifiedKey);
+        return "true".equals(verified);
+    }
+
+    /**
+     * 회원가입 완료 후 인증 플래그 삭제 (한 번만 사용되도록)
+     */
+    @Transactional
+    public void consumeEmailVerification(String email) {
+        String verifiedKey = "email:verified:" + email;
+        redis.delete(verifiedKey);
     }
 }
 

@@ -19,6 +19,7 @@ public enum ErrorStatus implements BaseErrorCode {
     _INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH401-INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다."),
     _EMAIL_DUPLICATED(HttpStatus.CONFLICT, "AUTH409-EMAIL_DUPLICATED", "이미 사용 중인 이메일입니다."),
     _EMAIL_RECENTLY_DELETED(HttpStatus.CONFLICT, "AUTH409-EMAIL_RECENTLY_DELETED", "최근 탈퇴한 이메일입니다. 탈퇴 후 7일 이내 재가입할 수 없습니다."),
+    _EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "AUTH400-EMAIL_NOT_VERIFIED", "이메일 인증이 완료되지 않았습니다. 이메일 인증을 먼저 완료해주세요."),
     _NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "AUTH409-NICKNAME_DUPLICATED", "이미 사용 중인 닉네임입니다."),
     _WEAK_PASSWORD(HttpStatus.BAD_REQUEST, "AUTH400-WEAK_PASSWORD", "비밀번호 규칙을 만족하지 않습니다. 대소문자/특수문자 포함 8자 이상이어야 합니다."),
     _RESET_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "AUTH400-RESET_TOKEN_INVALID", "유효하지 않은 재설정 토큰입니다."),

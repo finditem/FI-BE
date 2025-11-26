@@ -12,8 +12,9 @@ public class AuthConverter {
     /**
      * SignupRequest → User Entity 변환 (일반 회원가입용)
      * Role은 항상 USER로 고정됩니다.
+     * emailVerified는 백엔드에서 검증한 값만 사용합니다 (보안).
      */
-    public static User toUserEntity(SignupRequest request, String encodedPassword) {
+    public static User toUserEntity(SignupRequest request, String encodedPassword, boolean emailVerified) {
         return User.builder()
                 .email(request.getEmail())
                 .password(encodedPassword)
@@ -22,7 +23,7 @@ public class AuthConverter {
                 .termsOfServiceAgreed(Boolean.TRUE.equals(request.getTermsOfServiceAgreed()))
                 .privacyPolicyAgreed(Boolean.TRUE.equals(request.getPrivacyPolicyAgreed()))
                 .marketingConsent(Boolean.TRUE.equals(request.getMarketingConsent()))
-                .email_verified(Boolean.TRUE.equals(request.getEmailVerified()))
+                .email_verified(emailVerified) // 백엔드에서 검증한 값만 사용
                 .build();
     }
 
