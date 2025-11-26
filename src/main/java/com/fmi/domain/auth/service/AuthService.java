@@ -50,6 +50,9 @@ public class AuthService {
             throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
         }
 
+        // 약관 동의 필드는 @NotNull로 값은 필수지만, true/false 모두 허용
+        // (null 체크는 @NotNull에서 처리됨)
+
         // 보안: 프론트엔드에서 보낸 emailVerified 값은 무시하고, Redis에서 실제 인증 여부 확인
         boolean isEmailVerified = emailVerificationService.isEmailVerified(request.getEmail());
         if (!isEmailVerified) {
