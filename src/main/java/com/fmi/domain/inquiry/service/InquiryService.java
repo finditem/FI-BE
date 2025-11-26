@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
 
 @Service
@@ -128,7 +129,7 @@ public class InquiryService {
                     NotificationType.INQUIRY_REPLY,
                     "문의에 답변이 등록되었습니다",
                     content,
-                    "INQUIRY",
+                    ReferenceType.INQUIRY,
                     inquiry.getId()
             );
         }
