@@ -5,6 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,12 +22,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.nickname = :nickname AND u.deletedAt IS NULL")
     boolean existsByNickname(@Param("nickname") String nickname);
-    
-    @Query("SELECT u FROM User u WHERE u.phoneNumber = :phoneNumber AND u.deletedAt IS NULL")
-    Optional<User> findByPhoneNumber(@Param("phoneNumber") String phoneNumber);
-    
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.phoneNumber = :phoneNumber AND u.deletedAt IS NULL")
-    boolean existsByPhoneNumber(@Param("phoneNumber") String phoneNumber);
     
     // 일주일(7일) 이내 탈퇴한 이메일 체크 (재가입 방지용)
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.email = :email AND u.deletedAt IS NOT NULL AND u.deletedAt >= :oneWeekAgo")
@@ -45,6 +42,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 만료된 임시 비밀번호가 있는 사용자 조회 (정리 스케줄러용)
     @Query("SELECT u FROM User u WHERE u.temporaryPasswordExpiresAt IS NOT NULL AND u.temporaryPasswordExpiresAt < :now")
     List<User> findUsersWithExpiredTemporaryPassword(@Param("now") LocalDateTime now);
+
+    // 탈퇴한 사용자 조회 (관리자용)
+    @Query("SELECT u FROM User u WHERE u.deletedAt IS NOT NULL " +
+           "AND (:reason IS NULL OR u.withdrawalReason = :reason)")
+    Page<User> findDeletedUsers(@Param("reason") com.fmi.domain.Enum.WithdrawalReason reason, Pageable pageable);
 
     Optional<User> findByNickname(String nickname);
 }

@@ -1,10 +1,7 @@
 package com.fmi.domain.postfavorite.service;
 
-import com.fmi.domain.Enum.Status;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
-import com.fmi.domain.notification.data.enums.NotificationType;
-import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.response.PostListResponse;
 import com.fmi.domain.postfavorite.converter.PostFavoriteConverter;
@@ -30,7 +27,6 @@ public class PostFavoriteService {
     private final UserRepository userRepository;
     private final PostFavoriteConverter favoritePostConverter;
     private final PostConverter postConverter;
-    private final NotificationService notificationService;
 
     //즐찾 추가
     @Transactional

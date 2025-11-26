@@ -2,6 +2,8 @@ package com.fmi.domain.comment.repository;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.comment.data.Comment;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,8 +14,6 @@ import java.util.List;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment,Long> {
 
-    List<Comment> findByPostId(Long postid);
-    
     // 특정 사용자의 댓글 조회 (익명화 처리용)
     List<Comment> findByUser(User user);
 
@@ -21,4 +21,11 @@ public interface CommentRepository extends JpaRepository<Comment,Long> {
     List<Comment> findAllWithPostByUser(@Param("user") User user);
 
     long countByUser(User user);
+
+    @Query("select c from Comment c where c.post.id = :postId order by c.id desc")
+    Slice<Comment> findTopByPostIdOrderByIdDesc(@Param("postId") Long postId, Pageable pageable);
+
+    @Query("select c from Comment c where c.post.id = :postId and c.id < :cursor order by c.id desc")
+    Slice<Comment> findByPostIdAndIdLessThanOrderByIdDesc(@Param("postId") Long postId, @Param("cursor") Long cursor, Pageable pageable);
+
 }

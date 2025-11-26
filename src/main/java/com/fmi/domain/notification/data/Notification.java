@@ -2,6 +2,7 @@ package com.fmi.domain.notification.data;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,8 +35,9 @@ public class Notification {
     @Column(name = "message", nullable = false, length = 500)
     private String message;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "reference_type", length = 50)
-    private String referenceType;  // POST, COMMENT, CHAT, INQUIRY, etc
+    private ReferenceType referenceType;
 
     @Column(name = "reference_id")
     private Long referenceId;
@@ -44,7 +46,7 @@ public class Notification {
     @Builder.Default
     private Boolean isRead = false;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -65,6 +67,12 @@ public class Notification {
     // 읽음 여부 확인
     public boolean isRead() {
         return Boolean.TRUE.equals(isRead);
+    }
+
+    public void updateContent(String newMessage) {
+        this.message = newMessage;
+        this.createdAt = LocalDateTime.now();
+        this.isRead = false;
     }
 }
 

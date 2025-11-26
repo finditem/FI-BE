@@ -1,29 +1,30 @@
 package com.fmi.domain.notification.service;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notification.converter.NotificationConverter;
 import com.fmi.domain.notification.data.Notification;
 import com.fmi.domain.notification.data.NotificationSettings;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.repository.NotificationRepository;
 import com.fmi.domain.notification.repository.NotificationSettingsRepository;
 import com.fmi.domain.notification.web.dto.request.NotificationSettingsUpdateDTO;
 import com.fmi.domain.notification.web.dto.response.NotificationListDTO;
 import com.fmi.domain.notification.web.dto.response.NotificationSettingsDTO;
+import com.fmi.domain.post.data.Post;
+import com.fmi.domain.user.repository.UserCategoryRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import com.fmi.domain.auth.repository.UserRepository;
-import com.fmi.domain.user.repository.UserCategoryRepository;
-import com.fmi.domain.post.data.Post;
 
 @Slf4j
 @Service
@@ -205,8 +206,8 @@ public class NotificationService {
      * 알림 생성 (내부 사용 - 다른 Service에서 호출)
      */
     @Transactional
-    public void createNotification(User user, NotificationType type, String title, 
-                                   String message, String referenceType, Long referenceId) {
+    public void createNotification(User user, NotificationType type, String title,
+                                   String message, ReferenceType referenceType, Long referenceId) {
         // 알림 설정 확인
         NotificationSettings settings = notificationSettingsRepository.findByUser(user).orElse(null);
         
@@ -254,23 +255,75 @@ public class NotificationService {
         for (com.fmi.domain.auth.data.User user : users) {
             NotificationSettings settings = notificationSettingsRepository.findByUser(user).orElse(null);
             if (settings == null || Boolean.TRUE.equals(settings.getNoticeEnabled())) {
-                createNotification(user, NotificationType.NOTICE, title, message, "NOTICE", noticeId);
+                createNotification(user, NotificationType.NOTICE, title, message, ReferenceType.NOTICE, noticeId);
             }
         }
     }
 
     /**
-     * 게시글 생성 시 카테고리(Type) 기준 알림
-     * - 임시 정책: 동일 카테고리를 구독한 사용자에게 1회 발송
+     * 게시글 생성 시 카테고리 기준 알림
+     * - 동일 카테고리를 구독한 사용자에게 알림 발송
      */
     @Transactional
     public void notifyCategoriesForPost(Post post) {
-        long subscribedCount = userCategoryRepository.count();
-        if (subscribedCount == 0) {
+        if (post.getCategory() == null) {
+            log.debug("게시글에 카테고리가 없어 카테고리 알림을 건너뜁니다. postId={}", post.getId());
             return;
         }
-        // TODO: 게시글 Category 필드가 도입되면 구독 사용자 선별 및 알림 전송 로직을 구현합니다.
-        log.debug("카테고리 기반 알림은 게시글 Category 연동 후 지원됩니다. postId={}, subscribedCount={}", post.getId(), subscribedCount);
+        
+        // 해당 카테고리를 구독한 사용자 조회
+        var subscribedUsers = userCategoryRepository.findAllByCategory(post.getCategory());
+        if (subscribedUsers.isEmpty()) {
+            log.debug("카테고리 {}를 구독한 사용자가 없습니다. postId={}", post.getCategory(), post.getId());
+            return;
+        }
+        
+        // 게시글 작성자는 제외하고 알림 발송
+        for (var userCategory : subscribedUsers) {
+            User subscriber = userCategory.getUser();
+            
+            // 게시글 작성자에게는 알림 발송하지 않음
+            if (post.getUser() != null && subscriber.getId().equals(post.getUser().getId())) {
+                continue;
+            }
+            
+            // 알림 설정 확인 및 발송
+            NotificationSettings settings = notificationSettingsRepository.findByUser(subscriber).orElse(null);
+            if (settings != null && !Boolean.TRUE.equals(settings.getCategoryEnabled())) {
+                continue; // 카테고리 알림이 꺼져있으면 건너뜀
+            }
+            
+            String categoryName = getCategoryName(post.getCategory());
+            String title = "새로운 " + categoryName + " 게시글이 등록되었습니다";
+            String message = post.getTitle();
+            
+            createNotification(
+                subscriber,
+                NotificationType.CATEGORY,
+                title,
+                message,
+                ReferenceType.POST,
+                post.getId()
+            );
+        }
+        
+        log.info("카테고리 알림 발송 완료: postId={}, category={}, subscribers={}", 
+                post.getId(), post.getCategory(), subscribedUsers.size());
+    }
+    
+    /**
+     * 카테고리 이름 반환
+     */
+    private String getCategoryName(com.fmi.domain.Enum.Category category) {
+        return switch (category) {
+            case ELECTRONICS -> "전자기기";
+            case WALLET -> "지갑";
+            case ID_CARD -> "신분증";
+            case JEWELRY -> "귀금속";
+            case BAG -> "가방";
+            case CARD -> "카드";
+            case ETC -> "기타";
+        };
     }
     
     /**
@@ -297,6 +350,29 @@ public class NotificationService {
         }
     }
 
+    /**
+     * 새로운 알림 갱신 (채팅 알림 갱신용)
+     */
+    @Transactional
+    public void updateChatNotification(Notification notification, String newMessage) {
+        notification.updateContent(newMessage);
+        log.info(" 알림 갱신 완료: {}", notification.getNotificationId());
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        simpMessagingTemplate.convertAndSendToUser(
+                                notification.getUser().getId().toString(),
+                                "/queue/notification",
+                                notificationConverter.toListDTO(notification)
+                        );
+                    } catch (Exception ignored) {}
+                }
+            });
+        }
+    }
     
 }
 

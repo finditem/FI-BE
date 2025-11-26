@@ -4,6 +4,7 @@ import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.service.UserService;
+import com.fmi.domain.user.web.dto.AccountDeleteRequest;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.ProfileImageUpdateRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
@@ -108,12 +109,17 @@ public class UserController {
                    **주의사항:**
                    - 탈퇴 후에는 로그인 및 서비스 이용이 불가능합니다
                    - 작성한 게시글과 댓글은 자동으로 삭제되지 않으며, 익명화 처리될 수 있습니다
+                   
+                   **탈퇴 사유:**
+                   - 탈퇴 사유를 선택해야 합니다
+                   - reason이 OTHER인 경우 otherReason에 상세 사유를 입력할 수 있습니다
                    """)
     public ApiResponse<Void> deleteAccount(
-            @AuthenticationPrincipal UserDetails userDetails
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody AccountDeleteRequest request
     ) {
         String email = userDetails.getUsername();
-        userService.deleteAccount(email);
+        userService.deleteAccount(email, request);
         return ApiResponse.onSuccess(null);
     }
 }

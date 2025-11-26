@@ -25,6 +25,7 @@ public class CommentLike {
     @ManyToOne(fetch = FetchType.LAZY)
     private Comment comment;
 
+    @Builder.Default
     private boolean isLiked = true;
 
     @Column(name = "created_at", nullable = false, updatable = false)

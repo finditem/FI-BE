@@ -4,6 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.report.converter.ReportConverter;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 
 @Service
 @RequiredArgsConstructor
@@ -165,7 +167,7 @@ public class ReportService {
                     NotificationType.REPORT_RESULT,
                     title,
                     message,
-                    "REPORT",
+                    ReferenceType.REPORT,
                     report.getReportId()
             );
         }

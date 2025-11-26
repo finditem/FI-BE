@@ -4,7 +4,6 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.response.CommentResponse;
 import com.fmi.domain.comment.web.dto.CreateCommentDto;
-import com.fmi.domain.comment.web.dto.NotificationDto;
 import com.fmi.domain.post.data.Post;
 import org.springframework.stereotype.Component;
 

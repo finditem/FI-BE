@@ -6,13 +6,17 @@ import com.fmi.domain.comment.converter.CommentConverter;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.comment.response.CommentResponse;
+import com.fmi.domain.comment.response.CommentSliceResponse;
 import com.fmi.domain.comment.web.dto.CreateCommentDto;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +25,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -82,7 +85,7 @@ public class CommentService {
                             NotificationType.MENTION,
                             comment.getUser().getNickname() + "님이 멘션했습니다",
                             dto.getContent(),
-                            "COMMENT",
+                            ReferenceType.COMMENT,
                             comment.getId()
                     );
 
@@ -131,7 +134,7 @@ public class CommentService {
                 NotificationType.COMMENT,
                 "새 댓글이 달렸습니다",
                 dto.getContent(),
-                "POST",
+                ReferenceType.POST,
                 post.getId()
         );
     }
@@ -150,7 +153,7 @@ public class CommentService {
                 NotificationType.REPLY,
                 "댓글에 답글이 달렸습니다",
                 dto.getContent(),
-                "POST",
+                ReferenceType.POST,
                 post.getId()
         );
     }
@@ -186,14 +189,30 @@ public class CommentService {
         return commentConverter.toCommentResponse(comment);
     }
 
-    @Transactional
-    public List<CommentResponse> getComment(Long postId) {
 
-        List<Comment> comments = commentRepository.findByPostId(postId);
+    @Transactional(readOnly = true)
+    public CommentSliceResponse getComments(Long postId, Long cursor, int size) {
 
-        return comments.stream()
+        Slice<Comment> comments;
+
+        if (cursor == null) {
+            comments = commentRepository.findTopByPostIdOrderByIdDesc(postId, Pageable.ofSize(size));
+        } else {
+            comments = commentRepository.findByPostIdAndIdLessThanOrderByIdDesc(postId, cursor, Pageable.ofSize(size));
+        }
+
+        Long nextCursor  = comments.hasNext()
+                ? comments.getContent().get(comments.getContent().size() - 1).getId()
+                : null;
+
+
+        List<CommentResponse> result = comments.stream()
+                .limit(size)
                 .map(commentConverter::toCommentResponse)
-                .collect(Collectors.toList());
+                .toList();
+
+        return new CommentSliceResponse(result, comments.hasNext(), nextCursor);
     }
+
 }
 

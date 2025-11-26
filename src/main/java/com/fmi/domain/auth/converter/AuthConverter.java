@@ -10,23 +10,37 @@ import org.springframework.stereotype.Component;
 public class AuthConverter {
 
     /**
-     * SignupRequest → User Entity 변환
+     * SignupRequest → User Entity 변환 (일반 회원가입용)
+     * Role은 항상 USER로 고정됩니다.
      */
-    public static User toUserEntity(SignupRequest request, String encodedPassword, boolean preVerifiedPhone) {
+    public static User toUserEntity(SignupRequest request, String encodedPassword) {
         return User.builder()
                 .email(request.getEmail())
                 .password(encodedPassword)
                 .nickname(request.getNickname())
-                .name(request.getName())
-                .phoneNumber(request.getPhoneNumber())
-                .profile_img(request.getProfileImg() != null ? request.getProfileImg() : "")
-                .role(request.getRole() != null ? request.getRole() : Role.USER)
+                .role(Role.USER) // 일반 회원가입은 항상 USER로 고정
                 .termsOfServiceAgreed(Boolean.TRUE.equals(request.getTermsOfServiceAgreed()))
                 .privacyPolicyAgreed(Boolean.TRUE.equals(request.getPrivacyPolicyAgreed()))
                 .marketingConsent(Boolean.TRUE.equals(request.getMarketingConsent()))
-                .trust_score(request.getTrustScore() != null ? request.getTrustScore() : 0L)
                 .email_verified(Boolean.TRUE.equals(request.getEmailVerified()))
-                .phone_verified(preVerifiedPhone || Boolean.TRUE.equals(request.getPhoneVerified()))
+                .build();
+    }
+
+    /**
+     * AdminSignupRequest → User Entity 변환 (관리자 회원가입용)
+     * Role은 항상 ADMIN으로 고정됩니다.
+     * 동의 항목은 기본값으로 설정됩니다.
+     */
+    public static User toAdminUserEntity(com.fmi.domain.admin.web.dto.AdminSignupRequest request, String encodedPassword) {
+        return User.builder()
+                .email(request.getEmail())
+                .password(encodedPassword)
+                .nickname(request.getNickname())
+                .role(Role.ADMIN) // 관리자 회원가입은 항상 ADMIN으로 고정
+                .termsOfServiceAgreed(false) // 관리자는 동의 항목 불필요
+                .privacyPolicyAgreed(false)
+                .marketingConsent(false)
+                .email_verified(Boolean.TRUE.equals(request.getEmailVerified()))
                 .build();
     }
 
@@ -42,15 +56,12 @@ public class AuthConverter {
                 .email(effectiveEmail)
                 .password(encodedPassword)
                 .nickname(nickname != null ? nickname : ("kakao_" + providerId))
-                .name(nickname != null ? nickname : ("kakao_" + providerId))
                 .profile_img(profileImageUrl != null ? profileImageUrl : "")
                 .role(Role.USER)
                 .email_verified(true)
-                .phone_verified(false)
                 .termsOfServiceAgreed(false)
                 .privacyPolicyAgreed(false)
                 .marketingConsent(false)
-                .trust_score(0L)
                 .build();
     }
 
@@ -89,11 +100,5 @@ public class AuthConverter {
         return new EmailVerifyResponse(verified);
     }
 
-    /**
-     * boolean → PhoneVerifyResponse 변환
-     */
-    public static PhoneVerifyResponse toPhoneVerifyResponse(boolean verified) {
-        return new PhoneVerifyResponse(verified);
-    }
 }
 

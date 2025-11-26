@@ -12,6 +12,7 @@ import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
+import com.fmi.domain.userblock.service.BlockService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,10 @@ class ChatMessageServiceTest {
     private ChatRoomParticipantRepository chatRoomParticipantRepository;
     @Mock
     private ChatRoomPresenceService presenceService;
+    @Mock
+    private BlockService blockService;
+    @Mock
+    private ChatNotificationService chatNotificationService;
     @Mock
     private ChatRoom mockRoom;;
 
@@ -92,7 +97,7 @@ class ChatMessageServiceTest {
     void testSendMessage_When_Recipient_Is_Absent() {
 
         // given
-        given(presenceService.isUserPresent(anyLong(), eq("recipient@gmail.com"))).willReturn(false);
+        given(presenceService.isUserPresent(anyLong(), eq(2L))).willReturn(false);
 
         given(chatRoomParticipantRepository.findAllByChatRoom_Id(anyLong())).willReturn(List.of(recipientPt));
 
@@ -110,7 +115,7 @@ class ChatMessageServiceTest {
         assertThat(recipientPt.getUnreadCount()).isEqualTo(1);
 
         then(broker).should(times(1)).convertAndSendToUser(
-                eq("recipient@gmail.com"),
+                eq("2"),
                 eq("/queue/list-updates"),
                 any(ChatMessageResponseDTO.ListUpdateDTO.class)
         );
@@ -121,7 +126,7 @@ class ChatMessageServiceTest {
     @DisplayName("방 안에 있는 유저에게 메시지 전송 시, unreadCount 0 유지 및 read-receipt 전송")
     void testSendMessage_When_Recipient_Is_Present() {
         // given
-        given(presenceService.isUserPresent(anyLong(), eq("recipient@gmail.com")))
+        given(presenceService.isUserPresent(anyLong(), eq(2L)))
                 .willReturn(true);
 
         given(chatRoomParticipantRepository.findAllByChatRoom_Id(anyLong()))
@@ -144,13 +149,13 @@ class ChatMessageServiceTest {
 
         // read-receipt이 전송되었는지 확인
         then(broker).should(times(1)).convertAndSendToUser(
-                eq("sender@gmail.com"), // 메세지 보낸 사람에게
+                eq("1"), // 메세지 보낸 사람에게
                 eq("/queue/read-receipts"), // 읽음 전송
                 any(ChatMessageResponseDTO.ReadReceiptDTO.class)
         );
 
         then(broker).should(times(1)).convertAndSendToUser(
-                eq("recipient@gmail.com"),
+                eq("2"),
                 eq("/queue/list-updates"),
                 any(ChatMessageResponseDTO.ListUpdateDTO.class)
         );

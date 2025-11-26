@@ -51,6 +51,14 @@ public class ChatRoomParticipant {
     @Builder.Default
     private Long unreadCount = 0L;
 
+    // 최초로 안 읽은 메세지 도착 시간
+    @Column(name = "first_unread_at")
+    private LocalDateTime firstUnreadAt;
+
+    // 리마인더 발송 여부
+    @Column(name = "last_reminded_at")
+    private LocalDateTime lastRemindedAt;
+
     void setChatRoom(ChatRoom chatRoom) {
         this.chatRoom = chatRoom;
     }
@@ -76,6 +84,22 @@ public class ChatRoomParticipant {
     }
 
     /**
+     * 새 메시지가 도착했을 때 호출
+     */
+    public void onNewMessageArrived(ChatMessage message) {
+        this.participantState = ParticipantState.ACTIVE;
+        this.lastMessage = message;
+        this.lastMessageSentAt = message.getCreatedAt();
+
+        // 처음으로 안 읽은 시간 기록
+        if (this.unreadCount == 0L) {
+            this.firstUnreadAt = LocalDateTime.now();
+        }
+
+        this.unreadCount++;
+    }
+
+    /**
      * 메시지 읽음 처리 (카운트 0으로 초기화)
      */
     public void readMessages(Long lastReadId) {
@@ -83,6 +107,9 @@ public class ChatRoomParticipant {
             this.lastReadMessageId = lastReadId;
         }
         this.unreadCount = 0L;
+
+        this.firstUnreadAt = null;
+        this.lastRemindedAt = null;
     }
 
     /**
@@ -95,4 +122,10 @@ public class ChatRoomParticipant {
         this.unreadCount += 1;
     }
 
+    /**
+     * 리마인더 발송 후 호출
+     */
+    public void markReminded() {
+        this.lastRemindedAt = LocalDateTime.now();
+    }
 }

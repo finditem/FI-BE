@@ -106,6 +106,14 @@ public class JwtTokenProvider {
     public String getJti(String token) {
         return getAllClaims(token).getId();
     }
+
+    public String getRole(String token) {
+        return getAllClaims(token).get("role", String.class);
+    }
+
+    public Long getUserId(String token) {
+        return getAllClaims(token).get("userId", Long.class);
+    }
 }
 
 
