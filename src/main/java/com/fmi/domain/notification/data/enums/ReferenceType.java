@@ -4,11 +4,11 @@ import lombok.Getter;
 
 @Getter
 public enum ReferenceType {
-    CHAT("채팅"),
     POST("게시글"),
-    NOTICE("공지"),
     COMMENT("댓글"),
+    CHAT("채팅"),
     INQUIRY("문의"),
+    NOTICE("공지사항"),
     REPORT("신고");
 
     private final String description;
@@ -16,5 +16,4 @@ public enum ReferenceType {
     ReferenceType(String description) {
         this.description = description;
     }
-
 }
