@@ -4,7 +4,6 @@ import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
-import com.fmi.domain.auth.service.EmailVerificationService;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.domain.auth.repository.UserRepository;

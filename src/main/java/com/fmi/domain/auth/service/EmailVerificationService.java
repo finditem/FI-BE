@@ -1,6 +1,5 @@
 package com.fmi.domain.auth.service;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.domain.auth.repository.UserRepository;
