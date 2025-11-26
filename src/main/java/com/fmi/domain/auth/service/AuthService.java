@@ -3,6 +3,7 @@ package com.fmi.domain.auth.service;
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.web.dto.SignupRequest;
+import com.fmi.domain.admin.web.dto.AdminSignupRequest;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.domain.auth.repository.UserRepository;
@@ -48,6 +49,43 @@ public class AuthService {
         }
 
         User user = AuthConverter.toUserEntity(
+                request, 
+                passwordEncoder.encode(request.getPassword())
+        );
+        return userRepository.save(user).getId();
+    }
+
+    /**
+     * 관리자 회원가입
+     * Role을 ADMIN으로 강제 설정합니다.
+     * 동의 항목은 받지 않습니다.
+     */
+    @Transactional
+    public Long adminSignup(AdminSignupRequest request) {
+        // 활성 사용자 이메일 중복 체크
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new GeneralException(ErrorStatus._EMAIL_DUPLICATED);
+        }
+        
+        // 일주일(7일) 이내 탈퇴한 이메일 재가입 방지
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+        if (userRepository.existsRecentlyDeletedByEmail(request.getEmail(), oneWeekAgo)) {
+            throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
+        }
+        
+        // 비밀번호 규칙: 8자 이상, 대문자/소문자/숫자/특수문자 포함
+        String pw = request.getPassword() == null ? "" : request.getPassword();
+        boolean valid = pw.length() >= 8 && pw.length() <= 16
+                && pw.matches(".*[A-Z].*")
+                && pw.matches(".*[a-z].*")
+                && pw.matches(".*[0-9].*")
+                && pw.matches(".*[!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?].*");
+        if (!valid) {
+            throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
+        }
+
+        // Role을 ADMIN으로 강제 설정
+        User user = AuthConverter.toAdminUserEntity(
                 request, 
                 passwordEncoder.encode(request.getPassword())
         );

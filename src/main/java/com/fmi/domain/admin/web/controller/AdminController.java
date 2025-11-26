@@ -4,6 +4,10 @@ import com.fmi.domain.admin.dto.AdminInquiryResponse;
 import com.fmi.domain.admin.dto.AdminReportResponse;
 import com.fmi.domain.admin.dto.AdminUserDetailResponse;
 import com.fmi.domain.admin.service.AdminService;
+import com.fmi.domain.admin.web.dto.AdminSignupRequest;
+import com.fmi.domain.auth.converter.AuthConverter;
+import com.fmi.domain.auth.response.SignupResponse;
+import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
@@ -16,6 +20,7 @@ import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.service.ReportService;
 import com.fmi.domain.report.web.dto.ReportStatusUpdateRequestDTO;
 import com.fmi.global.apiPayload.ApiResponse;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +47,7 @@ public class AdminController {
     private final NoticeService noticeService;
     private final InquiryService inquiryService;
     private final ReportService reportService;
+    private final AuthService authService;
 
     @GetMapping("/inquiries")
     @Operation(summary = "관리자 문의 목록 조회", description = "문의 유형/상태/카테고리 조건으로 전체 문의 내역을 조회합니다.")
@@ -98,6 +104,13 @@ public class AdminController {
                                                   @RequestBody ReportStatusUpdateRequestDTO request) {
         reportService.updateStatus(reportId, request.getStatus(), request.getAdminNote());
         return ApiResponse.onSuccess("OK");
+    }
+
+    @PostMapping("/users/signup")
+    @Operation(summary = "관리자 회원가입", description = "관리자 계정을 생성합니다. Role은 자동으로 ADMIN으로 설정됩니다.")
+    public ApiResponse<SignupResponse> adminSignup(@Valid @RequestBody AdminSignupRequest request) {
+        Long id = authService.adminSignup(request);
+        return ApiResponse.onSuccess(AuthConverter.toSignupResponse(id));
     }
 }
 

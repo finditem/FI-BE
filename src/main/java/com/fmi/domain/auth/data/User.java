@@ -27,9 +27,6 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
-
     @Column(name = "nickname", nullable = false)
     private String nickname;
 
@@ -69,9 +66,6 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(name = "trust_score")
-    private Long trust_score;
-
     private boolean termsOfServiceAgreed;      // 서비스 이용약관 동의
     private boolean privacyPolicyAgreed;       // 개인정보 처리방침 동의
     private boolean marketingConsent;           // 마케팅 수신 동의
@@ -80,10 +74,7 @@ public class User {
     @Builder.Default
     private List<ChatRoomParticipant> chatRoomParticipants = new ArrayList<>();
 
-    public void updateUserInfo(String name, String email) {
-        if (name != null) {
-            this.name = name;
-        }
+    public void updateUserInfo(String email) {
         if (email != null) {
             this.email = email;
         }

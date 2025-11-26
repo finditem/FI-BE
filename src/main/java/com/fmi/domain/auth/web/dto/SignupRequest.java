@@ -1,6 +1,5 @@
 package com.fmi.domain.auth.web.dto;
 
-import com.fmi.domain.Enum.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -18,10 +17,6 @@ public class SignupRequest {
     @Schema(description = "닉네임", example = "johnny")
     @NotBlank
     private String nickname;
-
-    // 선택/부가 정보
-    @Schema(description = "역할", example = "USER")
-    private Role role; // 기본값 USER (null이면 서버에서 설정)
 
     // 동의 항목
     @Schema(description = "이용약관 동의", example = "true")

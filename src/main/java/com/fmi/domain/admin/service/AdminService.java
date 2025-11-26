@@ -97,13 +97,11 @@ public class AdminService {
 
         return AdminUserDetailResponse.builder()
                 .userId(user.getId())
-                .name(user.getName())
                 .nickname(user.getNickname())
                 .email(user.getEmail())
                 .emailVerified(user.isEmail_verified())
                 .role(user.getRole())
                 .profileImg(user.getProfile_img())
-                .trustScore(user.getTrust_score())
                 .termsOfServiceAgreed(user.isTermsOfServiceAgreed())
                 .privacyPolicyAgreed(user.isPrivacyPolicyAgreed())
                 .marketingConsent(user.isMarketingConsent())

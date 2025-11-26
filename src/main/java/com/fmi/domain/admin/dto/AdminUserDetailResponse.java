@@ -17,13 +17,11 @@ import java.util.List;
 public class AdminUserDetailResponse {
 
     private Long userId;
-    private String name;
     private String nickname;
     private String email;
     private boolean emailVerified;
     private Role role;
     private String profileImg;
-    private Long trustScore;
     private boolean termsOfServiceAgreed;
     private boolean privacyPolicyAgreed;
     private boolean marketingConsent;

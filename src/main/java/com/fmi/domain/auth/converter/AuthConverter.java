@@ -10,18 +10,36 @@ import org.springframework.stereotype.Component;
 public class AuthConverter {
 
     /**
-     * SignupRequest → User Entity 변환
+     * SignupRequest → User Entity 변환 (일반 회원가입용)
+     * Role은 항상 USER로 고정됩니다.
      */
     public static User toUserEntity(SignupRequest request, String encodedPassword) {
         return User.builder()
                 .email(request.getEmail())
                 .password(encodedPassword)
                 .nickname(request.getNickname())
-                .name(request.getNickname()) // name은 nickname과 동일하게 설정
-                .role(request.getRole() != null ? request.getRole() : Role.USER)
+                .role(Role.USER) // 일반 회원가입은 항상 USER로 고정
                 .termsOfServiceAgreed(Boolean.TRUE.equals(request.getTermsOfServiceAgreed()))
                 .privacyPolicyAgreed(Boolean.TRUE.equals(request.getPrivacyPolicyAgreed()))
                 .marketingConsent(Boolean.TRUE.equals(request.getMarketingConsent()))
+                .email_verified(Boolean.TRUE.equals(request.getEmailVerified()))
+                .build();
+    }
+
+    /**
+     * AdminSignupRequest → User Entity 변환 (관리자 회원가입용)
+     * Role은 항상 ADMIN으로 고정됩니다.
+     * 동의 항목은 기본값으로 설정됩니다.
+     */
+    public static User toAdminUserEntity(com.fmi.domain.admin.web.dto.AdminSignupRequest request, String encodedPassword) {
+        return User.builder()
+                .email(request.getEmail())
+                .password(encodedPassword)
+                .nickname(request.getNickname())
+                .role(Role.ADMIN) // 관리자 회원가입은 항상 ADMIN으로 고정
+                .termsOfServiceAgreed(false) // 관리자는 동의 항목 불필요
+                .privacyPolicyAgreed(false)
+                .marketingConsent(false)
                 .email_verified(Boolean.TRUE.equals(request.getEmailVerified()))
                 .build();
     }
@@ -38,14 +56,12 @@ public class AuthConverter {
                 .email(effectiveEmail)
                 .password(encodedPassword)
                 .nickname(nickname != null ? nickname : ("kakao_" + providerId))
-                .name(nickname != null ? nickname : ("kakao_" + providerId))
                 .profile_img(profileImageUrl != null ? profileImageUrl : "")
                 .role(Role.USER)
                 .email_verified(true)
                 .termsOfServiceAgreed(false)
                 .privacyPolicyAgreed(false)
                 .marketingConsent(false)
-                .trust_score(0L)
                 .build();
     }
 
