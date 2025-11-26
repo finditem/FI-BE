@@ -1,6 +1,7 @@
 package com.fmi.domain.post.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import lombok.AllArgsConstructor;
@@ -23,6 +24,8 @@ public class PostListResponse {
     private String address;
     private Status itemStatus;
     private Type postType;
+    private Category category;//전자기기 , 지갑 등
+    private Integer favoriteCount;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

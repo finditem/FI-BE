@@ -17,3 +17,4 @@ public enum ReferenceType {
         this.description = description;
     }
 }
+

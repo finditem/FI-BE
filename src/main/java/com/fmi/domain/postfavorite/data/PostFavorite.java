@@ -34,7 +34,9 @@ public class PostFavorite {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    public void toggle() {
+    public boolean toggle() {
         this.isFavorite = !this.isFavorite;
+
+        return isFavorite;
     }
 }

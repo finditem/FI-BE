@@ -37,7 +37,7 @@ public class Notification {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "reference_type", length = 50)
-    private ReferenceType referenceType;  // POST, COMMENT, CHAT, INQUIRY, etc
+    private ReferenceType referenceType;
 
     @Column(name = "reference_id")
     private Long referenceId;

@@ -33,7 +33,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/actuator/health", "/actuator/info", "/ws/**", "/error", "/health", "/api/health").permitAll()
                         .requestMatchers("/auth/login", "/auth/signup", "/auth/refresh", "/auth/logout",
                                 "/auth/check-email", "/auth/check-nickname", "/auth/reset/**", "/s3/**", "/chat-test.html", "/chat-test2.html").permitAll()
-                        .requestMatchers("/auth/kakao/**", "/auth/email/**", "/auth/phone/**").permitAll()
+                        .requestMatchers("/auth/kakao/**", "/auth/email/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         // 공지사항, FAQ, 공개 문의 - 공개 API (경로 개편)
                         .requestMatchers("/notice/**", "/faq/**", "/inquiry/public/**").permitAll()

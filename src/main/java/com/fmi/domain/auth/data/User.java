@@ -2,6 +2,7 @@ package com.fmi.domain.auth.data;
 
 
 import com.fmi.domain.Enum.Role;
+import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -27,9 +28,6 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
-
     @Column(name = "nickname", nullable = false)
     private String nickname;
 
@@ -39,12 +37,6 @@ public class User {
 
     @Column(name = "email_verified")
     private boolean email_verified;
-
-    @Column(name = "phone_number", unique = true)
-    private String phoneNumber;
-
-    @Column(name = "phone_verified")
-    private boolean phone_verified;
 
     @Enumerated(EnumType.STRING) // 여기서 STRING으로 매핑
     @Column(name = "role", nullable = false)
@@ -75,8 +67,12 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(name = "trust_score")
-    private Long trust_score;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "withdrawal_reason", length = 50)
+    private WithdrawalReason withdrawalReason;  // 탈퇴 사유
+
+    @Column(name = "withdrawal_other_reason", columnDefinition = "TEXT")
+    private String withdrawalOtherReason;       // 탈퇴 사유 기타 (reason이 OTHER인 경우)
 
     private boolean termsOfServiceAgreed;      // 서비스 이용약관 동의
     private boolean privacyPolicyAgreed;       // 개인정보 처리방침 동의
@@ -86,10 +82,7 @@ public class User {
     @Builder.Default
     private List<ChatRoomParticipant> chatRoomParticipants = new ArrayList<>();
 
-    public void updateUserInfo(String name, String email) {
-        if (name != null) {
-            this.name = name;
-        }
+    public void updateUserInfo(String email) {
         if (email != null) {
             this.email = email;
         }

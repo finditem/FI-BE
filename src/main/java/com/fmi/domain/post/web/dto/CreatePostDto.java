@@ -1,5 +1,6 @@
 package com.fmi.domain.post.web.dto;
 
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import lombok.Getter;
@@ -21,6 +22,7 @@ public class CreatePostDto {
     private double longitude;
     private String content;
     private double radius;
+    private Category category;
 
     private boolean temporarySave;
 

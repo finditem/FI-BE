@@ -3,13 +3,11 @@ package com.fmi.domain.post.converter;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
-import com.fmi.domain.post.response.PostListResponse;
-import com.fmi.domain.post.response.PostResponse;
-import com.fmi.domain.post.response.PostShareResponse;
-import com.fmi.domain.post.response.ViewResponse;
+import com.fmi.domain.post.response.*;
 import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -47,6 +45,7 @@ public class PostConverter {
                 .viewCnt(0)
                 .date(request.getDate())
                 .radius(request.getRadius())
+                .category(request.getCategory())
                 .temporarySave(request.isTemporarySave())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -67,6 +66,7 @@ public class PostConverter {
                 .radius(request.getRadius())
                 .viewCnt(0)
                 .date(request.getDate())
+                .category(request.getCategory())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -104,6 +104,7 @@ public class PostConverter {
         if (dto.getLongitude() != 0) post.setLongitude(dto.getLongitude());
         if (dto.getRadius() != 0) post.setRadius(dto.getRadius());
         if (dto.getContent() != null) post.setContent(dto.getContent());
+        if (dto.getCategory() != null) post.setCategory(dto.getCategory());
 
         post.setUpdatedAt(LocalDateTime.now());
     }
@@ -118,6 +119,7 @@ public class PostConverter {
         if (dto.getLongitude() != 0) post.setLongitude(dto.getLongitude());
         if (dto.getRadius() != 0) post.setRadius(dto.getRadius());
         if (dto.getContent() != null) post.setContent(dto.getContent());
+        if (dto.getCategory() != null) post.setCategory(dto.getCategory());
 
         post.setUpdatedAt(LocalDateTime.now());
     }
@@ -140,6 +142,8 @@ public class PostConverter {
                 .imageUrls(imageUrls)
                 .itemStatus(post.getItemStatus())
                 .postType(post.getPostType())
+                .category(post.getCategory())
+                .favoriteCount(post.getFavoriteCount())
                 .build();
     }
 
@@ -153,6 +157,8 @@ public class PostConverter {
                 .address(post.getAddress())
                 .itemStatus(post.getItemStatus())
                 .postType(post.getPostType())
+                .favoriteCount(post.getFavoriteCount())
+                .category(post.getCategory())
                 .createdAt(post.getCreatedAt())
                 .build();
     }
@@ -175,4 +181,19 @@ public class PostConverter {
                 .build();
 
     }
+
+    public FilterResponse toFilterResponse(Slice<Post> slice) {
+        List<PostListResponse> postDtos = slice.getContent()
+                .stream()
+                .map(this::toPostListResponse)
+                .toList();
+
+        Long nextCursor = slice.hasNext()
+                ? slice.getContent().get(slice.getContent().size() - 1).getId()
+                : null;
+
+        return new FilterResponse(postDtos, slice.hasNext(), nextCursor);
+    }
+
+
 }

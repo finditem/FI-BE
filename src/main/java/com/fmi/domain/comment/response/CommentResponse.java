@@ -14,4 +14,5 @@ public class CommentResponse {
     private String content;
     private String authorName;
     private LocalDateTime createdAt;
+    private int likeCount;
 }

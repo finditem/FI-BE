@@ -11,6 +11,7 @@ import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
+import com.fmi.domain.user.web.dto.AccountDeleteRequest;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.ProfileImageUpdateRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
@@ -117,11 +118,9 @@ public class UserService {
     }
 
     /**
-     * 비밀번호 변경
-     * 임시 비밀번호로 로그인한 경우에도 사용 가능 (임시 비밀번호를 현재 비밀번호로 확인)
-     * 원래 비밀번호로도 변경 가능
+     * 현재 비밀번호 검증
      */
-    public void changePassword(String email, PasswordChangeRequest request) {
+    public boolean verifyPassword(String email, String currentPassword) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
@@ -135,29 +134,42 @@ public class UserService {
         // 임시 비밀번호가 활성화되어 있으면 임시 비밀번호와 원래 비밀번호 모두 확인
         if (hasActiveTemporaryPassword) {
             // 임시 비밀번호 확인
-            if (passwordEncoder.matches(request.getCurrentPassword(), user.getTemporaryPassword())) {
+            if (passwordEncoder.matches(currentPassword, user.getTemporaryPassword())) {
                 passwordMatches = true;
             }
             // 원래 비밀번호 확인
             else if (user.getOriginalPassword() != null 
-                    && passwordEncoder.matches(request.getCurrentPassword(), user.getOriginalPassword())) {
+                    && passwordEncoder.matches(currentPassword, user.getOriginalPassword())) {
                 passwordMatches = true;
             }
             // password 필드 확인 (임시 비밀번호로 설정되어 있을 수 있음)
-            else if (passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            else if (passwordEncoder.matches(currentPassword, user.getPassword())) {
                 passwordMatches = true;
             }
         }
         // 임시 비밀번호가 없으면 일반 비밀번호만 확인
         else {
-            if (passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            if (passwordEncoder.matches(currentPassword, user.getPassword())) {
                 passwordMatches = true;
             }
         }
+        
+        return passwordMatches;
+    }
 
-        if (!passwordMatches) {
+    /**
+     * 비밀번호 변경
+     * 임시 비밀번호로 로그인한 경우에도 사용 가능 (임시 비밀번호를 현재 비밀번호로 확인)
+     * 원래 비밀번호로도 변경 가능
+     */
+    public void changePassword(String email, PasswordChangeRequest request) {
+        // 현재 비밀번호 검증
+        if (!verifyPassword(email, request.getCurrentPassword())) {
             throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
         }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         // 새 비밀번호와 확인 일치 여부
         if (!request.getNewPassword().equals(request.getNewPasswordConfirm())) {
@@ -182,7 +194,8 @@ public class UserService {
      * 30일 후 스케줄러에 의해 하드 삭제됩니다.
      * 프로필 이미지는 즉시 S3에서 삭제됩니다.
      */
-    public void deleteAccount(String email) {
+    @Transactional
+    public void deleteAccount(String email, AccountDeleteRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
@@ -195,9 +208,17 @@ public class UserService {
             }
         }
 
+        // 탈퇴 사유 설정
+        user.setWithdrawalReason(request.getReason());
+        if (request.getReason() == com.fmi.domain.Enum.WithdrawalReason.OTHER) {
+            user.setWithdrawalOtherReason(request.getOtherReason());
+        }
+
         // Soft Delete (deletedAt 설정)
         user.setDeletedAt(LocalDateTime.now());
         userRepository.save(user);
+        
+        log.info("사용자 탈퇴 완료: userId={}, email={}, reason={}", user.getId(), email, request.getReason());
     }
 
     /**
