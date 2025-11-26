@@ -4,6 +4,7 @@ import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
@@ -150,7 +151,7 @@ public class PostService {
                     NotificationType.FAVORITE,
                     title,
                     message,
-                    "POST",
+                    ReferenceType.POST,
                     post.getId()
             );
             log.info("알림 생성: userId={}, postId={}, newStatus={}", user.getId(), post.getId(), newStatus);
@@ -318,12 +319,12 @@ public class PostService {
     @Scheduled(cron = "0 0 * * * *")
     public void syncViewCountsToDb() {
         ScanOptions options = ScanOptions.scanOptions().match("post:view:count:*").build();
-        try (Cursor<byte[]> cursor = stringRedisTemplate.getConnectionFactory().getConnection().scan(options)) {
+        try (Cursor<String> cursor = stringRedisTemplate.scan(options)) {
 
             Map<Long, Long> viewCountMap = new HashMap<>();
 
             while (cursor.hasNext()) {
-                String key = new String(cursor.next());
+                String key = cursor.next();
                 Long postId = Long.parseLong(key.substring("post:view:count:".length()));
                 Long count = Optional.ofNullable(stringRedisTemplate.opsForValue().get(key))
                         .map(Long::parseLong)

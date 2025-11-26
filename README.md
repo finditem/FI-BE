@@ -3,7 +3,7 @@
 Spring Boot 기반 분실물/습득물 서비스 백엔드. HTTP API, WebSocket(STOMP), JPA, Flyway, Actuator, Docker, GitHub Actions(GHCR 빌드/푸시, 수동 실행) 기본 세팅을 포함합니다.
 
 ## 요구사항
-- Java 21 (Temurin 권장)
+- Java 17 (Temurin 권장)
 - Docker / Docker Compose (로컬 MySQL)
 - Git
 
@@ -103,7 +103,7 @@ docker build -t fmi-be:local .
 - 주의: 레포에 파일만 있는 상태로는 비용/배포 없음. 실제 배포하려면 K8s 클러스터와 Argo CD 설치 후 동기화 필요.
 
 ## 트러블슈팅
-- JDK 미설치/버전 불일치: Temurin 21 설치 후 `JAVA_HOME` 설정
+- JDK 미설치/버전 불일치: Temurin 17 설치 후 `JAVA_HOME` 설정
 - MySQL 접속 실패: `docker compose ps`로 컨테이너 상태 확인, 포트/계정 확인
 - CRLF/권한 문제: Dockerfile에서 `gradlew` 권한 및 줄바꿈 처리
 

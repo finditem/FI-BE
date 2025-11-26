@@ -1,6 +1,7 @@
 package com.fmi.domain.notification.web.dto.response;
 
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,7 +18,7 @@ public class NotificationListDTO {
     private NotificationType type;
     private String title;
     private String message;
-    private String referenceType;
+    private ReferenceType referenceType;
     private Long referenceId;
     private Boolean isRead;
     private LocalDateTime createdAt;

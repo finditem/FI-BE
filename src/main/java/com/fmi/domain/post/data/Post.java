@@ -83,6 +83,7 @@ public class Post {
     private List<PostImage> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<PostFavorite> favorites = new ArrayList<>();
 
     public void changeStatus(Status newStatus) {
