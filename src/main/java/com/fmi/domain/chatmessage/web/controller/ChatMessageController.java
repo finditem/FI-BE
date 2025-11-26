@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -27,6 +28,7 @@ import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessa
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/chats")
+@Slf4j
 public class ChatMessageController {
 
     private final ChatMessageService chatMessageService;
@@ -34,9 +36,9 @@ public class ChatMessageController {
 
     @MessageMapping("/chats/{roomId}/send")
     public void sendMessage(@DestinationVariable Long roomId, Principal principal, @Payload SendMessageRequestDTO requestDTO) {
-        String email = principal.getName();
-        User user = userService.findUser(email);
-        chatMessageService.sendMessage(roomId, user.getId(), requestDTO);
+        Long userId = Long.parseLong(principal.getName());
+        log.info("메세지 보낸 userId = {}", userId);
+        chatMessageService.sendMessage(roomId, userId, requestDTO);
     }
 
     @PostMapping(value = "/{roomId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

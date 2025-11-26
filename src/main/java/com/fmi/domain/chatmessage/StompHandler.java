@@ -13,9 +13,10 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Slf4j
 @Component
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Component;
 public class StompHandler implements ChannelInterceptor {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final UserDetailsService userDetailsService;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -44,14 +44,13 @@ public class StompHandler implements ChannelInterceptor {
             String token = bearerToken.substring(7);
 
             if (jwtTokenProvider.validateToken(token)) {
-                String email = jwtTokenProvider.getSubject(token);
-
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email.toString());
+                Long userId = jwtTokenProvider.getUserId(token);
+                String role = jwtTokenProvider.getRole(token);
 
                 Authentication authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails,
+                        String.valueOf(userId),
                         null,
-                        userDetails.getAuthorities()
+                        List.of(new SimpleGrantedAuthority(role))
                 );
 
                 // SecurityContext에 Authentication 설정
@@ -59,7 +58,7 @@ public class StompHandler implements ChannelInterceptor {
 
                 // Principal 설정 추가
                 accessor.setUser(authentication);
-                log.info("STOMP 인증 성공! User: {}", email);
+                log.info("STOMP 인증 성공! User: {}", userId);
 
             } else {
                 throw new GeneralException(ErrorStatus._INVALID_TOKEN);

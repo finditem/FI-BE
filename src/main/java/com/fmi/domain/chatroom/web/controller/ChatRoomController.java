@@ -102,17 +102,20 @@ public class ChatRoomController {
 
     @MessageMapping("/rooms/{roomId}/enter")
     public void enter(@DestinationVariable Long roomId, Principal p, StompHeaderAccessor acc) {
-        presenceService.enter(roomId, p.getName(), acc.getSessionId());
+        Long userId = Long.parseLong(p.getName());
+        presenceService.enter(roomId, userId, acc.getSessionId());
     }
 
     @MessageMapping("/rooms/{roomId}/ping")
     public void pingOne(@DestinationVariable Long roomId, Principal p, StompHeaderAccessor acc) {
-        presenceService.touchTTL(acc.getSessionId(), roomId, p.getName());
+        Long userId = Long.parseLong(p.getName());
+        presenceService.touchTTL(acc.getSessionId(), roomId, userId);
     }
 
     @MessageMapping("/rooms/{roomId}/leave")
     public void leave(@DestinationVariable Long roomId, Principal p, StompHeaderAccessor acc) {
-        presenceService.leave(roomId, p.getName(), acc.getSessionId());
+        Long userId = Long.parseLong(p.getName());
+        presenceService.leave(roomId, userId, acc.getSessionId());
     }
 
 }

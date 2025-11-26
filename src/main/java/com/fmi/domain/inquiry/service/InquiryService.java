@@ -13,6 +13,7 @@ import com.fmi.domain.inquiry.web.dto.request.InquiryPublicRequestDTO;
 import com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;

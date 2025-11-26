@@ -4,6 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
+import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.report.converter.ReportConverter;

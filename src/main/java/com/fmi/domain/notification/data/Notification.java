@@ -46,7 +46,7 @@ public class Notification {
     @Builder.Default
     private Boolean isRead = false;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -67,6 +67,12 @@ public class Notification {
     // 읽음 여부 확인
     public boolean isRead() {
         return Boolean.TRUE.equals(isRead);
+    }
+
+    public void updateContent(String newMessage) {
+        this.message = newMessage;
+        this.createdAt = LocalDateTime.now();
+        this.isRead = false;
     }
 }
 

@@ -13,6 +13,7 @@ import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
+import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
@@ -51,6 +52,7 @@ public class ChatMessageService {
     private final S3Service s3Service;
     private final ChatRoomPresenceService presenceService;
     private final BlockService blockService;
+    private final ChatNotificationService chatNotificationService;
 
     public MessageResponseDTO sendMessage(Long roomId, Long senderId, SendMessageRequestDTO req) {
         var room = chatRoomRepository.findById(roomId).orElseThrow(
@@ -79,8 +81,8 @@ public class ChatMessageService {
         updateParticipantsOnNewMessage(room.getId(), chatMessage);
 
         MessageResponseDTO responseDTO = messageResponseDTO(chatMessage);
-        broker.convertAndSendToUser(recipient.getEmail(), "/queue/messages", responseDTO);
-        broker.convertAndSendToUser(sender.getEmail(), "/queue/messages", responseDTO);
+        broker.convertAndSendToUser(recipient.getId().toString(), "/queue/messages", responseDTO);
+        broker.convertAndSendToUser(sender.getId().toString(), "/queue/messages", responseDTO);
         return responseDTO;
     }
 
@@ -124,8 +126,8 @@ public class ChatMessageService {
 
         // DTO로 변환하여 WebSocket 브로드캐스팅
         MessageImageResponseDTO responseDTO = messageImageResponseDTO(savedMessage);
-        broker.convertAndSendToUser(recipient.getEmail(), "/queue/messages", responseDTO);
-        broker.convertAndSendToUser(sender.getEmail(), "/queue/messages", responseDTO);
+        broker.convertAndSendToUser(recipient.getId().toString(), "/queue/messages", responseDTO);
+        broker.convertAndSendToUser(sender.getId().toString(), "/queue/messages", responseDTO);
         return responseDTO;
     }
 
@@ -140,9 +142,9 @@ public class ChatMessageService {
 
             // 수신자의 카운트만 증가
             if (!pt.getUser().getId().equals(senderId)) {
-                String email = pt.getUser().getEmail();
-                boolean isPresent = presenceService.isUserPresent(roomId, email);
-
+                Long userId = pt.getUser().getId();
+                boolean isPresent = presenceService.isUserPresent(roomId, pt.getUser().getId());
+                String preview = newMessage.getPreviewContent();
                 if (isPresent) {
                     // 방안에 있음 -> 즉시 읽음. DB unreadCount = 0
                     pt.readMessages(newMessage.getId());
@@ -151,34 +153,26 @@ public class ChatMessageService {
                             .readerId(pt.getUser().getId())
                             .lastReadMessageId(newMessage.getId())
                             .build();
-                    broker.convertAndSendToUser(sender.getEmail(), "/queue/read-receipts", receiptDTO);
+                    broker.convertAndSendToUser(sender.getId().toString(), "/queue/read-receipts", receiptDTO);
                 } else {
                     // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
-                    pt.incrementUnreadCount();
+                    pt.onNewMessageArrived(newMessage);
+                    chatNotificationService.saveOrUpdateChatNotification(pt.getUser(), roomId, preview, NotificationType.CHAT);
                 }
 
                 // 갱신된 정보로 DTO 생성
                 ListUpdateDTO listUpdateDTO = ListUpdateDTO.builder()
                         .roomId(roomId)
-                        .lastMessage(buildPreview(newMessage))
+                        .lastMessage(preview)
                         .lastMessageSentAt(newMessage.getCreatedAt())
                         .unreadCount(pt.getUnreadCount())
                         .build();
 
-                broker.convertAndSendToUser(email, "/queue/list-updates", listUpdateDTO);
+                broker.convertAndSendToUser(userId.toString(), "/queue/list-updates", listUpdateDTO);
             }
 
         }
 
-    }
-
-    private String buildPreview(ChatMessage message) {
-        if (message.getContent() != null && !message.getContent().isBlank()) {
-            return message.getContent();
-        } else if (message.getMessageType() == MessageType.IMAGE) {
-            return "사진을 보냈습니다.";
-        }
-        return null;
     }
 
     @Transactional(readOnly = true)
@@ -271,7 +265,7 @@ public class ChatMessageService {
                 .lastReadMessageId(lastMessageId)
                 .build();
 
-        broker.convertAndSendToUser(recipient.getEmail(), "/queue/read-receipts", receiptDTO);
+        broker.convertAndSendToUser(recipient.getId().toString(), "/queue/read-receipts", receiptDTO);
 
     }
 }
