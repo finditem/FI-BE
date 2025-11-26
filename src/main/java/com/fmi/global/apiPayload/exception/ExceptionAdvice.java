@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -70,6 +71,20 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> onThrowException(GeneralException generalException, HttpServletRequest request) {
         ErrorReasonDTO errorReasonHttpStatus = generalException.getErrorReasonHttpStatus();
         return handleExceptionInternal(generalException,errorReasonHttpStatus,null,request);
+    }
+
+    @ExceptionHandler(value = UsernameNotFoundException.class)
+    public ResponseEntity<Object> handleUsernameNotFoundException(UsernameNotFoundException e, HttpServletRequest request) {
+        // GeneralException이 원인인 경우 해당 에러 정보 사용
+        if (e.getCause() instanceof com.fmi.global.apiPayload.exception.GeneralException) {
+            com.fmi.global.apiPayload.exception.GeneralException generalException = 
+                    (com.fmi.global.apiPayload.exception.GeneralException) e.getCause();
+            ErrorReasonDTO errorReasonHttpStatus = generalException.getErrorReasonHttpStatus();
+            return handleExceptionInternal(e, errorReasonHttpStatus, null, request);
+        }
+        // 일반 UsernameNotFoundException인 경우 _USER_NOT_FOUND 사용
+        ErrorReasonDTO errorReason = ErrorStatus._USER_NOT_FOUND.getReasonHttpStatus();
+        return handleExceptionInternal(e, errorReason, null, request);
     }
 
     private ResponseEntity<Object> handleExceptionInternal(Exception e, ErrorReasonDTO reason,

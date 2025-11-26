@@ -1,5 +1,7 @@
 package com.fmi.domain.auth.service;
 
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -48,7 +50,7 @@ public class KakaoOAuthService {
         HttpEntity<MultiValueMap<String, String>> req = new HttpEntity<>(params, headers);
         KakaoToken token = rt.postForObject(TOKEN_URL, req, KakaoToken.class);
         if (token == null || token.getAccess_token() == null) {
-            throw new IllegalStateException("Kakao token exchange failed");
+            throw new GeneralException(ErrorStatus._KAKAO_TOKEN_EXCHANGE_FAILED);
         }
         return token;
     }
@@ -60,7 +62,7 @@ public class KakaoOAuthService {
         HttpEntity<Void> req = new HttpEntity<>(headers);
         KakaoUser user = rt.postForObject(USERINFO_URL, req, KakaoUser.class);
         if (user == null || user.getId() == null) {
-            throw new IllegalStateException("Kakao userinfo fetch failed");
+            throw new GeneralException(ErrorStatus._KAKAO_USERINFO_FETCH_FAILED);
         }
         return user;
     }
