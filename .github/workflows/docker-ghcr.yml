@@ -33,7 +33,7 @@ jobs:
             
             # Build
             echo "🔨 Building application..."
-            ./gradlew build -x test
+            ./gradlew clean bootJar -x test
             
             # Restart service
             echo "🔄 Restarting application..."
