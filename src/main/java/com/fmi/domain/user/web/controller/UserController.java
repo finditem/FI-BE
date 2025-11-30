@@ -81,7 +81,7 @@ public class UserController {
 
     @PatchMapping("/me/password")
     @Operation(summary = "비밀번호 변경", 
-               description = "현재 비밀번호를 확인하고 새 비밀번호로 변경합니다. 새 비밀번호는 8~20자의 영문, 숫자, 특수문자를 포함해야 합니다.")
+               description = "현재 비밀번호를 확인하고 새 비밀번호로 변경합니다. 새 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.")
     public ApiResponse<Void> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody PasswordChangeRequest request

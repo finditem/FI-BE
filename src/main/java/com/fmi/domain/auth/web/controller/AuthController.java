@@ -41,7 +41,7 @@ public class AuthController {
     private String refreshCookieSameSite;
 
     @PostMapping("/signup")
-    @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임/이름 등을 입력해 회원을 생성합니다. 비밀번호는 8자 이상, 대/소문자·숫자·특수문자를 포함해야 합니다.")
+    @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임을 입력해 회원을 생성합니다. 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.")
     public ApiResponse<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
         Long id = authService.signup(request);
         return ApiResponse.onSuccess(AuthConverter.toSignupResponse(id));
