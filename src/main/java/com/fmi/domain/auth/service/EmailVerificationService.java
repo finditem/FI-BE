@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -34,18 +35,59 @@ public class EmailVerificationService {
             throw new GeneralException(ErrorStatus._EMAIL_DUPLICATED);
         }
         
+        // 기존 인증 코드가 있다면 삭제 (새로운 코드 발송 시 이전 코드 무효화)
+        redis.delete(key(email));
+        
         // 중복이 아니면 인증번호 발송
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
-        redis.opsForValue().set(key(email), code, Duration.ofMinutes(5));
-        emailService.sendEmail(email, "Your verification code", "인증번호: " + code + " (5분 유효)");
+        Instant expiresAt = Instant.now().plus(Duration.ofMinutes(5));
+        // 코드와 만료 시간을 함께 저장 (만료 시간을 명시적으로 체크하기 위해)
+        String value = code + ":" + expiresAt.getEpochSecond();
+        
+        // 이메일 발송을 먼저 시도 (실패 시 예외 발생)
+        try {
+            emailService.sendEmail(email, "Your verification code", "인증번호: " + code + " (5분 유효)");
+            // 이메일 발송 성공 시에만 Redis에 코드 저장
+            redis.opsForValue().set(key(email), value, Duration.ofMinutes(5));
+        } catch (Exception e) {
+            // 이메일 발송 실패 시 Redis에 저장하지 않음 (이미 삭제했으므로 문제없음)
+            // 예외를 다시 던져서 API가 실패 응답을 반환하도록 함
+            throw e;
+        }
     }
 
     @Transactional
     public boolean verify(String email, String code) {
         String cached = redis.opsForValue().get(key(email));
-        if (cached == null || !cached.equals(code)) {
+        if (cached == null) {
             return false;
         }
+        
+        // 코드와 만료 시간 분리
+        String[] parts = cached.split(":");
+        if (parts.length != 2) {
+            // 이전 형식 호환성 (코드만 저장된 경우)
+            if (!cached.equals(code)) {
+                return false;
+            }
+        } else {
+            String storedCode = parts[0];
+            long expiresAtSeconds = Long.parseLong(parts[1]);
+            
+            // 코드가 일치하지 않으면 실패
+            if (!storedCode.equals(code)) {
+                return false;
+            }
+            
+            // 만료 시간 체크
+            Instant expiresAt = Instant.ofEpochSecond(expiresAtSeconds);
+            if (Instant.now().isAfter(expiresAt)) {
+                // 만료된 코드는 삭제
+                redis.delete(key(email));
+                return false;
+            }
+        }
+        
         // 사용 즉시 폐기
         redis.delete(key(email));
 
