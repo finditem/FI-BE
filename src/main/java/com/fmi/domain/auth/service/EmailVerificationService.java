@@ -3,6 +3,7 @@ package com.fmi.domain.auth.service;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.service.EmailBounceHandler;
 import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class EmailVerificationService {
     private final StringRedisTemplate redis;
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final EmailBounceHandler emailBounceHandler;
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -35,6 +37,12 @@ public class EmailVerificationService {
         // 이메일 중복 검사
         if (userRepository.existsByEmail(email)) {
             throw new GeneralException(ErrorStatus._EMAIL_DUPLICATED);
+        }
+        
+        // Bounce back을 받은 이메일 주소인지 확인
+        if (emailBounceHandler.hasBounced(email)) {
+            log.warn("❌ [EMAIL SEND BLOCKED] email={}, reason=이전에 bounce back을 받은 이메일 주소", email);
+            throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
         }
         
         // 기존 인증 코드가 있다면 삭제 (새로운 코드 발송 시 이전 코드 무효화)
@@ -62,7 +70,6 @@ public class EmailVerificationService {
     public void verify(String email, String code) {
         String cached = redis.opsForValue().get(key(email));
         if (cached == null) {
-            log.warn("❌ [EMAIL VERIFY FAILED] email={}, reason=코드가 존재하지 않음 (TTL 만료 또는 삭제됨)", email);
             throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
         }
         
@@ -71,7 +78,6 @@ public class EmailVerificationService {
         if (parts.length != 2) {
             // 이전 형식 호환성 (코드만 저장된 경우) - 만료 시간 정보가 없으므로 무효화
             // 보안상 이전 형식의 데이터는 만료된 것으로 간주
-            log.warn("❌ [EMAIL VERIFY FAILED] email={}, reason=이전 형식 데이터 (만료 시간 정보 없음)", email);
             redis.delete(key(email));
             throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
         }
@@ -81,7 +87,6 @@ public class EmailVerificationService {
         
         // 코드가 일치하지 않으면 실패
         if (!storedCode.equals(code)) {
-            log.warn("❌ [EMAIL VERIFY FAILED] email={}, reason=코드 불일치 (입력: {}, 저장: {})", email, code, storedCode);
             throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
         }
         
@@ -89,7 +94,6 @@ public class EmailVerificationService {
         Instant expiresAt = Instant.ofEpochSecond(expiresAtSeconds);
         if (Instant.now().isAfter(expiresAt)) {
             // 만료된 코드는 삭제
-            log.warn("❌ [EMAIL VERIFY FAILED] email={}, reason=만료된 코드 (만료시간: {}, 현재시간: {})", email, expiresAt, Instant.now());
             redis.delete(key(email));
             throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
         }
@@ -105,8 +109,6 @@ public class EmailVerificationService {
         userRepository.findByEmail(email).ifPresent(user -> {
             user.setEmail_verified(true);
         });
-        
-        log.info("✅ [EMAIL VERIFY SUCCESS] email={}", email);
     }
 
     /**
