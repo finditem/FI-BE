@@ -3,16 +3,20 @@ package com.fmi.domain.auth.service;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.service.EmailBounceHandler;
 import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.Instant;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class EmailVerificationService {
@@ -20,6 +24,7 @@ public class EmailVerificationService {
     private final StringRedisTemplate redis;
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final EmailBounceHandler emailBounceHandler;
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -34,18 +39,65 @@ public class EmailVerificationService {
             throw new GeneralException(ErrorStatus._EMAIL_DUPLICATED);
         }
         
+        // Bounce back을 받은 이메일 주소인지 확인
+        if (emailBounceHandler.hasBounced(email)) {
+            log.warn("❌ [EMAIL SEND BLOCKED] email={}, reason=이전에 bounce back을 받은 이메일 주소", email);
+            throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
+        }
+        
+        // 기존 인증 코드가 있다면 삭제 (새로운 코드 발송 시 이전 코드 무효화)
+        redis.delete(key(email));
+        
         // 중복이 아니면 인증번호 발송
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
-        redis.opsForValue().set(key(email), code, Duration.ofMinutes(5));
-        emailService.sendEmail(email, "Your verification code", "인증번호: " + code + " (5분 유효)");
+        Instant expiresAt = Instant.now().plus(Duration.ofMinutes(5));
+        // 코드와 만료 시간을 함께 저장 (만료 시간을 명시적으로 체크하기 위해)
+        String value = code + ":" + expiresAt.getEpochSecond();
+        
+        // 이메일 발송을 먼저 시도 (실패 시 예외 발생)
+        try {
+            emailService.sendEmail(email, "Your verification code", "인증번호: " + code + " (5분 유효)");
+            // 이메일 발송 성공 시에만 Redis에 코드 저장
+            redis.opsForValue().set(key(email), value, Duration.ofMinutes(5));
+        } catch (Exception e) {
+            // 이메일 발송 실패 시 Redis에 저장하지 않음 (이미 삭제했으므로 문제없음)
+            // 예외를 다시 던져서 API가 실패 응답을 반환하도록 함
+            throw e;
+        }
     }
 
     @Transactional
-    public boolean verify(String email, String code) {
+    public void verify(String email, String code) {
         String cached = redis.opsForValue().get(key(email));
-        if (cached == null || !cached.equals(code)) {
-            return false;
+        if (cached == null) {
+            throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
         }
+        
+        // 코드와 만료 시간 분리
+        String[] parts = cached.split(":");
+        if (parts.length != 2) {
+            // 이전 형식 호환성 (코드만 저장된 경우) - 만료 시간 정보가 없으므로 무효화
+            // 보안상 이전 형식의 데이터는 만료된 것으로 간주
+            redis.delete(key(email));
+            throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
+        }
+        
+        String storedCode = parts[0];
+        long expiresAtSeconds = Long.parseLong(parts[1]);
+        
+        // 코드가 일치하지 않으면 실패
+        if (!storedCode.equals(code)) {
+            throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
+        }
+        
+        // 만료 시간 체크
+        Instant expiresAt = Instant.ofEpochSecond(expiresAtSeconds);
+        if (Instant.now().isAfter(expiresAt)) {
+            // 만료된 코드는 삭제
+            redis.delete(key(email));
+            throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
+        }
+        
         // 사용 즉시 폐기
         redis.delete(key(email));
 
@@ -57,7 +109,6 @@ public class EmailVerificationService {
         userRepository.findByEmail(email).ifPresent(user -> {
             user.setEmail_verified(true);
         });
-        return true;
     }
 
     /**

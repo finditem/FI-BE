@@ -1,5 +1,7 @@
 package com.fmi.service;
 
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +32,7 @@ public class EmailService {
         
         // 실제 이메일 발송
         try {
+            log.debug("📧 [EMAIL SEND] from={}, to={}, subject={}", fromEmail, to, subject);
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(to);
@@ -37,12 +40,12 @@ public class EmailService {
             message.setText(body);
             
             mailSender.send(message);
-            log.info("✅ [EMAIL SENT] to={} subject={}", to, subject);
+            log.info("✅ [EMAIL SEND REQUEST] to={} subject={} (SMTP 서버에 발송 요청 완료, 실제 수신 여부는 나중에 확인됨)", to, subject);
         } catch (Exception e) {
-            log.error("❌ [EMAIL FAILED] to={} error={}", to, e.getMessage(), e);
-            log.error("💡 Tip: spring.mail.username/password 환경 변수를 확인하세요");
-            // 개발 환경에서는 로그만 출력 (실패해도 진행)
-            // 운영 환경에서는 예외를 던져야 할 수도 있음
+            log.error("❌ [EMAIL FAILED] from={}, to={}, error={}", fromEmail, to, e.getMessage(), e);
+            log.error("💡 Tip: spring.mail.username/password 환경 변수를 확인하세요. 현재 fromEmail={}", fromEmail);
+            // 이메일 발송 실패 시 GeneralException을 던져서 API가 실패 응답을 반환하도록 함
+            throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
         }
     }
 }
