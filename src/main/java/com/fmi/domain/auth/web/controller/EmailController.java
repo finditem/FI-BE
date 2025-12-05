@@ -6,6 +6,7 @@ import com.fmi.domain.auth.service.EmailVerificationService;
 import com.fmi.domain.auth.web.dto.EmailSendRequest;
 import com.fmi.domain.auth.web.dto.EmailVerifyRequest;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.service.EmailBounceHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class EmailController {
 
     private final EmailVerificationService service;
+    private final EmailBounceHandler emailBounceHandler;
 
     @PostMapping("/send-code")
     @Operation(summary = "email 인증 코드 발송", description = "이메일 중복 검사를 수행하고, 중복이 아니면 이메일로 6자리 인증번호를 발송합니다. 중복이면 409 에러를 반환합니다.")
@@ -32,6 +34,13 @@ public class EmailController {
         service.verify(req.getEmail(), req.getCode());
         // 인증 성공 시에만 여기 도달
         return ApiResponse.onSuccess(AuthConverter.toEmailVerifyResponse(true));
+    }
+
+    @PostMapping("/bounce")
+    @Operation(summary = "bounce back 수동 등록", description = "Gmail에서 bounce back을 받은 이메일 주소를 수동으로 등록합니다. 등록된 이메일 주소로는 인증 코드가 발송되지 않습니다.")
+    public ApiResponse<Void> registerBounce(@RequestBody EmailSendRequest req) {
+        emailBounceHandler.registerBounce(req.getEmail());
+        return ApiResponse.onSuccess(null);
     }
 }
 
