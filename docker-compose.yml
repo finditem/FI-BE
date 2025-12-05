@@ -30,6 +30,16 @@ services:
       timeout: 5s
       retries: 10
 
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: fmi-redis-commander
+    environment:
+      - REDIS_HOSTS=local:fmi-redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+
 volumes:
   mysql_data:
 
