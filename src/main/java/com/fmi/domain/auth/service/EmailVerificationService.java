@@ -5,6 +5,7 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class EmailVerificationService {
@@ -57,35 +59,39 @@ public class EmailVerificationService {
     }
 
     @Transactional
-    public boolean verify(String email, String code) {
+    public void verify(String email, String code) {
         String cached = redis.opsForValue().get(key(email));
         if (cached == null) {
-            return false;
+            log.warn("❌ [EMAIL VERIFY FAILED] email={}, reason=코드가 존재하지 않음 (TTL 만료 또는 삭제됨)", email);
+            throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
         }
         
         // 코드와 만료 시간 분리
         String[] parts = cached.split(":");
         if (parts.length != 2) {
-            // 이전 형식 호환성 (코드만 저장된 경우)
-            if (!cached.equals(code)) {
-                return false;
-            }
-        } else {
-            String storedCode = parts[0];
-            long expiresAtSeconds = Long.parseLong(parts[1]);
-            
-            // 코드가 일치하지 않으면 실패
-            if (!storedCode.equals(code)) {
-                return false;
-            }
-            
-            // 만료 시간 체크
-            Instant expiresAt = Instant.ofEpochSecond(expiresAtSeconds);
-            if (Instant.now().isAfter(expiresAt)) {
-                // 만료된 코드는 삭제
-                redis.delete(key(email));
-                return false;
-            }
+            // 이전 형식 호환성 (코드만 저장된 경우) - 만료 시간 정보가 없으므로 무효화
+            // 보안상 이전 형식의 데이터는 만료된 것으로 간주
+            log.warn("❌ [EMAIL VERIFY FAILED] email={}, reason=이전 형식 데이터 (만료 시간 정보 없음)", email);
+            redis.delete(key(email));
+            throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
+        }
+        
+        String storedCode = parts[0];
+        long expiresAtSeconds = Long.parseLong(parts[1]);
+        
+        // 코드가 일치하지 않으면 실패
+        if (!storedCode.equals(code)) {
+            log.warn("❌ [EMAIL VERIFY FAILED] email={}, reason=코드 불일치 (입력: {}, 저장: {})", email, code, storedCode);
+            throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
+        }
+        
+        // 만료 시간 체크
+        Instant expiresAt = Instant.ofEpochSecond(expiresAtSeconds);
+        if (Instant.now().isAfter(expiresAt)) {
+            // 만료된 코드는 삭제
+            log.warn("❌ [EMAIL VERIFY FAILED] email={}, reason=만료된 코드 (만료시간: {}, 현재시간: {})", email, expiresAt, Instant.now());
+            redis.delete(key(email));
+            throw new GeneralException(ErrorStatus._EMAIL_VERIFY_FAILED);
         }
         
         // 사용 즉시 폐기
@@ -99,7 +105,8 @@ public class EmailVerificationService {
         userRepository.findByEmail(email).ifPresent(user -> {
             user.setEmail_verified(true);
         });
-        return true;
+        
+        log.info("✅ [EMAIL VERIFY SUCCESS] email={}", email);
     }
 
     /**

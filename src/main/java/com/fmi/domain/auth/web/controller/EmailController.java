@@ -29,8 +29,9 @@ public class EmailController {
     @PostMapping("/verify")
     @Operation(summary = "email 인증 코드 검증", description = "이메일과 인증번호가 일치하고 유효기간 내인지 확인합니다.")
     public ApiResponse<EmailVerifyResponse> verify(@RequestBody EmailVerifyRequest req) {
-        boolean ok = service.verify(req.getEmail(), req.getCode());
-        return ApiResponse.onSuccess(AuthConverter.toEmailVerifyResponse(ok));
+        service.verify(req.getEmail(), req.getCode());
+        // 인증 성공 시에만 여기 도달
+        return ApiResponse.onSuccess(AuthConverter.toEmailVerifyResponse(true));
     }
 }
 
