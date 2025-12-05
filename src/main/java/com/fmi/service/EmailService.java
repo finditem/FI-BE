@@ -40,7 +40,7 @@ public class EmailService {
             message.setText(body);
             
             mailSender.send(message);
-            log.info("✅ [EMAIL SENT] to={} subject={}", to, subject);
+            log.info("✅ [EMAIL SEND REQUEST] to={} subject={} (SMTP 서버에 발송 요청 완료, 실제 수신 여부는 나중에 확인됨)", to, subject);
         } catch (Exception e) {
             log.error("❌ [EMAIL FAILED] from={}, to={}, error={}", fromEmail, to, e.getMessage(), e);
             log.error("💡 Tip: spring.mail.username/password 환경 변수를 확인하세요. 현재 fromEmail={}", fromEmail);
