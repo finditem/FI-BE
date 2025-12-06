@@ -79,7 +79,7 @@ public class ChatRoomController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(name = "type", required = false) Type type,
             @RequestParam(name = "address", required = false) String address,
-            @RequestParam(name= "sort", required = false, defaultValue = "NEWEST") SortType sort,
+            @RequestParam(name= "sort", required = false, defaultValue = "LATEST") SortType sort,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = userService.findUser(userDetails.getUsername());
