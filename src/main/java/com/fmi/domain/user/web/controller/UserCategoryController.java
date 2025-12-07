@@ -5,6 +5,7 @@ import com.fmi.domain.user.service.UserCategoryService;
 import com.fmi.domain.user.web.dto.response.UserCategoryResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,11 @@ public class UserCategoryController {
             summary = "내 카테고리 목록",
             description = "로그인한 사용자가 구독 중인 게시글 카테고리를 조회합니다."
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카테고리 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
+    })
     public ApiResponse<List<UserCategoryResponse>> list(@AuthenticationPrincipal UserDetails principal) {
         return ApiResponse.onSuccess(
                 categoryService.list(principal.getUsername()).stream()
@@ -51,6 +57,12 @@ public class UserCategoryController {
             summary = "카테고리 추가",
             description = "요청 바디에 전달한 게시글 카테고리를 내 구독 목록에 추가합니다. 이미 존재하면 무시합니다."
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카테고리 추가 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMON400: 잘못된 요청입니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
+    })
     public ApiResponse<String> add(@AuthenticationPrincipal UserDetails principal, @RequestBody CategoryRequest req) {
         categoryService.add(principal.getUsername(), req.getCategory());
         return ApiResponse.onSuccess("OK");
@@ -61,6 +73,12 @@ public class UserCategoryController {
             summary = "카테고리 삭제",
             description = "요청 바디에 전달한 게시글 카테고리를 내 구독 목록에서 제거합니다."
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카테고리 삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMON400: 잘못된 요청입니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
+    })
     public ApiResponse<String> remove(@AuthenticationPrincipal UserDetails principal, @RequestBody CategoryRequest req) {
         categoryService.remove(principal.getUsername(), req.getCategory());
         return ApiResponse.onSuccess("OK");
