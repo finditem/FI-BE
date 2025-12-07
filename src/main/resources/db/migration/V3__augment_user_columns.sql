@@ -3,13 +3,7 @@
 -- helper to add column if missing
 -- usage: set @col_name and @ddl then execute prepared statement conditionally
 
--- name VARCHAR(255) NOT NULL DEFAULT ''
-SET @col_name := 'name';
-SET @exists := (SELECT COUNT(1) FROM information_schema.COLUMNS
-                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user' AND COLUMN_NAME = @col_name);
-SET @ddl := "ALTER TABLE `user` ADD COLUMN `name` VARCHAR(255) NOT NULL DEFAULT ''";
-SET @sql := IF(@exists = 0, @ddl, 'SELECT 1');
-PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+-- name column removed in V11
 
 -- email_verified TINYINT(1) NOT NULL DEFAULT 0
 SET @col_name := 'email_verified';
