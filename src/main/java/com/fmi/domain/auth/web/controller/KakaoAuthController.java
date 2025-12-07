@@ -9,6 +9,8 @@ import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.JwtTokenProvider;
 import com.fmi.security.RefreshTokenStore;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -45,10 +47,46 @@ public class KakaoAuthController {
     @Operation(summary = "카카오 로그인(토큰 핸드오프)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카카오 로그인 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "AUTH400-KAKAO_GRANT: 지원하지 않는 grantType"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "AUTH500-KAKAO_TOKEN_FAILED: 카카오 토큰 교환에 실패했습니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "AUTH500-KAKAO_USERINFO_FAILED: 카카오 사용자 정보 조회에 실패했습니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "AUTH400-KAKAO_GRANT: 지원하지 않는 grantType",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"AUTH400-KAKAO_GRANT\", \"message\": \"지원하지 않는 grantType\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "AUTH500-KAKAO_TOKEN_FAILED: 카카오 토큰 교환에 실패했습니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"AUTH500-KAKAO_TOKEN_FAILED\", \"message\": \"카카오 토큰 교환에 실패했습니다.\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "AUTH500-KAKAO_USERINFO_FAILED: 카카오 사용자 정보 조회에 실패했습니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"AUTH500-KAKAO_USERINFO_FAILED\", \"message\": \"카카오 사용자 정보 조회에 실패했습니다.\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "COMMON500: 서버 에러",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
+                            )
+                    )
+            )
     })
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithKakao(@RequestBody KakaoLoginRequest req) {
         String grantType = req.getGrantType();
