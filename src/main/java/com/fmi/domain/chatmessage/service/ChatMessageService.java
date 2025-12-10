@@ -140,6 +140,11 @@ public class ChatMessageService {
             // 메시지 갱신 및 ACTIVE 설정
             pt.updateLastMessage(newMessage);
 
+            // 발신자가 보낸 메세지 읽음 처리
+            if (pt.getUser().getId().equals(senderId)) {
+                pt.readMessages(newMessage.getId());
+            }
+
             // 수신자의 카운트만 증가
             if (!pt.getUser().getId().equals(senderId)) {
                 boolean isPresent = presenceService.isUserPresent(roomId, pt.getUser().getId());
