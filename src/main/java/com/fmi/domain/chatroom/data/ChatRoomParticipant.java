@@ -108,16 +108,6 @@ public class ChatRoomParticipant {
     }
 
     /**
-     * 안 읽은 개수 1 증가
-     */
-    public void incrementUnreadCount() {
-        if (this.unreadCount == null) {
-            this.unreadCount = 0L;
-        }
-        this.unreadCount += 1;
-    }
-
-    /**
      * 리마인더 발송 후 호출
      */
     public void markReminded() {
