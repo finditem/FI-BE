@@ -86,16 +86,11 @@ public class ChatRoomParticipant {
     /**
      * 새 메시지가 도착했을 때 호출
      */
-    public void onNewMessageArrived(ChatMessage message) {
-        this.participantState = ParticipantState.ACTIVE;
-        this.lastMessage = message;
-        this.lastMessageSentAt = message.getCreatedAt();
-
+    public void onNewMessageArrived() {
         // 처음으로 안 읽은 시간 기록
         if (this.unreadCount == 0L) {
             this.firstUnreadAt = LocalDateTime.now();
         }
-
         this.unreadCount++;
     }
 
