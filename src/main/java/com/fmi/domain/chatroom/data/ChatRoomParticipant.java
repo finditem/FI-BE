@@ -72,6 +72,10 @@ public class ChatRoomParticipant {
         // 목록에서 보이지 않게 lastMessage도 초기화
         this.lastMessage = null;
         this.lastMessageSentAt = null;
+        this.unreadCount = 0L;
+        if (lastMessageIdOrNull != null) {
+            this.lastReadMessageId = lastMessageIdOrNull;
+        }
     }
 
     /**
