@@ -70,20 +70,20 @@ public class ChatRoomConverter {
                 .build();
 
         ChatMessage lastMessage = participant.getLastMessage();
-        String preview = null;
+        String content = null;
+        MessageType messageType = null;
+
         if (lastMessage != null) {
-            if (lastMessage.getContent() != null && !lastMessage.getContent().isBlank()) {
-                preview = lastMessage.getContent();
-            } else if (isImageMessage(lastMessage)) {
-                preview = "사진을 보냈습니다.";
-            }
+            content = lastMessage.getContent();
+            messageType=lastMessage.getMessageType();
         }
 
         return ChatRoomSummaryDTO.builder()
                 .roomId(participant.getChatRoom().getId())
                 .contactUser(contactUserDTO)
                 .postInfo(postInfoDTO)
-                .lastMessage(preview)
+                .messageType(messageType)
+                .lastMessage(content)
                 .lastMessageSentAt(participant.getLastMessageSentAt())
                 .unreadCount(participant.getUnreadCount())
                 .build();
