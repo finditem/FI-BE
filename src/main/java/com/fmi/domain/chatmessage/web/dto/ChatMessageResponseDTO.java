@@ -66,6 +66,7 @@ public class ChatMessageResponseDTO {
     @Getter
     public static class ListUpdateDTO {
         private Long roomId;
+        private MessageType messageType;
         private String lastMessage;
         private LocalDateTime lastMessageSentAt;
         private Long unreadCount; // DB에 저장된 값

@@ -157,13 +157,14 @@ public class ChatMessageService {
                 } else {
                     // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
                     pt.onNewMessageArrived();
-                    chatNotificationService.saveOrUpdateChatNotification(pt.getUser(), roomId, newMessage.getPreviewContent(), NotificationType.CHAT);
+                    chatNotificationService.saveOrUpdateChatNotification(pt.getUser(), roomId, newMessage.getContent(), NotificationType.CHAT);
                 }
             }
             // 갱신된 정보로 DTO 생성
             ListUpdateDTO listUpdateDTO = ListUpdateDTO.builder()
                     .roomId(roomId)
-                    .lastMessage(newMessage.getPreviewContent())
+                    .messageType(newMessage.getMessageType())
+                    .lastMessage(newMessage.getContent())
                     .lastMessageSentAt(newMessage.getCreatedAt())
                     .unreadCount(pt.getUnreadCount())
                     .build();
