@@ -93,10 +93,10 @@ public class ChatRoomController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM_LIST_FETCHED: 채팅 목록 조회 성공")
     })
     @PatchMapping("/chats/{roomId}/leave")
-    public ApiResponse<Void> leftChatRoom(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal UserDetails userDetails) {
+    public ApiResponse<Void> leaveChatRoom(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
         User user = userService.findUser(email);
-        chatRoomService.leftChatRoom(roomId, user.getId());
+        chatRoomService.leaveChatRoom(roomId, user.getId());
         return ApiResponse.of(SuccessStatus._CHATROOM_LEFT);
     }
 

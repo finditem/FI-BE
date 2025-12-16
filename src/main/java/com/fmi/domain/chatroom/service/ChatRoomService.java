@@ -120,7 +120,7 @@ public class ChatRoomService {
         return new MyChatListDTO(summaryDTOs, nextCursor);
     }
 
-    public void leftChatRoom(Long roomId, Long userId) {
+    public void leaveChatRoom(Long roomId, Long userId) {
         ChatRoomParticipant chatRoomParticipant = chatRoomParticipantRepository.findByUser_IdAndChatRoom_Id(userId, roomId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
 
