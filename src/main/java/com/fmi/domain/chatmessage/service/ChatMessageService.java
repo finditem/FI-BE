@@ -14,10 +14,10 @@ import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
-import com.fmi.domain.userblock.service.BlockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 
 import static com.fmi.domain.chatmessage.converter.ChatMessageConverter.messageImageResponseDTO;
 import static com.fmi.domain.chatmessage.converter.ChatMessageConverter.messageResponseDTO;
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendImageRequestDTO;
 import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessageRequestDTO;
 import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.*;
 
@@ -86,10 +85,9 @@ public class ChatMessageService {
         return responseDTO;
     }
 
-    public MessageImageResponseDTO sendImageMessage(Long roomId, SendImageRequestDTO requestDTO, Long userId) {
+    public MessageImageResponseDTO sendImageMessage(Long roomId, List<MultipartFile> images, Long userId) {
 
-        List<MultipartFile> imageFiles = requestDTO.getImages();
-        if (imageFiles == null || imageFiles.isEmpty()) {
+        if (images == null || images.isEmpty()) {
             throw new GeneralException(ErrorStatus._IMAGE_NOT_PROVIDED);
         }
 
@@ -109,12 +107,11 @@ public class ChatMessageService {
         ChatMessage chatMessage = ChatMessage.builder()
                 .chatRoom(room)
                 .user(sender)
-                .content(requestDTO.getContent())
                 .messageType(MessageType.IMAGE)
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        List<String> imageUrls = s3Service.upload(imageFiles);
+        List<String> imageUrls = s3Service.upload(images);
         imageUrls.forEach(url -> {
             MessageImage newImage = MessageImage.builder().imageUrl(url).build();
             chatMessage.addImage(newImage);
