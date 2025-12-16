@@ -5,7 +5,6 @@ import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.domain.chatroom.service.ChatRoomService;
-import com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
 import com.fmi.service.UserQueryService;
@@ -25,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResultDTO;
+import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.MyChatListDTO;
 
 @RestController
 @RequiredArgsConstructor
@@ -74,7 +74,7 @@ public class ChatRoomController {
 
     })
     @GetMapping("/users/me/chats")
-    public ApiResponse<ChatRoomResponseDTO.MyChatListDTO> getMyPostChatRooms(
+    public ApiResponse<MyChatListDTO> getMyPostChatRooms(
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(name = "type", required = false) Type type,
@@ -84,7 +84,7 @@ public class ChatRoomController {
     ) {
         User user = userService.findUser(userDetails.getUsername());
 
-        ChatRoomResponseDTO.MyChatListDTO responseDTO = chatRoomService.getMyPostChatRooms(user, cursor, size, type, address, sort);
+        MyChatListDTO responseDTO = chatRoomService.getMyPostChatRooms(user, cursor, size, type, address, sort);
         return ApiResponse.of(SuccessStatus._CHATROOM_LIST_FETCHED, responseDTO);
     }
 
