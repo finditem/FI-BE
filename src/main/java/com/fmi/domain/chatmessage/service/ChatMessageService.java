@@ -175,13 +175,8 @@ public class ChatMessageService {
 
     @Transactional(readOnly = true)
     public MessageSliceResponseDTO messageSlice(Long roomId, Long senderId, Long cursorId) {
-
-        if (!chatRoomParticipantRepository.existsByUser_IdAndChatRoom_Id(senderId, roomId)) {
-            throw new GeneralException(ErrorStatus._MESSAGE_NOT_ALLOWED);
-        }
-
         ChatRoomParticipant me = chatRoomParticipantRepository.findByChatRoom_IdAndUser_Id(roomId, senderId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._MESSAGE_NOT_ALLOWED));
 
         Long cutoff = me.getVisibleFromMessageId();
 
