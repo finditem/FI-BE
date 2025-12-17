@@ -32,7 +32,6 @@ public class ChatMessageResponseDTO {
         private Long messageId;
         private Long roomId;
         private Long senderId;
-        private String content;
         private MessageType messageType;
         private List<String> imageUrls;
         private LocalDateTime createdAt;

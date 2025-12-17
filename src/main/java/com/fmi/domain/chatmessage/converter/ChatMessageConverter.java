@@ -30,7 +30,6 @@ public class ChatMessageConverter {
                 .messageType(chatMessage.getMessageType())
                 .roomId(chatMessage.getChatRoom().getId())
                 .senderId(chatMessage.getUser().getId())
-                .content(chatMessage.getContent())
                 .imageUrls(chatMessage.getImages().stream()
                         .map(MessageImage::getImageUrl)
                         .collect(Collectors.toList()))
