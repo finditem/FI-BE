@@ -122,7 +122,7 @@ public class ChatRoomService {
 
     public void leaveChatRoom(Long roomId, Long userId) {
         ChatRoomParticipant chatRoomParticipant = chatRoomParticipantRepository.findByUser_IdAndChatRoom_Id(userId, roomId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._PARTICIPANT_NOT_FOUND));
 
         if (chatRoomParticipant.getParticipantState() == ParticipantState.LEFT) {
             return;
