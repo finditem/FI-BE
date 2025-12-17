@@ -140,11 +140,14 @@ public class ChatMessageService {
             // 메시지 갱신 및 ACTIVE 설정
             pt.updateLastMessage(newMessage);
 
+            // 발신자가 보낸 메세지 읽음 처리
+            if (pt.getUser().getId().equals(senderId)) {
+                pt.readMessages(newMessage.getId());
+            }
+
             // 수신자의 카운트만 증가
             if (!pt.getUser().getId().equals(senderId)) {
-                Long userId = pt.getUser().getId();
                 boolean isPresent = presenceService.isUserPresent(roomId, pt.getUser().getId());
-                String preview = newMessage.getPreviewContent();
                 if (isPresent) {
                     // 방안에 있음 -> 즉시 읽음. DB unreadCount = 0
                     pt.readMessages(newMessage.getId());
@@ -156,23 +159,20 @@ public class ChatMessageService {
                     broker.convertAndSendToUser(sender.getId().toString(), "/queue/read-receipts", receiptDTO);
                 } else {
                     // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
-                    pt.onNewMessageArrived(newMessage);
-                    chatNotificationService.saveOrUpdateChatNotification(pt.getUser(), roomId, preview, NotificationType.CHAT);
+                    pt.onNewMessageArrived();
+                    chatNotificationService.saveOrUpdateChatNotification(pt.getUser(), roomId, newMessage.getPreviewContent(), NotificationType.CHAT);
                 }
-
-                // 갱신된 정보로 DTO 생성
-                ListUpdateDTO listUpdateDTO = ListUpdateDTO.builder()
-                        .roomId(roomId)
-                        .lastMessage(preview)
-                        .lastMessageSentAt(newMessage.getCreatedAt())
-                        .unreadCount(pt.getUnreadCount())
-                        .build();
-
-                broker.convertAndSendToUser(userId.toString(), "/queue/list-updates", listUpdateDTO);
             }
+            // 갱신된 정보로 DTO 생성
+            ListUpdateDTO listUpdateDTO = ListUpdateDTO.builder()
+                    .roomId(roomId)
+                    .lastMessage(newMessage.getPreviewContent())
+                    .lastMessageSentAt(newMessage.getCreatedAt())
+                    .unreadCount(pt.getUnreadCount())
+                    .build();
 
+            broker.convertAndSendToUser(pt.getUser().getId().toString(), "/queue/list-updates", listUpdateDTO);
         }
-
     }
 
     @Transactional(readOnly = true)

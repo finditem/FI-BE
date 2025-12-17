@@ -72,6 +72,10 @@ public class ChatRoomParticipant {
         // 목록에서 보이지 않게 lastMessage도 초기화
         this.lastMessage = null;
         this.lastMessageSentAt = null;
+        this.unreadCount = 0L;
+        if (lastMessageIdOrNull != null) {
+            this.lastReadMessageId = lastMessageIdOrNull;
+        }
     }
 
     /**
@@ -86,16 +90,11 @@ public class ChatRoomParticipant {
     /**
      * 새 메시지가 도착했을 때 호출
      */
-    public void onNewMessageArrived(ChatMessage message) {
-        this.participantState = ParticipantState.ACTIVE;
-        this.lastMessage = message;
-        this.lastMessageSentAt = message.getCreatedAt();
-
+    public void onNewMessageArrived() {
         // 처음으로 안 읽은 시간 기록
         if (this.unreadCount == 0L) {
             this.firstUnreadAt = LocalDateTime.now();
         }
-
         this.unreadCount++;
     }
 
@@ -110,16 +109,6 @@ public class ChatRoomParticipant {
 
         this.firstUnreadAt = null;
         this.lastRemindedAt = null;
-    }
-
-    /**
-     * 안 읽은 개수 1 증가
-     */
-    public void incrementUnreadCount() {
-        if (this.unreadCount == null) {
-            this.unreadCount = 0L;
-        }
-        this.unreadCount += 1;
     }
 
     /**
