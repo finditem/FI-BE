@@ -125,6 +125,7 @@ public class PostConverter {
     }
 
     public PostResponse toPostResponse(Post post) {
+
         List<String> imageUrls = post.getImages() != null ?
                 post.getImages().stream()
                         .map(PostImage::getImgUrl)

@@ -16,6 +16,8 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite,Long>
     Optional<PostFavorite> findByUserAndPost(User user, Post post);
     List<PostFavorite> findByUserAndIsFavoriteTrue(User user);
 
+    boolean existsByUserAndPost(User user,Post post);
+
     @Query("SELECT pf.user FROM PostFavorite pf WHERE pf.post = :post AND pf.isFavorite = true")
     List<User> findUsersByPost(@Param("post") Post post);
 }
