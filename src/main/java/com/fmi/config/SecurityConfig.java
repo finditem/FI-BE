@@ -5,6 +5,7 @@ import com.fmi.security.JwtAuthenticationFilter;
 import com.fmi.security.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -34,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login", "/auth/signup", "/auth/refresh", "/auth/logout",
                                 "/auth/check-email", "/auth/check-nickname", "/auth/reset/**", "/s3/**", "/chat-test.html", "/chat-test2.html").permitAll()
                         .requestMatchers("/auth/kakao/**", "/auth/email/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/post/{postId}","/post/").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         // 공지사항, FAQ, 공개 문의 - 공개 API (경로 개편)
                         .requestMatchers("/notice/**", "/faq/**", "/inquiry/public/**").permitAll()
