@@ -68,7 +68,10 @@ public class ChatRoomController {
 
     @Operation(summary = "내 채팅 목록 조회", description = "내가 참여하고 있는 채팅방 목록을 커서 기반 페이지네이션으로 조회합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM_LIST_FETCHED: 채팅 목록 조회 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM_LIST_FETCHED: 채팅 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "LIST400-INVALID_CURSOR: 유효하지 않은 커서입니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
     })
     @Parameters({
             @Parameter(name = "cursor", description = "이전 페이지 응답의 nextCursor 값. 첫 페이지 조회 시 생략.", required = false),
@@ -94,6 +97,12 @@ public class ChatRoomController {
     }
 
     @Operation(summary = "채팅방 나가기", description = "채팅방을 나가면 그 시점부터 나간 사용자에게 대화 내역이 보이지 않고, 내 채팅 목록에도 사라집니다. 다시 채팅이 시작되면 그 나간 이후 시점부터 내역이 보입니다. (나가지 않은 사용자에겐 적용x)")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "채팅방 나가기 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "CHATROOM404-NOT_FOUND: 존재하지 않는 채팅방입니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
+    })
     @PostMapping("/chats/{roomId}/leave")
     public ApiResponse<Void> leaveChatRoom(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
