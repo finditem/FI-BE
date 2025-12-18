@@ -43,7 +43,8 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
                 .selectFrom(pt)
                 .join(pt.chatRoom, cr).fetchJoin()
                 .join(cr.post, p).fetchJoin()
-                .join(pt.lastMessage, lm).fetchJoin()
+                //todo: 추후에 이걸로 다시 변경 .join(pt.lastMessage, lm).fetchJoin()
+                .leftJoin(pt.lastMessage, lm).fetchJoin()
                 .join(cr.participants, otherPt)
                 .join(otherPt.user, otherUser).fetchJoin()
                 .where(
@@ -51,7 +52,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
                         pt.user.id.eq(userId),
                         otherPt.user.id.ne(userId),
                         pt.participantState.eq(ParticipantState.ACTIVE),
-                        pt.lastMessage.isNotNull(),
+                        //todo: 추후에 주석 해제 pt.lastMessage.isNotNull(),
 
                         typeEq(type),
                         addressEq(address)
