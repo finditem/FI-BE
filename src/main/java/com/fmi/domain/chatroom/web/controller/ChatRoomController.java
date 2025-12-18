@@ -5,7 +5,6 @@ import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.domain.chatroom.service.ChatRoomService;
-import com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
 import com.fmi.service.UserQueryService;
@@ -15,6 +14,8 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResultDTO;
+import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.MyChatListDTO;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,14 +38,14 @@ public class ChatRoomController {
 
     @Operation(summary = "채팅방 생성/조회", description = "특정 게시글에 대해 1:1 채팅방을 생성하거나 기존 채팅방을 조회합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM_CREATED: 채팅방이 새로 생성됨"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "CHATROOM_CREATED: 채팅방이 새로 생성됨"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM_FOUND: 기존 채팅방이 조회됨"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "CHATROOM_NOT_ALLOWED: 자신의 게시글에 채팅 시도"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST_NOT_FOUND: 존재하지 않는 게시글"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "USER_NOT_FOUND: 존재하지 않는 사용자")
     })
     @PostMapping("/posts/{postId}/chats")
-    public ApiResponse<ChatRoomResultDTO> createChatRoom(@PathVariable("postId") Long postId, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<ChatRoomResultDTO>> createChatRoom(@PathVariable("postId") Long postId, @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
         User user = userService.findUser(email);
         Pair<ChatRoomResultDTO, Boolean> result = chatRoomService.createChatRoom(postId, user.getId());
@@ -53,12 +55,15 @@ public class ChatRoomController {
 
         if (isNew) {
             // 새로 생성된 경우
-            return ApiResponse.of(SuccessStatus._CHATROOM_CREATED, responseDTO);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(ApiResponse.of(SuccessStatus._CHATROOM_CREATED, responseDTO));
         } else {
             // 기존에 존재했던 경우
-            return ApiResponse.of(SuccessStatus._CHATROOM_FOUND, responseDTO);
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(ApiResponse.of(SuccessStatus._CHATROOM_FOUND, responseDTO));
         }
-
     }
 
     @Operation(summary = "내 채팅 목록 조회", description = "내가 참여하고 있는 채팅방 목록을 커서 기반 페이지네이션으로 조회합니다.")
@@ -77,7 +82,7 @@ public class ChatRoomController {
 
     })
     @GetMapping("/users/me/chats")
-    public ApiResponse<ChatRoomResponseDTO.MyChatListDTO> getMyPostChatRooms(
+    public ApiResponse<MyChatListDTO> getMyPostChatRooms(
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(name = "type", required = false) Type type,
@@ -87,7 +92,7 @@ public class ChatRoomController {
     ) {
         User user = userService.findUser(userDetails.getUsername());
 
-        ChatRoomResponseDTO.MyChatListDTO responseDTO = chatRoomService.getMyPostChatRooms(user, cursor, size, type, address, sort);
+        MyChatListDTO responseDTO = chatRoomService.getMyPostChatRooms(user, cursor, size, type, address, sort);
         return ApiResponse.of(SuccessStatus._CHATROOM_LIST_FETCHED, responseDTO);
     }
 
@@ -98,11 +103,11 @@ public class ChatRoomController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "CHATROOM404-NOT_FOUND: 존재하지 않는 채팅방입니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
     })
-    @PatchMapping("/chats/{roomId}/leave")
-    public ApiResponse<Void> leftChatRoom(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal UserDetails userDetails) {
+    @PostMapping("/chats/{roomId}/leave")
+    public ApiResponse<Void> leaveChatRoom(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
         User user = userService.findUser(email);
-        chatRoomService.leftChatRoom(roomId, user.getId());
+        chatRoomService.leaveChatRoom(roomId, user.getId());
         return ApiResponse.of(SuccessStatus._CHATROOM_LEFT);
     }
 

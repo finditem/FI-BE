@@ -32,7 +32,6 @@ public class ChatMessageResponseDTO {
         private Long messageId;
         private Long roomId;
         private Long senderId;
-        private String content;
         private MessageType messageType;
         private List<String> imageUrls;
         private LocalDateTime createdAt;
@@ -66,6 +65,7 @@ public class ChatMessageResponseDTO {
     @Getter
     public static class ListUpdateDTO {
         private Long roomId;
+        private MessageType messageType;
         private String lastMessage;
         private LocalDateTime lastMessageSentAt;
         private Long unreadCount; // DB에 저장된 값

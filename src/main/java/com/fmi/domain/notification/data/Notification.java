@@ -32,7 +32,7 @@ public class Notification {
     @Column(name = "title", nullable = false, length = 200)
     private String title;
 
-    @Column(name = "message", nullable = false, length = 500)
+    @Column(name = "message", length = 500)
     private String message;
 
     @Enumerated(EnumType.STRING)

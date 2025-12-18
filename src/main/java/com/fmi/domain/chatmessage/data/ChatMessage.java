@@ -57,12 +57,4 @@ public class ChatMessage {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public String getPreviewContent() {
-        if (this.content != null && !this.content.isBlank()) {
-            return this.content;
-        } else if (this.getMessageType() == MessageType.IMAGE) {
-            return "사진을 보냈습니다.";
-        }
-        return "미리보기가 없는 메시지입니다.";
-    }
 }

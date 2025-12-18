@@ -5,11 +5,11 @@ import com.fmi.domain.chatmessage.service.ChatMessageService;
 import com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
+import com.fmi.service.UserQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -19,10 +19,11 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
+import java.util.List;
 
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendImageRequestDTO;
 import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessageRequestDTO;
 
 @RestController
@@ -55,12 +56,12 @@ public class ChatMessageController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
     })
     public ApiResponse<Void> uploadImage(@PathVariable Long roomId,
-                                         @AuthenticationPrincipal UserDetails userDetails, @ModelAttribute SendImageRequestDTO requestDTO) {
+                                         @AuthenticationPrincipal UserDetails userDetails, @RequestPart("images") List<MultipartFile> images) {
 
         String email = userDetails.getUsername();
         User user = userService.findUser(email);
 
-        chatMessageService.sendImageMessage(roomId, requestDTO, user.getId());
+        chatMessageService.sendImageMessage(roomId, images, user.getId());
         return ApiResponse.of(SuccessStatus._OK);
     }
 

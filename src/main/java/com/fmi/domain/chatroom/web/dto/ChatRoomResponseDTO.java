@@ -1,8 +1,8 @@
 package com.fmi.domain.chatroom.web.dto;
 
 import com.fmi.domain.Enum.Type;
+import com.fmi.domain.chatmessage.data.enums.MessageType;
 import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -58,6 +58,7 @@ public class ChatRoomResponseDTO {
         private Long roomId;
         private ContactUserDTO contactUser;
         private PostInfoDTO postInfo;
+        private MessageType messageType;
         private String lastMessage;
         private LocalDateTime lastMessageSentAt;
         private Long unreadCount;
