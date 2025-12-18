@@ -18,7 +18,7 @@ public class CommentLikeController {
 
     private final CommentLikeService commentLikeService;
 
-    @Operation(summary = "좋아요 알림 토글형식", description = "true 좋아요, false 좋아요 취소")
+    @Operation(summary = "댓글 좋아요 알림 토글형식", description = "true 좋아요, false 좋아요 취소")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "좋아요 토글 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),

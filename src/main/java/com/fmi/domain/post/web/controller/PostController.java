@@ -174,7 +174,7 @@ public class PostController {
     }
 
     @GetMapping("/{postId}/share")
-    @Operation(summary = "게시글 공유")
+    @Operation(summary = "더미 데이터용 api")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 공유 정보 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다"),
@@ -204,7 +204,7 @@ public class PostController {
     }
 
     @PostMapping("/filter")
-    @Operation(summary = "게시글 필터",description = "지역, 카테고리, 정렬, 찾음여부, 기간")
+    @Operation(summary = "게시글 필터", description = "지역, 카테고리, 정렬, 찾음여부, 기간")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 필터 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "LIST400-INVALID_CURSOR: 유효하지 않은 커서입니다"),
@@ -213,7 +213,7 @@ public class PostController {
     })
     public ResponseEntity<ApiResponse<FilterResponse>> getFilter(@RequestBody PostFilterDto dto,
                                                                  @RequestParam(required = false) Long cursor,
-                                                                 @PageableDefault(size = 20) Pageable pageable){
+                                                                 @PageableDefault(size = 20) Pageable pageable) {
 
         FilterResponse response = postService.getPostsByFilter(dto, pageable, cursor);
 

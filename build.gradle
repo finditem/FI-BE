@@ -50,7 +50,9 @@ dependencies {
 	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.3.0'
 	implementation platform('software.amazon.awssdk:bom:2.27.21')
 	implementation 'software.amazon.awssdk:s3'
-    // querydsl
+	implementation "software.amazon.awssdk:apache-client"
+
+	// querydsl
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"

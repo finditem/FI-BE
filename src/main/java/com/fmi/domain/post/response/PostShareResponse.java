@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PostShareResponse {
 
-    private String url;
     private String title;
     private String summary;
     private String thumbnailUrl;

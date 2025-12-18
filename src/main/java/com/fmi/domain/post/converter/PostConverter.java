@@ -17,7 +17,6 @@ import java.util.List;
 @Component
 public class PostConverter {
 
-    private static final String BASE_URL = "https://fmi.com/post/";
     private String createThumbnail(Post post) {
         if (post.getImages() == null || post.getImages().isEmpty()) {
             return null;
@@ -170,7 +169,6 @@ public class PostConverter {
                 .title(post.getTitle())
                 .summary(createSummary(post,20))
                 .thumbnailUrl(createThumbnail(post))
-                .url(BASE_URL+post.getId())
                 .build();
     }
 
