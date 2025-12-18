@@ -75,9 +75,10 @@ public class PostController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
     })
     public ResponseEntity<ApiResponse<PostResponse>> getPost(
-            @PathVariable Long postId
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails
     ){
-        PostResponse post = postService.getPost(postId);
+        PostResponse post = postService.getPost(postId,userDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(post));
     }
 
