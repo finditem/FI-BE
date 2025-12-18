@@ -23,7 +23,7 @@ public class PostFavoriteController {
 
     private final PostFavoriteService postFavoriteService;
 
-    @Operation(summary = "즐겨찾기 추가",description = "토글형식 - true: 즐겨찾기 추가, false: 해제")
+    @Operation(summary = "즐겨찾기 토글형식",description = "true 즐겨찾기 추가, false 즐겨찾기 취소")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 토글 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
