@@ -1,23 +1,29 @@
 name: "📝 Task"
 description: "일반적인 작업(리팩터링, 문서화, 설정 변경 등)을 기록하는 템플릿"
 title: "[TASK] "
-labels:
-  - type: feature
 assignees: []
 body:
   - type: markdown
     attributes:
-      value: |
-        아래 브랜치 전략을 반드시 따릅니다.
+      value: | 
+        ### 브랜치 전략 필독
+        이 프로젝트는 **Git Flow** 전략을 따릅니다. 아래 규칙을 준수해주세요. 
+        
         - 모든 작업은 이슈 기반 브랜치에서 진행합니다.
-        - main 브랜치에 직접 push/commit 금지, PR로만 머지합니다.
-        - 작업 브랜치는 main에서 생성하며 이름은 이슈 키 그대로 사용합니다. 예) FIND-001
-        - 의존 이슈가 있을 경우, 필요한 작업물이 있는 브랜치에서 분기합니다. 예) FIND-002 → FIND-001에서 분기
-        - 커밋 메시지는 Conventional Commits 양식을 권장합니다. 예) feat: 기능 요약
-
-        브랜치 생성 예시:
-        - main 최신화: `git pull --rebase origin main`
-        - 브랜치 생성: `git checkout -b <이슈키>` (예: `git checkout -b FIND-001`)
+        - main, develop 브랜치에 직접 push/commit 금지, PR로만 머지합니다.
+        - 작업 브랜치는 develop에서 생성하며 이름은 타입/이슈번호 형식을 사용합니다. 예) feature/#1
+        - 의존 이슈가 있을 경우, 필요한 작업물이 있는 브랜치에서 분기합니다. 예) feature/#2 → feature/#1에서 분기
+        - 커밋 메시지는 Conventional Commits 양식을 사용합니다. 예) feat: 기능 추가 
+        
+        #### 브랜치 생성 가이드
+        ```bash
+        # 1. develop 브랜치로 이동 및 최신화
+        git checkout develop
+        git pull origin develop
+        
+        # 2. 작업 브랜치 생성 (예: chore/#10)
+        git checkout -b <타입>/<이슈번호>
+        ```
 
   - type: textarea
     id: work_summary
@@ -51,12 +57,11 @@ body:
     id: branch_policy
     attributes:
       label: 브랜치/PR 정책 확인
-    
       description: 제출 전 아래 항목을 모두 확인하세요.
       options:
-        - label: main에서 브랜치를 생성한다 (예외적으로 의존 브랜치에서 분기 가능)
+        - label: develop에서 브랜치를 생성한다 (예외적으로 의존 브랜치에서 분기 가능)
           required: true
-        - label: main에 직접 push/commit 하지 않는다 (반드시 PR로 머지)
+        - label: main, develop에 직접 push/commit 하지 않는다 (반드시 PR로 머지)
           required: true
         - label: PR 대상은 develop 브랜치이다
           required: true
