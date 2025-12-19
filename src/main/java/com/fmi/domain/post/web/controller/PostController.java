@@ -174,7 +174,7 @@ public class PostController {
     }
 
     @GetMapping("/{postId}/share")
-    @Operation(summary = "더미 데이터용 api")
+    @Operation(summary = "메타 데이터용 api")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 공유 정보 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다"),
