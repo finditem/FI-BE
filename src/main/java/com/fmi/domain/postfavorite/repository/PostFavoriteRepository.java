@@ -14,6 +14,7 @@ import java.util.Optional;
 @Repository
 public interface PostFavoriteRepository extends JpaRepository<PostFavorite,Long> {
     Optional<PostFavorite> findByUserAndPost(User user, Post post);
+
     List<PostFavorite> findByUserAndIsFavoriteTrue(User user);
 
     boolean existsByUserAndPost(User user,Post post);

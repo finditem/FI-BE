@@ -33,10 +33,4 @@ public class PostFavorite {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
-
-    public boolean toggle() {
-        this.isFavorite = !this.isFavorite;
-
-        return isFavorite;
-    }
 }
