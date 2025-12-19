@@ -15,6 +15,7 @@ import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.PostFilterDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
+import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -190,11 +191,25 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostResponse getPost(Long postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+    public PostResponse getPost(Long postId, UserDetails userDetails) {
 
-        return postConverter.toPostResponse(post);
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
+
+        boolean isFavorite = false;
+
+        if (userDetails != null) {
+            User user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+            PostFavorite favorite = postFavoriteRepository.findByUserAndPost(user, post)
+                    .orElse(null);
+
+            isFavorite = favorite != null && favorite.isFavorite();
+        }
+
+
+        return postConverter.toPostDetailResponse(post, isFavorite);
     }
 
     @Transactional

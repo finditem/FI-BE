@@ -124,6 +124,7 @@ public class PostConverter {
     }
 
     public PostResponse toPostResponse(Post post) {
+
         List<String> imageUrls = post.getImages() != null ?
                 post.getImages().stream()
                         .map(PostImage::getImgUrl)
@@ -143,6 +144,31 @@ public class PostConverter {
                 .postType(post.getPostType())
                 .category(post.getCategory())
                 .favoriteCount(post.getFavoriteCount())
+                .build();
+    }
+
+    public PostResponse toPostDetailResponse(Post post, boolean isFavorite) {
+
+        List<String> imageUrls = post.getImages() != null ?
+                post.getImages().stream()
+                        .map(PostImage::getImgUrl)
+                        .toList() :
+                List.of();
+
+        return PostResponse.builder()
+                .postId(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .address(post.getAddress())
+                .latitude(post.getLatitude())
+                .longitude(post.getLongitude())
+                .radius(post.getRadius())
+                .imageUrls(imageUrls)
+                .itemStatus(post.getItemStatus())
+                .postType(post.getPostType())
+                .category(post.getCategory())
+                .favoriteCount(post.getFavoriteCount())
+                .favoriteStatus(isFavorite)
                 .build();
     }
 

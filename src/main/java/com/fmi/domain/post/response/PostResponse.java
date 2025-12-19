@@ -27,4 +27,6 @@ public class PostResponse {
     private Category category;
     private Integer favoriteCount;
 
+    private boolean favoriteStatus;
+
 }

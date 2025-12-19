@@ -28,9 +28,35 @@ public class PostFavoriteService {
     private final PostFavoriteConverter favoritePostConverter;
     private final PostConverter postConverter;
 
-    //즐찾 추가
+
     @Transactional
-    public boolean toggleFavorite(Long postId, UserDetails userDetails) {
+    public boolean addFavorite(Long postId, UserDetails userDetails){
+
+        String email = userDetails.getUsername();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
+
+        boolean exists = favoriteRepository.existsByUserAndPost(user, post);
+        if (exists) {
+            return true;
+        }
+
+        favoriteRepository.save(
+                favoritePostConverter.toFavoriteEntity(user, post)
+        );
+
+        post.setFavoriteCount(post.getFavoriteCount() + 1);
+
+        return true;
+    }
+
+    @Transactional
+    public boolean deleteFavorite(Long postId, UserDetails userDetails){
+
         String email = userDetails.getUsername();
 
         User user = userRepository.findByEmail(email)
@@ -43,17 +69,15 @@ public class PostFavoriteService {
                 .orElse(null);
 
         if (favorite == null) {
-            favoriteRepository.save(favoritePostConverter.toFavoriteEntity(user,post));
-            post.setFavoriteCount(post.getFavoriteCount() + 1);
-            return true;
+            return false;
         }
 
-        boolean newStatus = favorite.toggle();
+        favoriteRepository.delete(favorite);
 
-        int currentCount = post.getFavoriteCount() != null ? post.getFavoriteCount() : 0;
-        post.setFavoriteCount(currentCount + (newStatus ? 1 : -1));
 
-        return favorite.isFavorite();
+        post.setFavoriteCount(post.getFavoriteCount() - 1);
+
+        return false;
     }
 
     //즐찾 조회
