@@ -38,6 +38,8 @@ public class AuthController {
 
     @Value("${jwt.cookie.name:refresh_token}")
     private String refreshCookieName;
+    @Value("${jwt.cookie.access-token-name:access_token}")
+    private String accessCookieName;
     @Value("${jwt.cookie.secure:false}")
     private boolean refreshCookieSecure;
     @Value("${jwt.cookie.same-site:Lax}")
@@ -164,7 +166,18 @@ public class AuthController {
         java.util.Date refreshExp = jwtTokenProvider.getExpiration(refreshToken);
         refreshTokenStore.issue(jti, user.getEmail(), refreshHash, refreshExp.toInstant());
 
-        ResponseCookie cookie = ResponseCookie.from(refreshCookieName, refreshToken)
+        // accessToken 쿠키 설정
+        java.util.Date accessExp = jwtTokenProvider.getExpiration(accessToken);
+        ResponseCookie accessCookie = ResponseCookie.from(accessCookieName, accessToken)
+                .httpOnly(true)
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite)
+                .path("/")
+                .maxAge(java.time.Duration.between(java.time.Instant.now(), accessExp.toInstant()))
+                .build();
+
+        // refreshToken 쿠키 설정
+        ResponseCookie refreshCookie = ResponseCookie.from(refreshCookieName, refreshToken)
                 .httpOnly(true)
                 .secure(refreshCookieSecure)
                 .sameSite(refreshCookieSameSite)
@@ -173,8 +186,9 @@ public class AuthController {
                 .build();
 
         return ResponseEntity.ok()
-                .header("Set-Cookie", cookie.toString())
-                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), accessToken, isTemporaryPassword)));
+                .header("Set-Cookie", accessCookie.toString())
+                .header("Set-Cookie", refreshCookie.toString())
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), null, isTemporaryPassword)));
     }
 
     @GetMapping("/check-email")
@@ -319,20 +333,32 @@ public class AuthController {
         String newJti = java.util.UUID.randomUUID().toString();
         String newRefresh = jwtTokenProvider.createRefreshToken(email, newJti);
         String newHash = sha256Hex(newRefresh);
-        java.util.Date exp = jwtTokenProvider.getExpiration(newRefresh);
-        refreshTokenStore.issue(newJti, email, newHash, exp.toInstant());
+        java.util.Date refreshExp = jwtTokenProvider.getExpiration(newRefresh);
+        refreshTokenStore.issue(newJti, email, newHash, refreshExp.toInstant());
 
-        ResponseCookie cookie = ResponseCookie.from(refreshCookieName, newRefresh)
+        // accessToken 쿠키 설정
+        java.util.Date accessExp = jwtTokenProvider.getExpiration(accessToken);
+        ResponseCookie accessCookie = ResponseCookie.from(accessCookieName, accessToken)
                 .httpOnly(true)
                 .secure(refreshCookieSecure)
                 .sameSite(refreshCookieSameSite)
                 .path("/")
-                .maxAge(java.time.Duration.between(java.time.Instant.now(), exp.toInstant()))
+                .maxAge(java.time.Duration.between(java.time.Instant.now(), accessExp.toInstant()))
+                .build();
+
+        // refreshToken 쿠키 설정
+        ResponseCookie refreshCookie = ResponseCookie.from(refreshCookieName, newRefresh)
+                .httpOnly(true)
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite)
+                .path("/")
+                .maxAge(java.time.Duration.between(java.time.Instant.now(), refreshExp.toInstant()))
                 .build();
 
         return ResponseEntity.ok()
-                .header("Set-Cookie", cookie.toString())
-                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(null, accessToken)));
+                .header("Set-Cookie", accessCookie.toString())
+                .header("Set-Cookie", refreshCookie.toString())
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(null, null)));
     }
 
     private static String sha256Hex(String value) {
@@ -371,15 +397,28 @@ public class AuthController {
                 }
             }
         }
-        ResponseCookie remove = ResponseCookie.from(refreshCookieName, "")
+        
+        // accessToken 쿠키 제거
+        ResponseCookie removeAccess = ResponseCookie.from(accessCookieName, "")
                 .httpOnly(true)
                 .secure(refreshCookieSecure)
                 .sameSite(refreshCookieSameSite)
                 .path("/")
                 .maxAge(0)
                 .build();
+        
+        // refreshToken 쿠키 제거
+        ResponseCookie removeRefresh = ResponseCookie.from(refreshCookieName, "")
+                .httpOnly(true)
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite)
+                .path("/")
+                .maxAge(0)
+                .build();
+        
         return ResponseEntity.ok()
-                .header("Set-Cookie", remove.toString())
+                .header("Set-Cookie", removeAccess.toString())
+                .header("Set-Cookie", removeRefresh.toString())
                 .body(ApiResponse.onSuccess("OK"));
     }
 
