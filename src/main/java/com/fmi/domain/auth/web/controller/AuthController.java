@@ -185,10 +185,14 @@ public class AuthController {
                 .maxAge(java.time.Duration.between(java.time.Instant.now(), refreshExp.toInstant()))
                 .build();
 
+        // 응답 생성 및 반환
+        // accessToken과 refreshToken은 쿠키로 전송되므로 응답 body에는 포함하지 않습니다.
+        // 응답 body에는 userId와 isTemporaryPassword만 포함됩니다.
         return ResponseEntity.ok()
-                .header("Set-Cookie", accessCookie.toString())
-                .header("Set-Cookie", refreshCookie.toString())
-                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), null, isTemporaryPassword)));
+                .header("Set-Cookie", accessCookie.toString())  // accessToken을 쿠키로 전송
+                .header("Set-Cookie", refreshCookie.toString())  // refreshToken을 쿠키로 전송
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), isTemporaryPassword)));
+                // 변경: accessToken 파라미터(null) 제거, userId와 isTemporaryPassword만 전달
     }
 
     @GetMapping("/check-email")
@@ -355,10 +359,15 @@ public class AuthController {
                 .maxAge(java.time.Duration.between(java.time.Instant.now(), refreshExp.toInstant()))
                 .build();
 
+        // 응답 생성 및 반환
+        // refresh() 메서드는 토큰 갱신만 수행하므로 userId는 null로 설정합니다.
+        // accessToken과 refreshToken은 쿠키로 전송되므로 응답 body에는 포함하지 않습니다.
         return ResponseEntity.ok()
-                .header("Set-Cookie", accessCookie.toString())
-                .header("Set-Cookie", refreshCookie.toString())
-                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(null, null)));
+                .header("Set-Cookie", accessCookie.toString())  // 새 accessToken을 쿠키로 전송
+                .header("Set-Cookie", refreshCookie.toString())  // 새 refreshToken을 쿠키로 전송
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(null)));
+                // userId를 null로 전달: refresh()는 토큰 갱신만 하므로 userId 반환 불필요
+                // LoginResponse 구조상 userId가 필수 필드라서 null 전달 (클라이언트는 사용하지 않음)
     }
 
     private static String sha256Hex(String value) {
