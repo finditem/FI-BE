@@ -277,21 +277,11 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "토큰 리프레시 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401",
-                    description = "AUTH400-INVALID_TOKEN: 토큰이 유효하지 않습니다",
+                    description = "AUTH401-INVALID_REFRESH: 리프레시 토큰이 없거나 유효하지 않습니다",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH400-INVALID_TOKEN\", \"message\": \"토큰이 유효하지 않습니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "AUTH400-NOT_FOUND: Authorization 헤더가 없거나 형식이 잘못되었습니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH400-NOT_FOUND\", \"message\": \"Authorization 헤더가 없거나 형식이 잘못되었습니다.\"}"
+                                    value = "{\"isSuccess\": false, \"code\": \"AUTH401-INVALID_REFRESH\", \"message\": \"리프레시 토큰 없음\"}"
                             )
                     )
             ),
