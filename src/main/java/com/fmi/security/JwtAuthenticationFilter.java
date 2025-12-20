@@ -34,10 +34,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
-        String bearer = request.getHeader("Authorization");
         String token = null;
-        if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
-            token = bearer.substring(7);
+        
+        // 1. 쿠키에서 accessToken 읽기 (우선순위)
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("access_token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        
+        // 2. 쿠키에 없으면 Authorization 헤더에서 읽기 (하위 호환성)
+        if (!StringUtils.hasText(token)) {
+            String bearer = request.getHeader("Authorization");
+            if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
+                token = bearer.substring(7);
+            }
         }
 
         if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {

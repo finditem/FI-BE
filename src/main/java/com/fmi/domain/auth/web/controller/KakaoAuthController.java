@@ -38,6 +38,8 @@ public class KakaoAuthController {
 
     @Value("${jwt.cookie.name:refresh_token}")
     private String refreshCookieName;
+    @Value("${jwt.cookie.access-token-name:access_token}")
+    private String accessCookieName;
     @Value("${jwt.cookie.secure:false}")
     private boolean refreshCookieSecure;
     @Value("${jwt.cookie.same-site:Lax}")
@@ -125,19 +127,33 @@ public class KakaoAuthController {
         String jti = UUID.randomUUID().toString();
         String refresh = jwtTokenProvider.createRefreshToken(localUser.getEmail(), jti);
         String refreshHash = sha256Hex(refresh);
-        var exp = jwtTokenProvider.getExpiration(refresh).toInstant();
-        refreshTokenStore.issue(jti, localUser.getEmail(), refreshHash, exp);
+        var refreshExp = jwtTokenProvider.getExpiration(refresh).toInstant();
+        refreshTokenStore.issue(jti, localUser.getEmail(), refreshHash, refreshExp);
 
-        ResponseCookie cookie = ResponseCookie.from(refreshCookieName, refresh)
+        // accessToken 쿠키 설정
+        var accessExp = jwtTokenProvider.getExpiration(accessToken).toInstant();
+        ResponseCookie accessCookie = ResponseCookie.from(accessCookieName, accessToken)
                 .httpOnly(true)
                 .secure(refreshCookieSecure)
                 .sameSite(refreshCookieSameSite)
                 .path("/")
-                .maxAge(Duration.between(Instant.now(), exp))
+                .maxAge(Duration.between(Instant.now(), accessExp))
                 .build();
 
-        Map<String, Object> result = Map.of("userId", localUser.getId(), "accessToken", accessToken);
-        return ResponseEntity.ok().header("Set-Cookie", cookie.toString()).body(ApiResponse.onSuccess(result));
+        // refreshToken 쿠키 설정
+        ResponseCookie refreshCookie = ResponseCookie.from(refreshCookieName, refresh)
+                .httpOnly(true)
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite)
+                .path("/")
+                .maxAge(Duration.between(Instant.now(), refreshExp))
+                .build();
+
+        Map<String, Object> result = Map.of("userId", localUser.getId());
+        return ResponseEntity.ok()
+                .header("Set-Cookie", accessCookie.toString())
+                .header("Set-Cookie", refreshCookie.toString())
+                .body(ApiResponse.onSuccess(result));
     }
 
     private static String sha256Hex(String value) {
