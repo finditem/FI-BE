@@ -45,6 +45,16 @@ public class PasswordResetController {
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "AUTH400-SOCIAL_ACCOUNT: 소셜 로그인 계정입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"AUTH400-SOCIAL_ACCOUNT\", \"message\": \"소셜 로그인 계정입니다.\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
                     content = @Content(
