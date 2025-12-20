@@ -73,18 +73,28 @@ public class AuthConverter {
         return new SignupResponse(userId);
     }
 
-    /**
-     * User + AccessToken → LoginResponse 변환
-     */
-    public static LoginResponse toLoginResponse(Long userId, String accessToken, boolean isTemporaryPassword) {
-        return new LoginResponse(userId, accessToken, isTemporaryPassword);
+
+    public static LoginResponse toLoginResponse(Long userId, boolean isTemporaryPassword) {
+        // LoginResponse 생성자에 accessToken 파라미터를 제거했으므로
+        // userId와 isTemporaryPassword만 전달합니다.
+        return new LoginResponse(userId, isTemporaryPassword);
     }
     
     /**
-     * User + AccessToken → LoginResponse 변환 (임시 비밀번호 플래그 없음 - 하위 호환성)
+     * LoginResponse 생성 메서드 (임시 비밀번호 플래그 없음 - 하위 호환성)
+     * 
+     * userId만 받아서 LoginResponse 객체를 생성합니다.
+     * isTemporaryPassword는 기본값 false로 설정됩니다.
+     * 
+     * 변경 사항:
+     * - accessToken 파라미터를 제거했습니다.
+     * 
+     * @param userId 사용자 ID
+     * @return LoginResponse 객체 (isTemporaryPassword = false)
      */
-    public static LoginResponse toLoginResponse(Long userId, String accessToken) {
-        return new LoginResponse(userId, accessToken, false);
+    public static LoginResponse toLoginResponse(Long userId) {
+        // isTemporaryPassword를 false로 설정하여 LoginResponse 생성
+        return new LoginResponse(userId, false);
     }
 
     /**
