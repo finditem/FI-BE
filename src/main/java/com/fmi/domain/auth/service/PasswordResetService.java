@@ -4,6 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 public class PasswordResetService {
 
     private final UserRepository userRepository;
+    private final SocialAccountsRepository socialAccountsRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
@@ -31,6 +33,10 @@ public class PasswordResetService {
     public void issueTemporaryPassword(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
+        
+        if (socialAccountsRepository.findByUser(user).isPresent()) {
+            throw new GeneralException(ErrorStatus._SOCIAL_ACCOUNT);
+        }
         
         String tempPassword = generateTempPassword();
         LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);  // 1시간 후 만료

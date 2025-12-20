@@ -30,6 +30,7 @@ public enum ErrorStatus implements BaseErrorCode {
     _TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH400-NOT_FOUND", "Authorization 헤더가 없거나 형식이 잘못되었습니다."),
     _KAKAO_TOKEN_EXCHANGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH500-KAKAO_TOKEN_FAILED", "카카오 토큰 교환에 실패했습니다."),
     _KAKAO_USERINFO_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH500-KAKAO_USERINFO_FAILED", "카카오 사용자 정보 조회에 실패했습니다."),
+    _SOCIAL_ACCOUNT(HttpStatus.BAD_REQUEST, "AUTH400-SOCIAL_ACCOUNT", "소셜 로그인 계정입니다."),
 
     // s3 관련 응답
     _NOT_EXIST_FILE (HttpStatus.NOT_FOUND, "FILE404-NOT_FOUND", "존재하지 않는 파일입니다."),
