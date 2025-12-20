@@ -55,12 +55,12 @@ public class PasswordResetController {
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
+                    responseCode = "400",
+                    description = "COMMON400: 잘못된 요청입니다 (존재하지 않는 이메일)",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"USER404-NOT_FOUND\", \"message\": \"존재하지 않는 회원입니다.\"}"
+                                    value = "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}"
                             )
                     )
             ),
