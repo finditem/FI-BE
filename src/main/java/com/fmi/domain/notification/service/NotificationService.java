@@ -67,11 +67,11 @@ public class NotificationService {
     @Transactional
     public void markAsRead(Long notificationId, User user) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.NOTIFICATION_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOTIFICATION_NOT_FOUND));
         
         // 본인 알림인지 확인
         if (!notification.getUser().getId().equals(user.getId())) {
-            throw new GeneralException(ErrorStatus.NOTIFICATION_ACCESS_DENIED);
+            throw new GeneralException(ErrorStatus._NOTIFICATION_ACCESS_DENIED);
         }
         
         notification.markAsRead();
@@ -91,11 +91,11 @@ public class NotificationService {
     @Transactional
     public void deleteNotification(Long notificationId, User user) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.NOTIFICATION_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOTIFICATION_NOT_FOUND));
         
         // 본인 알림인지 확인
         if (!notification.getUser().getId().equals(user.getId())) {
-            throw new GeneralException(ErrorStatus.NOTIFICATION_ACCESS_DENIED);
+            throw new GeneralException(ErrorStatus._NOTIFICATION_ACCESS_DENIED);
         }
         
         notificationRepository.delete(notification);

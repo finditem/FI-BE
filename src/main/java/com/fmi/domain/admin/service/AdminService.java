@@ -132,7 +132,7 @@ public class AdminService {
      */
     public InquiryDetailDTO getInquiryDetail(Long inquiryId) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.INQUIRY_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
         
         // 답변 조회
         InquiryReply reply = inquiryReplyRepository.findByInquiry(inquiry).orElse(null);
@@ -145,7 +145,7 @@ public class AdminService {
      */
     public ReportResponseDTO getReportDetail(Long reportId) {
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.REPORT_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
         
         return reportConverter.toResponseDTO(report);
     }

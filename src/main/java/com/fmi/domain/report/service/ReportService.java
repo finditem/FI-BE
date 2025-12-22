@@ -47,7 +47,7 @@ public class ReportService {
         reportRepository.findByReporterAndTargetTypeAndTargetId(
                 user, request.getTargetType(), request.getTargetId())
                 .ifPresent(report -> {
-                    throw new GeneralException(ErrorStatus.REPORT_ALREADY_EXISTS);
+                    throw new GeneralException(ErrorStatus._REPORT_ALREADY_EXISTS);
                 });
         
         // 신고 대상 존재 여부 확인
@@ -95,7 +95,7 @@ public class ReportService {
                 break;
             case COMMENT:
                 commentRepository.findById(targetId)
-                        .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND));
+                        .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
                 break;
             case USER:
                 userRepository.findActiveById(targetId)
@@ -103,7 +103,7 @@ public class ReportService {
                 break;
             case CHAT:
                 chatMessageRepository.findById(targetId)
-                        .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND)); // ChatMessage 용 에러 추가 필요
+                        .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND)); // ChatMessage 용 에러 추가 필요
                 break;
         }
     }
@@ -144,7 +144,7 @@ public class ReportService {
     @Transactional
     public void updateStatus(Long reportId, ReportStatus status, String adminNote) {
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.REPORT_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
 
         switch (status) {
             case RESOLVED:

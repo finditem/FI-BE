@@ -88,7 +88,7 @@ public class InquiryService {
         if (type == InquiryType.PUBLIC) {
             // 공개 문의: 회원만 가능 + email 필수
             if (user == null) {
-                throw new GeneralException(ErrorStatus.INQUIRY_ACCESS_DENIED);
+                throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
             }
             if (request.getEmail() == null || request.getEmail().isBlank()) {
                 throw new GeneralException(ErrorStatus._BAD_REQUEST);
@@ -112,7 +112,7 @@ public class InquiryService {
     @Transactional
     public Long addReply(Long inquiryId, String content, Long adminId) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new com.fmi.global.apiPayload.exception.GeneralException(com.fmi.global.apiPayload.code.status.ErrorStatus.INQUIRY_NOT_FOUND));
+                .orElseThrow(() -> new com.fmi.global.apiPayload.exception.GeneralException(com.fmi.global.apiPayload.code.status.ErrorStatus._INQUIRY_NOT_FOUND));
 
         InquiryReply reply = InquiryReply.builder()
                 .inquiry(inquiry)
@@ -172,12 +172,12 @@ public class InquiryService {
      */
     public InquiryDetailDTO getInquiryDetail(Long inquiryId, User user) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.INQUIRY_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
         
         // 권한 확인: 공개 문의는 누구나, 비공개 문의는 본인만
         if (inquiry.getInquiryType() == InquiryType.PRIVATE) {
             if (user == null || !inquiry.getUser().getId().equals(user.getId())) {
-                throw new GeneralException(ErrorStatus.INQUIRY_ACCESS_DENIED);
+                throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
             }
         }
         
