@@ -112,7 +112,7 @@ public class InquiryService {
     @Transactional
     public Long addReply(Long inquiryId, String content, Long adminId) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new com.fmi.global.apiPayload.exception.GeneralException(com.fmi.global.apiPayload.code.status.ErrorStatus._INQUIRY_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
 
         InquiryReply reply = InquiryReply.builder()
                 .inquiry(inquiry)
