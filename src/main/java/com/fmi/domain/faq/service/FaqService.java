@@ -43,7 +43,7 @@ public class FaqService {
     @Transactional
     public FaqResponseDTO getFaqDetail(Long faqId) {
         Faq faq = faqRepository.findById(faqId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.FAQ_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._FAQ_NOT_FOUND));
         
         // 조회수 증가
         faq.increaseViewCount();

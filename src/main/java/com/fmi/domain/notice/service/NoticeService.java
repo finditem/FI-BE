@@ -47,7 +47,7 @@ public class NoticeService {
     @Transactional
     public NoticeResponseDTO getNoticeDetail(Long noticeId) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.NOTICE_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
         
         // 조회수 증가
         notice.increaseViewCount();

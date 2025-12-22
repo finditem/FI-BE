@@ -38,10 +38,12 @@ public class AuthController {
 
     @Value("${jwt.cookie.name:refresh_token}")
     private String refreshCookieName;
+    @Value("${jwt.cookie.access-token-name:access_token}")
+    private String accessCookieName;
     @Value("${jwt.cookie.secure:false}")
-    private boolean refreshCookieSecure;
+    private boolean cookieSecure;
     @Value("${jwt.cookie.same-site:Lax}")
-    private String refreshCookieSameSite;
+    private String cookieSameSite;
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임을 입력해 회원을 생성합니다. 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.")
@@ -164,17 +166,33 @@ public class AuthController {
         java.util.Date refreshExp = jwtTokenProvider.getExpiration(refreshToken);
         refreshTokenStore.issue(jti, user.getEmail(), refreshHash, refreshExp.toInstant());
 
-        ResponseCookie cookie = ResponseCookie.from(refreshCookieName, refreshToken)
+        // accessToken 쿠키 설정
+        java.util.Date accessExp = jwtTokenProvider.getExpiration(accessToken);
+        ResponseCookie accessCookie = ResponseCookie.from(accessCookieName, accessToken)
                 .httpOnly(true)
-                .secure(refreshCookieSecure)
-                .sameSite(refreshCookieSameSite)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(java.time.Duration.between(java.time.Instant.now(), accessExp.toInstant()))
+                .build();
+
+        // refreshToken 쿠키 설정
+        ResponseCookie refreshCookie = ResponseCookie.from(refreshCookieName, refreshToken)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(java.time.Duration.between(java.time.Instant.now(), refreshExp.toInstant()))
                 .build();
 
+        // 응답 생성 및 반환
+        // accessToken과 refreshToken은 쿠키로 전송되므로 응답 body에는 포함하지 않습니다.
+        // 응답 body에는 userId와 isTemporaryPassword만 포함됩니다.
         return ResponseEntity.ok()
-                .header("Set-Cookie", cookie.toString())
-                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), accessToken, isTemporaryPassword)));
+                .header("Set-Cookie", accessCookie.toString())  // accessToken을 쿠키로 전송
+                .header("Set-Cookie", refreshCookie.toString())  // refreshToken을 쿠키로 전송
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), isTemporaryPassword)));
+                // 변경: accessToken 파라미터(null) 제거, userId와 isTemporaryPassword만 전달
     }
 
     @GetMapping("/check-email")
@@ -259,21 +277,11 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "토큰 리프레시 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401",
-                    description = "AUTH400-INVALID_TOKEN: 토큰이 유효하지 않습니다",
+                    description = "AUTH401-INVALID_REFRESH: 리프레시 토큰이 없거나 유효하지 않습니다",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH400-INVALID_TOKEN\", \"message\": \"토큰이 유효하지 않습니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "AUTH400-NOT_FOUND: Authorization 헤더가 없거나 형식이 잘못되었습니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH400-NOT_FOUND\", \"message\": \"Authorization 헤더가 없거나 형식이 잘못되었습니다.\"}"
+                                    value = "{\"isSuccess\": false, \"code\": \"AUTH401-INVALID_REFRESH\", \"message\": \"리프레시 토큰이 없거나 유효하지 않습니다.\"}"
                             )
                     )
             ),
@@ -319,20 +327,37 @@ public class AuthController {
         String newJti = java.util.UUID.randomUUID().toString();
         String newRefresh = jwtTokenProvider.createRefreshToken(email, newJti);
         String newHash = sha256Hex(newRefresh);
-        java.util.Date exp = jwtTokenProvider.getExpiration(newRefresh);
-        refreshTokenStore.issue(newJti, email, newHash, exp.toInstant());
+        java.util.Date refreshExp = jwtTokenProvider.getExpiration(newRefresh);
+        refreshTokenStore.issue(newJti, email, newHash, refreshExp.toInstant());
 
-        ResponseCookie cookie = ResponseCookie.from(refreshCookieName, newRefresh)
+        // accessToken 쿠키 설정
+        java.util.Date accessExp = jwtTokenProvider.getExpiration(accessToken);
+        ResponseCookie accessCookie = ResponseCookie.from(accessCookieName, accessToken)
                 .httpOnly(true)
-                .secure(refreshCookieSecure)
-                .sameSite(refreshCookieSameSite)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
-                .maxAge(java.time.Duration.between(java.time.Instant.now(), exp.toInstant()))
+                .maxAge(java.time.Duration.between(java.time.Instant.now(), accessExp.toInstant()))
                 .build();
 
+        // refreshToken 쿠키 설정
+        ResponseCookie refreshCookie = ResponseCookie.from(refreshCookieName, newRefresh)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(java.time.Duration.between(java.time.Instant.now(), refreshExp.toInstant()))
+                .build();
+
+        // 응답 생성 및 반환
+        // refresh() 메서드는 토큰 갱신만 수행하므로 userId는 null로 설정합니다.
+        // accessToken과 refreshToken은 쿠키로 전송되므로 응답 body에는 포함하지 않습니다.
         return ResponseEntity.ok()
-                .header("Set-Cookie", cookie.toString())
-                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(null, accessToken)));
+                .header("Set-Cookie", accessCookie.toString())  // 새 accessToken을 쿠키로 전송
+                .header("Set-Cookie", refreshCookie.toString())  // 새 refreshToken을 쿠키로 전송
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(null)));
+                // userId를 null로 전달: refresh()는 토큰 갱신만 하므로 userId 반환 불필요
+                // LoginResponse 구조상 userId가 필수 필드라서 null 전달 (클라이언트는 사용하지 않음)
     }
 
     private static String sha256Hex(String value) {
@@ -371,15 +396,28 @@ public class AuthController {
                 }
             }
         }
-        ResponseCookie remove = ResponseCookie.from(refreshCookieName, "")
+        
+        // accessToken 쿠키 제거
+        ResponseCookie removeAccess = ResponseCookie.from(accessCookieName, "")
                 .httpOnly(true)
-                .secure(refreshCookieSecure)
-                .sameSite(refreshCookieSameSite)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(0)
                 .build();
+        
+        // refreshToken 쿠키 제거
+        ResponseCookie removeRefresh = ResponseCookie.from(refreshCookieName, "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(0)
+                .build();
+        
         return ResponseEntity.ok()
-                .header("Set-Cookie", remove.toString())
+                .header("Set-Cookie", removeAccess.toString())
+                .header("Set-Cookie", removeRefresh.toString())
                 .body(ApiResponse.onSuccess("OK"));
     }
 

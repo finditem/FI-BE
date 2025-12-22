@@ -30,6 +30,7 @@ public enum ErrorStatus implements BaseErrorCode {
     _TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH400-NOT_FOUND", "Authorization 헤더가 없거나 형식이 잘못되었습니다."),
     _KAKAO_TOKEN_EXCHANGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH500-KAKAO_TOKEN_FAILED", "카카오 토큰 교환에 실패했습니다."),
     _KAKAO_USERINFO_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH500-KAKAO_USERINFO_FAILED", "카카오 사용자 정보 조회에 실패했습니다."),
+    _SOCIAL_ACCOUNT(HttpStatus.BAD_REQUEST, "AUTH400-SOCIAL_ACCOUNT", "소셜 로그인 계정입니다."),
 
     // s3 관련 응답
     _NOT_EXIST_FILE (HttpStatus.NOT_FOUND, "FILE404-NOT_FOUND", "존재하지 않는 파일입니다."),
@@ -64,25 +65,25 @@ public enum ErrorStatus implements BaseErrorCode {
     _MESSAGE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "MESSAGE-NOT_ALLOWED", "채팅 내역을 조회할 권한이 없습니다."),
 
     // 공지사항 관련 응답
-    NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE404-NOT_FOUND", "존재하지 않는 공지사항입니다."),
+    _NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE404-NOT_FOUND", "존재하지 않는 공지사항입니다."),
     
     // FAQ 관련 응답
-    FAQ_NOT_FOUND(HttpStatus.NOT_FOUND, "FAQ404-NOT_FOUND", "존재하지 않는 FAQ입니다."),
+    _FAQ_NOT_FOUND(HttpStatus.NOT_FOUND, "FAQ404-NOT_FOUND", "존재하지 않는 FAQ입니다."),
     
     // 문의 관련 응답
-    INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "INQUIRY404-NOT_FOUND", "존재하지 않는 문의입니다."),
-    INQUIRY_ACCESS_DENIED(HttpStatus.FORBIDDEN, "INQUIRY403-ACCESS_DENIED", "해당 문의를 조회할 권한이 없습니다."),
+    _INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "INQUIRY404-NOT_FOUND", "존재하지 않는 문의입니다."),
+    _INQUIRY_ACCESS_DENIED(HttpStatus.FORBIDDEN, "INQUIRY403-ACCESS_DENIED", "해당 문의를 조회할 권한이 없습니다."),
     
     // 신고 관련 응답
-    REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "REPORT409-ALREADY_EXISTS", "이미 신고한 대상입니다."),
-    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404-NOT_FOUND", "존재하지 않는 신고입니다."),
+    _REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "REPORT409-ALREADY_EXISTS", "이미 신고한 대상입니다."),
+    _REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404-NOT_FOUND", "존재하지 않는 신고입니다."),
     
     // 댓글 관련 응답
-    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404-NOT_FOUND", "존재하지 않는 댓글입니다."),
+    _COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404-NOT_FOUND", "존재하지 않는 댓글입니다."),
     
     // 알림 관련 응답
-    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION404-NOT_FOUND", "존재하지 않는 알림입니다."),
-    NOTIFICATION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "NOTIFICATION403-ACCESS_DENIED", "해당 알림에 접근할 권한이 없습니다.");
+    _NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION404-NOT_FOUND", "존재하지 않는 알림입니다."),
+    _NOTIFICATION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "NOTIFICATION403-ACCESS_DENIED", "해당 알림에 접근할 권한이 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

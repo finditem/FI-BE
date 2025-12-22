@@ -43,7 +43,7 @@ public class CommentLikeService {
     public boolean toggleLike(Long commentId, UserDetails userDetails) {
 
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
