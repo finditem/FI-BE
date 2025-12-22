@@ -281,7 +281,7 @@ public class AuthController {
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH401-INVALID_REFRESH\", \"message\": \"리프레시 토큰 없음\"}"
+                                    value = "{\"isSuccess\": false, \"code\": \"AUTH401-INVALID_REFRESH\", \"message\": \"리프레시 토큰이 없거나 유효하지 않습니다.\"}"
                             )
                     )
             ),
