@@ -41,9 +41,9 @@ public class AuthController {
     @Value("${jwt.cookie.access-token-name:access_token}")
     private String accessCookieName;
     @Value("${jwt.cookie.secure:false}")
-    private boolean refreshCookieSecure;
+    private boolean cookieSecure;
     @Value("${jwt.cookie.same-site:Lax}")
-    private String refreshCookieSameSite;
+    private String cookieSameSite;
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임을 입력해 회원을 생성합니다. 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.")
@@ -170,8 +170,8 @@ public class AuthController {
         java.util.Date accessExp = jwtTokenProvider.getExpiration(accessToken);
         ResponseCookie accessCookie = ResponseCookie.from(accessCookieName, accessToken)
                 .httpOnly(true)
-                .secure(refreshCookieSecure)
-                .sameSite(refreshCookieSameSite)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(java.time.Duration.between(java.time.Instant.now(), accessExp.toInstant()))
                 .build();
@@ -179,8 +179,8 @@ public class AuthController {
         // refreshToken 쿠키 설정
         ResponseCookie refreshCookie = ResponseCookie.from(refreshCookieName, refreshToken)
                 .httpOnly(true)
-                .secure(refreshCookieSecure)
-                .sameSite(refreshCookieSameSite)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(java.time.Duration.between(java.time.Instant.now(), refreshExp.toInstant()))
                 .build();
@@ -334,8 +334,8 @@ public class AuthController {
         java.util.Date accessExp = jwtTokenProvider.getExpiration(accessToken);
         ResponseCookie accessCookie = ResponseCookie.from(accessCookieName, accessToken)
                 .httpOnly(true)
-                .secure(refreshCookieSecure)
-                .sameSite(refreshCookieSameSite)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(java.time.Duration.between(java.time.Instant.now(), accessExp.toInstant()))
                 .build();
@@ -343,8 +343,8 @@ public class AuthController {
         // refreshToken 쿠키 설정
         ResponseCookie refreshCookie = ResponseCookie.from(refreshCookieName, newRefresh)
                 .httpOnly(true)
-                .secure(refreshCookieSecure)
-                .sameSite(refreshCookieSameSite)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(java.time.Duration.between(java.time.Instant.now(), refreshExp.toInstant()))
                 .build();
@@ -400,8 +400,8 @@ public class AuthController {
         // accessToken 쿠키 제거
         ResponseCookie removeAccess = ResponseCookie.from(accessCookieName, "")
                 .httpOnly(true)
-                .secure(refreshCookieSecure)
-                .sameSite(refreshCookieSameSite)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(0)
                 .build();
@@ -409,8 +409,8 @@ public class AuthController {
         // refreshToken 쿠키 제거
         ResponseCookie removeRefresh = ResponseCookie.from(refreshCookieName, "")
                 .httpOnly(true)
-                .secure(refreshCookieSecure)
-                .sameSite(refreshCookieSameSite)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(0)
                 .build();
