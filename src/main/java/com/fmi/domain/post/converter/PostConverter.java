@@ -147,7 +147,7 @@ public class PostConverter {
                 .build();
     }
 
-    public PostResponse toPostDetailResponse(Post post, boolean isFavorite) {
+    public PostResponse toPostDetailResponse(Post post, boolean isFavorite, Long viewcount) {
 
         List<String> imageUrls = post.getImages() != null ?
                 post.getImages().stream()
@@ -169,6 +169,7 @@ public class PostConverter {
                 .category(post.getCategory())
                 .favoriteCount(post.getFavoriteCount())
                 .favoriteStatus(isFavorite)
+                .viewcount(viewcount)
                 .build();
     }
 
@@ -203,7 +204,6 @@ public class PostConverter {
                 .postId(postId)
                 .viewCount(viewcnt)
                 .build();
-
     }
 
     public FilterResponse toFilterResponse(Slice<Post> slice) {
