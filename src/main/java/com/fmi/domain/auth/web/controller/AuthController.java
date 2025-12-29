@@ -200,17 +200,27 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "사용 가능한 닉네임"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
-                    description = "NICKNAME_*: 부적절한 닉네임 또는 중복된 닉네임",
+                    description = "NICKNAME_INVALID: 부적절한 닉네임 (길이, 금칙어 등)",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"NICKNAME_DUPLICATED\", \"message\": \"이미 사용 중인 닉네임입니다.\"}"
+                                    value = "{\"isSuccess\": false, \"code\": \"NICKNAME_INVALID\", \"message\": \"부적절한 닉네임입니다.\"}"
                             )
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
-                    description = "COMMON400: 잘못된 요청입니다",
+                    description = "NICKNAME_DUPLICATE: 이미 사용 중인 닉네임",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"NICKNAME_DUPLICATE\", \"message\": \"중복된 닉네임입니다.\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "COMMON400: 잘못된 요청입니다 (닉네임 누락)",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
