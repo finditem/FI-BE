@@ -46,19 +46,9 @@ public class KakaoAuthController {
     private String refreshCookieSameSite;
 
     @PostMapping
-    @Operation(summary = "카카오 로그인(토큰 핸드오프)")
+    @Operation(summary = "카카오 로그인")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카카오 로그인 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "AUTH400-KAKAO_GRANT: 지원하지 않는 grantType",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH400-KAKAO_GRANT\", \"message\": \"지원하지 않는 grantType\"}"
-                            )
-                    )
-            ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "500",
                     description = "AUTH500-KAKAO_TOKEN_FAILED: 카카오 토큰 교환에 실패했습니다",
@@ -91,18 +81,8 @@ public class KakaoAuthController {
             )
     })
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithKakao(@RequestBody KakaoLoginRequest req) {
-        String grantType = req.getGrantType();
-        if (grantType == null) grantType = "authorization_code";
-
-        String kakaoAccessToken;
-        if ("authorization_code".equalsIgnoreCase(grantType)) {
-            KakaoToken token = kakaoOAuthService.exchangeCodeForToken(req.getCode(), req.getRedirectUri());
-            kakaoAccessToken = token.getAccess_token();
-        } else if ("access_token".equalsIgnoreCase(grantType)) {
-            kakaoAccessToken = req.getAccessToken();
-        } else {
-            return ResponseEntity.badRequest().body(ApiResponse.onFailure("AUTH400-KAKAO_GRANT", "지원하지 않는 grantType", null));
-        }
+        KakaoToken token = kakaoOAuthService.exchangeCodeForToken(req.getCode(), req.getRedirectUri());
+        String kakaoAccessToken = token.getAccess_token();
 
         KakaoUser user = kakaoOAuthService.getUserInfo(kakaoAccessToken);
         String email = user.getKakao_account() != null ? user.getKakao_account().getEmail() : null;
