@@ -11,6 +11,5 @@ import lombok.NoArgsConstructor;
 public class KakaoLoginRequest {
     @NotBlank(message = "code 필수")
     private String code;
-    private String redirectUri;
 }
 
