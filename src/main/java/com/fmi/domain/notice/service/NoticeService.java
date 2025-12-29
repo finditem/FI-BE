@@ -13,8 +13,12 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class NoticeService {
     private final NoticeRepository noticeRepository;
     private final NoticeConverter noticeConverter;
     private final NotificationService notificationService;
+    private final StringRedisTemplate stringRedisTemplate;
     
     /**
      * 공지사항 목록 조회
@@ -43,16 +48,44 @@ public class NoticeService {
     
     /**
      * 공지사항 상세 조회
+     * @param noticeId 공지사항 ID
+     * @param userIdentifier 사용자 식별자 (이메일 또는 IP 주소)
      */
-    @Transactional
-    public NoticeResponseDTO getNoticeDetail(Long noticeId) {
+    public NoticeResponseDTO getNoticeDetail(Long noticeId, String userIdentifier) {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
         
-        // 조회수 증가
-        notice.increaseViewCount();
+        // Redis를 사용하여 5분마다만 조회수 증가
+        String viewSetKey = "notice:view:set:" + noticeId;      // 어떤 유저가 조회했는지
+        String viewCountKey = "notice:view:count:" + noticeId;  // 공지사항 조회수 누적
         
-        return noticeConverter.toResponseDTO(notice);
+        // Redis에 조회수가 없으면 DB 값으로 초기화
+        String existingCount = stringRedisTemplate.opsForValue().get(viewCountKey);
+        if (existingCount == null) {
+            stringRedisTemplate.opsForValue().set(viewCountKey, String.valueOf(notice.getViewCount()));
+            stringRedisTemplate.expire(viewCountKey, Duration.ofMinutes(5));
+        }
+        
+        // 새로운 조회자인 경우에만 조회수 증가
+        Long added = stringRedisTemplate.opsForSet().add(viewSetKey, userIdentifier);
+        boolean newViewer = added != null && added > 0;
+        if (newViewer) {
+            stringRedisTemplate.opsForValue().increment(viewCountKey);
+        }
+        // 5분(300초) 후 만료
+        stringRedisTemplate.expire(viewSetKey, Duration.ofMinutes(5));
+        stringRedisTemplate.expire(viewCountKey, Duration.ofMinutes(5));
+        
+        // Redis에서 현재 조회수 가져오기
+        Long currentViewCount = Optional.ofNullable(stringRedisTemplate.opsForValue().get(viewCountKey))
+                .map(Long::parseLong)
+                .orElse(notice.getViewCount().longValue());
+        
+        NoticeResponseDTO response = noticeConverter.toResponseDTO(notice);
+        // Redis 조회수로 덮어쓰기
+        response.setViewCount(currentViewCount.intValue());
+        
+        return response;
     }
 
     /**

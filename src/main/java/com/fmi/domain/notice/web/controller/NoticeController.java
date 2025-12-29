@@ -15,6 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -68,7 +71,7 @@ public class NoticeController {
      * GET /api/notice/{noticeId}
      */
     @GetMapping("/{noticeId}")
-    @Operation(summary = "공지사항 상세 조회", description = "조회수가 자동으로 증가합니다.")
+    @Operation(summary = "공지사항 상세 조회", description = "조회수가 5분마다만 증가합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "공지사항 상세 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -93,7 +96,22 @@ public class NoticeController {
             )
     })
     public ApiResponse<NoticeResponseDTO> getNoticeDetail(@PathVariable Long noticeId) {
-        NoticeResponseDTO notice = noticeService.getNoticeDetail(noticeId);
+        // 인증된 사용자의 이메일을 사용자 식별자로 사용
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userIdentifier = null;
+        
+        if (authentication != null && authentication.isAuthenticated() 
+                && authentication.getPrincipal() instanceof UserDetails) {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            userIdentifier = userDetails.getUsername(); // 이메일
+        }
+        
+        // 인증되지 않은 경우 기본값 사용 (공개 API이므로)
+        if (userIdentifier == null) {
+            userIdentifier = "anonymous";
+        }
+        
+        NoticeResponseDTO notice = noticeService.getNoticeDetail(noticeId, userIdentifier);
         return ApiResponse.onSuccess(notice);
     }
 }
