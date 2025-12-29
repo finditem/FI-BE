@@ -12,7 +12,6 @@ import com.fmi.security.RefreshTokenStore;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
@@ -24,7 +23,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import com.fmi.global.apiPayload.code.status.ErrorStatus;
 
 @RestController
 @RequestMapping("/auth")
@@ -193,39 +191,6 @@ public class AuthController {
                 .header("Set-Cookie", refreshCookie.toString())  // refreshToken을 쿠키로 전송
                 .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), isTemporaryPassword)));
                 // 변경: accessToken 파라미터(null) 제거, userId와 isTemporaryPassword만 전달
-    }
-
-    @GetMapping("/check-email")
-    @Operation(summary = "이메일 중복 확인", description = "중복이면 409와 에러 코드를 반환합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "사용 가능한 이메일"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "409",
-                    description = "AUTH409-EMAIL_DUPLICATED: 이미 사용 중인 이메일입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH409-EMAIL_DUPLICATED\", \"message\": \"이미 사용 중인 이메일입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "COMMON400: 잘못된 요청입니다 (이메일 형식 오류)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}"
-                            )
-                    )
-            )
-    })
-    public ResponseEntity<ApiResponse<?>> checkEmail(@RequestParam("email") @Email String email) {
-        boolean exists = authService.emailExists(email);
-        if (exists) {
-            return ResponseEntity.status(409).body(ApiResponse.onFailure(ErrorStatus._EMAIL_DUPLICATED));
-        }
-        return ResponseEntity.ok(ApiResponse.onSuccess(AuthConverter.toCheckResponse(true)));
     }
 
     @GetMapping("/check-nickname")
