@@ -81,7 +81,7 @@ public class KakaoAuthController {
             )
     })
     public ResponseEntity<ApiResponse<Map<String, Object>>> loginWithKakao(@RequestBody KakaoLoginRequest req) {
-        KakaoToken token = kakaoOAuthService.exchangeCodeForToken(req.getCode(), req.getRedirectUri());
+        KakaoToken token = kakaoOAuthService.exchangeCodeForToken(req.getCode());
         String kakaoAccessToken = token.getAccess_token();
 
         KakaoUser user = kakaoOAuthService.getUserInfo(kakaoAccessToken);
