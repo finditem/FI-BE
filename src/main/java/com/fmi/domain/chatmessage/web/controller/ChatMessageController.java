@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -30,6 +31,7 @@ import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessa
 @RequiredArgsConstructor
 @RequestMapping("/chats")
 @Slf4j
+@Tag(name = "ChatMessage", description = "채팅 메시지 관련 API")
 public class ChatMessageController {
 
     private final ChatMessageService chatMessageService;

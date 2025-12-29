@@ -7,6 +7,7 @@ import com.fmi.domain.comment.web.dto.CreateCommentDto;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("comment")
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Comment", description = "댓글 관련 API")
 public class CommentController {
 
     private final CommentService commentService;

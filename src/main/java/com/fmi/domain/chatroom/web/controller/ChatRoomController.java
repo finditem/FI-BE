@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,7 @@ import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.MyChatListDTO;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "ChatRoom", description = "채팅방 관련 API")
 public class ChatRoomController {
 
     private final UserQueryService userService;
