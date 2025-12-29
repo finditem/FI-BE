@@ -37,8 +37,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/kakao/**", "/auth/email/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/post/{postId}","/post/").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        // 공지사항, FAQ, 공개 문의 - 공개 API (경로 개편)
-                        .requestMatchers("/notice/**", "/faq/**", "/inquiry/public/**").permitAll()
+                        // 공지사항, 공개 문의 - 공개 API (경로 개편)
+                        .requestMatchers("/notice/**", "/inquiry/public/**").permitAll()
                         // 관리자 전용 API 보호
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

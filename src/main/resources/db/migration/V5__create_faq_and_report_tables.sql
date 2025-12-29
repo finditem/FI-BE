@@ -1,17 +1,3 @@
--- FAQ 테이블 생성
-CREATE TABLE IF NOT EXISTS faq (
-    faq_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    question VARCHAR(300) NOT NULL,
-    answer TEXT NOT NULL,
-    category VARCHAR(50) NOT NULL COMMENT 'USAGE, ACCOUNT, PAYMENT, REPORT, TECHNICAL, ETC',
-    order_num INT DEFAULT 0 COMMENT '정렬 순서',
-    view_count INT DEFAULT 0,
-    created_at DATETIME(6) NOT NULL,
-    updated_at DATETIME(6) NULL,
-    INDEX idx_category_order (category, order_num),
-    INDEX idx_view_count (view_count DESC)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- 문의 답변 테이블 생성
 CREATE TABLE IF NOT EXISTS inquiry_reply (
     reply_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -95,14 +81,6 @@ SET @sql = IF(@col_exists = 0,
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
-
--- 초기 데이터 삽입 (FAQ)
-INSERT INTO faq (question, answer, category, order_num, created_at, updated_at) VALUES
-('분실물은 어떻게 등록하나요?', '게시판에서 분실물 카테고리를 선택하고 상세 정보(물품명, 분실 장소, 분실 일시, 특징)를 작성하면 됩니다. 사진이 있다면 함께 첨부해주세요.', 'USAGE', 1, NOW(), NOW()),
-('습득물을 찾았어요. 어떻게 하나요?', '습득물 게시판에 습득한 물품의 사진과 함께 습득 장소, 습득 일시를 등록해주세요. 주인이 찾아갈 수 있도록 상세히 작성해주시면 감사하겠습니다.', 'USAGE', 2, NOW(), NOW()),
-('회원 탈퇴는 어떻게 하나요?', '마이페이지 > 설정 > 회원 탈퇴에서 가능합니다. 탈퇴 시 작성한 게시글과 댓글은 삭제되지 않으며, 개인정보만 삭제됩니다.', 'ACCOUNT', 1, NOW(), NOW()),
-('비밀번호를 잊어버렸어요.', '로그인 화면에서 "비밀번호 찾기"를 클릭하여 가입한 이메일로 비밀번호 재설정 링크를 받으실 수 있습니다.', 'ACCOUNT', 2, NOW(), NOW()),
-('신고는 어떻게 하나요?', '부적절한 게시글이나 댓글 우측의 신고 버튼을 클릭하여 신고 사유를 작성하시면 됩니다. 신고된 내용은 관리자가 검토 후 조치합니다.', 'REPORT', 1, NOW(), NOW());
 
 -- 알림 설정 테이블 생성
 CREATE TABLE IF NOT EXISTS notification_settings (
