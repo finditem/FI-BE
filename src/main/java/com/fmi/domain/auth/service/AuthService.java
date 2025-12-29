@@ -157,10 +157,6 @@ public class AuthService {
         private final boolean isTemporaryPassword;
     }
 
-    public boolean emailExists(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
     /**
      * 닉네임 유효성 및 중복 검사
      * @return NicknameCheckResult (available, errorType, message)
