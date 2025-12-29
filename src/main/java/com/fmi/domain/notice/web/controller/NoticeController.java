@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -95,24 +96,53 @@ public class NoticeController {
                     )
             )
     })
-    public ApiResponse<NoticeResponseDTO> getNoticeDetail(@PathVariable Long noticeId) {
-        // 인증된 사용자의 이메일을 사용자 식별자로 사용
+    public ApiResponse<NoticeResponseDTO> getNoticeDetail(
+            @PathVariable Long noticeId,
+            HttpServletRequest request) {
+        
+        // 사용자 식별자 추출
+        String userIdentifier;
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userIdentifier = null;
         
         if (authentication != null && authentication.isAuthenticated() 
                 && authentication.getPrincipal() instanceof UserDetails) {
+            // 인증된 사용자: 이메일 사용
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             userIdentifier = userDetails.getUsername(); // 이메일
-        }
-        
-        // 인증되지 않은 경우 기본값 사용 (공개 API이므로)
-        if (userIdentifier == null) {
-            userIdentifier = "anonymous";
+        } else {
+            // 비로그인 사용자: IP 주소 사용 (각 사용자 개별 식별)
+            userIdentifier = getClientIpAddress(request);
         }
         
         NoticeResponseDTO notice = noticeService.getNoticeDetail(noticeId, userIdentifier);
         return ApiResponse.onSuccess(notice);
+    }
+    
+    /**
+     * 클라이언트 IP 주소 추출 (비로그인 사용자 개별 식별용)
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // X-Forwarded-For는 여러 IP가 있을 수 있으므로 첫 번째 IP만 사용
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip != null ? ip : "unknown";
     }
 }
 
