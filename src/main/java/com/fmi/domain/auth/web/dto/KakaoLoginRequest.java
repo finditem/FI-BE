@@ -3,14 +3,14 @@ package com.fmi.domain.auth.web.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class KakaoLoginRequest {
-    @NotBlank(message = "grantType 필수")
-    private String grantType; // authorization_code | access_token
+    @NotBlank(message = "code 필수")
     private String code;
     private String redirectUri;
-    private String accessToken;
 }
 
