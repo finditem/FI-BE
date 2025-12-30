@@ -219,26 +219,22 @@ public class PostService {
         }
 
         String email = userDetails.getUsername();
-        String viewSetKey = "post:view:set:" + postId;
+        String userCheckKey = "post:view:lock:" + postId + ":" + email;
         String viewCountKey = "post:view:count:" + postId;
+        String changedIdsKey = "post:changed:ids";
 
-        Long added = stringRedisTemplate.opsForSet().add(viewSetKey, email);
+        Boolean isFirstView = stringRedisTemplate.opsForValue()
+                .setIfAbsent(userCheckKey, "y", Duration.ofMinutes(5));
 
-        boolean newViewer = added != null && added > 0;
+        if (Boolean.TRUE.equals(isFirstView)) {
+            Long updatedCount = stringRedisTemplate.opsForValue().increment(viewCountKey);
+            stringRedisTemplate.opsForSet().add(changedIdsKey, postId.toString());
 
-        if (newViewer) {
-            stringRedisTemplate.opsForValue().increment(viewCountKey);
+            return updatedCount;
         }
 
-        Long ttl = stringRedisTemplate.getExpire(viewSetKey);
-
-        if (ttl == null || ttl < 0) {
-            stringRedisTemplate.expire(viewSetKey, Duration.ofHours(1));
-        }
-
-        return Optional.ofNullable(stringRedisTemplate.opsForValue().get(viewCountKey))
-                .map(Long::parseLong)
-                .orElse(null);
+        String currentCount = stringRedisTemplate.opsForValue().get(viewCountKey);
+        return currentCount != null ? Long.parseLong(currentCount) : 0L;
     }
 
     @Transactional
