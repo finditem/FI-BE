@@ -7,6 +7,7 @@ import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.PostFilterDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
+import com.fmi.domain.post.web.dto.response.PostListSliceResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -58,12 +59,12 @@ public class PostController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMON400: 잘못된 요청입니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
     })
-    public ResponseEntity<ApiResponse<List<PostListResponse>>> getAllPosts(
+    public ResponseEntity<ApiResponse<PostListSliceResponse>> getAllPosts(
             @RequestParam Type type,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size
     ){
-        List<PostListResponse> posts = postService.getAllPosts(type, page, size);
+        PostListSliceResponse posts = postService.getAllPosts(type, cursor, size);
         return ResponseEntity.ok(ApiResponse.onSuccess(posts));
     }
 

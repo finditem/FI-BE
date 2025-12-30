@@ -15,6 +15,7 @@ import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.PostFilterDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
+import com.fmi.domain.post.web.dto.response.PostListSliceResponse;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -180,14 +181,27 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public List<PostListResponse> getAllPosts(Type type, int page, int size) {
+    public PostListSliceResponse getAllPosts(Type type, Long cursor, int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Post> postPage = postRepository.findByTemporarySaveFalseAndPostType(type, pageable);
+        Pageable pageable = PageRequest.of(0, size, Sort.by("createdAt").descending());
 
-        return postPage.stream()
+        Slice<Post> postSlice;
+        if (cursor == null) {
+            postSlice = postRepository.findByTemporarySaveFalseAndPostType(type, pageable);
+        } else {
+            postSlice = postRepository.findByTemporarySaveFalseAndPostTypeAndIdLessThan(type, cursor, pageable);
+        }
+
+        Long nextCursor = postSlice.hasNext()
+                ? postSlice.getContent().get(postSlice.getContent().size() - 1).getId()
+                : null;
+
+        List<PostListResponse> summaries = postSlice.getContent()
+                .stream()
                 .map(postConverter::toPostListResponse)
                 .toList();
+
+        return new PostListSliceResponse(summaries, nextCursor, postSlice.hasNext());
     }
 
     @Transactional(readOnly = true)
