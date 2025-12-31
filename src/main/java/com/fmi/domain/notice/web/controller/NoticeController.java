@@ -31,7 +31,7 @@ public class NoticeController {
     
     /**
      * 공지사항 목록 조회
-     * GET /api/notice?category=GENERAL&page=0&size=10
+     * GET /notice?category=GENERAL&page=0&size=10
      */
     @GetMapping
     @Operation(summary = "공지사항 목록 조회", description = "상단 고정 공지사항이 먼저 표시됩니다.")
@@ -69,7 +69,7 @@ public class NoticeController {
     
     /**
      * 공지사항 상세 조회
-     * GET /api/notice/{noticeId}
+     * GET /notice/{noticeId}
      */
     @GetMapping("/{noticeId}")
     @Operation(summary = "공지사항 상세 조회", description = "조회수가 5분마다만 증가합니다.")
