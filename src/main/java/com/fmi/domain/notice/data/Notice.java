@@ -58,5 +58,9 @@ public class Notice {
     public void increaseViewCount() {
         this.viewCount++;
     }
+    
+    public void setViewCount(Integer viewCount) {
+        this.viewCount = viewCount;
+    }
 }
 

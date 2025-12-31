@@ -26,13 +26,12 @@ public class KakaoOAuthService {
     @Value("${KAKAO_CLIENT_SECRET:}")
     private String clientSecret; // 선택 항목
     @Value("${KAKAO_REDIRECT_URI:}")
-    private String defaultRedirectUri; // 프론트에서 전달 가능, 없으면 기본 사용
+    private String redirectUri;
 
     private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String USERINFO_URL = "https://kapi.kakao.com/v2/user/me";
 
-    public KakaoToken exchangeCodeForToken(String code, String redirectUri) {
-        String useRedirect = (redirectUri != null && !redirectUri.isBlank()) ? redirectUri : defaultRedirectUri;
+    public KakaoToken exchangeCodeForToken(String code) {
 
         RestTemplate rt = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -41,7 +40,7 @@ public class KakaoOAuthService {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", restApiKey);
-        params.add("redirect_uri", useRedirect);
+        params.add("redirect_uri", redirectUri);
         params.add("code", code);
         if (clientSecret != null && !clientSecret.isBlank()) {
             params.add("client_secret", clientSecret);

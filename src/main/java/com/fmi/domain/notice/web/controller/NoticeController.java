@@ -10,11 +10,15 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,7 +31,7 @@ public class NoticeController {
     
     /**
      * 공지사항 목록 조회
-     * GET /api/notice?category=GENERAL&page=0&size=10
+     * GET /notice?category=GENERAL&page=0&size=10
      */
     @GetMapping
     @Operation(summary = "공지사항 목록 조회", description = "상단 고정 공지사항이 먼저 표시됩니다.")
@@ -65,10 +69,10 @@ public class NoticeController {
     
     /**
      * 공지사항 상세 조회
-     * GET /api/notice/{noticeId}
+     * GET /notice/{noticeId}
      */
     @GetMapping("/{noticeId}")
-    @Operation(summary = "공지사항 상세 조회", description = "조회수가 자동으로 증가합니다.")
+    @Operation(summary = "공지사항 상세 조회", description = "조회수가 5분마다만 증가합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "공지사항 상세 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -92,9 +96,53 @@ public class NoticeController {
                     )
             )
     })
-    public ApiResponse<NoticeResponseDTO> getNoticeDetail(@PathVariable Long noticeId) {
-        NoticeResponseDTO notice = noticeService.getNoticeDetail(noticeId);
+    public ApiResponse<NoticeResponseDTO> getNoticeDetail(
+            @PathVariable Long noticeId,
+            HttpServletRequest request) {
+        
+        // 사용자 식별자 추출
+        String userIdentifier;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication != null && authentication.isAuthenticated() 
+                && authentication.getPrincipal() instanceof UserDetails) {
+            // 인증된 사용자: 이메일 사용
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            userIdentifier = userDetails.getUsername(); // 이메일
+        } else {
+            // 비로그인 사용자: IP 주소 사용 (각 사용자 개별 식별)
+            userIdentifier = getClientIpAddress(request);
+        }
+        
+        NoticeResponseDTO notice = noticeService.getNoticeDetail(noticeId, userIdentifier);
         return ApiResponse.onSuccess(notice);
+    }
+    
+    /**
+     * 클라이언트 IP 주소 추출 (비로그인 사용자 개별 식별용)
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // X-Forwarded-For는 여러 IP가 있을 수 있으므로 첫 번째 IP만 사용
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip != null ? ip : "unknown";
     }
 }
 
