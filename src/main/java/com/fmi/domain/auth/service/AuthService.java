@@ -112,7 +112,7 @@ public class AuthService {
      */
     public AuthenticateResult authenticate(String email, String rawPassword) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._UNAUTHORIZED));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._INVALID_CREDENTIALS));
         
         boolean isTemporaryPassword = false;
         boolean passwordMatches = false;
@@ -145,7 +145,7 @@ public class AuthService {
         }
         
         if (!passwordMatches) {
-            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+            throw new GeneralException(ErrorStatus._INVALID_CREDENTIALS);
         }
         
         return new AuthenticateResult(user, isTemporaryPassword);
@@ -155,10 +155,6 @@ public class AuthService {
     public static class AuthenticateResult {
         private final User user;
         private final boolean isTemporaryPassword;
-    }
-
-    public boolean emailExists(String email) {
-        return userRepository.existsByEmail(email);
     }
 
     /**
