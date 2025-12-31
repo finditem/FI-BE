@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,7 @@ import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.MyChatListDTO;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "ChatRoom", description = "채팅방 관련 API")
 public class ChatRoomController {
 
     private final UserQueryService userService;
@@ -38,11 +40,10 @@ public class ChatRoomController {
 
     @Operation(summary = "채팅방 생성/조회", description = "특정 게시글에 대해 1:1 채팅방을 생성하거나 기존 채팅방을 조회합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "CHATROOM_CREATED: 채팅방이 새로 생성됨"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM_FOUND: 기존 채팅방이 조회됨"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "CHATROOM_NOT_ALLOWED: 자신의 게시글에 채팅 시도"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST_NOT_FOUND: 존재하지 않는 게시글"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "USER_NOT_FOUND: 존재하지 않는 사용자")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "CHATROOM_CREATED: 채팅방이 생성되었습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM_FOUND: 기존 채팅방을 조회합니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "CHATROOM_NOT_ALLOWED: 자신의 글에는 채팅할 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST_NOT_FOUND: 존재하지 않는 게시글입니다."),
     })
     @PostMapping("/posts/{postId}/chats")
     public ResponseEntity<ApiResponse<ChatRoomResultDTO>> createChatRoom(@PathVariable("postId") Long postId, @AuthenticationPrincipal UserDetails userDetails) {
@@ -68,10 +69,7 @@ public class ChatRoomController {
 
     @Operation(summary = "내 채팅 목록 조회", description = "내가 참여하고 있는 채팅방 목록을 커서 기반 페이지네이션으로 조회합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM_LIST_FETCHED: 채팅 목록 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "LIST400-INVALID_CURSOR: 유효하지 않은 커서입니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM_LIST_FETCHED: 나의 채팅 목록 조회에 성공했습니다."),
     })
     @Parameters({
             @Parameter(name = "cursor", description = "이전 페이지 응답의 nextCursor 값. 첫 페이지 조회 시 생략.", required = false),
@@ -98,10 +96,8 @@ public class ChatRoomController {
 
     @Operation(summary = "채팅방 나가기", description = "채팅방을 나가면 그 시점부터 나간 사용자에게 대화 내역이 보이지 않고, 내 채팅 목록에도 사라집니다. 다시 채팅이 시작되면 그 나간 이후 시점부터 내역이 보입니다. (나가지 않은 사용자에겐 적용x)")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "채팅방 나가기 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "CHATROOM404-NOT_FOUND: 존재하지 않는 채팅방입니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM-LEFT: 채팅방 나가기를 성공했습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "CHATROOM-PARTICIPANT_NOT_FOUND: 참여 중인 채팅방이 아닙니다.")
     })
     @PostMapping("/chats/{roomId}/leave")
     public ApiResponse<Void> leaveChatRoom(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal UserDetails userDetails) {

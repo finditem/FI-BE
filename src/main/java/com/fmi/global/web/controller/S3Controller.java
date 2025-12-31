@@ -5,6 +5,7 @@ import com.fmi.global.service.S3Service;
 import com.fmi.global.web.dto.ImageDeleteRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/s3")
+@Tag(name = "S3", description = "S3 테스트용 API")
 public class S3Controller {
 
     private final S3Service s3Service;
