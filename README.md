@@ -24,7 +24,7 @@ docker compose up -d
 ```
 - 헬스체크: `GET http://localhost:8080/api/health` 또는 `GET http://localhost:8080/actuator/health`
 
-## API Documentation
+## API 문서
 서버 실행 후 아래 주소에서 API 명세를 확인할 수 있습니다.
 - **Swagger UI:** `http://localhost:8080/swagger-ui/index.html` 
 
