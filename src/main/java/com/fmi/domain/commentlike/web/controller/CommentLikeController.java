@@ -27,7 +27,7 @@ public class CommentLikeController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 않는 댓글입니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
     })
-    @PostMapping("/{commentId}/like")
+    @PostMapping("comments/{commentId}/like")
     public ResponseEntity<ApiResponse<Boolean>> toggleLike(
             @PathVariable Long commentId,
             @AuthenticationPrincipal UserDetails userDetails
