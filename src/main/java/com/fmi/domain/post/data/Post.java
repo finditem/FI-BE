@@ -8,6 +8,7 @@ import com.fmi.domain.postfavorite.data.PostFavorite;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -86,8 +87,11 @@ public class Post {
     @Builder.Default
     private List<PostFavorite> favorites = new ArrayList<>();
 
-    public void changeStatus(Status newStatus) {
-        this.itemStatus = newStatus;
+    public boolean isNew() {
+        return Duration.between(createdAt, LocalDateTime.now()).toHours() < 24;
     }
+
+
+
 
 }

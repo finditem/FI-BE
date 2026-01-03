@@ -201,6 +201,7 @@ public class PostService {
                 .map(postConverter::toPostListResponse)
                 .toList();
 
+        //조회수 추가 로직
         return new PostListSliceResponse(summaries, nextCursor, postSlice.hasNext());
     }
 

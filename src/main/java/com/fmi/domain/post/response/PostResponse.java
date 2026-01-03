@@ -29,5 +29,6 @@ public class PostResponse {
 
     private boolean favoriteStatus;
 
-    private Long viewcount;
+    private Long viewCount;
+    private boolean isNew;
 }
