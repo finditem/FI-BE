@@ -41,21 +41,19 @@ public class SwaggerConfig {
     @Bean
     public OpenApiCustomizer sortTagsAlphabetically() {
         return openApi -> {
-            if (openApi.getTags() != null) {
-                openApi.getTags().sort(Comparator
-                        .comparingInt((Tag t) -> {
-                            String name = t.getName();
-                            if ("Health".equals(name)) {
-                                return 2;
-                            }
-                            if ("S3".equals(name)) {
-                                return 1;
-                            }
-                            return 0;
-                        })
-                        .thenComparing(Tag::getName)
-                );
-            }
+            List<Tag> tags = openApi.getTags();
+            if (tags == null || tags.isEmpty()) return;
+
+            tags.sort(Comparator
+                    .comparingInt((Tag t) -> {
+                        String name = t.getName();
+                        if ("Auth".equals(name)) return -1;
+                        if ("S3".equals(name)) return 1;
+                        if ("Health".equals(name)) return 2;
+                        return 0;
+                    })
+                    .thenComparing(Tag::getName, String.CASE_INSENSITIVE_ORDER)
+            );
         };
     }
 }
