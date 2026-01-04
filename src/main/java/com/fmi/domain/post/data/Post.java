@@ -87,11 +87,21 @@ public class Post {
     @Builder.Default
     private List<PostFavorite> favorites = new ArrayList<>();
 
+    @Column(name = "comment_count", nullable = false)
+    @Builder.Default
+    private Integer commentCount = 0;
+
     public boolean isNew() {
         return Duration.between(createdAt, LocalDateTime.now()).toHours() < 24;
     }
 
+    public void increaseCommentCount() {
+        this.commentCount += 1;
+    }
 
-
-
+    public void decreaseCommentCount() {
+        if (this.commentCount > 0) {
+            this.commentCount -= 1;
+        }
+    }
 }

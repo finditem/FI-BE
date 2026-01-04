@@ -183,6 +183,8 @@ public class PostService {
     @Transactional(readOnly = true)
     public PostListSliceResponse getAllPosts(Type type, Long cursor, int size) {
 
+        Long hotPostId = getHotPostId();
+
         Pageable pageable = PageRequest.of(0, size, Sort.by("createdAt").descending());
 
         Slice<Post> postSlice;
@@ -198,8 +200,9 @@ public class PostService {
 
         List<PostListResponse> summaries = postSlice.getContent()
                 .stream()
-                .map(postConverter::toPostListResponse)
+                .map(post -> postConverter.toPostListResponse(post, hotPostId))
                 .toList();
+
 
         //조회수 추가 로직
         return new PostListSliceResponse(summaries, nextCursor, postSlice.hasNext());
@@ -210,6 +213,8 @@ public class PostService {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
+
+        Long hotPostId = getHotPostId();
 
         boolean isFavorite = false;
 
@@ -224,7 +229,7 @@ public class PostService {
         }
         Long viewCount = increaseViewCount(postId, userDetails);
 
-        return postConverter.toPostDetailResponse(post, isFavorite, viewCount);
+        return postConverter.toPostDetailResponse(post, isFavorite, viewCount, hotPostId);
     }
 
     private Long increaseViewCount(Long postId, UserDetails userDetails) {
@@ -341,10 +346,10 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public FilterResponse getPostsByFilter(PostFilterDto dto, Pageable pageable, Long cursorId) {
-
+        Long hotPostId = getHotPostId();
         Slice<Post> slice = postRepository.findPostsByFilters(dto, pageable, cursorId);
 
-        return postConverter.toFilterResponse(slice);
+        return postConverter.toFilterResponse(slice,hotPostId);
     }
 
     @Scheduled(cron = "0 0 * * * *")
@@ -374,6 +379,14 @@ public class PostService {
 
 
         }
+    }
+
+    public Long getHotPostId() {
+        return postRepository.findHotPost(PageRequest.of(0, 1))
+                .stream()
+                .findFirst()
+                .map(Post::getId)
+                .orElse(null);
     }
 
 }

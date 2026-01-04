@@ -61,7 +61,7 @@ public class UserService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         List<PostListResponse> posts = postRepository.findAllPublishedWithImagesByUser(user).stream()
-                .map(postConverter::toPostListResponse)
+                .map(post -> postConverter.toPostListResponse(post, null))//hot값은 널
                 .toList();
 
         List<UserCommentSummaryResponse> comments = commentRepository.findAllWithPostByUser(user).stream()

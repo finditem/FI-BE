@@ -93,7 +93,7 @@ public class PostFavoriteService {
 
         return favorites.stream()
                 .map(PostFavorite::getPost)
-                .map(postConverter::toPostListResponse)
+                .map(post -> postConverter.toPostListResponse(post, null))
                 .toList();
     }
 

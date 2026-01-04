@@ -31,4 +31,5 @@ public class PostResponse {
 
     private Long viewCount;
     private boolean isNew;
+    private boolean isHot;
 }

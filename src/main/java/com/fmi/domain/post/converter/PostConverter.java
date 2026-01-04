@@ -147,7 +147,7 @@ public class PostConverter {
                 .build();
     }
 
-    public PostResponse toPostDetailResponse(Post post, boolean isFavorite, Long viewCount) {
+    public PostResponse toPostDetailResponse(Post post, boolean isFavorite, Long viewCount, Long hotPostId) {
 
         List<String> imageUrls = post.getImages() != null ?
                 post.getImages().stream()
@@ -171,10 +171,11 @@ public class PostConverter {
                 .favoriteStatus(isFavorite)
                 .viewCount(viewCount)
                 .isNew(post.isNew())
+                .isHot(post.getId().equals(hotPostId))
                 .build();
     }
 
-    public PostListResponse toPostListResponse(Post post) {
+    public PostListResponse toPostListResponse(Post post,Long hotPostId) {
 
         return PostListResponse.builder()
                 .postId(post.getId())
@@ -188,6 +189,7 @@ public class PostConverter {
                 .category(post.getCategory())
                 .createdAt(post.getCreatedAt())
                 .isNew(post.isNew())
+                .isHot(post.getId().equals(hotPostId))
                 .build();
     }
 
@@ -208,10 +210,10 @@ public class PostConverter {
                 .build();
     }
 
-    public FilterResponse toFilterResponse(Slice<Post> slice) {
+    public FilterResponse toFilterResponse(Slice<Post> slice, Long hotPostId) {
         List<PostListResponse> postDtos = slice.getContent()
                 .stream()
-                .map(this::toPostListResponse)
+                .map(post -> toPostListResponse(post, hotPostId))
                 .toList();
 
         Long nextCursor = slice.hasNext()
@@ -220,6 +222,7 @@ public class PostConverter {
 
         return new FilterResponse(postDtos, slice.hasNext(), nextCursor);
     }
+
 
 
 }
