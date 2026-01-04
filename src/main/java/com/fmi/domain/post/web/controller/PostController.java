@@ -26,13 +26,13 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/post")
+@RequestMapping("/posts")
 @Tag(name = "Post", description = "게시글 관련 API")
 public class PostController {
 
     private final PostService postService;
 
-    @PostMapping(value = "/")
+    @PostMapping
     @Operation(summary = "게시글 생성")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 생성 성공"),
@@ -53,7 +53,7 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @GetMapping("/")
+    @GetMapping
     @Operation(summary = "전체 게시글 조회")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
@@ -78,8 +78,10 @@ public class PostController {
     })
     public ResponseEntity<ApiResponse<PostResponse>> getPost(
             @PathVariable Long postId,
-            @AuthenticationPrincipal UserDetails userDetails
-    ){
+            @AuthenticationPrincipal UserDetails userDetails){
+
+
+
         PostResponse post = postService.getPost(postId,userDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(post));
     }
@@ -188,22 +190,6 @@ public class PostController {
         PostShareResponse shareResponse = postService.getSharePost(postId);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(shareResponse));
-    }
-
-    @GetMapping("/views/{postId}")
-    @Operation(summary = "게시글 조회수 증가",description = "한 유저당 시간 당 1 조회수로 제한")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회수 증가 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
-    })
-    public ResponseEntity<ApiResponse<ViewResponse>> getPostView(
-            @PathVariable Long postId,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        ViewResponse response = postService.getPostView(postId, userDetails);
-
-        return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
     @PostMapping("/filter")

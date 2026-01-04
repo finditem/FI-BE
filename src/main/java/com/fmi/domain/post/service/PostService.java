@@ -207,9 +207,34 @@ public class PostService {
 
             isFavorite = favorite != null && favorite.isFavorite();
         }
+        Long viewCount = increaseViewCount(postId, userDetails);
 
+        return postConverter.toPostDetailResponse(post, isFavorite, viewCount);
+    }
 
-        return postConverter.toPostDetailResponse(post, isFavorite);
+    private Long increaseViewCount(Long postId, UserDetails userDetails) {
+
+        if (userDetails == null) {
+            return null;
+        }
+
+        String email = userDetails.getUsername();
+        String userCheckKey = "post:view:lock:" + postId + ":" + email;
+        String viewCountKey = "post:view:count:" + postId;
+        String changedIdsKey = "post:changed:ids";
+
+        Boolean isFirstView = stringRedisTemplate.opsForValue()
+                .setIfAbsent(userCheckKey, "y", Duration.ofMinutes(5));
+
+        if (Boolean.TRUE.equals(isFirstView)) {
+            Long updatedCount = stringRedisTemplate.opsForValue().increment(viewCountKey);
+            stringRedisTemplate.opsForSet().add(changedIdsKey, postId.toString());
+
+            return updatedCount;
+        }
+
+        String currentCount = stringRedisTemplate.opsForValue().get(viewCountKey);
+        return currentCount != null ? Long.parseLong(currentCount) : 0L;
     }
 
     @Transactional
@@ -298,30 +323,6 @@ public class PostService {
         return postConverter.toShareResponse(post);
     }
 
-    public ViewResponse getPostView(Long postId, UserDetails userDetails) {
-
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
-
-        String email=userDetails.getUsername();
-
-        String viewSetKey = "post:view:set:" + postId;      // 어떤 유저가 조회했는지
-        String viewCountKey = "post:view:count:" + postId;  // 게시글 조회수 누적
-
-        Long added = stringRedisTemplate.opsForSet().add(viewSetKey, email);
-        boolean newViewer = added != null && added > 0;
-        if (newViewer) {
-            stringRedisTemplate.opsForValue().increment(viewCountKey);
-        }
-        stringRedisTemplate.expire(viewSetKey, Duration.ofHours(1));
-
-        Long currentViewCount = Optional.ofNullable(stringRedisTemplate.opsForValue().get(viewCountKey))
-                .map(Long::parseLong)
-                .orElse(post.getViewCnt());
-
-        return postConverter.toViewResponse(postId,currentViewCount);
-
-    }
 
     @Transactional(readOnly = true)
     public FilterResponse getPostsByFilter(PostFilterDto dto, Pageable pageable, Long cursorId) {

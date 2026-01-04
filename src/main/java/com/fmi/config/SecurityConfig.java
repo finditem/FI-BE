@@ -33,9 +33,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/actuator/health", "/actuator/info", "/ws/**", "/error", "/health", "/api/health").permitAll()
                         .requestMatchers("/auth/login", "/auth/signup", "/auth/refresh", "/auth/logout",
-                                "/auth/check-email", "/auth/check-nickname", "/auth/reset/**", "/s3/**", "/chat-test.html", "/chat-test2.html").permitAll()
+                                "/auth/check-email", "/auth/check-nickname", "/auth/reset/**", "/s3/**", "/chat-test.html", "/chat-test2.html","/posts/filter").permitAll()
                         .requestMatchers("/auth/kakao/**", "/auth/email/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/post/{postId}","/post/").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/post/{postId}","/post").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         // 공지사항, 공개 문의 - 공개 API (경로 개편)
                         .requestMatchers("/notice/**", "/inquiry/public/**").permitAll()

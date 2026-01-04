@@ -17,19 +17,18 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "Post", description = "게시글 관련 API")
 public class PostFavoriteController {
 
     private final PostFavoriteService postFavoriteService;
 
-    @Operation(summary = "즐겨찾기 추가",description = "즐겨찾기를 추가합니다.")
+    @Operation(summary = "즐겨찾기 추가",description = "즐겨찾기를 추가합니다.",tags = {"Post"})
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 추가 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
     })
-    @PostMapping("/{postId}/favorite")
+    @PostMapping("/posts/{postId}/favorites")
     public ResponseEntity<ApiResponse<PostFavoriteResponse>> createFavorite(@PathVariable Long postId,
                                                                             @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -39,14 +38,14 @@ public class PostFavoriteController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @Operation(summary = "즐겨찾기 삭제",description = "즐겨찾기를 삭제합니다.")
+    @Operation(summary = "즐겨찾기 삭제",description = "즐겨찾기를 삭제합니다.",tags = {"Post"})
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 삭제 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
     })
-    @DeleteMapping("/{postId}/favorite")
+    @DeleteMapping("/posts/{postId}/favorites")
     public ResponseEntity<ApiResponse<PostFavoriteResponse>> deleteFavorite(@PathVariable Long postId,
                                                                             @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -62,7 +61,7 @@ public class PostFavoriteController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
     })
-    @GetMapping("/post/favoriteList")
+    @GetMapping("/users/me/favorites")
     public ResponseEntity<ApiResponse<List<PostListResponse>>> getFavoritePost(@AuthenticationPrincipal UserDetails userDetails){
 
         List<PostListResponse> response = postFavoriteService.getFavoritePost(userDetails);
