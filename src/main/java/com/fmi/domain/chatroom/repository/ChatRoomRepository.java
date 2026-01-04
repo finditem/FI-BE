@@ -1,6 +1,7 @@
 package com.fmi.domain.chatroom.repository;
 
 import com.fmi.domain.chatroom.data.ChatRoom;
+import com.fmi.domain.post.data.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +20,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
                                                   @Param("userId1") Long userId1,
                                                   @Param("userId2") Long userId2);
 
+
+    long countByPostId(Long postId);
 }

@@ -147,13 +147,15 @@ public class PostConverter {
                 .build();
     }
 
-    public PostResponse toPostDetailResponse(Post post, boolean isFavorite, Long viewCount, Long hotPostId) {
+    public PostResponse toPostDetailResponse(Post post, boolean isFavorite, Long viewCount, Long hotPostId, Long chatRoomCount) {
 
         List<String> imageUrls = post.getImages() != null ?
                 post.getImages().stream()
                         .map(PostImage::getImgUrl)
                         .toList() :
                 List.of();
+
+        String nickname = post.getUser().getNickname();
 
         return PostResponse.builder()
                 .postId(post.getId())
@@ -172,6 +174,9 @@ public class PostConverter {
                 .viewCount(viewCount)
                 .isNew(post.isNew())
                 .isHot(post.getId().equals(hotPostId))
+                .nickName(nickname)
+                .createdAt(post.getCreatedAt())
+                .chatRoomCount(chatRoomCount)
                 .build();
     }
 

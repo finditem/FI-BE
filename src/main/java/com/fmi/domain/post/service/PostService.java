@@ -3,6 +3,7 @@ package com.fmi.domain.post.service;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.post.converter.PostConverter;
@@ -51,6 +52,7 @@ public class PostService {
     private final NotificationService notificationService;
     private final PostFavoriteRepository postFavoriteRepository;
     private final StringRedisTemplate stringRedisTemplate;
+    private final ChatRoomRepository chatRoomRepository;
 
 
     @Transactional
@@ -215,6 +217,7 @@ public class PostService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
 
         Long hotPostId = getHotPostId();
+        Long chatRoomCount= chatRoomRepository.countByPostId(postId);
 
         boolean isFavorite = false;
 
@@ -229,7 +232,7 @@ public class PostService {
         }
         Long viewCount = increaseViewCount(postId, userDetails);
 
-        return postConverter.toPostDetailResponse(post, isFavorite, viewCount, hotPostId);
+        return postConverter.toPostDetailResponse(post, isFavorite, viewCount, hotPostId, chatRoomCount);
     }
 
     private Long increaseViewCount(Long postId, UserDetails userDetails) {

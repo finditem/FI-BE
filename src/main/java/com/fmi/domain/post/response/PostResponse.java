@@ -5,6 +5,7 @@ import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -32,4 +33,8 @@ public class PostResponse {
     private Long viewCount;
     private boolean isNew;
     private boolean isHot;
+
+    private String nickName;
+    private LocalDateTime createdAt;
+    private Long chatRoomCount;
 }
