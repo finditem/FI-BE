@@ -17,8 +17,6 @@ public class PostFilterDto {
     private LocalDate startDate; // 시작일
     private LocalDate endDate;   // 종료일
 
-    private boolean favoriteStatus; // 즐찾 상태
-
     @Builder.Default
     private Status itemStatus = Status.SEARCHING;// 물건 찾는중/찾음 상태
     @Builder.Default
