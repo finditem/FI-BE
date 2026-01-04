@@ -27,13 +27,13 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/post")
+@RequestMapping("/posts")
 @Tag(name = "Post", description = "게시글 관련 API")
 public class PostController {
 
     private final PostService postService;
 
-    @PostMapping(value = "/")
+    @PostMapping
     @Operation(summary = "게시글 생성")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 생성 성공"),
@@ -54,7 +54,7 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @GetMapping("/")
+    @GetMapping
     @Operation(summary = "전체 게시글 조회")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),

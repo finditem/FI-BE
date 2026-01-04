@@ -37,4 +37,5 @@ public class PostResponse {
     private String nickName;
     private LocalDateTime createdAt;
     private Long chatRoomCount;
+
 }
