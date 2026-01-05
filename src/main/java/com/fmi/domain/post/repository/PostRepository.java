@@ -59,4 +59,6 @@ public interface PostRepository extends JpaRepository<Post,Long>, PostRepository
 """)
     List<Post> findHotPost(Pageable pageable);
 
+    Long countByUserAndTemporarySaveFalse(User user);
+
 }

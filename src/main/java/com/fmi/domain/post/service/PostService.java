@@ -246,6 +246,7 @@ public class PostService {
 
         Long hotPostId = getHotPostId();
         Long chatRoomCount= chatRoomRepository.countByPostId(postId);
+        Long userPostCount = postRepository.countByUserAndTemporarySaveFalse(post.getUser());
 
         boolean isFavorite = false;
 
@@ -260,7 +261,7 @@ public class PostService {
         }
         Long viewCount = increaseViewCount(postId, userDetails);
 
-        return postConverter.toPostDetailResponse(post, isFavorite, viewCount, hotPostId, chatRoomCount);
+        return postConverter.toPostDetailResponse(post, isFavorite, viewCount, hotPostId, chatRoomCount,userPostCount);
     }
 
     private Long increaseViewCount(Long postId, UserDetails userDetails) {

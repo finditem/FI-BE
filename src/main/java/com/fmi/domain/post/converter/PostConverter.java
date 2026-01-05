@@ -149,7 +149,7 @@ public class PostConverter {
                 .build();
     }
 
-    public PostResponse toPostDetailResponse(Post post, boolean isFavorite, Long viewCount, Long hotPostId, Long chatRoomCount) {
+    public PostResponse toPostDetailResponse(Post post, boolean isFavorite, Long viewCount, Long hotPostId, Long chatRoomCount, Long userPostCount) {
 
         List<String> imageUrls = post.getImages() != null ?
                 post.getImages().stream()
@@ -180,6 +180,7 @@ public class PostConverter {
                 .createdAt(post.getCreatedAt())
                 .chatRoomCount(chatRoomCount)
                 .profileUrl(post.getUser().getProfile_img())
+                .userPostCount(userPostCount)
                 .build();
     }
 

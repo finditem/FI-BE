@@ -39,4 +39,6 @@ public class PostResponse {
     private LocalDateTime createdAt;
     private Long chatRoomCount;
 
+    private Long userPostCount;
+
 }
