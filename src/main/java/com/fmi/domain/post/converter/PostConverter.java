@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 public class PostConverter {
@@ -180,7 +182,7 @@ public class PostConverter {
                 .build();
     }
 
-    public PostListResponse toPostListResponse(Post post,Long hotPostId) {
+    public PostListResponse toPostListResponse(Post post,Long hotPostId,Long viewCount,boolean isFavorite) {
 
         return PostListResponse.builder()
                 .postId(post.getId())
@@ -195,6 +197,8 @@ public class PostConverter {
                 .createdAt(post.getCreatedAt())
                 .isNew(post.isNew())
                 .isHot(post.getId().equals(hotPostId))
+                .viewCount(viewCount)
+                .favoriteStatus(isFavorite)
                 .build();
     }
 
@@ -208,17 +212,19 @@ public class PostConverter {
                 .build();
     }
 
-    public ViewResponse toViewResponse(long postId, long viewcnt){
-        return ViewResponse.builder()
-                .postId(postId)
-                .viewCount(viewcnt)
-                .build();
-    }
+    public FilterResponse toFilterResponse(Slice<Post> slice,
+                                           Long hotPostId,
+                                           Map<Long, Long> viewCounts,
+                                           Set<Long> favoritePostIds) {
 
-    public FilterResponse toFilterResponse(Slice<Post> slice, Long hotPostId) {
         List<PostListResponse> postDtos = slice.getContent()
                 .stream()
-                .map(post -> toPostListResponse(post, hotPostId))
+                .map(post -> toPostListResponse(
+                        post,
+                        hotPostId,
+                        viewCounts.getOrDefault(post.getId(), 0L), // Redis 값 적용
+                        favoritePostIds.contains(post.getId())    // 즐겨찾기 상태 적용
+                ))
                 .toList();
 
         Long nextCursor = slice.hasNext()

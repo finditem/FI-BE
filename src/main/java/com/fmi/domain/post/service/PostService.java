@@ -183,10 +183,9 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostListSliceResponse getAllPosts(Type type, Long cursor, int size) {
+    public PostListSliceResponse getAllPosts(Type type, Long cursor, int size,UserDetails userDetails) {
 
         Long hotPostId = getHotPostId();
-
         Pageable pageable = PageRequest.of(0, size, Sort.by("createdAt").descending());
 
         Slice<Post> postSlice;
@@ -195,19 +194,43 @@ public class PostService {
         } else {
             postSlice = postRepository.findByTemporarySaveFalseAndPostTypeAndIdLessThan(type, cursor, pageable);
         }
+        List<Post> posts = postSlice.getContent();
+        List<Long> postIds = postSlice.getContent().stream().map(Post::getId).toList();
+
+        Map<Long, Long> viewCounts = getViewCountsFromRedis(postIds);
+        Set<Long> favoritePostIds = getFavoritePostIds(userDetails, posts);
+
+        List<PostListResponse> summaries = posts.stream()
+                .map(post -> postConverter.toPostListResponse(
+                        post,
+                        hotPostId,
+                        viewCounts.getOrDefault(post.getId(), 0L),
+                        favoritePostIds.contains(post.getId())
+                ))
+                .toList();
 
         Long nextCursor = postSlice.hasNext()
                 ? postSlice.getContent().get(postSlice.getContent().size() - 1).getId()
                 : null;
 
-        List<PostListResponse> summaries = postSlice.getContent()
-                .stream()
-                .map(post -> postConverter.toPostListResponse(post, hotPostId))
+        return new PostListSliceResponse(summaries, nextCursor, postSlice.hasNext());
+    }
+
+    public Map<Long, Long> getViewCountsFromRedis(List<Long> postIds) {
+        if (postIds.isEmpty()) return Collections.emptyMap();
+
+        List<String> keys = postIds.stream()
+                .map(id -> "post:view:count:" + id)
                 .toList();
 
+        List<String> values = stringRedisTemplate.opsForValue().multiGet(keys);
 
-        //조회수 추가 로직
-        return new PostListSliceResponse(summaries, nextCursor, postSlice.hasNext());
+        Map<Long, Long> viewCountMap = new HashMap<>();
+        for (int i = 0; i < postIds.size(); i++) {
+            String val = values.get(i);
+            viewCountMap.put(postIds.get(i), val != null ? Long.parseLong(val) : 0L);
+        }
+        return viewCountMap;
     }
 
     @Transactional(readOnly = true)
@@ -348,11 +371,18 @@ public class PostService {
 
 
     @Transactional(readOnly = true)
-    public FilterResponse getPostsByFilter(PostFilterDto dto, Pageable pageable, Long cursorId) {
+    public FilterResponse getPostsByFilter(PostFilterDto dto, Pageable pageable, Long cursorId, UserDetails userDetails) {
         Long hotPostId = getHotPostId();
         Slice<Post> slice = postRepository.findPostsByFilters(dto, pageable, cursorId);
 
-        return postConverter.toFilterResponse(slice,hotPostId);
+        List<Post> posts = slice.getContent();
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+
+        Map<Long, Long> viewCounts = getViewCountsFromRedis(postIds);
+
+        Set<Long> favoritePostIds = getFavoritePostIds(userDetails, posts);
+
+        return postConverter.toFilterResponse(slice, hotPostId, viewCounts, favoritePostIds);
     }
 
     @Scheduled(cron = "0 0 * * * *")
@@ -392,4 +422,15 @@ public class PostService {
                 .orElse(null);
     }
 
+    private Set<Long> getFavoritePostIds(UserDetails userDetails, List<Post> posts) {
+
+        if (userDetails == null || posts.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        return postFavoriteRepository.findPostIdsByUserAndPostIn(user, posts);
+    }
 }

@@ -4,6 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.response.PostListResponse;
+import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.postfavorite.converter.PostFavoriteConverter;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +29,7 @@ public class PostFavoriteService {
     private final UserRepository userRepository;
     private final PostFavoriteConverter favoritePostConverter;
     private final PostConverter postConverter;
+    private final PostService postService;
 
 
     @Transactional
@@ -90,10 +93,21 @@ public class PostFavoriteService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         List<PostFavorite> favorites = favoriteRepository.findByUserAndIsFavoriteTrue(user);
-
-        return favorites.stream()
+        List<Post> posts = favorites.stream()
                 .map(PostFavorite::getPost)
-                .map(post -> postConverter.toPostListResponse(post, null))
+                .toList();
+
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+
+        Map<Long, Long> viewCounts = postService.getViewCountsFromRedis(postIds);
+
+        return posts.stream()
+                .map(post -> postConverter.toPostListResponse(
+                        post,
+                        null,
+                        viewCounts.getOrDefault(post.getId(), 0L),
+                        true
+                ))
                 .toList();
     }
 

@@ -57,11 +57,12 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public UserOtherPageResponse getOtherUserPage(Long userId) {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         List<PostListResponse> posts = postRepository.findAllPublishedWithImagesByUser(user).stream()
-                .map(post -> postConverter.toPostListResponse(post, null))//hot값은 널
+                .map(post -> postConverter.toPostListResponse(post, null,null,false))
                 .toList();
 
         List<UserCommentSummaryResponse> comments = commentRepository.findAllWithPostByUser(user).stream()

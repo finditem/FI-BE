@@ -28,7 +28,7 @@ public class PostListResponse {
     private Integer favoriteCount;
 
     private boolean favoriteStatus; // 즐찾 상태
-    private Long viewcount; // 조회수
+    private Long viewCount; // 조회수
     private boolean isNew;
     private boolean isHot;
 

@@ -64,9 +64,10 @@ public class PostController {
     public ResponseEntity<ApiResponse<PostListSliceResponse>> getAllPosts(
             @RequestParam Type type,
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal UserDetails userDetails
     ){
-        PostListSliceResponse posts = postService.getAllPosts(type, cursor, size);
+        PostListSliceResponse posts = postService.getAllPosts(type, cursor, size,userDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(posts));
     }
 
@@ -201,9 +202,10 @@ public class PostController {
     })
     public ResponseEntity<ApiResponse<FilterResponse>> getFilter(@RequestBody PostFilterDto dto,
                                                                  @RequestParam(required = false) Long cursor,
-                                                                 @PageableDefault(size = 20) Pageable pageable) {
+                                                                 @PageableDefault(size = 20) Pageable pageable,
+                                                                 @AuthenticationPrincipal UserDetails userDetails) {
 
-        FilterResponse response = postService.getPostsByFilter(dto, pageable, cursor);
+        FilterResponse response = postService.getPostsByFilter(dto, pageable, cursor,userDetails);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
