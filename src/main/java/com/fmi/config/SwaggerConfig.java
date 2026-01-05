@@ -6,9 +6,11 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.tags.Tag;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Configuration
@@ -34,5 +36,24 @@ public class SwaggerConfig {
                         new Tag().name("Report").description("신고 API"),
                         new Tag().name("Notification").description("알림 API")
                 ));
+    }
+
+    @Bean
+    public OpenApiCustomizer sortTagsAlphabetically() {
+        return openApi -> {
+            List<Tag> tags = openApi.getTags();
+            if (tags == null || tags.isEmpty()) return;
+
+            tags.sort(Comparator
+                    .comparingInt((Tag t) -> {
+                        String name = t.getName();
+                        if ("Auth".equals(name)) return -1;
+                        if ("S3".equals(name)) return 1;
+                        if ("Health".equals(name)) return 2;
+                        return 0;
+                    })
+                    .thenComparing(Tag::getName, String.CASE_INSENSITIVE_ORDER)
+            );
+        };
     }
 }
