@@ -179,6 +179,7 @@ public class PostConverter {
                 .nickName(nickname)
                 .createdAt(post.getCreatedAt())
                 .chatRoomCount(chatRoomCount)
+                .profileUrl(post.getUser().getProfile_img())
                 .build();
     }
 

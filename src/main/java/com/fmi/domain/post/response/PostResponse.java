@@ -34,6 +34,7 @@ public class PostResponse {
     private boolean isNew;
     private boolean isHot;
 
+    private String profileUrl;
     private String nickName;
     private LocalDateTime createdAt;
     private Long chatRoomCount;

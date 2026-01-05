@@ -54,7 +54,7 @@ public class PostService {
     private final StringRedisTemplate stringRedisTemplate;
     private final ChatRoomRepository chatRoomRepository;
 
-
+// 게시글 생성
     @Transactional
     public PostResponse createPost(CreatePostDto request, UserDetails userDetails, List<MultipartFile> images) {
 
@@ -83,6 +83,7 @@ public class PostService {
         return postConverter.toPostResponse(post);
     }
 
+    //게시글 수정
     @Transactional
     public PostResponse updatePost(Long postId, UpdatePostDto request, UserDetails userDetails, List<MultipartFile> images) {
 
@@ -162,6 +163,7 @@ public class PostService {
         }
     }
 
+    //게시글 삭제
     @Transactional
     public Post deletePost(Long postId, UserDetails userDetails) {
 
@@ -182,6 +184,7 @@ public class PostService {
         return post;
     }
 
+    //게시글 전체 조회
     @Transactional(readOnly = true)
     public PostListSliceResponse getAllPosts(Type type, Long cursor, int size,UserDetails userDetails) {
 
@@ -216,6 +219,7 @@ public class PostService {
         return new PostListSliceResponse(summaries, nextCursor, postSlice.hasNext());
     }
 
+    // 레디스에 게시글 조회수 가져오기
     public Map<Long, Long> getViewCountsFromRedis(List<Long> postIds) {
         if (postIds.isEmpty()) return Collections.emptyMap();
 
@@ -233,6 +237,7 @@ public class PostService {
         return viewCountMap;
     }
 
+    // 게시글 단일 조회
     @Transactional(readOnly = true)
     public PostResponse getPost(Long postId, UserDetails userDetails) {
 
@@ -260,13 +265,15 @@ public class PostService {
 
     private Long increaseViewCount(Long postId, UserDetails userDetails) {
 
+        String viewCountKey = "post:view:count:" + postId;
+
         if (userDetails == null) {
-            return null;
+            String currentCount = stringRedisTemplate.opsForValue().get(viewCountKey);
+            return currentCount != null ? Long.parseLong(currentCount) : 0L;
         }
 
         String email = userDetails.getUsername();
         String userCheckKey = "post:view:lock:" + postId + ":" + email;
-        String viewCountKey = "post:view:count:" + postId;
         String changedIdsKey = "post:changed:ids";
 
         Boolean isFirstView = stringRedisTemplate.opsForValue()
