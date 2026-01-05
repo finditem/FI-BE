@@ -8,6 +8,7 @@ import com.fmi.domain.postfavorite.data.PostFavorite;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -86,8 +87,21 @@ public class Post {
     @Builder.Default
     private List<PostFavorite> favorites = new ArrayList<>();
 
-    public void changeStatus(Status newStatus) {
-        this.itemStatus = newStatus;
+    @Column(name = "comment_count", nullable = false)
+    @Builder.Default
+    private Integer commentCount = 0;
+
+    public boolean isNew() {
+        return Duration.between(createdAt, LocalDateTime.now()).toHours() < 24;
     }
 
+    public void increaseCommentCount() {
+        this.commentCount += 1;
+    }
+
+    public void decreaseCommentCount() {
+        if (this.commentCount > 0) {
+            this.commentCount -= 1;
+        }
+    }
 }

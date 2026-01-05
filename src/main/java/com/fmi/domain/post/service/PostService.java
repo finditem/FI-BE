@@ -3,6 +3,7 @@ package com.fmi.domain.post.service;
 import com.fmi.domain.Enum.Status;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.post.converter.PostConverter;
@@ -15,6 +16,7 @@ import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.PostFilterDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
+import com.fmi.domain.post.web.dto.response.PostListSliceResponse;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -50,8 +52,9 @@ public class PostService {
     private final NotificationService notificationService;
     private final PostFavoriteRepository postFavoriteRepository;
     private final StringRedisTemplate stringRedisTemplate;
+    private final ChatRoomRepository chatRoomRepository;
 
-
+// 게시글 생성
     @Transactional
     public PostResponse createPost(CreatePostDto request, UserDetails userDetails, List<MultipartFile> images) {
 
@@ -80,6 +83,7 @@ public class PostService {
         return postConverter.toPostResponse(post);
     }
 
+    //게시글 수정
     @Transactional
     public PostResponse updatePost(Long postId, UpdatePostDto request, UserDetails userDetails, List<MultipartFile> images) {
 
@@ -159,6 +163,7 @@ public class PostService {
         }
     }
 
+    //게시글 삭제
     @Transactional
     public Post deletePost(Long postId, UserDetails userDetails) {
 
@@ -179,22 +184,69 @@ public class PostService {
         return post;
     }
 
+    //게시글 전체 조회
     @Transactional(readOnly = true)
-    public List<PostListResponse> getAllPosts(Type type, int page, int size) {
+    public PostListSliceResponse getAllPosts(Type type, Long cursor, int size,UserDetails userDetails) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Post> postPage = postRepository.findByTemporarySaveFalseAndPostType(type, pageable);
+        Long hotPostId = getHotPostId();
+        Pageable pageable = PageRequest.of(0, size, Sort.by("createdAt").descending());
 
-        return postPage.stream()
-                .map(postConverter::toPostListResponse)
+        Slice<Post> postSlice;
+        if (cursor == null) {
+            postSlice = postRepository.findByTemporarySaveFalseAndPostType(type, pageable);
+        } else {
+            postSlice = postRepository.findByTemporarySaveFalseAndPostTypeAndIdLessThan(type, cursor, pageable);
+        }
+        List<Post> posts = postSlice.getContent();
+        List<Long> postIds = postSlice.getContent().stream().map(Post::getId).toList();
+
+        Map<Long, Long> viewCounts = getViewCountsFromRedis(postIds);
+        Set<Long> favoritePostIds = getFavoritePostIds(userDetails, posts);
+
+        List<PostListResponse> summaries = posts.stream()
+                .map(post -> postConverter.toPostListResponse(
+                        post,
+                        hotPostId,
+                        viewCounts.getOrDefault(post.getId(), 0L),
+                        favoritePostIds.contains(post.getId())
+                ))
                 .toList();
+
+        Long nextCursor = postSlice.hasNext()
+                ? postSlice.getContent().get(postSlice.getContent().size() - 1).getId()
+                : null;
+
+        return new PostListSliceResponse(summaries, nextCursor, postSlice.hasNext());
     }
 
+    // 레디스에 게시글 조회수 가져오기
+    public Map<Long, Long> getViewCountsFromRedis(List<Long> postIds) {
+        if (postIds.isEmpty()) return Collections.emptyMap();
+
+        List<String> keys = postIds.stream()
+                .map(id -> "post:view:count:" + id)
+                .toList();
+
+        List<String> values = stringRedisTemplate.opsForValue().multiGet(keys);
+
+        Map<Long, Long> viewCountMap = new HashMap<>();
+        for (int i = 0; i < postIds.size(); i++) {
+            String val = values.get(i);
+            viewCountMap.put(postIds.get(i), val != null ? Long.parseLong(val) : 0L);
+        }
+        return viewCountMap;
+    }
+
+    // 게시글 단일 조회
     @Transactional(readOnly = true)
     public PostResponse getPost(Long postId, UserDetails userDetails) {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
+
+        Long hotPostId = getHotPostId();
+        Long chatRoomCount= chatRoomRepository.countByPostId(postId);
+        Long userPostCount = postRepository.countByUserAndTemporarySaveFalse(post.getUser());
 
         boolean isFavorite = false;
 
@@ -209,18 +261,20 @@ public class PostService {
         }
         Long viewCount = increaseViewCount(postId, userDetails);
 
-        return postConverter.toPostDetailResponse(post, isFavorite, viewCount);
+        return postConverter.toPostDetailResponse(post, isFavorite, viewCount, hotPostId, chatRoomCount,userPostCount);
     }
 
     private Long increaseViewCount(Long postId, UserDetails userDetails) {
 
+        String viewCountKey = "post:view:count:" + postId;
+
         if (userDetails == null) {
-            return null;
+            String currentCount = stringRedisTemplate.opsForValue().get(viewCountKey);
+            return currentCount != null ? Long.parseLong(currentCount) : 0L;
         }
 
         String email = userDetails.getUsername();
         String userCheckKey = "post:view:lock:" + postId + ":" + email;
-        String viewCountKey = "post:view:count:" + postId;
         String changedIdsKey = "post:changed:ids";
 
         Boolean isFirstView = stringRedisTemplate.opsForValue()
@@ -325,11 +379,18 @@ public class PostService {
 
 
     @Transactional(readOnly = true)
-    public FilterResponse getPostsByFilter(PostFilterDto dto, Pageable pageable, Long cursorId) {
-
+    public FilterResponse getPostsByFilter(PostFilterDto dto, Pageable pageable, Long cursorId, UserDetails userDetails) {
+        Long hotPostId = getHotPostId();
         Slice<Post> slice = postRepository.findPostsByFilters(dto, pageable, cursorId);
 
-        return postConverter.toFilterResponse(slice);
+        List<Post> posts = slice.getContent();
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+
+        Map<Long, Long> viewCounts = getViewCountsFromRedis(postIds);
+
+        Set<Long> favoritePostIds = getFavoritePostIds(userDetails, posts);
+
+        return postConverter.toFilterResponse(slice, hotPostId, viewCounts, favoritePostIds);
     }
 
     @Scheduled(cron = "0 0 * * * *")
@@ -361,4 +422,23 @@ public class PostService {
         }
     }
 
+    public Long getHotPostId() {
+        return postRepository.findHotPost(PageRequest.of(0, 1))
+                .stream()
+                .findFirst()
+                .map(Post::getId)
+                .orElse(null);
+    }
+
+    private Set<Long> getFavoritePostIds(UserDetails userDetails, List<Post> posts) {
+
+        if (userDetails == null || posts.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        return postFavoriteRepository.findPostIdsByUserAndPostIn(user, posts);
+    }
 }

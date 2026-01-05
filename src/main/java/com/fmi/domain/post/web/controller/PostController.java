@@ -7,6 +7,7 @@ import com.fmi.domain.post.web.dto.CreatePostDto;
 import com.fmi.domain.post.web.dto.PostFilterDto;
 import com.fmi.domain.post.web.dto.TemporaryPostDto;
 import com.fmi.domain.post.web.dto.UpdatePostDto;
+import com.fmi.domain.post.web.dto.response.PostListSliceResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -60,12 +61,13 @@ public class PostController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMON400: 잘못된 요청입니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
     })
-    public ResponseEntity<ApiResponse<List<PostListResponse>>> getAllPosts(
+    public ResponseEntity<ApiResponse<PostListSliceResponse>> getAllPosts(
             @RequestParam Type type,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal UserDetails userDetails
     ){
-        List<PostListResponse> posts = postService.getAllPosts(type, page, size);
+        PostListSliceResponse posts = postService.getAllPosts(type, cursor, size,userDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(posts));
     }
 
@@ -79,8 +81,6 @@ public class PostController {
     public ResponseEntity<ApiResponse<PostResponse>> getPost(
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails){
-
-
 
         PostResponse post = postService.getPost(postId,userDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(post));
@@ -202,9 +202,10 @@ public class PostController {
     })
     public ResponseEntity<ApiResponse<FilterResponse>> getFilter(@RequestBody PostFilterDto dto,
                                                                  @RequestParam(required = false) Long cursor,
-                                                                 @PageableDefault(size = 20) Pageable pageable) {
+                                                                 @PageableDefault(size = 20) Pageable pageable,
+                                                                 @AuthenticationPrincipal UserDetails userDetails) {
 
-        FilterResponse response = postService.getPostsByFilter(dto, pageable, cursor);
+        FilterResponse response = postService.getPostsByFilter(dto, pageable, cursor,userDetails);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }

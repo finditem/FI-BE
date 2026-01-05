@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface PostFavoriteRepository extends JpaRepository<PostFavorite,Long> {
@@ -21,4 +22,7 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite,Long>
 
     @Query("SELECT pf.user FROM PostFavorite pf WHERE pf.post = :post AND pf.isFavorite = true")
     List<User> findUsersByPost(@Param("post") Post post);
+
+    @Query("SELECT pf.post.id FROM PostFavorite pf WHERE pf.user = :user AND pf.post IN :posts AND pf.isFavorite = true")
+    Set<Long> findPostIdsByUserAndPostIn(@Param("user") User user, @Param("posts") List<Post> posts);
 }

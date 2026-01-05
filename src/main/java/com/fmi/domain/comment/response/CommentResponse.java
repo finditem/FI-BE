@@ -15,4 +15,5 @@ public class CommentResponse {
     private String authorName;
     private LocalDateTime createdAt;
     private int likeCount;
+    private Long parentId;
 }

@@ -58,6 +58,8 @@ public class CommentService {
         Comment comment = commentConverter.toCommentEntity(dto, user, post, parentComment);
         Comment savedComment = commentRepository.save(comment);
 
+        post.increaseCommentCount();
+
         boolean isReply = parentComment != null;
 
         Set<Long> mentionedUserIds = handleMentions(savedComment, dto);
@@ -183,6 +185,8 @@ public class CommentService {
         if (!comment.getUser().getEmail().equals(userDetails.getUsername())) {
             throw new RuntimeException("작성자만 수정할 수 있습니다.");
         }
+
+        comment.getPost().decreaseCommentCount(); // 댓글 수 감소
 
         commentRepository.delete(comment);
 

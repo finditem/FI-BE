@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 public class PostConverter {
@@ -147,13 +149,15 @@ public class PostConverter {
                 .build();
     }
 
-    public PostResponse toPostDetailResponse(Post post, boolean isFavorite, Long viewCount) {
+    public PostResponse toPostDetailResponse(Post post, boolean isFavorite, Long viewCount, Long hotPostId, Long chatRoomCount, Long userPostCount) {
 
         List<String> imageUrls = post.getImages() != null ?
                 post.getImages().stream()
                         .map(PostImage::getImgUrl)
                         .toList() :
                 List.of();
+
+        String nickname = post.getUser().getNickname();
 
         return PostResponse.builder()
                 .postId(post.getId())
@@ -170,10 +174,17 @@ public class PostConverter {
                 .favoriteCount(post.getFavoriteCount())
                 .favoriteStatus(isFavorite)
                 .viewCount(viewCount)
+                .isNew(post.isNew())
+                .isHot(post.getId().equals(hotPostId))
+                .nickName(nickname)
+                .createdAt(post.getCreatedAt())
+                .chatRoomCount(chatRoomCount)
+                .profileUrl(post.getUser().getProfile_img())
+                .userPostCount(userPostCount)
                 .build();
     }
 
-    public PostListResponse toPostListResponse(Post post) {
+    public PostListResponse toPostListResponse(Post post,Long hotPostId,Long viewCount,boolean isFavorite) {
 
         return PostListResponse.builder()
                 .postId(post.getId())
@@ -186,6 +197,10 @@ public class PostConverter {
                 .favoriteCount(post.getFavoriteCount())
                 .category(post.getCategory())
                 .createdAt(post.getCreatedAt())
+                .isNew(post.isNew())
+                .isHot(post.getId().equals(hotPostId))
+                .viewCount(viewCount)
+                .favoriteStatus(isFavorite)
                 .build();
     }
 
@@ -194,22 +209,24 @@ public class PostConverter {
 
         return PostShareResponse.builder()
                 .title(post.getTitle())
-                .summary(createSummary(post,20))
+                .summary(createSummary(post,100))
                 .thumbnailUrl(createThumbnail(post))
                 .build();
     }
 
-    public ViewResponse toViewResponse(long postId, long viewcnt){
-        return ViewResponse.builder()
-                .postId(postId)
-                .viewCount(viewcnt)
-                .build();
-    }
+    public FilterResponse toFilterResponse(Slice<Post> slice,
+                                           Long hotPostId,
+                                           Map<Long, Long> viewCounts,
+                                           Set<Long> favoritePostIds) {
 
-    public FilterResponse toFilterResponse(Slice<Post> slice) {
         List<PostListResponse> postDtos = slice.getContent()
                 .stream()
-                .map(this::toPostListResponse)
+                .map(post -> toPostListResponse(
+                        post,
+                        hotPostId,
+                        viewCounts.getOrDefault(post.getId(), 0L), // Redis 값 적용
+                        favoritePostIds.contains(post.getId())    // 즐겨찾기 상태 적용
+                ))
                 .toList();
 
         Long nextCursor = slice.hasNext()
@@ -218,6 +235,7 @@ public class PostConverter {
 
         return new FilterResponse(postDtos, slice.hasNext(), nextCursor);
     }
+
 
 
 }

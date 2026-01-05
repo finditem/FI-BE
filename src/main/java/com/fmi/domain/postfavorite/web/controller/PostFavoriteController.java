@@ -17,6 +17,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Post", description = "게시글 관련 API")
 public class PostFavoriteController {
 
     private final PostFavoriteService postFavoriteService;
