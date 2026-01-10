@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -84,6 +85,14 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
         }
         // 일반 UsernameNotFoundException인 경우 _USER_NOT_FOUND 사용
         ErrorReasonDTO errorReason = ErrorStatus._USER_NOT_FOUND.getReasonHttpStatus();
+        return handleExceptionInternal(e, errorReason, null, request);
+    }
+
+    @ExceptionHandler(value = DataIntegrityViolationException.class)
+    public ResponseEntity<Object> handleDataIntegrityViolation(DataIntegrityViolationException e, HttpServletRequest request) {
+        log.error("데이터베이스 제약 조건 위반 발생", e);
+        // 상세 에러 메시지는 로그에만 기록하고 클라이언트에는 일반 메시지만 전달
+        ErrorReasonDTO errorReason = ErrorStatus._BAD_REQUEST.getReasonHttpStatus();
         return handleExceptionInternal(e, errorReason, null, request);
     }
 
