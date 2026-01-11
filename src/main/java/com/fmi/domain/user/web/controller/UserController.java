@@ -64,16 +64,6 @@ public class UserController {
                                     value = "{\"isSuccess\": false, \"code\": \"FILE500-UPLOAD_IO\", \"message\": \"업로드 중 오류가 발생했습니다.\"}"
                             )
                     )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
-                            )
-                    )
             )
     })
     public ApiResponse<ImageUploadResponse> uploadImages(
@@ -88,32 +78,12 @@ public class UserController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 정보 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "COMMON401: 인증이 필요합니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON401\", \"message\": \"인증이 필요합니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = "{\"isSuccess\": false, \"code\": \"USER404-NOT_FOUND\", \"message\": \"존재하지 않는 회원입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
                             )
                     )
             )
@@ -137,16 +107,6 @@ public class UserController {
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = "{\"isSuccess\": false, \"code\": \"USER404-NOT_FOUND\", \"message\": \"존재하지 않는 회원입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
                             )
                     )
             )
@@ -173,32 +133,12 @@ public class UserController {
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "COMMON401: 인증이 필요합니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON401\", \"message\": \"인증이 필요합니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = "{\"isSuccess\": false, \"code\": \"USER404-NOT_FOUND\", \"message\": \"존재하지 않는 회원입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
                             )
                     )
             )
@@ -228,16 +168,6 @@ public class UserController {
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "COMMON401: 인증이 필요합니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON401\", \"message\": \"인증이 필요합니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
                     content = @Content(
@@ -254,16 +184,6 @@ public class UserController {
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = "{\"isSuccess\": false, \"code\": \"FILE500-DELETE_IO\", \"message\": \"파일을 삭제할 수 없습니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
                             )
                     )
             )
@@ -313,32 +233,12 @@ public class UserController {
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "COMMON401: 인증이 필요합니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON401\", \"message\": \"인증이 필요합니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = "{\"isSuccess\": false, \"code\": \"USER404-NOT_FOUND\", \"message\": \"존재하지 않는 회원입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
                             )
                     )
             )
@@ -378,26 +278,6 @@ public class UserController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원 탈퇴 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "COMMON400: 잘못된 요청입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "COMMON401: 인증이 필요합니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON401\", \"message\": \"인증이 필요합니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
                     content = @Content(
@@ -414,16 +294,6 @@ public class UserController {
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = "{\"isSuccess\": false, \"code\": \"FILE500-DELETE_IO\", \"message\": \"파일을 삭제할 수 없습니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
                             )
                     )
             )
