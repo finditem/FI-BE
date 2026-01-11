@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/auth/email")
+@RequestMapping("/auths/email")
 @RequiredArgsConstructor
 @Tag(name = "Auth")
 public class EmailController {
