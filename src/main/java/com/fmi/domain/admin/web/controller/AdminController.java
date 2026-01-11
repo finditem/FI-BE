@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/admins")
 @RequiredArgsConstructor
 @Tag(name = "Admin", description = "관리자 전용 API")
 public class AdminController {
