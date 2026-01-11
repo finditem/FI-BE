@@ -20,7 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/report")
+@RequestMapping("/reports")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
 @Tag(name = "Report", description = "신고 API")
@@ -30,7 +30,7 @@ public class ReportController {
     
     /**
      * 신고하기 (통합)
-     * POST /api/report
+     * POST /api/reports
      * 
      * Request Body 예시:
      * {
@@ -66,7 +66,7 @@ public class ReportController {
     
     /**
      * 내 신고 내역 조회
-     * GET /api/report/me?status=PENDING&page=0&size=10
+     * GET /api/reports/me?status=PENDING&page=0&size=10
      */
     @GetMapping("/me")
     @Operation(summary = "내 신고 내역 조회", description = "내가 접수한 모든 신고 내역을 조회합니다.")
