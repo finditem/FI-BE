@@ -28,10 +28,8 @@ public class BlockController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "유저 차단 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "USER400-BLOCK_SELF: 자기 자신은 차단할 수 없습니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "USER409-ALREADY_BLOCKED: 이미 차단한 사용자입니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "USER409-ALREADY_BLOCKED: 이미 차단한 사용자입니다")
     })
     public ApiResponse<String> block(@AuthenticationPrincipal User me, @PathVariable Long userId) {
         blockService.block(me.getId(), userId);
@@ -42,10 +40,8 @@ public class BlockController {
     @Operation(summary = "유저 차단 해제", description = "로그인 사용자가 대상 유저의 차단을 해제합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "유저 차단 해제 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "USER404-NOT_BLOCKED: 차단되지 않은 사용자입니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "USER404-NOT_BLOCKED: 차단되지 않은 사용자입니다")
     })
     public ApiResponse<String> unblock(@AuthenticationPrincipal User me, @PathVariable Long userId) {
         blockService.unblock(me.getId(), userId);
@@ -55,9 +51,7 @@ public class BlockController {
     @GetMapping("/block")
     @Operation(summary = "내가 차단한 유저 목록")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "차단 유저 목록 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "차단 유저 목록 조회 성공")
     })
     public ApiResponse<List<Long>> list(@AuthenticationPrincipal User me) {
         List<BlockedUser> blocks = blockService.list(me.getId());
