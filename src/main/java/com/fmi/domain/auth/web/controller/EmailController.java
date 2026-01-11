@@ -47,16 +47,6 @@ public class EmailController {
                                     value = "{\"isSuccess\": false, \"code\": \"AUTH500-EMAIL_SEND_FAILED\", \"message\": \"이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.\"}"
                             )
                     )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "COMMON400: 잘못된 요청입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}"
-                            )
-                    )
             )
     })
     public ApiResponse<Void> send(@RequestBody EmailSendRequest req) {
@@ -77,16 +67,6 @@ public class EmailController {
                                     value = "{\"isSuccess\": false, \"code\": \"AUTH400-EMAIL_VERIFY_FAILED\", \"message\": \"인증 코드가 만료되었거나 일치하지 않습니다.\"}"
                             )
                     )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "COMMON400: 잘못된 요청입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}"
-                            )
-                    )
             )
     })
     public ApiResponse<EmailVerifyResponse> verify(@RequestBody EmailVerifyRequest req) {
@@ -98,27 +78,7 @@ public class EmailController {
     @PostMapping("/bounce")
     @Operation(summary = "bounce back 수동 등록", description = "Gmail에서 bounce back을 받은 이메일 주소를 수동으로 등록합니다. 등록된 이메일 주소로는 인증 코드가 발송되지 않습니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bounce back 등록 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "COMMON400: 잘못된 요청입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
-                            )
-                    )
-            )
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bounce back 등록 성공")
     })
     public ApiResponse<Void> registerBounce(@RequestBody EmailSendRequest req) {
         emailBounceHandler.registerBounce(req.getEmail());
