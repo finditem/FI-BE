@@ -24,7 +24,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/inquiry")
+@RequestMapping("/inquiries")
 @RequiredArgsConstructor
 @Tag(name = "Inquiry", description = "문의 API")
 public class InquiryController {
@@ -33,7 +33,7 @@ public class InquiryController {
     
     /**
      * 공개 문의 작성
-     * POST /api/inquiry/public
+     * POST /api/inquiries
      */
     @PostMapping
     @Operation(summary = "문의 작성", description = "inquiryType=PUBLIC|PRIVATE 로 구분합니다. PUBLIC: 회원만 가능 + email 필수 / PRIVATE: 비회원 가능(필요 시 email 포함)")
@@ -77,11 +77,11 @@ public class InquiryController {
         return ApiResponse.onSuccess(inquiryId);
     }
     
-    // 기존 /inquiry/public, /inquiry/private 엔드포인트는 제거되었습니다. 단일 POST /inquiry 를 사용하세요.
+    // 기존 /inquiries/public, /inquiries/private 엔드포인트는 제거되었습니다. 단일 POST /inquiries 를 사용하세요.
     
     /**
      * 공개 문의 목록 조회
-     * GET /api/inquiry/public?category=GENERAL&status=PENDING&page=0&size=10
+     * GET /api/inquiries/public?category=GENERAL&status=PENDING&page=0&size=10
      */
     @GetMapping("/public")
     @Operation(summary = "공개 문의 목록 조회")
@@ -111,7 +111,7 @@ public class InquiryController {
     
     /**
      * 내 문의 내역 조회
-     * GET /api/inquiry/me?page=0&size=10
+     * GET /api/inquiries/me?page=0&size=10
      */
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -151,7 +151,7 @@ public class InquiryController {
     
     /**
      * 문의 상세 조회
-     * GET /api/inquiry/{inquiryId}
+     * GET /api/inquiries/{inquiryId}
      */
     @GetMapping("/{inquiryId}")
     @Operation(summary = "문의 상세 조회", description = "공개 문의는 누구나, 비공개 문의는 본인만 조회 가능합니다.")
