@@ -13,6 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RequestMapping("comments")
 @RestController
@@ -33,10 +36,11 @@ public class CommentController {
     })
     public ResponseEntity<ApiResponse<CommentResponse>> createComment(
             @RequestBody CreateCommentDto request,
+            @RequestPart(value = "image", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long postId) {
 
-        CommentResponse response = commentService.createComment(request,userDetails,postId);
+        CommentResponse response = commentService.createComment(request,userDetails,postId,images);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }

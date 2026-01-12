@@ -12,7 +12,9 @@ import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.repository.PostRepository;
+import com.fmi.global.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +22,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -37,9 +40,10 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final CommentConverter commentConverter;
     private final NotificationService notificationService;
+    private final S3Service s3Service;
 
     @Transactional
-    public CommentResponse createComment(CreateCommentDto dto, UserDetails userDetails, Long postId) {
+    public CommentResponse createComment(CreateCommentDto dto, UserDetails userDetails, Long postId,List<MultipartFile> images) {
 
 
         Post post = postRepository.findById(postId)
@@ -47,6 +51,11 @@ public class CommentService {
 
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다"));
+
+        List<String> s3Urls = (images == null || images.isEmpty())
+                ? new ArrayList<>()
+                : s3Service.upload(images);
+
 
         Comment parentComment = null;
 
@@ -58,8 +67,14 @@ public class CommentService {
         Comment comment = commentConverter.toCommentEntity(dto, user, post, parentComment);
         Comment savedComment = commentRepository.save(comment);
 
-        post.increaseCommentCount();
+//        List<PostImage> postImages = CommentConverter.toPostImageEntities(post, s3Urls);
+//
+//        if (!postImages.isEmpty()) {
+//            commentImage.saveAll(postImages);
+//            post.setImages(postImages);
+//        }
 
+        post.increaseCommentCount();
         boolean isReply = parentComment != null;
 
         Set<Long> mentionedUserIds = handleMentions(savedComment, dto);

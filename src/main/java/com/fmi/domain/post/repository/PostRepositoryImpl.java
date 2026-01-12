@@ -4,6 +4,7 @@ import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.QPost;
 import com.fmi.domain.post.web.dto.PostFilterDto;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -43,14 +44,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
                         dto.getEndDate() != null ? p.createdAt.loe(dto.getEndDate().atTime(23,59,59)) : null,
                         cursorCondition(cursor, dto.getSortType(), p)
                 )
-                .orderBy(
-                        switch(dto.getSortType()) {
-                            case OLDEST -> p.createdAt.asc();
-                            case LATEST -> p.createdAt.desc();
-                            case MOST_FAVORITED -> p.favoriteCount.desc();
-                            default -> p.viewCnt.desc();
-                        }
-                )
+                .orderBy(getOrderBy(dto.getSortType(), p))
                 .limit(pageable.getPageSize() + 1);
 
 
@@ -59,6 +53,16 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
         if (hasNext) content.remove(pageable.getPageSize());
 
         return new SliceImpl<>(content, pageable, hasNext);
+    }
+
+    private OrderSpecifier<?>[] getOrderBy(SortType sortType, QPost p) {
+        return switch (sortType) {
+            case OLDEST -> new OrderSpecifier[]{p.createdAt.asc(), p.id.asc()};
+            case LATEST -> new OrderSpecifier[]{p.createdAt.desc(), p.id.desc()};
+            case MOST_FAVORITED -> new OrderSpecifier[]{p.favoriteCount.desc(), p.id.desc()};
+            case MOST_VIEWED -> new OrderSpecifier[]{p.viewCnt.desc(), p.id.desc()};
+            default -> new OrderSpecifier[]{p.id.desc()};
+        };
     }
 
     private BooleanExpression cursorCondition(Post cursor, SortType sortType, QPost p) {
