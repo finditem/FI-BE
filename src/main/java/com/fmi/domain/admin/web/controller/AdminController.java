@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/admins")
 @RequiredArgsConstructor
 @Tag(name = "Admin", description = "관리자 전용 API")
 public class AdminController {
@@ -153,7 +153,7 @@ public class AdminController {
         return ApiResponse.onSuccess(response);
     }
 
-    @PostMapping("/notice")
+    @PostMapping("/notices")
     @Operation(summary = "공지 생성(관리자)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "공지 생성 성공")
@@ -163,7 +163,7 @@ public class AdminController {
         return ApiResponse.onSuccess(id);
     }
 
-    @PostMapping("/inquiry/{inquiryId}/reply")
+    @PostMapping("/inquiries/{inquiryId}/reply")
     @Operation(summary = "문의 답변 등록(관리자)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 답변 등록 성공"),
@@ -184,7 +184,7 @@ public class AdminController {
         return ApiResponse.onSuccess(replyId);
     }
 
-    @PutMapping("/report/{reportId}/status")
+    @PutMapping("/reports/{reportId}/status")
     @Operation(summary = "신고 처리 상태 변경(관리자)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 처리 상태 변경 성공"),

@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/auth/reset")
+@RequestMapping("/auths/reset")
 @RequiredArgsConstructor
 @Tag(name = "Auth")
 public class PasswordResetController {

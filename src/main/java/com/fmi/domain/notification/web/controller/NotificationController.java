@@ -22,7 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/notification")
+@RequestMapping("/notifications")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
 @Tag(name = "Notification", description = "알림 API")
@@ -33,7 +33,7 @@ public class NotificationController {
     
     /**
      * 내 알림 목록 조회
-     * GET /api/notification?unreadOnly=false&page=0&size=20
+     * GET /api/notifications?unreadOnly=false&page=0&size=20
      */
     @GetMapping
     @Operation(summary = "내 알림 목록 조회", description = "읽음/읽지 않음 필터링 가능")
@@ -55,7 +55,7 @@ public class NotificationController {
     
     /**
      * 알림 설정 조회
-     * GET /api/notification/settings
+     * GET /api/notifications/settings
      */
     @GetMapping("/settings")
     @Operation(summary = "내 알림 설정 조회")
