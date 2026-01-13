@@ -35,7 +35,7 @@ public class EmailBounceHandler {
         String recipientEmail = extractRecipientEmail(bounceEmailContent);
         
         if (recipientEmail == null) {
-            log.warn("⚠️ [BOUNCE BACK] 원본 수신자 이메일 주소를 추출할 수 없습니다.");
+            log.warn("[BOUNCE BACK] 원본 수신자 이메일 주소를 추출할 수 없습니다.");
             return;
         }
 
@@ -43,7 +43,7 @@ public class EmailBounceHandler {
         String bounceKey = BOUNCE_KEY_PREFIX + recipientEmail;
         redis.opsForValue().set(bounceKey, "true", Duration.ofHours(24));
         
-        log.warn("❌ [BOUNCE BACK] email={} - 이메일 주소가 유효하지 않거나 존재하지 않습니다.", recipientEmail);
+        log.warn("[BOUNCE BACK] email={} - 이메일 주소가 유효하지 않거나 존재하지 않습니다.", recipientEmail);
     }
 
     /**
@@ -100,7 +100,7 @@ public class EmailBounceHandler {
     public void registerBounce(String email) {
         String bounceKey = BOUNCE_KEY_PREFIX + email;
         redis.opsForValue().set(bounceKey, "true", Duration.ofHours(24));
-        log.warn("❌ [BOUNCE BACK REGISTERED] email={} - 수동으로 bounce back 등록됨", email);
+        log.warn("[BOUNCE BACK REGISTERED] email={} - 수동으로 bounce back 등록됨", email);
     }
 
     /**
@@ -111,7 +111,7 @@ public class EmailBounceHandler {
     public void clearBounce(String email) {
         String bounceKey = BOUNCE_KEY_PREFIX + email;
         redis.delete(bounceKey);
-        log.info("✅ [BOUNCE BACK CLEARED] email={}", email);
+        log.info("[BOUNCE BACK CLEARED] email={}", email);
     }
 }
 
