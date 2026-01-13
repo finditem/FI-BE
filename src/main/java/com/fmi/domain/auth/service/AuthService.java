@@ -7,6 +7,7 @@ import com.fmi.domain.admin.web.dto.AdminSignupRequest;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.service.EmailService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +25,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final NicknameValidationService nicknameValidationService;
     private final EmailVerificationService emailVerificationService;
+    private final EmailService emailService;
 
     @Transactional
     public Long signup(SignupRequest request) {
@@ -66,7 +68,31 @@ public class AuthService {
                 passwordEncoder.encode(request.getPassword()),
                 true // 백엔드에서 검증한 인증 여부 사용
         );
-        return userRepository.save(user).getId();
+        User savedUser = userRepository.save(user);
+        
+        // 회원가입 환영 이메일 발송 (비동기로 처리하거나 트랜잭션 외부에서 처리 권장)
+        try {
+            String nickname = savedUser.getNickname() != null ? savedUser.getNickname() : "회원";
+            String email = savedUser.getEmail();
+            String signupDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                    .format(savedUser.getCreatedAt() != null ? savedUser.getCreatedAt() : LocalDateTime.now());
+            
+            emailService.sendHtmlEmail(
+                email,
+                "회원가입을 환영합니다",
+                "welcome-email.html",
+                java.util.Map.of(
+                    "NAME", nickname,
+                    "USER", email,
+                    "DATE", signupDate
+                )
+            );
+        } catch (Exception e) {
+            // 이메일 발송 실패해도 회원가입은 성공 처리
+            // 로그만 남기고 계속 진행
+        }
+        
+        return savedUser.getId();
     }
 
     /**
