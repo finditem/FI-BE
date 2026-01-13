@@ -18,6 +18,7 @@ import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
+import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,6 +41,7 @@ public class UserService {
     private final PostRepository postRepository;
     private final PostConverter postConverter;
     private final CommentRepository commentRepository;
+    private final EmailService emailService;
 
     /**
      * 내 정보 조회
@@ -218,6 +220,28 @@ public class UserService {
         // Soft Delete (deletedAt 설정)
         user.setDeletedAt(LocalDateTime.now());
         userRepository.save(user);
+        
+        // 계정 삭제 이메일 발송
+        try {
+            String nickname = user.getNickname() != null ? user.getNickname() : "회원";
+            String userEmail = user.getEmail();
+            String deletionDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                    .format(LocalDateTime.now());
+            
+            emailService.sendHtmlEmail(
+                userEmail,
+                "계정이 삭제되었습니다",
+                "account-deletion-email.html",
+                java.util.Map.of(
+                    "NAME", nickname,
+                    "USER", userEmail,
+                    "DATE", deletionDate
+                )
+            );
+        } catch (Exception e) {
+            // 이메일 발송 실패해도 계정 삭제는 성공 처리
+            log.warn("계정 삭제 이메일 발송 실패: {}", e.getMessage());
+        }
         
         log.info("사용자 탈퇴 완료: userId={}, email={}, reason={}", user.getId(), email, request.getReason());
     }
