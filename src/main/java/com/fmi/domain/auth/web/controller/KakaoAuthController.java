@@ -27,7 +27,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/auths/kakao")
+@RequestMapping("/auth/kakao")
 @RequiredArgsConstructor
 @Tag(name = "Auth")
 public class KakaoAuthController {

@@ -32,13 +32,13 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/actuator/health", "/actuator/info", "/ws/**", "/error", "/health", "/api/health").permitAll()
-                        .requestMatchers("/auths/**", "/s3/**", "/chat-test.html", "/chat-test2.html", "/posts/filter").permitAll()
+                        .requestMatchers("/auth/**", "/s3/**", "/chat-test.html", "/chat-test2.html", "/posts/filter").permitAll()
                         .requestMatchers(HttpMethod.GET, "/posts/{postId}","/posts").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         // 공지사항, 공개 문의 - 공개 API (경로 개편)
                         .requestMatchers("/notices/**", "/inquiries/public/**").permitAll()
                         // 관리자 전용 API 보호
-                        .requestMatchers("/admins/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(h -> h.disable());
