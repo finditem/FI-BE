@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.service.EmailService;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +37,7 @@ public class ReportService {
     private final ChatMessageRepository chatMessageRepository;
     private final ReportConverter reportConverter;
     private final NotificationService notificationService;
+    private final EmailService emailService;
     
     /**
      * 신고하기 (통합)
@@ -62,6 +64,31 @@ public class ReportService {
                 .build();
         
         Report saved = reportRepository.save(report);
+        
+        // 신고 접수 이메일 발송 (신고자에게)
+        try {
+            String targetTitle = getTargetTitle(saved.getTargetType(), saved.getTargetId());
+            String nickname = user.getNickname() != null ? user.getNickname() : "회원";
+            String reportDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                    .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
+            String reportContent = saved.getReason() != null ? saved.getReason() : "";
+            
+            emailService.sendHtmlEmail(
+                user.getEmail(),
+                "신고가 접수되었습니다",
+                "report-received-email.html",
+                java.util.Map.of(
+                    "NAME", nickname,
+                    "TITLE", targetTitle,
+                    "USER", targetTitle, // 신고 대상 정보
+                    "DATE", reportDate,
+                    "CONTENT", reportContent
+                )
+            );
+        } catch (Exception e) {
+            // 이메일 발송 실패해도 신고는 성공 처리
+        }
+        
         return saved.getReportId();
     }
     
@@ -156,7 +183,7 @@ public class ReportService {
                 throw new GeneralException(ErrorStatus._BAD_REQUEST);
         }
 
-        // 신고자에게 결과 알림
+        // 신고자에게 결과 알림 및 이메일 발송
         User reporter = report.getReporter();
         if (reporter != null) {
             String title = "신고 처리 결과: " + status.name();
@@ -169,6 +196,30 @@ public class ReportService {
                     ReferenceType.REPORT,
                     report.getReportId()
             );
+            
+            // 신고 결과 이메일 발송
+            try {
+                String targetTitle = getTargetTitle(report.getTargetType(), report.getTargetId());
+                String reportDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                        .format(report.getCreatedAt() != null ? report.getCreatedAt() : java.time.LocalDateTime.now());
+                String resultText = status == ReportStatus.RESOLVED ? "처리 완료" : "반려";
+                String content = adminNote != null && !adminNote.isEmpty() ? adminNote : "처리 완료되었습니다.";
+                
+                emailService.sendHtmlEmail(
+                    reporter.getEmail(),
+                    "신고 처리 결과 안내",
+                    "report-result-email.html",
+                    java.util.Map.of(
+                        "TITLE", targetTitle,
+                        "USER", reporter.getEmail(),
+                        "RESULT", resultText,
+                        "DATE", reportDate,
+                        "CONTENT", content
+                    )
+                );
+            } catch (Exception e) {
+                // 이메일 발송 실패해도 알림은 성공 처리
+            }
         }
     }
 }
