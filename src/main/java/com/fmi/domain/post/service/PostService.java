@@ -71,6 +71,7 @@ public class PostService {
         postRepository.save(post);
 
         List<PostImage> postImages = postConverter.toPostImageEntities(post, s3Urls);
+
         if (!postImages.isEmpty()) {
             postImageRepository.saveAll(postImages);
             post.setImages(postImages);
