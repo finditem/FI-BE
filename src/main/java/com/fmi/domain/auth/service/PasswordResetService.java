@@ -55,10 +55,16 @@ public class PasswordResetService {
         user.setUpdatedAt(LocalDateTime.now());
         
         userRepository.save(user);
-        emailService.sendEmail(email, "Temporary password", 
-                "임시 비밀번호: " + tempPassword + "\n" +
-                "유효기한: 1시간\n" +
-                "로그인 후 비밀번호를 반드시 변경하세요.");
+        
+        // HTML 템플릿 사용
+        emailService.sendHtmlEmail(
+            email,
+            "임시 비밀번호 발급",
+            "password-reset-email.html",
+            java.util.Map.of(
+                "PASSWORD", tempPassword
+            )
+        );
     }
 
     private String generateTempPassword() {

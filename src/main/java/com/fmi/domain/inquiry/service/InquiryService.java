@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.service.EmailService;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +35,7 @@ public class InquiryService {
     private final InquiryReplyRepository inquiryReplyRepository;
     private final InquiryConverter inquiryConverter;
     private final NotificationService notificationService;
+    private final EmailService emailService;
     
     /**
      * 공개 문의 작성
@@ -103,6 +105,30 @@ public class InquiryService {
         }
 
         Inquiry saved = inquiryRepository.save(builder.build());
+        
+        // 문의 접수 이메일 발송
+        try {
+            String recipientEmail = saved.getEmail() != null ? saved.getEmail() : 
+                                   (saved.getUser() != null ? saved.getUser().getEmail() : null);
+            if (recipientEmail != null) {
+                String inquiryDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                        .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
+                
+                emailService.sendHtmlEmail(
+                    recipientEmail,
+                    "문의가 접수되었습니다",
+                    "support-request-email.html",
+                    java.util.Map.of(
+                        "TITLE", saved.getTitle(),
+                        "DATE", inquiryDate,
+                        "CONTENT", saved.getContent() != null ? saved.getContent() : ""
+                    )
+                );
+            }
+        } catch (Exception e) {
+            // 이메일 발송 실패해도 문의는 성공 처리
+        }
+        
         return saved.getId();
     }
 
@@ -122,7 +148,7 @@ public class InquiryService {
 
         InquiryReply saved = inquiryReplyRepository.save(reply);
 
-        // 회원 문의인 경우에만 알림
+        // 회원 문의인 경우에만 알림 및 이메일 발송
         if (inquiry.getUser() != null) {
             notificationService.createNotification(
                     inquiry.getUser(),
@@ -132,6 +158,44 @@ public class InquiryService {
                     ReferenceType.INQUIRY,
                     inquiry.getId()
             );
+            
+            // 문의 답변 이메일 발송
+            try {
+                String replyDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                        .format(java.time.LocalDateTime.now());
+                
+                emailService.sendHtmlEmail(
+                    inquiry.getUser().getEmail(),
+                    "문의에 답변이 등록되었습니다",
+                    "support-reply-email.html",
+                    java.util.Map.of(
+                        "TITLE", inquiry.getTitle(),
+                        "DATE", replyDate,
+                        "CONTENT", content
+                    )
+                );
+            } catch (Exception e) {
+                // 이메일 발송 실패해도 알림은 성공 처리
+            }
+        } else if (inquiry.getEmail() != null) {
+            // 비회원 문의인 경우 이메일로만 발송
+            try {
+                String replyDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                        .format(java.time.LocalDateTime.now());
+                
+                emailService.sendHtmlEmail(
+                    inquiry.getEmail(),
+                    "문의에 답변이 등록되었습니다",
+                    "support-reply-email.html",
+                    java.util.Map.of(
+                        "TITLE", inquiry.getTitle(),
+                        "DATE", replyDate,
+                        "CONTENT", content
+                    )
+                );
+            } catch (Exception e) {
+                // 이메일 발송 실패는 무시
+            }
         }
 
         return saved.getReplyId();

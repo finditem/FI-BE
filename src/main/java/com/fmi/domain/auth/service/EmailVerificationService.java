@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -41,7 +42,7 @@ public class EmailVerificationService {
         
         // Bounce back을 받은 이메일 주소인지 확인
         if (emailBounceHandler.hasBounced(email)) {
-            log.warn("❌ [EMAIL SEND BLOCKED] email={}, reason=이전에 bounce back을 받은 이메일 주소", email);
+            log.warn("[EMAIL SEND BLOCKED] email={}, reason=이전에 bounce back을 받은 이메일 주소", email);
             throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
         }
         
@@ -56,7 +57,15 @@ public class EmailVerificationService {
         
         // 이메일 발송을 먼저 시도 (실패 시 예외 발생)
         try {
-            emailService.sendEmail(email, "Your verification code", "인증번호: " + code + " (5분 유효)");
+            // HTML 템플릿 사용
+            emailService.sendHtmlEmail(
+                email,
+                "이메일 인증 코드",
+                "verify-code.html",
+                java.util.Map.of(
+                    "CODE", code
+                )
+            );
             // 이메일 발송 성공 시에만 Redis에 코드 저장
             redis.opsForValue().set(key(email), value, Duration.ofMinutes(5));
         } catch (Exception e) {
