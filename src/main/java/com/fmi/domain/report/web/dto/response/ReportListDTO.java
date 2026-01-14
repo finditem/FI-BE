@@ -20,6 +20,7 @@ public class ReportListDTO {
     private Long targetId;
     private String targetTitle;        // 신고 대상의 제목/내용 일부
     private ReportType reportType;
+    private String reason;             // 신고 사유 내용
     private ReportStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime resolvedAt;

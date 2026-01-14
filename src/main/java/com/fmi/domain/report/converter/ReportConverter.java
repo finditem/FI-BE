@@ -15,6 +15,7 @@ public class ReportConverter {
                 .targetId(report.getTargetId())
                 .targetTitle(targetTitle)
                 .reportType(report.getReportType())
+                .reason(report.getReason())
                 .status(report.getStatus())
                 .createdAt(report.getCreatedAt())
                 .resolvedAt(report.getResolvedAt())
