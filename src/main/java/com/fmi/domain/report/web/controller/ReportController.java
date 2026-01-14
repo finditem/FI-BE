@@ -7,6 +7,7 @@ import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -72,6 +73,7 @@ public class ReportController {
     })
     public ApiResponse<Page<ReportListDTO>> getMyReports(
             @AuthenticationPrincipal User user,
+            @Parameter(description = "신고 상태 필터 (PENDING=접수, REVIEWED=검토중, RESOLVED=처리완료)", required = false)
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
