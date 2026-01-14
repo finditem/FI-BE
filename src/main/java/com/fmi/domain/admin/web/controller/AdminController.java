@@ -184,6 +184,27 @@ public class AdminController {
         return ApiResponse.onSuccess(replyId);
     }
 
+    @PutMapping("/inquiries/{inquiryId}/status")
+    @Operation(summary = "문의 처리 상태 변경(관리자)")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 처리 상태 변경 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<String> updateInquiryStatus(@PathVariable Long inquiryId,
+                                                   @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryStatusUpdateRequestDTO request) {
+        inquiryService.updateStatus(inquiryId, request.getStatus());
+        return ApiResponse.onSuccess("OK");
+    }
+
     @PutMapping("/reports/{reportId}/status")
     @Operation(summary = "신고 처리 상태 변경(관리자)")
     @ApiResponses({
