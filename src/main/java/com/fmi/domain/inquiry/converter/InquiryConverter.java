@@ -10,40 +10,26 @@ import org.springframework.stereotype.Component;
 @Component
 public class InquiryConverter {
     
-    public InquiryListDTO toListDTO(Inquiry inquiry, boolean hasReply) {
-        String authorNickname = inquiry.getUser() != null 
-                ? inquiry.getUser().getNickname() 
-                : "익명";
-        
+    public InquiryListDTO toListDTO(Inquiry inquiry) {
         return InquiryListDTO.builder()
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
-                .inquiryType(inquiry.getInquiryType())
                 .category(inquiry.getCategory())
                 .status(inquiry.getAnswerStatus())
-                .authorNickname(authorNickname)
-                .hasReply(hasReply)
                 .createdAt(inquiry.getCreatedAt())
                 .build();
     }
     
     public InquiryDetailDTO toDetailDTO(Inquiry inquiry, InquiryReply reply) {
-        String authorNickname = inquiry.getUser() != null 
-                ? inquiry.getUser().getNickname() 
-                : "익명";
-        
         InquiryReplyDTO replyDTO = reply != null ? toReplyDTO(reply) : null;
         
         return InquiryDetailDTO.builder()
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
                 .content(inquiry.getContent())
-                .inquiryType(inquiry.getInquiryType())
                 .category(inquiry.getCategory())
                 .status(inquiry.getAnswerStatus())
-                .authorNickname(authorNickname)
                 .createdAt(inquiry.getCreatedAt())
-                .updatedAt(inquiry.getUpdatedAt())
                 .reply(replyDTO)
                 .build();
     }
