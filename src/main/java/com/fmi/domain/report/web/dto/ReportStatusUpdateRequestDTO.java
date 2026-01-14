@@ -9,7 +9,7 @@ import lombok.Data;
 public class ReportStatusUpdateRequestDTO {
     @NotNull
     @Schema(
-            description = "신고 상태 (REVIEWED=처리중, RESOLVED=처리완료만 가능. 관리자가 신고를 검토 중 또는 처리 완료로 변경할 때 사용)",
+            description = "신고 상태 (REVIEWED=처리중, RESOLVED=처리완료만 가능. 관리자가 신고를 처리 중 또는 처리 완료로 변경할 때 사용)",
             example = "RESOLVED"
     )
     private ReportStatus status;
