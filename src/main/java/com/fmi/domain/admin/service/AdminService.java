@@ -66,7 +66,6 @@ public class AdminService {
                 .inquiryType(inquiry.getInquiryType())
                 .category(inquiry.getCategory())
                 .status(inquiry.getAnswerStatus())
-                .hasReply(inquiryReplyRepository.existsByInquiry(inquiry))
                 .createdAt(inquiry.getCreatedAt())
                 .userId(inquiry.getUser() != null ? inquiry.getUser().getId() : null)
                 .userNickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)

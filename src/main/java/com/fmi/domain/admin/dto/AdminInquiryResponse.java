@@ -21,7 +21,6 @@ public class AdminInquiryResponse {
     private InquiryType inquiryType;
     private InquiryCategory category;
     private InquiryStatus status;
-    private Boolean hasReply;
     private LocalDateTime createdAt;
 
     private Long userId;
