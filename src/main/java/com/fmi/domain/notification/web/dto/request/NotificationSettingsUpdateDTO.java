@@ -15,5 +15,6 @@ public class NotificationSettingsUpdateDTO {
     private Boolean favoriteEnabled;         // 좋아요 알림
     private Boolean noticeEnabled;           // 공지사항 알림
     private Boolean categoryEnabled;         // 카테고리 알림
+    private Boolean marketingConsent;        // 마케팅 이메일 수신 동의
 }
 
