@@ -73,7 +73,7 @@ public class ReportController {
     })
     public ApiResponse<Page<ReportListDTO>> getMyReports(
             @AuthenticationPrincipal User user,
-            @Parameter(description = "신고 상태 필터 (PENDING=접수, REVIEWED=검토중, RESOLVED=처리완료)", required = false)
+            @Parameter(description = "신고 상태 필터 (PENDING=접수, REVIEWED=처리중, RESOLVED=처리완료)", required = false)
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
