@@ -1,4 +1,4 @@
-package com.fmi.domain.chatmessage;
+package com.fmi.global.handler;
 
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
