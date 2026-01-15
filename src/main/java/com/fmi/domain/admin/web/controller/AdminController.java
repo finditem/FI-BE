@@ -200,7 +200,7 @@ public class AdminController {
             )
     })
     public ApiResponse<String> updateInquiryStatus(@PathVariable Long inquiryId,
-                                                   @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryStatusUpdateRequestDTO request) {
+                                                   @Valid @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryStatusUpdateRequestDTO request) {
         inquiryService.updateStatus(inquiryId, request.getStatus());
         return ApiResponse.onSuccess("OK");
     }
@@ -221,7 +221,7 @@ public class AdminController {
             )
     })
     public ApiResponse<String> updateReportStatus(@PathVariable Long reportId,
-                                                  @RequestBody ReportStatusUpdateRequestDTO request) {
+                                                  @Valid @RequestBody ReportStatusUpdateRequestDTO request) {
         reportService.updateStatus(reportId, request.getStatus(), request.getAdminNote());
         return ApiResponse.onSuccess("OK");
     }
