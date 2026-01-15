@@ -1,6 +1,7 @@
 package com.fmi.config;
 
-import com.fmi.domain.chatmessage.StompHandler;
+import com.fmi.global.interceptor.CustomHandshakeInterceptor;
+import com.fmi.global.handler.StompHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -14,6 +15,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final StompHandler stompHandler;
+    private final CustomHandshakeInterceptor customHandshakeInterceptor;
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
@@ -22,8 +24,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
+                .addInterceptors(customHandshakeInterceptor)
                 .setAllowedOriginPatterns("*");
-                //.withSockJS();
+        //.withSockJS();
     }
 
     @Override
@@ -33,6 +36,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.setUserDestinationPrefix("/user");
     }
 }
+
+
 
 
 
