@@ -172,12 +172,13 @@ public class ReportService {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
 
+        // 관리자는 REVIEWED(처리중) 또는 RESOLVED(처리완료) 상태로 변경 가능
         switch (status) {
+            case REVIEWED:
+                report.review(adminNote);
+                break;
             case RESOLVED:
                 report.resolve(adminNote);
-                break;
-            case REJECTED:
-                report.reject(adminNote);
                 break;
             default:
                 throw new GeneralException(ErrorStatus._BAD_REQUEST);
@@ -186,7 +187,8 @@ public class ReportService {
         // 신고자에게 결과 알림 및 이메일 발송
         User reporter = report.getReporter();
         if (reporter != null) {
-            String title = "신고 처리 결과: " + status.name();
+            String statusText = status == ReportStatus.RESOLVED ? "처리 완료" : "처리 중";
+            String title = "신고 처리 결과: " + statusText;
             String message = adminNote == null ? "" : adminNote;
             notificationService.createNotification(
                     reporter,
@@ -202,12 +204,17 @@ public class ReportService {
                 String targetTitle = getTargetTitle(report.getTargetType(), report.getTargetId());
                 String reportDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                         .format(report.getCreatedAt() != null ? report.getCreatedAt() : java.time.LocalDateTime.now());
-                String resultText = status == ReportStatus.RESOLVED ? "처리 완료" : "반려";
-                String content = adminNote != null && !adminNote.isEmpty() ? adminNote : "처리 완료되었습니다.";
+                String resultText = status == ReportStatus.RESOLVED ? "처리 완료" : "처리 중";
+                String content = adminNote != null && !adminNote.isEmpty() 
+                        ? adminNote 
+                        : (status == ReportStatus.RESOLVED ? "처리 완료되었습니다." : "처리 중입니다.");
                 
+                String emailSubject = status == ReportStatus.RESOLVED 
+                        ? "신고 처리 결과 안내" 
+                        : "신고 처리 중 안내";
                 emailService.sendHtmlEmail(
                     reporter.getEmail(),
-                    "신고 처리 결과 안내",
+                    emailSubject,
                     "report-result-email.html",
                     java.util.Map.of(
                         "TITLE", targetTitle,

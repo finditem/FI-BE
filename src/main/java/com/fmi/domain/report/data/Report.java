@@ -68,14 +68,13 @@ public class Report {
         updatedAt = LocalDateTime.now();
     }
 
-    public void resolve(String adminNote) {
-        this.status = ReportStatus.RESOLVED;
+    public void review(String adminNote) {
+        this.status = ReportStatus.REVIEWED;
         this.adminNote = adminNote;
-        this.resolvedAt = LocalDateTime.now();
     }
 
-    public void reject(String adminNote) {
-        this.status = ReportStatus.REJECTED;
+    public void resolve(String adminNote) {
+        this.status = ReportStatus.RESOLVED;
         this.adminNote = adminNote;
         this.resolvedAt = LocalDateTime.now();
     }
