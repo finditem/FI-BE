@@ -8,8 +8,6 @@ import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.repository.InquiryReplyRepository;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
-import com.fmi.domain.inquiry.web.dto.request.InquiryPrivateRequestDTO;
-import com.fmi.domain.inquiry.web.dto.request.InquiryPublicRequestDTO;
 import com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
@@ -38,70 +36,20 @@ public class InquiryService {
     private final EmailService emailService;
     
     /**
-     * 공개 문의 작성
-     */
-    @Transactional
-    public Long createPublicInquiry(InquiryPublicRequestDTO request, User user) {
-        Inquiry inquiry = Inquiry.builder()
-                .user(user)  // 비회원인 경우 null
-                .title(request.getTitle())
-                .content(request.getContent())
-                .category(request.getCategory())
-                .inquiryType(InquiryType.PUBLIC)
-                .email(request.getEmail())  // 비회원용 이메일
-                .build();
-        
-        Inquiry saved = inquiryRepository.save(inquiry);
-        return saved.getId();
-    }
-    
-    /**
-     * 1:1 개인 문의 작성
-     */
-    @Transactional
-    public Long createPrivateInquiry(InquiryPrivateRequestDTO request, User user) {
-        Inquiry inquiry = Inquiry.builder()
-                .user(user)
-                .title(request.getTitle())
-                .content(request.getContent())
-                .category(request.getCategory())
-                .inquiryType(InquiryType.PRIVATE)
-                .build();
-        
-        Inquiry saved = inquiryRepository.save(inquiry);
-        return saved.getId();
-    }
-
-    /**
-     * 단일 엔드포인트: 문의 생성 (PUBLIC/PRIVATE)
+     * 1:1 개인 문의 생성
      */
     @Transactional
     public Long createInquiry(InquiryCreateRequestDTO request, User user) {
-        InquiryType type = request.getInquiryType();
-        if (type == null) {
-            throw new GeneralException(ErrorStatus._BAD_REQUEST);
-        }
         Inquiry.InquiryBuilder builder = Inquiry.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
                 .category(request.getCategory())
-                .inquiryType(type);
+                .inquiryType(InquiryType.PRIVATE)  // 항상 1:1 개인 문의로 설정
+                .user(user);
 
-        if (type == InquiryType.PUBLIC) {
-            // 공개 문의: 회원만 가능 + email 필수
-            if (user == null) {
-                throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
-            }
-            if (request.getEmail() == null || request.getEmail().isBlank()) {
-                throw new GeneralException(ErrorStatus._BAD_REQUEST);
-            }
-            builder.user(user).email(request.getEmail());
-        } else {
-            // 1:1 문의: 비회원도 가능 (email은 정책에 따라 선택)
-            builder.user(user);
-            if (user == null && request.getEmail() != null && !request.getEmail().isBlank()) {
-                builder.email(request.getEmail());
-            }
+        // 비회원 문의인 경우 이메일 설정
+        if (user == null && request.getEmail() != null && !request.getEmail().isBlank()) {
+            builder.email(request.getEmail());
         }
 
         Inquiry saved = inquiryRepository.save(builder.build());
@@ -147,6 +95,9 @@ public class InquiryService {
                 .build();
 
         InquiryReply saved = inquiryReplyRepository.save(reply);
+        
+        // 답변 추가 시 문의 상태를 ANSWERED로 변경
+        inquiry.markAsAnswered();
 
         // 회원 문의인 경우에만 알림 및 이메일 발송
         if (inquiry.getUser() != null) {
@@ -202,33 +153,12 @@ public class InquiryService {
     }
     
     /**
-     * 공개 문의 목록 조회
-     */
-    public Page<InquiryListDTO> getPublicInquiryList(InquiryCategory category, InquiryStatus status, Pageable pageable) {
-        Page<Inquiry> inquiries;
-        
-        if (status != null) {
-            inquiries = inquiryRepository.findByInquiryTypeAndAnswerStatus(InquiryType.PUBLIC, status, pageable);
-        } else {
-            inquiries = inquiryRepository.findByInquiryType(InquiryType.PUBLIC, pageable);
-        }
-        
-        return inquiries.map(inquiry -> {
-            boolean hasReply = inquiryReplyRepository.existsByInquiry(inquiry);
-            return inquiryConverter.toListDTO(inquiry, hasReply);
-        });
-    }
-    
-    /**
      * 내 문의 내역 조회
      */
     public Page<InquiryListDTO> getMyInquiries(User user, Pageable pageable) {
         Page<Inquiry> inquiries = inquiryRepository.findByUser(user, pageable);
         
-        return inquiries.map(inquiry -> {
-            boolean hasReply = inquiryReplyRepository.existsByInquiry(inquiry);
-            return inquiryConverter.toListDTO(inquiry, hasReply);
-        });
+        return inquiries.map(inquiry -> inquiryConverter.toListDTO(inquiry));
     }
     
     /**
@@ -238,17 +168,102 @@ public class InquiryService {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
         
-        // 권한 확인: 공개 문의는 누구나, 비공개 문의는 본인만
-        if (inquiry.getInquiryType() == InquiryType.PRIVATE) {
-            if (user == null || !inquiry.getUser().getId().equals(user.getId())) {
-                throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
-            }
+        // 권한 확인: 1:1 개인 문의는 본인만 조회 가능
+        if (user == null || inquiry.getUser() == null || !inquiry.getUser().getId().equals(user.getId())) {
+            throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
         }
         
         // 답변 조회
         InquiryReply reply = inquiryReplyRepository.findByInquiry(inquiry).orElse(null);
         
         return inquiryConverter.toDetailDTO(inquiry, reply);
+    }
+    
+    /**
+     * 문의 상태 변경(관리자)
+     */
+    @Transactional
+    public void updateStatus(Long inquiryId, InquiryStatus status) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
+
+        switch (status) {
+            case RECEIVED:
+                inquiry.markAsReceived();
+                break;
+            case PENDING:
+                inquiry.markAsPending();
+                break;
+            case ANSWERED:
+                inquiry.markAsAnswered();
+                break;
+            default:
+                throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
+
+        // 문의자에게 상태 변경 알림 및 이메일 발송
+        String statusMessage = getStatusMessage(status);
+        
+        // 회원 문의인 경우 알림 및 이메일 발송
+        if (inquiry.getUser() != null) {
+            notificationService.createNotification(
+                    inquiry.getUser(),
+                    NotificationType.INQUIRY_REPLY,
+                    "문의 상태가 변경되었습니다",
+                    statusMessage,
+                    ReferenceType.INQUIRY,
+                    inquiry.getId()
+            );
+            
+            // 문의 상태 변경 이메일 발송
+            try {
+                String statusDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                        .format(java.time.LocalDateTime.now());
+                
+                emailService.sendHtmlEmail(
+                    inquiry.getUser().getEmail(),
+                    "문의 상태가 변경되었습니다",
+                    "inquiry-status-change-email.html",
+                    java.util.Map.of(
+                        "TITLE", inquiry.getTitle(),
+                        "STATUS", statusMessage,
+                        "DATE", statusDate
+                    )
+                );
+            } catch (Exception e) {
+                // 이메일 발송 실패해도 알림은 성공 처리
+            }
+        } else if (inquiry.getEmail() != null) {
+            // 비회원 문의인 경우 이메일로만 발송
+            try {
+                String statusDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                        .format(java.time.LocalDateTime.now());
+                
+                emailService.sendHtmlEmail(
+                    inquiry.getEmail(),
+                    "문의 상태가 변경되었습니다",
+                    "inquiry-status-change-email.html",
+                    java.util.Map.of(
+                        "TITLE", inquiry.getTitle(),
+                        "STATUS", statusMessage,
+                        "DATE", statusDate
+                    )
+                );
+            } catch (Exception e) {
+                // 이메일 발송 실패는 무시
+            }
+        }
+    }
+    
+    /**
+     * 상태에 따른 메시지 반환
+     */
+    private String getStatusMessage(InquiryStatus status) {
+        return switch (status) {
+            case RECEIVED -> "접수";
+            case PENDING -> "보류";
+            case ANSWERED -> "답변완료";
+        };
     }
 }
 

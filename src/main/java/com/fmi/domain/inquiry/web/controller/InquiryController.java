@@ -32,11 +32,11 @@ public class InquiryController {
     private final InquiryService inquiryService;
     
     /**
-     * 공개 문의 작성
+     * 1:1 개인 문의 작성
      * POST /api/inquiries
      */
     @PostMapping
-    @Operation(summary = "문의 작성", description = "inquiryType=PUBLIC|PRIVATE 로 구분합니다. PUBLIC: 회원만 가능 + email 필수 / PRIVATE: 비회원 가능(필요 시 email 포함)")
+    @Operation(summary = "1:1 개인 문의 작성", description = "비회원도 가능하며, 비회원인 경우 email을 포함할 수 있습니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 작성 성공")
     })
@@ -47,35 +47,13 @@ public class InquiryController {
         return ApiResponse.onSuccess(inquiryId);
     }
     
-    // 기존 /inquiries/public, /inquiries/private 엔드포인트는 제거되었습니다. 단일 POST /inquiries 를 사용하세요.
-    
-    /**
-     * 공개 문의 목록 조회
-     * GET /api/inquiries/public?category=GENERAL&status=PENDING&page=0&size=10
-     */
-    @GetMapping("/public")
-    @Operation(summary = "공개 문의 목록 조회")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "공개 문의 목록 조회 성공")
-    })
-    public ApiResponse<Page<InquiryListDTO>> getPublicInquiryList(
-            @RequestParam(required = false) InquiryCategory category,
-            @RequestParam(required = false) InquiryStatus status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<InquiryListDTO> inquiries = inquiryService.getPublicInquiryList(category, status, pageable);
-        return ApiResponse.onSuccess(inquiries);
-    }
-    
     /**
      * 내 문의 내역 조회
      * GET /api/inquiries/me?page=0&size=10
      */
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "내 문의 내역 조회", description = "공개/비공개 문의를 모두 조회합니다.")
+    @Operation(summary = "내 문의 내역 조회", description = "본인의 1:1 개인 문의를 조회합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 문의 내역 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -114,7 +92,7 @@ public class InquiryController {
      * GET /api/inquiries/{inquiryId}
      */
     @GetMapping("/{inquiryId}")
-    @Operation(summary = "문의 상세 조회", description = "공개 문의는 누구나, 비공개 문의는 본인만 조회 가능합니다.")
+    @Operation(summary = "문의 상세 조회", description = "본인의 1:1 개인 문의만 조회 가능합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 상세 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(

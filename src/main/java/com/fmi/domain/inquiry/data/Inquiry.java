@@ -71,5 +71,9 @@ public class Inquiry {
     public void markAsPending() {
         this.answerStatus = InquiryStatus.PENDING;
     }
+    
+    public void markAsReceived() {
+        this.answerStatus = InquiryStatus.RECEIVED;
+    }
 }
 
