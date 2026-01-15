@@ -153,7 +153,11 @@ public class NotificationService {
         NotificationSettings settings = notificationSettingsRepository.findByUser(user)
                 .orElseGet(() -> createDefaultSettings(user));
         
-        return notificationConverter.toSettingsDTO(settings);
+        // User 엔티티를 최신 상태로 조회 (marketingConsent 포함)
+        User freshUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        
+        return notificationConverter.toSettingsDTO(settings, freshUser);
     }
     
     /**
@@ -161,9 +165,14 @@ public class NotificationService {
      */
     @Transactional
     public NotificationSettingsDTO updateSettings(User user, NotificationSettingsUpdateDTO request) {
-        NotificationSettings settings = notificationSettingsRepository.findByUser(user)
-                .orElseGet(() -> createDefaultSettings(user));
+        // User 엔티티를 최신 상태로 조회
+        User freshUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         
+        NotificationSettings settings = notificationSettingsRepository.findByUser(freshUser)
+                .orElseGet(() -> createDefaultSettings(freshUser));
+        
+        // NotificationSettings 업데이트
         settings.updateSettings(
                 request.getCommentEnabled(),
                 request.getChatEnabled(),
@@ -175,19 +184,32 @@ public class NotificationService {
         );
         
         NotificationSettings saved = notificationSettingsRepository.save(settings);
-        return notificationConverter.toSettingsDTO(saved);
+        
+        // User.marketingConsent 업데이트 (요청에 값이 있는 경우에만)
+        if (request.getMarketingConsent() != null) {
+            freshUser.setMarketingConsent(request.getMarketingConsent());
+            userRepository.save(freshUser);
+        }
+        
+        return notificationConverter.toSettingsDTO(saved, freshUser);
     }
 
     /**
      * 댓글/채팅/카테고리 설정만 부분 업데이트
+     * @deprecated 모든 알림 타입을 변경할 수 있는 updateSettings() 사용 권장
      */
+    @Deprecated
     @Transactional
     public NotificationSettingsDTO updateBasicSettings(User user, Boolean commentEnabled, Boolean chatEnabled, Boolean categoryEnabled) {
-        NotificationSettings settings = notificationSettingsRepository.findByUser(user)
-                .orElseGet(() -> createDefaultSettings(user));
+        // User 엔티티를 최신 상태로 조회
+        User freshUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        
+        NotificationSettings settings = notificationSettingsRepository.findByUser(freshUser)
+                .orElseGet(() -> createDefaultSettings(freshUser));
         settings.updateSettings(commentEnabled, chatEnabled, null, null, null, null, categoryEnabled);
         NotificationSettings saved = notificationSettingsRepository.save(settings);
-        return notificationConverter.toSettingsDTO(saved);
+        return notificationConverter.toSettingsDTO(saved, freshUser);
     }
     
     /**

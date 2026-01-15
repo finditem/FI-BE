@@ -22,7 +22,7 @@ public class NotificationConverter {
                 .build();
     }
     
-    public NotificationSettingsDTO toSettingsDTO(NotificationSettings settings) {
+    public NotificationSettingsDTO toSettingsDTO(NotificationSettings settings, com.fmi.domain.auth.data.User user) {
         return NotificationSettingsDTO.builder()
                 .commentEnabled(settings.getCommentEnabled())
                 .chatEnabled(settings.getChatEnabled())
@@ -31,6 +31,7 @@ public class NotificationConverter {
                 .favoriteEnabled(settings.getFavoriteEnabled())
                 .noticeEnabled(settings.getNoticeEnabled())
                 .categoryEnabled(settings.getCategoryEnabled())
+                .marketingConsent(user.isMarketingConsent())
                 .build();
     }
 }

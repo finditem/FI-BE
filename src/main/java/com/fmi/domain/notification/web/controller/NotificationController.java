@@ -68,11 +68,13 @@ public class NotificationController {
     }
     
     /**
-     * 알림 설정 변경(댓글/채팅/카테고리만 변경 가능)
-     * PUT /notification/settings
+     * 알림 설정 변경 (모든 알림 타입 변경 가능)
+     * PUT /notifications/settings
      */
     @PutMapping("/settings")
-    @Operation(summary = "알림 설정 변경", description = "댓글, 채팅, 카테고리 설정만 변경 가능합니다.")
+    @Operation(summary = "알림 설정 변경", 
+               description = "모든 알림 타입을 개별적으로 설정/해제할 수 있습니다. " +
+                           "지원 필드: 댓글, 채팅, 즐겨찾기, 1:1문의 답변, 신고 처리 결과, 공지사항, 카테고리, 마케팅 이메일 수신 동의")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 설정 변경 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -108,25 +110,9 @@ public class NotificationController {
     })
     public ApiResponse<NotificationSettingsDTO> updateSettings(
             @AuthenticationPrincipal User user,
-            @RequestBody BasicSettingsRequest request) {
-        NotificationSettingsDTO settings = notificationService.updateBasicSettings(user,
-                request.getCommentEnabled(), request.getChatEnabled(), request.getCategoryEnabled());
+            @RequestBody com.fmi.domain.notification.web.dto.request.NotificationSettingsUpdateDTO request) {
+        NotificationSettingsDTO settings = notificationService.updateSettings(user, request);
         return ApiResponse.onSuccess(settings);
-    }
-
-    // 통합으로 대체: PATCH /notification/settings/basic 제거
-
-    public static class BasicSettingsRequest {
-        private Boolean commentEnabled;
-        private Boolean chatEnabled;
-        private Boolean categoryEnabled;
-
-        public Boolean getCommentEnabled() { return commentEnabled; }
-        public void setCommentEnabled(Boolean commentEnabled) { this.commentEnabled = commentEnabled; }
-        public Boolean getChatEnabled() { return chatEnabled; }
-        public void setChatEnabled(Boolean chatEnabled) { this.chatEnabled = chatEnabled; }
-        public Boolean getCategoryEnabled() { return categoryEnabled; }
-        public void setCategoryEnabled(Boolean categoryEnabled) { this.categoryEnabled = categoryEnabled; }
     }
 
     /**
