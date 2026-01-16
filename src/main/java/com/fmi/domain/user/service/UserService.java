@@ -13,6 +13,7 @@ import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.web.dto.AccountDeleteRequest;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
+import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.web.dto.ProfileImageUpdateRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -161,16 +162,19 @@ public class UserService {
     }
 
     /**
-     * 비밀번호 변경
-     * 임시 비밀번호로 로그인한 경우에도 사용 가능 (임시 비밀번호를 현재 비밀번호로 확인)
-     * 원래 비밀번호로도 변경 가능
+     * 현재 비밀번호 검증 (프론트엔드에서 별도로 검증할 때 사용)
      */
-    public void changePassword(String email, PasswordChangeRequest request) {
-        // 현재 비밀번호 검증
+    public void verifyPasswordWithException(String email, PasswordVerifyRequest request) {
         if (!verifyPassword(email, request.getCurrentPassword())) {
             throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
         }
+    }
 
+    /**
+     * 비밀번호 변경
+     * 현재 비밀번호는 별도 엔드포인트에서 검증해야 하며, 이 메서드는 새 비밀번호만 받아서 변경합니다.
+     */
+    public void changePassword(String email, PasswordChangeRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
