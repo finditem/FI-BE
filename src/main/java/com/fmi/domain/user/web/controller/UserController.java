@@ -6,6 +6,7 @@ import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.service.UserService;
 import com.fmi.domain.user.web.dto.AccountDeleteRequest;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
+import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.web.dto.ProfileImageUpdateRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -197,11 +198,11 @@ public class UserController {
         return ApiResponse.onSuccess(response);
     }
 
-    @PatchMapping("/me/password")
-    @Operation(summary = "비밀번호 변경", 
-               description = "현재 비밀번호를 확인하고 새 비밀번호로 변경합니다. 새 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.")
+    @PostMapping("/me/password/verify")
+    @Operation(summary = "현재 비밀번호 검증", 
+               description = "현재 비밀번호가 올바른지 검증합니다. 비밀번호 변경 전에 먼저 호출하여 비밀번호를 확인해야 합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비밀번호 검증 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
                     description = "USER400-PASSWORD_INCORRECT: 현재 비밀번호가 일치하지 않습니다",
@@ -212,6 +213,31 @@ public class UserController {
                             )
                     )
             ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"USER404-NOT_FOUND\", \"message\": \"존재하지 않는 회원입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<Void> verifyPassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody PasswordVerifyRequest request
+    ) {
+        String email = userDetails.getUsername();
+        userService.verifyPasswordWithException(email, request);
+        return ApiResponse.onSuccess(null);
+    }
+
+    @PatchMapping("/me/password")
+    @Operation(summary = "비밀번호 변경", 
+               description = "새 비밀번호로 변경합니다. 비밀번호 검증은 별도 엔드포인트(/users/me/password/verify)에서 먼저 완료해야 합니다. 새 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
                     description = "USER400-PASSWORD_MISMATCH: 새 비밀번호와 확인이 일치하지 않습니다",
