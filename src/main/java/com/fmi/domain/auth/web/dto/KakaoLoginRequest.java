@@ -17,5 +17,12 @@ public class KakaoLoginRequest {
     )
     @NotBlank(message = "code 필수")
     private String code;
+    
+    @Schema(
+        description = "환경 타입 (선택사항: 'dev' 또는 'prod', 없으면 기본값 'prod' 사용)",
+        example = "dev",
+        allowableValues = {"dev", "prod"}
+    )
+    private String environment;
 }
 
