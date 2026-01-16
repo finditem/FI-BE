@@ -31,19 +31,35 @@ public class KakaoOAuthService {
     private String clientSecret; // 선택 항목
     @Value("${KAKAO_REDIRECT_URI:}")
     private String redirectUri;
+    @Value("${KAKAO_REDIRECT_URI_DEV:}")
+    private String redirectUriDev;
 
     private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String USERINFO_URL = "https://kapi.kakao.com/v2/user/me";
 
     public KakaoToken exchangeCodeForToken(String code) {
+        return exchangeCodeForToken(code, null);
+    }
+
+    public KakaoToken exchangeCodeForToken(String code, String environment) {
         RestTemplate rt = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
+        // environment에 따라 환경 변수에서 redirectUri 선택
+        String finalRedirectUri;
+        if (environment != null && environment.equalsIgnoreCase("dev") && redirectUriDev != null && !redirectUriDev.isBlank()) {
+            // environment가 "dev"이면 개발용 사용
+            finalRedirectUri = redirectUriDev;
+        } else {
+            // 기본값(프로덕션) 사용
+            finalRedirectUri = this.redirectUri;
+        }
+
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", restApiKey);
-        params.add("redirect_uri", redirectUri);
+        params.add("redirect_uri", finalRedirectUri);
         params.add("code", code);
         if (clientSecret != null && !clientSecret.isBlank()) {
             params.add("client_secret", clientSecret);

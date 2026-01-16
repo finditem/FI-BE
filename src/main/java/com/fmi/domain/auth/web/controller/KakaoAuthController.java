@@ -116,7 +116,8 @@ public class KakaoAuthController {
             )
     })
     public ResponseEntity<ApiResponse<LoginResponse>> loginWithKakao(@Valid @RequestBody KakaoLoginRequest req) {
-        KakaoToken token = kakaoOAuthService.exchangeCodeForToken(req.getCode());
+        // environment에 따라 환경 변수에서 자동 선택
+        KakaoToken token = kakaoOAuthService.exchangeCodeForToken(req.getCode(), req.getEnvironment());
         String kakaoAccessToken = token.getAccess_token();
 
         KakaoUser user = kakaoOAuthService.getUserInfo(kakaoAccessToken);
