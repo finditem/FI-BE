@@ -27,8 +27,6 @@ import com.fmi.domain.report.converter.ReportConverter;
 import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
 import com.fmi.domain.user.data.UserCategory;
 import com.fmi.domain.user.repository.UserCategoryRepository;
-import com.fmi.domain.user.service.UserService;
-import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +51,6 @@ public class AdminService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserCategoryRepository userCategoryRepository;
-    private final UserService userService;
 
     public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
                                                      InquiryStatus status,
@@ -147,21 +144,6 @@ public class AdminService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
         
         return reportConverter.toResponseDTO(report);
-    }
-
-    /**
-     * 현재 비밀번호 검증 (기존 UserService 사용)
-     */
-    public boolean verifyPassword(User admin, String currentPassword) {
-        return userService.verifyPassword(admin.getEmail(), currentPassword);
-    }
-
-    /**
-     * 관리자 비밀번호 변경 (기존 UserService 사용)
-     */
-    @Transactional
-    public void changePassword(User admin, PasswordChangeRequest request) {
-        userService.changePassword(admin.getEmail(), request);
     }
 
     /**
