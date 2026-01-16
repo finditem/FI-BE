@@ -6,7 +6,6 @@ import com.fmi.domain.admin.dto.AdminReportResponse;
 import com.fmi.domain.admin.dto.AdminUserDetailResponse;
 import com.fmi.domain.admin.service.AdminService;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
-import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.response.SignupResponse;
 import com.fmi.domain.auth.service.AuthService;
@@ -14,7 +13,6 @@ import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.inquiry.service.InquiryService;
 import com.fmi.domain.inquiry.web.dto.InquiryReplyCreateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
@@ -37,9 +35,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -269,72 +265,6 @@ public class AdminController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "deletedAt"));
         Page<AdminDeletedUserResponse> response = adminService.getDeletedUsers(reason, pageable);
         return ApiResponse.onSuccess(response);
-    }
-
-    @PostMapping("/password/verify")
-    @Operation(summary = "현재 비밀번호 검증", description = "관리자의 현재 비밀번호를 검증합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비밀번호 검증 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "USER400-PASSWORD_INCORRECT: 현재 비밀번호가 일치하지 않습니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"USER400-PASSWORD_INCORRECT\", \"message\": \"현재 비밀번호가 일치하지 않습니다.\"}"
-                            )
-                    )
-            )
-    })
-    public ApiResponse<Boolean> verifyPassword(
-            @AuthenticationPrincipal User admin,
-            @RequestBody PasswordChangeRequest request
-    ) {
-        boolean isValid = adminService.verifyPassword(admin, request.getCurrentPassword());
-        return ApiResponse.onSuccess(isValid);
-    }
-
-    @PatchMapping("/password")
-    @Operation(summary = "관리자 비밀번호 변경", description = "관리자의 비밀번호를 변경합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "USER400-PASSWORD_INCORRECT: 현재 비밀번호가 일치하지 않습니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"USER400-PASSWORD_INCORRECT\", \"message\": \"현재 비밀번호가 일치하지 않습니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "USER400-PASSWORD_MISMATCH: 새 비밀번호와 확인이 일치하지 않습니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"USER400-PASSWORD_MISMATCH\", \"message\": \"새 비밀번호와 확인이 일치하지 않습니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "AUTH400-WEAK_PASSWORD: 비밀번호 규칙을 만족하지 않습니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH400-WEAK_PASSWORD\", \"message\": \"비밀번호 규칙을 만족하지 않습니다. 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.\"}"
-                            )
-                    )
-            )
-    })
-    public ApiResponse<String> changePassword(
-            @AuthenticationPrincipal User admin,
-            @Valid @RequestBody PasswordChangeRequest request
-    ) {
-        adminService.changePassword(admin, request);
-        return ApiResponse.onSuccess("OK");
     }
 }
 
