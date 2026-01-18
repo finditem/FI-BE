@@ -76,37 +76,7 @@ public class NotificationController {
                description = "모든 알림 타입을 개별적으로 설정/해제할 수 있습니다. " +
                            "지원 필드: 댓글, 채팅, 즐겨찾기, 1:1문의 답변, 신고 처리 결과, 공지사항, 카테고리, 마케팅 이메일 수신 동의")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 설정 변경 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "COMMON400: 잘못된 요청입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "COMMON401: 인증이 필요합니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON401\", \"message\": \"인증이 필요합니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
-                            )
-                    )
-            )
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 설정 변경 성공")
     })
     public ApiResponse<NotificationSettingsDTO> updateSettings(
             @AuthenticationPrincipal User user,
@@ -124,42 +94,12 @@ public class NotificationController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 읽음 처리 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "COMMON400: 잘못된 요청입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "COMMON401: 인증이 필요합니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON401\", \"message\": \"인증이 필요합니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "NOTIFICATION404-NOT_FOUND: 존재하지 않는 알림입니다",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = "{\"isSuccess\": false, \"code\": \"NOTIFICATION404-NOT_FOUND\", \"message\": \"존재하지 않는 알림입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
                             )
                     )
             )
@@ -182,26 +122,6 @@ public class NotificationController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 삭제 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "COMMON400: 잘못된 요청입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "COMMON401: 인증이 필요합니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON401\", \"message\": \"인증이 필요합니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "403",
                     description = "NOTIFICATION403-ACCESS_DENIED: 해당 알림에 접근할 권한이 없습니다",
                     content = @Content(
@@ -218,16 +138,6 @@ public class NotificationController {
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = "{\"isSuccess\": false, \"code\": \"NOTIFICATION404-NOT_FOUND\", \"message\": \"존재하지 않는 알림입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
                             )
                     )
             )

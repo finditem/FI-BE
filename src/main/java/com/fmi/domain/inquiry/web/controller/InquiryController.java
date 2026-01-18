@@ -1,8 +1,6 @@
 package com.fmi.domain.inquiry.web.controller;
 
 import com.fmi.domain.auth.data.User;
-import com.fmi.domain.inquiry.data.enums.InquiryCategory;
-import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.service.InquiryService;
  
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
@@ -55,27 +53,7 @@ public class InquiryController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "내 문의 내역 조회", description = "본인의 1:1 개인 문의를 조회합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 문의 내역 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "COMMON401: 인증이 필요합니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON401\", \"message\": \"인증이 필요합니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
-                            )
-                    )
-            )
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 문의 내역 조회 성공")
     })
     public ApiResponse<Page<InquiryListDTO>> getMyInquiries(
             @AuthenticationPrincipal User user,
@@ -112,16 +90,6 @@ public class InquiryController {
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "COMMON500: 서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"COMMON500\", \"message\": \"서버 에러, 관리자에게 문의 바랍니다.\"}"
                             )
                     )
             )
