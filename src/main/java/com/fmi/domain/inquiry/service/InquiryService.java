@@ -45,22 +45,31 @@ public class InquiryService {
      */
     @Transactional
     public Long createInquiry(InquiryCreateRequestDTO request, UserDetails userDetails) {
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        Inquiry.InquiryBuilder builder = Inquiry.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .category(request.getCategory())
-                .inquiryType(InquiryType.PRIVATE)  // 항상 1:1 개인 문의로 설정
-                .user(user);
+        User user = null;
+        String resolvedEmail;
 
-        // 비회원 문의인 경우 이메일 설정
-        if (user == null && request.getEmail() != null && !request.getEmail().isBlank()) {
-            builder.email(request.getEmail());
+        if (userDetails != null) {
+            user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+            resolvedEmail = user.getEmail();
+        } else {
+            if (request.getEmail() == null || request.getEmail().isBlank()) {
+                throw new GeneralException(ErrorStatus._INQUIRY_GUEST_EMAIL_REQUIRED);
+            }
+            resolvedEmail = request.getEmail().trim();
         }
 
-        Inquiry saved = inquiryRepository.save(builder.build());
+        Inquiry saved = inquiryRepository.save(
+                Inquiry.builder()
+                        .title(request.getTitle())
+                        .content(request.getContent())
+                        .category(request.getCategory())
+                        .inquiryType(InquiryType.PRIVATE)
+                        .user(user) // 회원이면 user 세팅
+                        .email(user == null ? resolvedEmail : null) // 비회원이면 email 컬럼 세팅
+                        .build()
+        );
 
         eventPublisher.publishEvent(InquiryEvent.from(saved));
         
