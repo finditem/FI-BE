@@ -4,7 +4,9 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
+import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.report.converter.ReportConverter;
@@ -16,14 +18,13 @@ import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.fmi.domain.notification.service.NotificationService;
-import com.fmi.domain.notification.data.enums.NotificationType;
-import com.fmi.service.EmailService;
 
 @Service
 @RequiredArgsConstructor
@@ -38,12 +39,16 @@ public class ReportService {
     private final ReportConverter reportConverter;
     private final NotificationService notificationService;
     private final EmailService emailService;
-    
+
     /**
      * 신고하기 (통합)
      */
     @Transactional
-    public Long createReport(ReportCreateRequestDTO request, User user) {
+    public Long createReport(ReportCreateRequestDTO request, UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
         // 중복 신고 확인
         reportRepository.findByReporterAndTargetTypeAndTargetId(
                 user, request.getTargetType(), request.getTargetId())
