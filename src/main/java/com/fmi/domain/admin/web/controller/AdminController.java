@@ -18,6 +18,8 @@ import com.fmi.domain.inquiry.web.dto.InquiryReplyCreateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.notice.service.NoticeService;
 import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
+import com.fmi.domain.notice.web.dto.NoticeUpdateRequestDTO;
+import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.service.ReportService;
@@ -42,6 +44,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -157,6 +160,65 @@ public class AdminController {
     public ApiResponse<Long> createNotice(@RequestBody NoticeCreateRequestDTO request) {
         Long id = noticeService.createNotice(request);
         return ApiResponse.onSuccess(id);
+    }
+
+    @PutMapping("/notices/{noticeId}")
+    @Operation(summary = "공지 수정(관리자)")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "공지 수정 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"noticeId\": 1, \"title\": \"수정 제목\", \"content\": \"수정 내용\", \"category\": \"GENERAL\", \"pinned\": false, \"viewCount\": 10, \"createdAt\": \"2024-01-01T00:00:00\", \"updatedAt\": \"2024-01-02T00:00:00\"}}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "NOTICE404-NOT_FOUND: 존재하지 않는 공지사항입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"NOTICE404-NOT_FOUND\", \"message\": \"존재하지 않는 공지사항입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<NoticeResponseDTO> updateNotice(@PathVariable Long noticeId,
+                                                       @Valid @RequestBody NoticeUpdateRequestDTO request) {
+        NoticeResponseDTO response = noticeService.updateNotice(noticeId, request);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @DeleteMapping("/notices/{noticeId}")
+    @Operation(summary = "공지 삭제(관리자)")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "공지 삭제 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": \"공지사항 삭제 완료\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "NOTICE404-NOT_FOUND: 존재하지 않는 공지사항입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"NOTICE404-NOT_FOUND\", \"message\": \"존재하지 않는 공지사항입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<String> deleteNotice(@PathVariable Long noticeId) {
+        noticeService.deleteNotice(noticeId);
+        return ApiResponse.onSuccess("공지사항 삭제 완료");
     }
 
     @PostMapping("/inquiries/{inquiryId}/reply")
