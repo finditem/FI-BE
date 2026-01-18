@@ -15,8 +15,8 @@ import java.util.List;
 @Slf4j
 public class SlackService {
 
-    @Value("${slack.webhook.url}")
-    private String webhookUrl;
+    @Value("${slack.webhook.inquiry-url}")
+    private String inquiryWebhookUrl;
 
     public void sendInquiryNotification(InquiryEvent event) {
         try {
@@ -35,7 +35,7 @@ public class SlackService {
                             )).build()))
                     .build();
 
-            slack.send(webhookUrl, payload);
+            slack.send(inquiryWebhookUrl, payload);
         } catch (Exception e) {
             log.error("슬랙 알림 전송 실패", e);
         }
