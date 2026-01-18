@@ -75,7 +75,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 기본 프로필 정보를 조회합니다. (닉네임, 이메일, 이메일 인증 여부, 프로필 이미지)")
+    @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 기본 프로필 정보를 조회합니다. (닉네임, 이메일, 프로필 이미지)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 정보 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
