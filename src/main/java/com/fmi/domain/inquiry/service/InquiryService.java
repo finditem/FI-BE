@@ -1,6 +1,7 @@
 package com.fmi.domain.inquiry.service;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
 import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.data.InquiryReply;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,12 +38,16 @@ public class InquiryService {
     private final NotificationService notificationService;
     private final EmailService emailService;
     private final ApplicationEventPublisher eventPublisher;
-    
+    private final UserRepository userRepository;
+
     /**
      * 1:1 개인 문의 생성
      */
     @Transactional
-    public Long createInquiry(InquiryCreateRequestDTO request, User user) {
+    public Long createInquiry(InquiryCreateRequestDTO request, UserDetails userDetails) {
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
         Inquiry.InquiryBuilder builder = Inquiry.builder()
                 .title(request.getTitle())
                 .content(request.getContent())

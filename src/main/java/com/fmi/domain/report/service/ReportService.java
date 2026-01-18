@@ -48,8 +48,7 @@ public class ReportService {
      */
     @Transactional
     public Long createReport(ReportCreateRequestDTO request, UserDetails userDetails) {
-        String email = userDetails.getUsername();
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         // 중복 신고 확인

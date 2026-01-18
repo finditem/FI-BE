@@ -1,10 +1,7 @@
 package com.fmi.domain.inquiry.web.controller;
 
 import com.fmi.domain.auth.data.User;
-import com.fmi.domain.inquiry.data.enums.InquiryCategory;
-import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.service.InquiryService;
- 
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -21,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -42,8 +40,8 @@ public class InquiryController {
     })
     public ApiResponse<Long> createInquiry(
             @Valid @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO request,
-            @AuthenticationPrincipal User user) {
-        Long inquiryId = inquiryService.createInquiry(request, user);
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long inquiryId = inquiryService.createInquiry(request, userDetails);
         return ApiResponse.onSuccess(inquiryId);
     }
     
