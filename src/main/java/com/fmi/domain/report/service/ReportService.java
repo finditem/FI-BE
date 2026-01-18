@@ -72,17 +72,7 @@ public class ReportService {
         
         Report saved = reportRepository.save(report);
 
-        eventPublisher.publishEvent(new ReportEvent(
-                saved.getReportId(),
-                saved.getTargetId(),
-                saved.getTargetType(),
-                saved.getReportType(),
-                saved.getReason(),
-                user.getId(),
-                user.getNickname(),
-                saved.getCreatedAt()
-        ));
-
+        eventPublisher.publishEvent(ReportEvent.from(saved, user));
 
         // 신고 접수 이메일 발송 (신고자에게)
         try {
