@@ -62,5 +62,13 @@ public class Notice {
     public void setViewCount(Integer viewCount) {
         this.viewCount = viewCount;
     }
+
+    public void update(String title, String content, NoticeCategory category, Boolean pinned) {
+        this.title = title;
+        this.content = content;
+        this.category = category;
+        this.pinned = pinned;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
 
