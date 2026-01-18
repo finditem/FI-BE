@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -56,9 +57,9 @@ public class ReportController {
     })
     public ApiResponse<Long> createReport(
             @Valid @RequestBody ReportCreateRequestDTO request,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         
-        Long reportId = reportService.createReport(request, user);
+        Long reportId = reportService.createReport(request, userDetails);
         return ApiResponse.onSuccess(reportId);
     }
     
