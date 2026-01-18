@@ -7,6 +7,8 @@ import com.fmi.domain.notice.repository.NoticeRepository;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
+import com.fmi.domain.notice.web.dto.NoticeUpdateRequestDTO;
+import com.fmi.domain.noticecomment.repository.NoticeCommentRepository;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -28,6 +30,7 @@ public class NoticeService {
     private final NoticeRepository noticeRepository;
     private final NoticeConverter noticeConverter;
     private final NotificationService notificationService;
+    private final NoticeCommentRepository noticeCommentRepository;
     private final StringRedisTemplate stringRedisTemplate;
     
     /**
@@ -110,6 +113,33 @@ public class NoticeService {
         );
 
         return saved.getNoticeId();
+    }
+
+    /**
+     * 공지사항 수정 (관리자)
+     */
+    @Transactional
+    public NoticeResponseDTO updateNotice(Long noticeId, NoticeUpdateRequestDTO request) {
+        Notice notice = noticeRepository.findById(noticeId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
+
+        NoticeCategory category = request.getCategory() == null ? notice.getCategory() : request.getCategory();
+        Boolean pinned = request.getPinned() == null ? notice.getPinned() : request.getPinned();
+        notice.update(request.getTitle(), request.getContent(), category, pinned);
+
+        return noticeConverter.toResponseDTO(notice);
+    }
+
+    /**
+     * 공지사항 삭제 (관리자)
+     */
+    @Transactional
+    public void deleteNotice(Long noticeId) {
+        Notice notice = noticeRepository.findById(noticeId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
+
+        noticeCommentRepository.deleteByNoticeNoticeId(noticeId);
+        noticeRepository.delete(notice);
     }
 }
 
