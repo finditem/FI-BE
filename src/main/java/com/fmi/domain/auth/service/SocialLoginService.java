@@ -31,7 +31,7 @@ public class SocialLoginService {
         String providerId = String.valueOf(kakaoId);
 
         // 이미 존재하는 소셜 계정인지 확인
-        return socialAccountsRepository.findByProviderAndProviderId(Provider.KAKAO, providerId)
+        return socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.KAKAO, providerId)
                 .map(existingAccount -> {
                     log.info("기존 카카오 계정 찾음: providerId={}, userId={}", providerId, existingAccount.getUser().getId());
                     return existingAccount.getUser();
@@ -60,7 +60,7 @@ public class SocialLoginService {
 
                     // 동시성 문제 방지를 위해 저장 전 다시 한 번 확인
                     // (다른 스레드가 이미 저장했을 수 있음)
-                    Optional<SocialAccounts> existingAccount = socialAccountsRepository.findByProviderAndProviderId(Provider.KAKAO, providerId);
+                    Optional<SocialAccounts> existingAccount = socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.KAKAO, providerId);
                     if (existingAccount.isPresent()) {
                         log.info("동시 요청으로 인해 이미 소셜 계정이 생성됨: providerId={}, userId={}", providerId, existingAccount.get().getUser().getId());
                         return existingAccount.get().getUser();
@@ -79,7 +79,7 @@ public class SocialLoginService {
                     } catch (DataIntegrityViolationException e) {
                         log.warn("소셜 계정 저장 중 중복 키 위반 발생 (동시 요청 가능성): providerId={}, error={}", providerId, e.getMessage());
                         // 중복 키 위반 시 다시 조회해서 반환
-                        Optional<SocialAccounts> retryAccount = socialAccountsRepository.findByProviderAndProviderId(Provider.KAKAO, providerId);
+                        Optional<SocialAccounts> retryAccount = socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.KAKAO, providerId);
                         if (retryAccount.isPresent()) {
                             log.info("중복 키 위반 후 재조회 성공: providerId={}, userId={}", providerId, retryAccount.get().getUser().getId());
                             return retryAccount.get().getUser();
