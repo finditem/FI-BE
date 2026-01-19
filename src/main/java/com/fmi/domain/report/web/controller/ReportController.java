@@ -1,11 +1,14 @@
 package com.fmi.domain.report.web.controller;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.service.ReportService;
 import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -18,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 public class ReportController {
     
     private final ReportService reportService;
+    private final UserRepository userRepository;
     
     /**
      * 신고하기 (통합)
@@ -56,8 +61,10 @@ public class ReportController {
     })
     public ApiResponse<Long> createReport(
             @Valid @RequestBody ReportCreateRequestDTO request,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         Long reportId = reportService.createReport(request, user);
         return ApiResponse.onSuccess(reportId);
     }
@@ -72,12 +79,14 @@ public class ReportController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 내역 조회 성공")
     })
     public ApiResponse<Page<ReportListDTO>> getMyReports(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "신고 상태 필터 (PENDING=접수, REVIEWED=처리중, RESOLVED=처리완료)", required = false)
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<ReportListDTO> reports = reportService.getMyReports(user, status, pageable);
         return ApiResponse.onSuccess(reports);

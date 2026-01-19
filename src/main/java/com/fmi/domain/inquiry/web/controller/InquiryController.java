@@ -1,11 +1,14 @@
 package com.fmi.domain.inquiry.web.controller;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.inquiry.service.InquiryService;
  
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -19,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 public class InquiryController {
     
     private final InquiryService inquiryService;
+    private final UserRepository userRepository;
     
     /**
      * 1:1 개인 문의 작성
@@ -40,7 +45,12 @@ public class InquiryController {
     })
     public ApiResponse<Long> createInquiry(
             @Valid @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO request,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User user = null;
+        if (userDetails != null) {
+            user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        }
         Long inquiryId = inquiryService.createInquiry(request, user);
         return ApiResponse.onSuccess(inquiryId);
     }
@@ -56,10 +66,12 @@ public class InquiryController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 문의 내역 조회 성공")
     })
     public ApiResponse<Page<InquiryListDTO>> getMyInquiries(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<InquiryListDTO> inquiries = inquiryService.getMyInquiries(user, pageable);
         return ApiResponse.onSuccess(inquiries);
@@ -96,8 +108,10 @@ public class InquiryController {
     })
     public ApiResponse<InquiryDetailDTO> getInquiryDetail(
             @PathVariable Long inquiryId,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         InquiryDetailDTO inquiry = inquiryService.getInquiryDetail(inquiryId, user);
         return ApiResponse.onSuccess(inquiry);
     }
