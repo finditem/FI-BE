@@ -100,6 +100,10 @@ public class S3Service {
 
     // 이미지의 public url을 이용하여 S3에서 해당 이미지를 제거, getKeyFromImageAddress 메서드를 호출하여 삭제에 필요한 key 획득
     public void delete(List<String> imageUrls) {
+        if (imageUrls == null || imageUrls.isEmpty()) {
+            return;
+        }
+
         List<String> keys = imageUrls.stream()
                 .map(this::getKeyFromImageUrls)
                 .toList();
