@@ -86,7 +86,7 @@ public class CommentService {
             notifyPostOwner(post, user, dto, mentionedUserIds);
         }
 
-        return commentConverter.toCommentResponse(savedComment);
+        return toResponse(savedComment, userDetails);
     }
 
     private Set<Long> handleMentions(Comment comment, CreateCommentDto dto) {
@@ -189,7 +189,7 @@ public class CommentService {
         comment.setContent(dto.getContent());
         comment.setUpdatedAt(LocalDateTime.now());
 
-        return commentConverter.toCommentResponse(comment);
+        return toResponse(comment, userDetails);
     }
 
     @Transactional
@@ -212,12 +212,12 @@ public class CommentService {
 
         commentRepository.delete(comment);
 
-        return commentConverter.toCommentResponse(comment);
+        return toResponse(comment, userDetails);
     }
 
 
     @Transactional(readOnly = true)
-    public CommentSliceResponse getComments(Long postId, Long cursor, int size) {
+    public CommentSliceResponse getComments(Long postId, Long cursor, int size, UserDetails userDetails) {
 
         Slice<Comment> comments;
 
@@ -234,10 +234,33 @@ public class CommentService {
 
         List<CommentResponse> result = comments.stream()
                 .limit(size)
-                .map(commentConverter::toCommentResponse)
+                .map(comment -> toResponse(comment, userDetails))
                 .toList();
 
         return new CommentSliceResponse(result, comments.hasNext(), nextCursor);
+    }
+
+    private CommentResponse toResponse(Comment comment, UserDetails userDetails) {
+        boolean isOwner = isOwner(comment, userDetails);
+        boolean isAdmin = isAdmin(userDetails);
+
+        return commentConverter.toCommentResponse(comment, isOwner, isOwner || isAdmin);
+    }
+
+    private boolean isOwner(Comment comment, UserDetails userDetails) {
+        return userDetails != null
+                && comment.getUser() != null
+                && comment.getUser().getEmail().equals(userDetails.getUsername());
+    }
+
+    private boolean isAdmin(UserDetails userDetails) {
+        if (userDetails == null) {
+            return false;
+        }
+
+        return userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
     }
 
 }
