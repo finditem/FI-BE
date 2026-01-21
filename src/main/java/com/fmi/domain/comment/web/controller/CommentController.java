@@ -64,7 +64,7 @@ public class CommentController {
     }
 
     @PutMapping(value = "/{commentId}")
-    @Operation(summary = "댓글 수정")
+    @Operation(summary = "댓글 수정", description = "작성자만 수정할 수 있습니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 수정 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMON400: 잘못된 요청입니다"),
@@ -84,7 +84,7 @@ public class CommentController {
     }
 
     @DeleteMapping(value = "/{commentId}")
-    @Operation(summary = "댓글 삭제")
+    @Operation(summary = "댓글 삭제", description = "작성자 또는 관리자(ROLE_ADMIN)만 삭제할 수 있습니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 삭제 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
