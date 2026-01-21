@@ -24,14 +24,25 @@ public class CommentConverter {
     }
 
     public CommentResponse toCommentResponse(Comment comment) {
-        return new CommentResponse(
-                comment.getId(),
-                comment.getContent(),
-                comment.getUser().getNickname(),
-                comment.getCreatedAt(),
-                comment.getLikeCount(),
-                comment.getParent() != null ? comment.getParent().getId() : null
-        );
+        return toCommentResponse(comment, false, false);
+    }
+
+    public CommentResponse toCommentResponse(Comment comment, boolean canEdit, boolean canDelete) {
+        User author = comment.getUser();
+        Long authorId = author != null ? author.getId() : null;
+        String authorName = author != null ? author.getNickname() : null;
+
+        return CommentResponse.builder()
+                .id(comment.getId())
+                .content(comment.getContent())
+                .authorId(authorId)
+                .authorName(authorName)
+                .createdAt(comment.getCreatedAt())
+                .likeCount(comment.getLikeCount())
+                .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
+                .canEdit(canEdit)
+                .canDelete(canDelete)
+                .build();
     }
 
 }
