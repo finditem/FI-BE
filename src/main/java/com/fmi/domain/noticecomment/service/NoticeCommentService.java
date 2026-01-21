@@ -15,6 +15,7 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,7 +108,12 @@ public class NoticeCommentService {
         NoticeComment comment = noticeCommentRepository.findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
-        if (!comment.getUser().getEmail().equals(userDetails.getUsername())) {
+        boolean isOwner = comment.getUser().getEmail().equals(userDetails.getUsername());
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+
+        if (!isOwner && !isAdmin) {
             throw new GeneralException(ErrorStatus._FORBIDDEN);
         }
 
