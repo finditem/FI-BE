@@ -135,7 +135,7 @@ public class NoticeCommentController {
     }
 
     @DeleteMapping("/comments/{commentId}")
-    @Operation(summary = "공지사항 댓글 삭제", description = "작성자만 삭제할 수 있으며, 관리자도 본인이 작성한 댓글만 삭제 가능합니다.")
+    @Operation(summary = "공지사항 댓글 삭제", description = "작성자 또는 관리자(ROLE_ADMIN)만 삭제할 수 있습니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
