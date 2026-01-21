@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -197,8 +198,14 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다"));
 
-        if (!comment.getUser().getEmail().equals(userDetails.getUsername())) {
-            throw new RuntimeException("작성자만 수정할 수 있습니다.");
+        // 작성자이거나 관리자인 경우 삭제 가능
+        boolean isOwner = comment.getUser().getEmail().equals(userDetails.getUsername());
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+
+        if (!isOwner && !isAdmin) {
+            throw new RuntimeException("작성자 또는 관리자만 삭제할 수 있습니다.");
         }
 
         comment.getPost().decreaseCommentCount(); // 댓글 수 감소
