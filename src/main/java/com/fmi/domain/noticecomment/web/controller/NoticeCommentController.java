@@ -34,7 +34,7 @@ public class NoticeCommentController {
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"id\": 12, \"content\": \"댓글 내용\", \"authorName\": \"닉네임\", \"createdAt\": \"2024-01-01T00:00:00\", \"parentId\": null}}"
+                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"id\": 12, \"content\": \"댓글 내용\", \"authorId\": 34, \"authorName\": \"닉네임\", \"createdAt\": \"2024-01-01T00:00:00\", \"parentId\": null, \"canEdit\": true, \"canDelete\": true}}"
                             )
                     )
             ),
@@ -77,7 +77,7 @@ public class NoticeCommentController {
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"comments\": [{\"id\": 12, \"content\": \"댓글 내용\", \"authorName\": \"닉네임\", \"createdAt\": \"2024-01-01T00:00:00\", \"parentId\": null}], \"hasNext\": true, \"cursor\": 12}}"
+                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"comments\": [{\"id\": 12, \"content\": \"댓글 내용\", \"authorId\": 34, \"authorName\": \"닉네임\", \"createdAt\": \"2024-01-01T00:00:00\", \"parentId\": null, \"canEdit\": true, \"canDelete\": true}], \"hasNext\": true, \"cursor\": 12}}"
                             )
                     )
             ),
@@ -95,9 +95,10 @@ public class NoticeCommentController {
     public ResponseEntity<ApiResponse<NoticeCommentSliceResponse>> getComments(
             @PathVariable Long noticeId,
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        NoticeCommentSliceResponse response = noticeCommentService.getComments(noticeId, cursor, size);
+        NoticeCommentSliceResponse response = noticeCommentService.getComments(noticeId, cursor, size, userDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
@@ -110,7 +111,7 @@ public class NoticeCommentController {
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"id\": 12, \"content\": \"수정된 댓글\", \"authorName\": \"닉네임\", \"createdAt\": \"2024-01-01T00:00:00\", \"parentId\": null}}"
+                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"id\": 12, \"content\": \"수정된 댓글\", \"authorId\": 34, \"authorName\": \"닉네임\", \"createdAt\": \"2024-01-01T00:00:00\", \"parentId\": null, \"canEdit\": true, \"canDelete\": true}}"
                             )
                     )
             ),
@@ -143,7 +144,7 @@ public class NoticeCommentController {
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"id\": 12, \"content\": \"삭제된 댓글\", \"authorName\": \"닉네임\", \"createdAt\": \"2024-01-01T00:00:00\", \"parentId\": null}}"
+                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"id\": 12, \"content\": \"삭제된 댓글\", \"authorId\": 34, \"authorName\": \"닉네임\", \"createdAt\": \"2024-01-01T00:00:00\", \"parentId\": null, \"canEdit\": false, \"canDelete\": true}}"
                             )
                     )
             ),
