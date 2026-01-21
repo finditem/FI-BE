@@ -24,12 +24,23 @@ public class NoticeCommentConverter {
     }
 
     public NoticeCommentResponse toResponse(NoticeComment comment) {
+        return toResponse(comment, false, false);
+    }
+
+    public NoticeCommentResponse toResponse(NoticeComment comment, boolean canEdit, boolean canDelete) {
+        User author = comment.getUser();
+        Long authorId = author != null ? author.getId() : null;
+        String authorName = author != null ? author.getNickname() : null;
+
         return NoticeCommentResponse.builder()
                 .id(comment.getId())
                 .content(comment.getContent())
-                .authorName(comment.getUser().getNickname())
+                .authorId(authorId)
+                .authorName(authorName)
                 .createdAt(comment.getCreatedAt())
                 .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
+                .canEdit(canEdit)
+                .canDelete(canDelete)
                 .build();
     }
 }
