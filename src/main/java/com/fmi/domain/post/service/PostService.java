@@ -179,7 +179,9 @@ public class PostService {
                 .map(PostImage::getImgUrl)
                 .toList();
 
-        s3Service.delete(s3Urls);
+        if (!s3Urls.isEmpty()) {
+            s3Service.delete(s3Urls);
+        }
         postRepository.delete(post);
 
         return post;

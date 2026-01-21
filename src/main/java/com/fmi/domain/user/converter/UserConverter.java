@@ -17,14 +17,13 @@ public class UserConverter {
 
     /**
      * User Entity → UserProfileResponse 변환
-     * 닉네임, 이메일(인증여부), 프로필 이미지만 반환
+     * 닉네임, 이메일, 프로필 이미지만 반환
      */
     public static UserProfileResponse toUserProfileResponse(User user) {
         return UserProfileResponse.builder()
                 .userId(user.getId())
                 .nickname(user.getNickname())
                 .email(user.getEmail())
-                .emailVerified(user.isEmail_verified())
                 .profileImg(user.getProfile_img())
                 .build();
     }
