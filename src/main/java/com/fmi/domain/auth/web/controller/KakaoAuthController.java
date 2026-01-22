@@ -139,6 +139,7 @@ public class KakaoAuthController {
         claims.put("userId", localUser.getId());
         claims.put("role", localUser.getRole().name());
         claims.put("provider", "KAKAO");
+        claims.put("purpose", "access");
         String accessToken = jwtTokenProvider.createAccessToken(localUser.getEmail(), claims);
 
         String jti = UUID.randomUUID().toString();
