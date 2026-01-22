@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,7 +86,7 @@ public class CommentService {
             notifyPostOwner(post, user, dto, mentionedUserIds);
         }
 
-        return commentConverter.toCommentResponse(savedComment);
+        return toResponse(savedComment, userDetails);
     }
 
     private Set<Long> handleMentions(Comment comment, CreateCommentDto dto) {
@@ -188,7 +189,7 @@ public class CommentService {
         comment.setContent(dto.getContent());
         comment.setUpdatedAt(LocalDateTime.now());
 
-        return commentConverter.toCommentResponse(comment);
+        return toResponse(comment, userDetails);
     }
 
     @Transactional
@@ -197,20 +198,26 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다"));
 
-        if (!comment.getUser().getEmail().equals(userDetails.getUsername())) {
-            throw new RuntimeException("작성자만 수정할 수 있습니다.");
+        // 작성자이거나 관리자인 경우 삭제 가능
+        boolean isOwner = comment.getUser().getEmail().equals(userDetails.getUsername());
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+
+        if (!isOwner && !isAdmin) {
+            throw new RuntimeException("작성자 또는 관리자만 삭제할 수 있습니다.");
         }
 
         comment.getPost().decreaseCommentCount(); // 댓글 수 감소
 
         commentRepository.delete(comment);
 
-        return commentConverter.toCommentResponse(comment);
+        return toResponse(comment, userDetails);
     }
 
 
     @Transactional(readOnly = true)
-    public CommentSliceResponse getComments(Long postId, Long cursor, int size) {
+    public CommentSliceResponse getComments(Long postId, Long cursor, int size, UserDetails userDetails) {
 
         Slice<Comment> comments;
 
@@ -227,10 +234,33 @@ public class CommentService {
 
         List<CommentResponse> result = comments.stream()
                 .limit(size)
-                .map(commentConverter::toCommentResponse)
+                .map(comment -> toResponse(comment, userDetails))
                 .toList();
 
         return new CommentSliceResponse(result, comments.hasNext(), nextCursor);
+    }
+
+    private CommentResponse toResponse(Comment comment, UserDetails userDetails) {
+        boolean isOwner = isOwner(comment, userDetails);
+        boolean isAdmin = isAdmin(userDetails);
+
+        return commentConverter.toCommentResponse(comment, isOwner, isOwner || isAdmin);
+    }
+
+    private boolean isOwner(Comment comment, UserDetails userDetails) {
+        return userDetails != null
+                && comment.getUser() != null
+                && comment.getUser().getEmail().equals(userDetails.getUsername());
+    }
+
+    private boolean isAdmin(UserDetails userDetails) {
+        if (userDetails == null) {
+            return false;
+        }
+
+        return userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
     }
 
 }

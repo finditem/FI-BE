@@ -1,0 +1,25 @@
+package com.fmi.domain.noticecomment.repository;
+
+import com.fmi.domain.noticecomment.data.NoticeComment;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface NoticeCommentRepository extends JpaRepository<NoticeComment, Long> {
+
+    @Query("select c from NoticeComment c join fetch c.user left join fetch c.parent " +
+            "where c.notice.noticeId = :noticeId order by c.id desc")
+    Slice<NoticeComment> findTopByNoticeIdOrderByIdDesc(@Param("noticeId") Long noticeId, Pageable pageable);
+
+    @Query("select c from NoticeComment c join fetch c.user left join fetch c.parent " +
+            "where c.notice.noticeId = :noticeId and c.id < :cursor order by c.id desc")
+    Slice<NoticeComment> findByNoticeIdAndIdLessThanOrderByIdDesc(@Param("noticeId") Long noticeId,
+                                                                  @Param("cursor") Long cursor,
+                                                                  Pageable pageable);
+
+    void deleteByNoticeNoticeId(Long noticeId);
+}

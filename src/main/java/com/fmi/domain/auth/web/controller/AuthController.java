@@ -6,6 +6,7 @@ import com.fmi.domain.auth.response.SignupResponse;
 import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.auth.web.dto.LoginRequest;
 import com.fmi.domain.auth.web.dto.SignupRequest;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.JwtTokenProvider;
 import com.fmi.security.RefreshTokenStore;
@@ -33,6 +34,7 @@ public class AuthController {
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenStore refreshTokenStore;
+    private final SocialAccountsRepository socialAccountsRepository;
 
     @Value("${jwt.cookie.name:refresh_token}")
     private String refreshCookieName;
@@ -122,6 +124,7 @@ public class AuthController {
         var claims = new java.util.HashMap<String, Object>();
         claims.put("userId", user.getId());
         claims.put("role", user.getRole().name());
+        claims.put("purpose", "access");
         if (isTemporaryPassword) {
             claims.put("isTemporaryPassword", true);  // JWT에 임시 비밀번호 플래그 포함
         }
@@ -242,11 +245,21 @@ public class AuthController {
             return ResponseEntity.status(401).body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "유효하지 않은 리프레시(대조 실패)", null));
         }
 
+        var userOpt = authService.findActiveUserByEmail(email);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(401).body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "유효하지 않은 리프레시(사용자 없음)", null));
+        }
+        var user = userOpt.get();
+
         // RTR: 기존 리프레시 폐기, 새 리프레시/쿠키 발급
         refreshTokenStore.revoke(jti);
 
         var claims = new java.util.HashMap<String, Object>();
-        claims.put("purpose", "refresh");
+        claims.put("userId", user.getId());
+        claims.put("role", user.getRole().name());
+        claims.put("purpose", "access");
+        socialAccountsRepository.findByUser(user)
+                .ifPresent(account -> claims.put("provider", account.getProvider().name()));
         String accessToken = jwtTokenProvider.createAccessToken(email, claims);
 
         String newJti = java.util.UUID.randomUUID().toString();
