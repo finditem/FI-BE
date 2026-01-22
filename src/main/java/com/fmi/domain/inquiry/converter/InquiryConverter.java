@@ -12,6 +12,7 @@ public class InquiryConverter {
         return InquiryListDTO.builder()
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
+                .content(inquiry.getContent())
                 .category(inquiry.getCategory())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
