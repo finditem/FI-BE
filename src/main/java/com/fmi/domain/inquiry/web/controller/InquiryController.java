@@ -82,7 +82,7 @@ public class InquiryController {
      * GET /api/inquiries/{inquiryId}
      */
     @GetMapping("/{inquiryId}")
-    @Operation(summary = "문의 상세 조회", description = "본인의 1:1 개인 문의만 조회 가능합니다.")
+    @Operation(summary = "문의 상세 조회", description = "본인의 1:1 개인 문의만 조회 가능합니다. 비회원인 경우 email 파라미터 필요.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 상세 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -108,11 +108,15 @@ public class InquiryController {
     })
     public ApiResponse<InquiryDetailDTO> getInquiryDetail(
             @PathVariable Long inquiryId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) String email) {
         
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        InquiryDetailDTO inquiry = inquiryService.getInquiryDetail(inquiryId, user);
+        User user = null;
+        if (userDetails != null) {
+            user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        }
+        InquiryDetailDTO inquiry = inquiryService.getInquiryDetail(inquiryId, user, email);
         return ApiResponse.onSuccess(inquiry);
     }
 }
