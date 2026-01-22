@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -175,6 +176,13 @@ public class AuthService {
         }
         
         return new AuthenticateResult(user, isTemporaryPassword);
+    }
+
+    /**
+     * 활성 사용자 조회 (deletedAt이 null인 사용자만)
+     */
+    public Optional<User> findActiveUserByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
     
     @Data
