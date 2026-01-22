@@ -13,7 +13,6 @@ import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
-import com.fmi.domain.inquiry.repository.InquiryReplyRepository;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.report.data.Report;
@@ -21,7 +20,6 @@ import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
-import com.fmi.domain.inquiry.data.InquiryReply;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.report.converter.ReportConverter;
 import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
@@ -43,7 +41,6 @@ import java.util.List;
 public class AdminService {
 
     private final InquiryRepository inquiryRepository;
-    private final InquiryReplyRepository inquiryReplyRepository;
     private final InquiryConverter inquiryConverter;
     private final ReportRepository reportRepository;
     private final ReportConverter reportConverter;
@@ -130,10 +127,7 @@ public class AdminService {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
         
-        // 답변 조회
-        InquiryReply reply = inquiryReplyRepository.findByInquiry(inquiry).orElse(null);
-        
-        return inquiryConverter.toDetailDTO(inquiry, reply);
+        return inquiryConverter.toDetailDTO(inquiry);
     }
 
     /**
