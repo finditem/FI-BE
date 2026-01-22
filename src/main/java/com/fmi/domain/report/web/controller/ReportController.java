@@ -62,10 +62,7 @@ public class ReportController {
     public ApiResponse<Long> createReport(
             @Valid @RequestBody ReportCreateRequestDTO request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        Long reportId = reportService.createReport(request, user);
+        Long reportId = reportService.createReport(request, userDetails);
         return ApiResponse.onSuccess(reportId);
     }
     

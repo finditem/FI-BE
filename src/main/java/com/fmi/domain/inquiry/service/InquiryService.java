@@ -1,28 +1,31 @@
 package com.fmi.domain.inquiry.service;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
+import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.data.InquiryReply;
-import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
+import com.fmi.domain.inquiry.event.InquiryEvent;
 import com.fmi.domain.inquiry.repository.InquiryReplyRepository;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
+import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.fmi.domain.inquiry.data.Inquiry;
-import com.fmi.domain.notification.data.enums.NotificationType;
-import com.fmi.domain.notification.service.NotificationService;
-import com.fmi.service.EmailService;
 
 @Service
 @RequiredArgsConstructor
@@ -34,25 +37,41 @@ public class InquiryService {
     private final InquiryConverter inquiryConverter;
     private final NotificationService notificationService;
     private final EmailService emailService;
-    
+    private final ApplicationEventPublisher eventPublisher;
+    private final UserRepository userRepository;
+
     /**
      * 1:1 개인 문의 생성
      */
     @Transactional
-    public Long createInquiry(InquiryCreateRequestDTO request, User user) {
-        Inquiry.InquiryBuilder builder = Inquiry.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .category(request.getCategory())
-                .inquiryType(InquiryType.PRIVATE)  // 항상 1:1 개인 문의로 설정
-                .user(user);
+    public Long createInquiry(InquiryCreateRequestDTO request, UserDetails userDetails) {
 
-        // 비회원 문의인 경우 이메일 설정
-        if (user == null && request.getEmail() != null && !request.getEmail().isBlank()) {
-            builder.email(request.getEmail());
+        User user = null;
+        String resolvedEmail;
+
+        if (userDetails != null) {
+            user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+            resolvedEmail = user.getEmail();
+        } else {
+            if (request.getEmail() == null || request.getEmail().isBlank()) {
+                throw new GeneralException(ErrorStatus._INQUIRY_GUEST_EMAIL_REQUIRED);
+            }
+            resolvedEmail = request.getEmail().trim();
         }
 
-        Inquiry saved = inquiryRepository.save(builder.build());
+        Inquiry saved = inquiryRepository.save(
+                Inquiry.builder()
+                        .title(request.getTitle())
+                        .content(request.getContent())
+                        .category(request.getCategory())
+                        .inquiryType(InquiryType.PRIVATE)
+                        .user(user) // 회원이면 user 세팅
+                        .email(user == null ? resolvedEmail : null) // 비회원이면 email 컬럼 세팅
+                        .build()
+        );
+
+        eventPublisher.publishEvent(InquiryEvent.from(saved));
         
         // 문의 접수 이메일 발송
         try {

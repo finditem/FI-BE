@@ -71,7 +71,8 @@ public enum ErrorStatus implements BaseErrorCode {
     // 문의 관련 응답
     _INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "INQUIRY404-NOT_FOUND", "존재하지 않는 문의입니다."),
     _INQUIRY_ACCESS_DENIED(HttpStatus.FORBIDDEN, "INQUIRY403-ACCESS_DENIED", "해당 문의를 조회할 권한이 없습니다."),
-    
+    _INQUIRY_GUEST_EMAIL_REQUIRED(HttpStatus.BAD_REQUEST, "INQUIRY400-GUEST_EMAIL_REQUIRED", "비회원 문의는 이메일이 필수입니다."),
+
     // 신고 관련 응답
     _REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "REPORT409-ALREADY_EXISTS", "이미 신고한 대상입니다."),
     _REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404-NOT_FOUND", "존재하지 않는 신고입니다."),
