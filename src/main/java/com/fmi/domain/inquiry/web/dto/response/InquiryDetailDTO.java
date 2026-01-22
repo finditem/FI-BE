@@ -28,8 +28,5 @@ public class InquiryDetailDTO {
     private InquiryStatus status;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
-    
-    @Schema(description = "답변 (있는 경우)", example = "null")
-    private InquiryReplyDTO reply;
 }
 

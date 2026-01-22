@@ -2,11 +2,9 @@ package com.fmi.domain.inquiry.service;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
-import com.fmi.domain.inquiry.data.InquiryReply;
 import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
-import com.fmi.domain.inquiry.repository.InquiryReplyRepository;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
@@ -30,7 +28,6 @@ import com.fmi.service.EmailService;
 public class InquiryService {
     
     private final InquiryRepository inquiryRepository;
-    private final InquiryReplyRepository inquiryReplyRepository;
     private final InquiryConverter inquiryConverter;
     private final NotificationService notificationService;
     private final EmailService emailService;
@@ -81,78 +78,6 @@ public class InquiryService {
     }
 
     /**
-     * 문의 답변 생성(관리자)
-     */
-    @Transactional
-    public Long addReply(Long inquiryId, String content, Long adminId) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
-
-        InquiryReply reply = InquiryReply.builder()
-                .inquiry(inquiry)
-                .adminId(adminId)
-                .content(content)
-                .build();
-
-        InquiryReply saved = inquiryReplyRepository.save(reply);
-        
-        // 답변 추가 시 문의 상태를 ANSWERED로 변경
-        inquiry.markAsAnswered();
-
-        // 회원 문의인 경우에만 알림 및 이메일 발송
-        if (inquiry.getUser() != null) {
-            notificationService.createNotification(
-                    inquiry.getUser(),
-                    NotificationType.INQUIRY_REPLY,
-                    "문의에 답변이 등록되었습니다",
-                    content,
-                    ReferenceType.INQUIRY,
-                    inquiry.getId()
-            );
-            
-            // 문의 답변 이메일 발송
-            try {
-                String replyDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-                        .format(java.time.LocalDateTime.now());
-                
-                emailService.sendHtmlEmail(
-                    inquiry.getUser().getEmail(),
-                    "문의에 답변이 등록되었습니다",
-                    "support-reply-email.html",
-                    java.util.Map.of(
-                        "TITLE", inquiry.getTitle(),
-                        "DATE", replyDate,
-                        "CONTENT", content
-                    )
-                );
-            } catch (Exception e) {
-                // 이메일 발송 실패해도 알림은 성공 처리
-            }
-        } else if (inquiry.getEmail() != null) {
-            // 비회원 문의인 경우 이메일로만 발송
-            try {
-                String replyDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-                        .format(java.time.LocalDateTime.now());
-                
-                emailService.sendHtmlEmail(
-                    inquiry.getEmail(),
-                    "문의에 답변이 등록되었습니다",
-                    "support-reply-email.html",
-                    java.util.Map.of(
-                        "TITLE", inquiry.getTitle(),
-                        "DATE", replyDate,
-                        "CONTENT", content
-                    )
-                );
-            } catch (Exception e) {
-                // 이메일 발송 실패는 무시
-            }
-        }
-
-        return saved.getReplyId();
-    }
-    
-    /**
      * 내 문의 내역 조회
      */
     public Page<InquiryListDTO> getMyInquiries(User user, Pageable pageable) {
@@ -163,20 +88,28 @@ public class InquiryService {
     
     /**
      * 문의 상세 조회
+     * - 회원 문의: user로 확인
+     * - 비회원 문의: email로 확인
+     * - 관리자: 항상 접근 가능
      */
-    public InquiryDetailDTO getInquiryDetail(Long inquiryId, User user) {
+    public InquiryDetailDTO getInquiryDetail(Long inquiryId, User user, String email) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
         
         // 권한 확인: 1:1 개인 문의는 본인만 조회 가능
-        if (user == null || inquiry.getUser() == null || !inquiry.getUser().getId().equals(user.getId())) {
-            throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
+        // 회원 문의인 경우
+        if (inquiry.getUser() != null) {
+            if (user == null || !inquiry.getUser().getId().equals(user.getId())) {
+                throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
+            }
+        } else {
+            // 비회원 문의인 경우 이메일로 확인
+            if (email == null || inquiry.getEmail() == null || !inquiry.getEmail().equals(email)) {
+                throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
+            }
         }
         
-        // 답변 조회
-        InquiryReply reply = inquiryReplyRepository.findByInquiry(inquiry).orElse(null);
-        
-        return inquiryConverter.toDetailDTO(inquiry, reply);
+        return inquiryConverter.toDetailDTO(inquiry);
     }
     
     /**
