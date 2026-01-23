@@ -2,6 +2,8 @@ package com.fmi.domain.chatroom.data;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,7 +48,7 @@ public class ChatRoom {
                 .map(ChatRoomParticipant::getUser) // 실제 User 객체를 꺼냅니다.
                 .filter(user -> !user.getId().equals(userId)) // 나 자신이 아닌 사용자를 필터링
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("채팅방에 다른 참여자가 없습니다."));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_INVALID_STATE));
     }
 
     /**
