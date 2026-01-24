@@ -133,4 +133,20 @@ public class ChatRoomService {
 
         chatRoomParticipant.leftChatRoom(lastMsgId);
     }
+
+    public ChatRoomResultDTO getChatRoomDetail(Long roomId, User user) {
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+
+        if (!chatRoom.isParticipant(user)) {
+            throw new GeneralException(ErrorStatus._CHATROOM_ACCESS_DENIED);
+        }
+
+        User opponent = chatRoom.getOtherParticipant(user.getId());
+
+        Post post = chatRoom.getPost();
+
+        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post);
+    }
+
 }

@@ -107,6 +107,23 @@ public class ChatRoomController {
         return ApiResponse.of(SuccessStatus._CHATROOM_LEFT);
     }
 
+    @Operation(summary = "채팅방 상세 조회", description = "특정 채팅방의 상세 정보(상대방 정보, 게시글 요약 등)를 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CHATROOM_FOUND: 기존 채팅방을 조회합니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "CHATROOM_ACCESS_DENIED: 해당 채팅방에 접근 권한이 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "CHATROOM_NOT_FOUND: 존재하지 않는 채팅방입니다.")
+    })
+    @GetMapping("/chats/{roomId}")
+    public ApiResponse<ChatRoomResultDTO> getChatRoomDetail(@PathVariable("roomId") Long roomId, @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        User user = userService.findUser(email);
+
+        ChatRoomResultDTO responseDTO = chatRoomService.getChatRoomDetail(roomId, user);
+
+        return ApiResponse.of(SuccessStatus._CHATROOM_FOUND, responseDTO);
+    }
+
+
     @MessageMapping("/rooms/{roomId}/enter")
     public void enter(@DestinationVariable Long roomId, Principal p, StompHeaderAccessor acc) {
         Long userId = Long.parseLong(p.getName());
