@@ -1,11 +1,16 @@
 package com.fmi.domain.user.service;
 
+import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.post.converter.PostConverter;
+import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.response.PostListResponse;
+import com.fmi.domain.post.service.PostService;
+import com.fmi.domain.postfavorite.data.PostFavorite;
+import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
@@ -28,7 +33,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -43,6 +50,8 @@ public class UserService {
     private final PostConverter postConverter;
     private final CommentRepository commentRepository;
     private final EmailService emailService;
+    private final PostFavoriteRepository postFavoriteRepository;
+    private final PostService postService;
 
     /**
      * 내 정보 조회
@@ -57,22 +66,61 @@ public class UserService {
 
     /**
      * 타인 페이지 조회
+     * type 파라미터에 따라 조회할 데이터를 분리합니다.
+     * - posts: 게시글만 조회
+     * - comments: 댓글만 조회
+     * - favorites: 즐겨찾기만 조회
+     * - 미지정 또는 기본값: posts (게시글만 조회)
      */
     @Transactional(readOnly = true)
-    public UserOtherPageResponse getOtherUserPage(Long userId) {
+    public UserOtherPageResponse getOtherUserPage(Long userId, UserOtherPageType type) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        List<PostListResponse> posts = postRepository.findAllPublishedWithImagesByUser(user).stream()
-                .map(post -> postConverter.toPostListResponse(post, null,null,false))
+        // type에 따라 필요한 데이터만 조회
+        List<PostListResponse> posts = Collections.emptyList();
+        List<UserCommentSummaryResponse> comments = Collections.emptyList();
+        List<PostListResponse> favorites = Collections.emptyList();
+
+        UserOtherPageType resolvedType = type == null ? UserOtherPageType.POSTS : type;
+        switch (resolvedType) {
+            case POSTS -> posts = postRepository.findAllPublishedWithImagesByUser(user).stream()
+                    .map(post -> postConverter.toPostListResponse(post, null, null, false))
+                    .toList();
+            case COMMENTS -> comments = commentRepository.findAllWithPostByUser(user).stream()
+                    .map(UserConverter::toUserCommentSummaryResponse)
+                    .toList();
+            case FAVORITES -> favorites = getFavoritePostsByUser(user);
+        }
+
+        return UserConverter.toUserOtherPageResponse(user, posts, comments, favorites);
+    }
+
+    /**
+     * 특정 사용자의 즐겨찾기 게시글 조회
+     */
+    private List<PostListResponse> getFavoritePostsByUser(User user) {
+        List<PostFavorite> favorites = postFavoriteRepository.findByUserAndIsFavoriteTrue(user);
+        List<Post> posts = favorites.stream()
+                .map(PostFavorite::getPost)
                 .toList();
 
-        List<UserCommentSummaryResponse> comments = commentRepository.findAllWithPostByUser(user).stream()
-                .map(UserConverter::toUserCommentSummaryResponse)
-                .toList();
+        if (posts.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-        return UserConverter.toUserOtherPageResponse(user, posts, comments);
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+        Map<Long, Long> viewCounts = postService.getViewCountsFromRedis(postIds);
+
+        return posts.stream()
+                .map(post -> postConverter.toPostListResponse(
+                        post,
+                        null,
+                        viewCounts.getOrDefault(post.getId(), 0L),
+                        true
+                ))
+                .toList();
     }
 
     /**

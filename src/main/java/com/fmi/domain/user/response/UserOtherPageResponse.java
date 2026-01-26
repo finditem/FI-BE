@@ -19,5 +19,6 @@ public class UserOtherPageResponse {
     private String profileImg;
     private List<PostListResponse> posts;
     private List<UserCommentSummaryResponse> comments;
+    private List<PostListResponse> favorites;
 }
 
