@@ -98,7 +98,15 @@ public class UserController {
     }
 
     @GetMapping("/{userId}/page")
-    @Operation(summary = "타인 페이지 조회", description = "다른 사용자의 닉네임, 프로필 이미지, 게시글, 작성 댓글 목록을 조회합니다.")
+    @Operation(summary = "타인 페이지 조회", description = """
+            다른 사용자의 닉네임, 프로필 이미지, 게시글, 작성 댓글, 즐겨찾기 목록을 조회합니다.
+            
+            **type 파라미터:**
+            - type=posts → 게시글만 조회
+            - type=comments → 댓글만 조회
+            - type=favorites → 즐겨찾기만 조회
+            - type 미지정 → 기본 탭(posts) 조회
+            """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "타인 페이지 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -113,9 +121,10 @@ public class UserController {
             )
     })
     public ApiResponse<UserOtherPageResponse> getUserOtherPage(
-            @PathVariable Long userId
+            @PathVariable Long userId,
+            @RequestParam(required = false, defaultValue = "posts") String type
     ) {
-        UserOtherPageResponse response = userService.getOtherUserPage(userId);
+        UserOtherPageResponse response = userService.getOtherUserPage(userId, type);
         return ApiResponse.onSuccess(response);
     }
 
