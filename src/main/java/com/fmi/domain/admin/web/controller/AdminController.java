@@ -36,6 +36,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -90,8 +92,9 @@ public class AdminController {
                     )
             )
     })
-    public ApiResponse<InquiryDetailDTO> getInquiryDetail(@PathVariable Long inquiryId) {
-        InquiryDetailDTO response = adminService.getInquiryDetail(inquiryId);
+    public ApiResponse<InquiryDetailDTO> getInquiryDetail(@PathVariable Long inquiryId,
+                                                          @AuthenticationPrincipal UserDetails userDetails) {
+        InquiryDetailDTO response = adminService.getInquiryDetail(inquiryId, userDetails);
         return ApiResponse.onSuccess(response);
     }
 

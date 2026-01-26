@@ -11,6 +11,8 @@ import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
+import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
+import com.fmi.domain.inquirycomment.service.InquiryCommentService;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
@@ -36,6 +38,7 @@ public class InquiryService {
     private final EmailService emailService;
     private final ApplicationEventPublisher eventPublisher;
     private final UserRepository userRepository;
+    private final InquiryCommentService inquiryCommentService;
 
     /**
      * 1:1 개인 문의 생성
@@ -111,9 +114,15 @@ public class InquiryService {
      * - 비회원 문의: email로 확인
      * - 관리자: 항상 접근 가능
      */
-    public InquiryDetailDTO getInquiryDetail(Long inquiryId, User user, String email) {
+    public InquiryDetailDTO getInquiryDetail(Long inquiryId, UserDetails userDetails, String email) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
+
+        User user = null;
+        if (userDetails != null) {
+            user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        }
         
         // 권한 확인: 1:1 개인 문의는 본인만 조회 가능
         // 회원 문의인 경우
@@ -128,7 +137,9 @@ public class InquiryService {
             }
         }
         
-        return inquiryConverter.toDetailDTO(inquiry);
+        java.util.List<InquiryCommentResponse> comments =
+                inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails, email);
+        return inquiryConverter.toDetailDTO(inquiry, comments);
     }
     
     /**

@@ -2,6 +2,7 @@ package com.fmi.domain.inquiry.web.dto.response;
 
 import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
+import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -28,5 +30,7 @@ public class InquiryDetailDTO {
     private InquiryStatus status;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
+    @Schema(description = "댓글 목록")
+    private List<InquiryCommentResponse> comments;
 }
 

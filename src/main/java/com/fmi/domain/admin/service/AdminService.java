@@ -21,6 +21,8 @@ import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
+import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
+import com.fmi.domain.inquirycomment.service.InquiryCommentService;
 import com.fmi.domain.report.converter.ReportConverter;
 import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
 import com.fmi.domain.user.data.UserCategory;
@@ -30,6 +32,7 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +51,7 @@ public class AdminService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserCategoryRepository userCategoryRepository;
+    private final InquiryCommentService inquiryCommentService;
 
     public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
                                                      InquiryStatus status,
@@ -123,11 +127,13 @@ public class AdminService {
     /**
      * 문의 상세 조회 (관리자용 - 비공개 문의도 조회 가능)
      */
-    public InquiryDetailDTO getInquiryDetail(Long inquiryId) {
+    public InquiryDetailDTO getInquiryDetail(Long inquiryId, UserDetails userDetails) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
         
-        return inquiryConverter.toDetailDTO(inquiry);
+        List<InquiryCommentResponse> comments =
+                inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails, null);
+        return inquiryConverter.toDetailDTO(inquiry, comments);
     }
 
     /**

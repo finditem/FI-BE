@@ -104,13 +104,8 @@ public class InquiryController {
             @PathVariable Long inquiryId,
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) String email) {
-        
-        User user = null;
-        if (userDetails != null) {
-            user = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        }
-        InquiryDetailDTO inquiry = inquiryService.getInquiryDetail(inquiryId, user, email);
+
+        InquiryDetailDTO inquiry = inquiryService.getInquiryDetail(inquiryId, userDetails, email);
         return ApiResponse.onSuccess(inquiry);
     }
 }
