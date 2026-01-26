@@ -4,26 +4,29 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
+import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.report.converter.ReportConverter;
 import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
+import com.fmi.domain.report.event.ReportEvent;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.fmi.domain.notification.service.NotificationService;
-import com.fmi.domain.notification.data.enums.NotificationType;
-import com.fmi.service.EmailService;
 
 @Service
 @RequiredArgsConstructor
@@ -38,12 +41,16 @@ public class ReportService {
     private final ReportConverter reportConverter;
     private final NotificationService notificationService;
     private final EmailService emailService;
-    
+    private final ApplicationEventPublisher eventPublisher;
+
     /**
      * 신고하기 (통합)
      */
     @Transactional
-    public Long createReport(ReportCreateRequestDTO request, User user) {
+    public Long createReport(ReportCreateRequestDTO request, UserDetails userDetails) {
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
         // 중복 신고 확인
         reportRepository.findByReporterAndTargetTypeAndTargetId(
                 user, request.getTargetType(), request.getTargetId())
@@ -64,7 +71,9 @@ public class ReportService {
                 .build();
         
         Report saved = reportRepository.save(report);
-        
+
+        eventPublisher.publishEvent(ReportEvent.from(saved, user));
+
         // 신고 접수 이메일 발송 (신고자에게)
         try {
             String targetTitle = getTargetTitle(saved.getTargetType(), saved.getTargetId());

@@ -3,7 +3,6 @@ package com.fmi.domain.inquiry.web.controller;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.inquiry.service.InquiryService;
- 
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -46,12 +45,7 @@ public class InquiryController {
     public ApiResponse<Long> createInquiry(
             @Valid @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        User user = null;
-        if (userDetails != null) {
-            user = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        }
-        Long inquiryId = inquiryService.createInquiry(request, user);
+        Long inquiryId = inquiryService.createInquiry(request, userDetails);
         return ApiResponse.onSuccess(inquiryId);
     }
     
