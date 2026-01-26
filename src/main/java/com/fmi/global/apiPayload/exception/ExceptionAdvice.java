@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -59,6 +60,19 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
         });
 
         return handleExceptionInternalArgs(e, HttpHeaders.EMPTY, ErrorStatus._BAD_REQUEST, request, errors);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Object> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException e, HttpServletRequest request) {
+        Throwable cause = e.getCause();
+        if (cause instanceof GeneralException generalException) {
+            ErrorReasonDTO errorReasonHttpStatus = generalException.getErrorReasonHttpStatus();
+            return handleExceptionInternal(e, errorReasonHttpStatus, null, request);
+        }
+        ErrorReasonDTO errorReason = ErrorStatus._BAD_REQUEST.getReasonHttpStatus();
+        return handleExceptionInternal(e, errorReason, null, request);
     }
 
     @ExceptionHandler

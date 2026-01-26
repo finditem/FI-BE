@@ -1,5 +1,6 @@
 package com.fmi.domain.user.service;
 
+import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
@@ -72,7 +73,7 @@ public class UserService {
      * - 미지정 또는 기본값: posts (게시글만 조회)
      */
     @Transactional(readOnly = true)
-    public UserOtherPageResponse getOtherUserPage(Long userId, String type) {
+    public UserOtherPageResponse getOtherUserPage(Long userId, UserOtherPageType type) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
@@ -82,21 +83,15 @@ public class UserService {
         List<UserCommentSummaryResponse> comments = Collections.emptyList();
         List<PostListResponse> favorites = Collections.emptyList();
 
-        // type이 null이거나 "posts"인 경우 게시글 조회
-        if (type == null || type.equals("posts")) {
-            posts = postRepository.findAllPublishedWithImagesByUser(user).stream()
+        UserOtherPageType resolvedType = type == null ? UserOtherPageType.POSTS : type;
+        switch (resolvedType) {
+            case POSTS -> posts = postRepository.findAllPublishedWithImagesByUser(user).stream()
                     .map(post -> postConverter.toPostListResponse(post, null, null, false))
                     .toList();
-        }
-        // type이 "comments"인 경우 댓글 조회
-        else if (type.equals("comments")) {
-            comments = commentRepository.findAllWithPostByUser(user).stream()
+            case COMMENTS -> comments = commentRepository.findAllWithPostByUser(user).stream()
                     .map(UserConverter::toUserCommentSummaryResponse)
                     .toList();
-        }
-        // type이 "favorites"인 경우 즐겨찾기 조회
-        else if (type.equals("favorites")) {
-            favorites = getFavoritePostsByUser(user);
+            case FAVORITES -> favorites = getFavoritePostsByUser(user);
         }
 
         return UserConverter.toUserOtherPageResponse(user, posts, comments, favorites);
