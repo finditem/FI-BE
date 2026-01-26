@@ -25,7 +25,7 @@ public class InquiryCommentController {
     private final InquiryCommentService inquiryCommentService;
 
     @PostMapping
-    @Operation(summary = "문의 댓글 작성", description = "문의 작성자 또는 관리자만 댓글 작성 가능. 비회원인 경우 email 파라미터 필요.")
+    @Operation(summary = "문의 댓글 작성", description = "문의 작성자 또는 관리자만 댓글 작성 가능.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
@@ -46,16 +46,15 @@ public class InquiryCommentController {
     public ResponseEntity<ApiResponse<InquiryCommentResponse>> createComment(
             @RequestBody CreateInquiryCommentDto request,
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long inquiryId,
-            @RequestParam(required = false) String email) {
+            @PathVariable Long inquiryId) {
 
-        InquiryCommentResponse response = inquiryCommentService.createComment(request, userDetails, inquiryId, email);
+        InquiryCommentResponse response = inquiryCommentService.createComment(request, userDetails, inquiryId);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
     @GetMapping
-    @Operation(summary = "문의 댓글 목록 조회 (커서 기반 무한스크롤)", description = "문의 작성자 또는 관리자만 조회 가능. 비회원인 경우 email 파라미터 필요.")
+    @Operation(summary = "문의 댓글 목록 조회 (커서 기반 무한스크롤)", description = "문의 작성자 또는 관리자만 조회 가능.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
@@ -75,16 +74,15 @@ public class InquiryCommentController {
             @PathVariable Long inquiryId,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size,
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(required = false) String email) {
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        InquiryCommentSliceResponse response = inquiryCommentService.getComments(inquiryId, cursor, size, userDetails, email);
+        InquiryCommentSliceResponse response = inquiryCommentService.getComments(inquiryId, cursor, size, userDetails);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
     @PutMapping("/{commentId}")
-    @Operation(summary = "문의 댓글 수정", description = "작성자만 수정할 수 있습니다. 비회원 댓글은 수정 불가.")
+    @Operation(summary = "문의 댓글 수정", description = "작성자만 수정할 수 있습니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
@@ -106,10 +104,9 @@ public class InquiryCommentController {
             @RequestBody CreateInquiryCommentDto request,
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long inquiryId,
-            @PathVariable Long commentId,
-            @RequestParam(required = false) String email) {
+            @PathVariable Long commentId) {
 
-        InquiryCommentResponse response = inquiryCommentService.updateComment(request, userDetails, commentId, email);
+        InquiryCommentResponse response = inquiryCommentService.updateComment(request, userDetails, commentId);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
@@ -135,10 +132,9 @@ public class InquiryCommentController {
     public ResponseEntity<ApiResponse<InquiryCommentResponse>> deleteComment(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long inquiryId,
-            @PathVariable Long commentId,
-            @RequestParam(required = false) String email) {
+            @PathVariable Long commentId) {
 
-        InquiryCommentResponse response = inquiryCommentService.deleteComment(userDetails, commentId, email);
+        InquiryCommentResponse response = inquiryCommentService.deleteComment(userDetails, commentId);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }

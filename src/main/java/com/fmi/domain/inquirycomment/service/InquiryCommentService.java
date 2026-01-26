@@ -40,31 +40,24 @@ public class InquiryCommentService {
 
     /**
      * 댓글 작성
-     * - 문의 작성자(user 또는 email 일치) 또는 관리자만 작성 가능
-     * - 비회원인 경우 email로 식별
+     * - 문의 작성자 또는 관리자만 작성 가능
      */
     @Transactional
-    public InquiryCommentResponse createComment(CreateInquiryCommentDto dto, UserDetails userDetails, Long inquiryId, String email) {
+    public InquiryCommentResponse createComment(CreateInquiryCommentDto dto, UserDetails userDetails, Long inquiryId) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
 
+        if (userDetails == null) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
+
         // 권한 확인: 문의 작성자 또는 관리자만 댓글 작성 가능
-        if (!canAccessInquiry(inquiry, userDetails, email)) {
+        if (!canAccessInquiry(inquiry, userDetails)) {
             throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
         }
 
-        User user = null;
-        String commentEmail = null;
-
-        if (userDetails != null) {
-            user = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        } else if (email != null && !email.isBlank()) {
-            // 비회원인 경우 이메일 사용
-            commentEmail = email;
-        } else {
-            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
-        }
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         // 부모 댓글 조회 (대댓글인 경우)
         InquiryComment parent = null;
@@ -78,7 +71,7 @@ public class InquiryCommentService {
             }
         }
 
-        InquiryComment comment = inquiryCommentConverter.toCommentEntity(dto, user, inquiry, parent, commentEmail);
+        InquiryComment comment = inquiryCommentConverter.toCommentEntity(dto, user, inquiry, parent, null);
         InquiryComment savedComment = inquiryCommentRepository.save(comment);
 
         // 알림 발송 (선택적)
@@ -88,7 +81,7 @@ public class InquiryCommentService {
             log.warn("댓글 알림 발송 실패: {}", e.getMessage());
         }
 
-        return toResponse(savedComment, userDetails, email);
+        return toResponse(savedComment, userDetails);
     }
 
     /**
@@ -96,12 +89,16 @@ public class InquiryCommentService {
      * - 문의 작성자 또는 관리자만 조회 가능
      */
     @Transactional(readOnly = true)
-    public InquiryCommentSliceResponse getComments(Long inquiryId, Long cursor, int size, UserDetails userDetails, String email) {
+    public InquiryCommentSliceResponse getComments(Long inquiryId, Long cursor, int size, UserDetails userDetails) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
 
+        if (userDetails == null) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
+
         // 권한 확인: 문의 작성자 또는 관리자만 조회 가능
-        if (!canAccessInquiry(inquiry, userDetails, email)) {
+        if (!canAccessInquiry(inquiry, userDetails)) {
             throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
         }
 
@@ -117,33 +114,32 @@ public class InquiryCommentService {
                 ? comments.getContent().get(comments.getContent().size() - 1).getId()
                 : null;
 
-        List<InquiryCommentResponse> result = buildResponsesWithReplies(comments.getContent(), userDetails, email);
+        List<InquiryCommentResponse> result = buildResponsesWithReplies(comments.getContent(), userDetails);
 
         return new InquiryCommentSliceResponse(result, comments.hasNext(), nextCursor);
     }
 
     /**
      * 댓글 수정
-     * - 작성자만 수정 가능 (비회원 댓글은 수정 불가)
+     * - 작성자만 수정 가능
      */
     @Transactional
-    public InquiryCommentResponse updateComment(CreateInquiryCommentDto dto, UserDetails userDetails, Long commentId, String email) {
+    public InquiryCommentResponse updateComment(CreateInquiryCommentDto dto, UserDetails userDetails, Long commentId) {
         InquiryComment comment = inquiryCommentRepository.findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
-        // 비회원 댓글은 수정 불가
-        if (comment.getUser() == null) {
+        if (userDetails == null) {
             throw new GeneralException(ErrorStatus._FORBIDDEN);
         }
 
         // 작성자 확인
-        if (userDetails == null || !comment.getUser().getEmail().equals(userDetails.getUsername())) {
+        if (comment.getUser() == null || !comment.getUser().getEmail().equals(userDetails.getUsername())) {
             throw new GeneralException(ErrorStatus._FORBIDDEN);
         }
 
         comment.updateContent(dto.getContent());
 
-        return toResponse(comment, userDetails, email);
+        return toResponse(comment, userDetails);
     }
 
     /**
@@ -151,7 +147,7 @@ public class InquiryCommentService {
      * - 작성자 또는 관리자만 삭제 가능 (관리자는 다른 사람의 댓글도 삭제 가능)
      */
     @Transactional
-    public InquiryCommentResponse deleteComment(UserDetails userDetails, Long commentId, String email) {
+    public InquiryCommentResponse deleteComment(UserDetails userDetails, Long commentId) {
         InquiryComment comment = inquiryCommentRepository.findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
@@ -159,9 +155,6 @@ public class InquiryCommentService {
         boolean isOwner = false;
         if (comment.getUser() != null && userDetails != null) {
             isOwner = comment.getUser().getEmail().equals(userDetails.getUsername());
-        } else if (comment.getUser() == null && comment.getEmail() != null && email != null) {
-            // 비회원 댓글인 경우 이메일로 확인
-            isOwner = comment.getEmail().equals(email);
         }
 
         // 관리자 확인
@@ -173,14 +166,14 @@ public class InquiryCommentService {
 
         inquiryCommentRepository.delete(comment);
 
-        return toResponse(comment, userDetails, email);
+        return toResponse(comment, userDetails);
     }
 
     /**
      * 문의 접근 권한 확인
-     * - 문의 작성자(user 또는 email 일치) 또는 관리자만 접근 가능
+     * - 문의 작성자 또는 관리자만 접근 가능
      */
-    private boolean canAccessInquiry(Inquiry inquiry, UserDetails userDetails, String email) {
+    private boolean canAccessInquiry(Inquiry inquiry, UserDetails userDetails) {
         // 관리자는 항상 접근 가능
         if (isAdmin(userDetails)) {
             return true;
@@ -188,15 +181,7 @@ public class InquiryCommentService {
 
         // 회원 문의인 경우
         if (inquiry.getUser() != null) {
-            if (userDetails == null) {
-                return false;
-            }
             return inquiry.getUser().getEmail().equals(userDetails.getUsername());
-        }
-
-        // 비회원 문의인 경우 이메일로 확인
-        if (inquiry.getEmail() != null && email != null) {
-            return inquiry.getEmail().equals(email);
         }
 
         return false;
@@ -218,7 +203,7 @@ public class InquiryCommentService {
     /**
      * 댓글 작성자 확인
      */
-    private boolean isOwner(InquiryComment comment, UserDetails userDetails, String email) {
+    private boolean isOwner(InquiryComment comment, UserDetails userDetails) {
         // 회원 댓글인 경우
         if (comment.getUser() != null) {
             if (userDetails == null) {
@@ -227,20 +212,15 @@ public class InquiryCommentService {
             return comment.getUser().getEmail().equals(userDetails.getUsername());
         }
 
-        // 비회원 댓글인 경우 이메일로 확인
-        if (comment.getEmail() != null && email != null) {
-            return comment.getEmail().equals(email);
-        }
-
         return false;
     }
 
     /**
      * 엔티티를 Response로 변환
      */
-    private InquiryCommentResponse toResponse(InquiryComment comment, UserDetails userDetails, String email) {
-        boolean canEdit = isOwner(comment, userDetails, email) && comment.getUser() != null; // 비회원 댓글은 수정 불가
-        boolean canDelete = isOwner(comment, userDetails, email) || isAdmin(userDetails);
+    private InquiryCommentResponse toResponse(InquiryComment comment, UserDetails userDetails) {
+        boolean canEdit = isOwner(comment, userDetails);
+        boolean canDelete = isOwner(comment, userDetails) || isAdmin(userDetails);
 
         // Converter로 기본 Response 생성
         InquiryCommentResponse response = inquiryCommentConverter.toCommentResponse(comment, canEdit, canDelete);
@@ -248,8 +228,8 @@ public class InquiryCommentService {
         // 대댓글 목록 변환 (각 대댓글마다 권한 체크)
         List<InquiryCommentResponse> replies = comment.getReplies().stream()
                 .map(reply -> {
-                    boolean replyCanEdit = isOwner(reply, userDetails, email) && reply.getUser() != null;
-                    boolean replyCanDelete = isOwner(reply, userDetails, email) || isAdmin(userDetails);
+                    boolean replyCanEdit = isOwner(reply, userDetails);
+                    boolean replyCanDelete = isOwner(reply, userDetails) || isAdmin(userDetails);
                     return inquiryCommentConverter.toCommentResponse(reply, replyCanEdit, replyCanDelete);
                 })
                 .collect(Collectors.toList());
@@ -264,17 +244,19 @@ public class InquiryCommentService {
      * 문의 상세 조회용 댓글 전체 반환 (대댓글 포함, N+1 방지)
      */
     @Transactional(readOnly = true)
-    public List<InquiryCommentResponse> getCommentsForDetail(Long inquiryId, UserDetails userDetails, String email) {
+    public List<InquiryCommentResponse> getCommentsForDetail(Long inquiryId, UserDetails userDetails) {
+        if (userDetails == null) {
+            return java.util.Collections.emptyList();
+        }
         List<InquiryComment> parents = inquiryCommentRepository.findByInquiryIdAndParentIsNullOrderByIdAsc(inquiryId);
-        return buildResponsesWithReplies(parents, userDetails, email);
+        return buildResponsesWithReplies(parents, userDetails);
     }
 
     /**
      * 최상위 댓글 + 대댓글 일괄 조회 후 Response 변환
      */
     private List<InquiryCommentResponse> buildResponsesWithReplies(List<InquiryComment> parents,
-                                                                   UserDetails userDetails,
-                                                                   String email) {
+                                                                  UserDetails userDetails) {
         if (parents == null || parents.isEmpty()) {
             return java.util.Collections.emptyList();
         }
@@ -289,16 +271,16 @@ public class InquiryCommentService {
 
         return parents.stream()
                 .map(parent -> {
-                    boolean canEdit = isOwner(parent, userDetails, email) && parent.getUser() != null;
-                    boolean canDelete = isOwner(parent, userDetails, email) || isAdmin(userDetails);
+                    boolean canEdit = isOwner(parent, userDetails);
+                    boolean canDelete = isOwner(parent, userDetails) || isAdmin(userDetails);
                     InquiryCommentResponse response = inquiryCommentConverter.toCommentResponse(parent, canEdit, canDelete);
 
                     List<InquiryCommentResponse> replyResponses = repliesByParentId
                             .getOrDefault(parent.getId(), java.util.Collections.emptyList())
                             .stream()
                             .map(reply -> {
-                                boolean replyCanEdit = isOwner(reply, userDetails, email) && reply.getUser() != null;
-                                boolean replyCanDelete = isOwner(reply, userDetails, email) || isAdmin(userDetails);
+                                boolean replyCanEdit = isOwner(reply, userDetails);
+                                boolean replyCanDelete = isOwner(reply, userDetails) || isAdmin(userDetails);
                                 return inquiryCommentConverter.toCommentResponse(reply, replyCanEdit, replyCanDelete);
                             })
                             .collect(Collectors.toList());

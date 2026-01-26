@@ -7,6 +7,7 @@ import com.fmi.domain.auth.web.dto.EmailSendRequest;
 import com.fmi.domain.auth.web.dto.EmailVerifyRequest;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.service.EmailBounceHandler;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,7 +50,7 @@ public class EmailController {
                     )
             )
     })
-    public ApiResponse<Void> send(@RequestBody EmailSendRequest req) {
+    public ApiResponse<Void> send(@Valid @RequestBody EmailSendRequest req) {
         service.sendCode(req.getEmail());
         return ApiResponse.onSuccess(null);
     }
@@ -69,7 +70,7 @@ public class EmailController {
                     )
             )
     })
-    public ApiResponse<EmailVerifyResponse> verify(@RequestBody EmailVerifyRequest req) {
+    public ApiResponse<EmailVerifyResponse> verify(@Valid @RequestBody EmailVerifyRequest req) {
         service.verify(req.getEmail(), req.getCode());
         // 인증 성공 시에만 여기 도달
         return ApiResponse.onSuccess(AuthConverter.toEmailVerifyResponse(true));
@@ -80,7 +81,7 @@ public class EmailController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bounce back 등록 성공")
     })
-    public ApiResponse<Void> registerBounce(@RequestBody EmailSendRequest req) {
+    public ApiResponse<Void> registerBounce(@Valid @RequestBody EmailSendRequest req) {
         emailBounceHandler.registerBounce(req.getEmail());
         return ApiResponse.onSuccess(null);
     }

@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,38 +108,35 @@ public class InquiryService {
         
         return inquiries.map(inquiry -> inquiryConverter.toListDTO(inquiry));
     }
-    
+
     /**
      * 문의 상세 조회
      * - 회원 문의: user로 확인
-     * - 비회원 문의: email로 확인
      * - 관리자: 항상 접근 가능
      */
-    public InquiryDetailDTO getInquiryDetail(Long inquiryId, UserDetails userDetails, String email) {
+    public InquiryDetailDTO getInquiryDetail(Long inquiryId, UserDetails userDetails) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
 
-        User user = null;
-        if (userDetails != null) {
-            user = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        if (userDetails == null) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
+
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         
         // 권한 확인: 1:1 개인 문의는 본인만 조회 가능
         // 회원 문의인 경우
         if (inquiry.getUser() != null) {
-            if (user == null || !inquiry.getUser().getId().equals(user.getId())) {
+            if (!inquiry.getUser().getId().equals(user.getId())) {
                 throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
             }
-        } else {
-            // 비회원 문의인 경우 이메일로 확인
-            if (email == null || inquiry.getEmail() == null || !inquiry.getEmail().equals(email)) {
-                throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
-            }
+        } else if (!isAdmin(userDetails)) {
+            throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
         }
         
         java.util.List<InquiryCommentResponse> comments =
-                inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails, email);
+                inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
         return inquiryConverter.toDetailDTO(inquiry, comments);
     }
     
@@ -228,5 +226,15 @@ public class InquiryService {
             case ANSWERED -> "답변완료";
         };
     }
+
+    private boolean isAdmin(UserDetails userDetails) {
+        if (userDetails == null) {
+            return false;
+        }
+        return userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+    }
+
 }
 

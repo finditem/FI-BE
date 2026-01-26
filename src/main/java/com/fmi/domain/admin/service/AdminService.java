@@ -132,7 +132,7 @@ public class AdminService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
         
         List<InquiryCommentResponse> comments =
-                inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails, null);
+                inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
         return inquiryConverter.toDetailDTO(inquiry, comments);
     }
 
