@@ -24,7 +24,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -118,9 +117,7 @@ public class InquiryCommentService {
                 ? comments.getContent().get(comments.getContent().size() - 1).getId()
                 : null;
 
-        List<InquiryCommentResponse> result = comments.getContent().stream()
-                .map(comment -> toResponse(comment, userDetails, email))
-                .collect(Collectors.toList());
+        List<InquiryCommentResponse> result = buildResponsesWithReplies(comments.getContent(), userDetails, email);
 
         return new InquiryCommentSliceResponse(result, comments.hasNext(), nextCursor);
     }
@@ -261,6 +258,55 @@ public class InquiryCommentService {
         response.setReplies(replies);
 
         return response;
+    }
+
+    /**
+     * 문의 상세 조회용 댓글 전체 반환 (대댓글 포함, N+1 방지)
+     */
+    @Transactional(readOnly = true)
+    public List<InquiryCommentResponse> getCommentsForDetail(Long inquiryId, UserDetails userDetails, String email) {
+        List<InquiryComment> parents = inquiryCommentRepository.findByInquiryIdAndParentIsNullOrderByIdAsc(inquiryId);
+        return buildResponsesWithReplies(parents, userDetails, email);
+    }
+
+    /**
+     * 최상위 댓글 + 대댓글 일괄 조회 후 Response 변환
+     */
+    private List<InquiryCommentResponse> buildResponsesWithReplies(List<InquiryComment> parents,
+                                                                   UserDetails userDetails,
+                                                                   String email) {
+        if (parents == null || parents.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        List<Long> parentIds = parents.stream()
+                .map(InquiryComment::getId)
+                .collect(Collectors.toList());
+
+        List<InquiryComment> replies = inquiryCommentRepository.findByParentIdInOrderByIdAsc(parentIds);
+        java.util.Map<Long, List<InquiryComment>> repliesByParentId = replies.stream()
+                .collect(Collectors.groupingBy(reply -> reply.getParent().getId()));
+
+        return parents.stream()
+                .map(parent -> {
+                    boolean canEdit = isOwner(parent, userDetails, email) && parent.getUser() != null;
+                    boolean canDelete = isOwner(parent, userDetails, email) || isAdmin(userDetails);
+                    InquiryCommentResponse response = inquiryCommentConverter.toCommentResponse(parent, canEdit, canDelete);
+
+                    List<InquiryCommentResponse> replyResponses = repliesByParentId
+                            .getOrDefault(parent.getId(), java.util.Collections.emptyList())
+                            .stream()
+                            .map(reply -> {
+                                boolean replyCanEdit = isOwner(reply, userDetails, email) && reply.getUser() != null;
+                                boolean replyCanDelete = isOwner(reply, userDetails, email) || isAdmin(userDetails);
+                                return inquiryCommentConverter.toCommentResponse(reply, replyCanEdit, replyCanDelete);
+                            })
+                            .collect(Collectors.toList());
+
+                    response.setReplies(replyResponses);
+                    return response;
+                })
+                .collect(Collectors.toList());
     }
 
     /**
