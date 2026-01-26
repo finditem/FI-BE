@@ -28,22 +28,62 @@ jobs:
             cd ~/FMI-BE
             
             # Git pull
-            echo "📥 Pulling latest code..."
+            echo "Pulling latest code..."
             git pull origin ${{ github.ref_name }}
             
+            # 환경 변수 파일 생성/업데이트
+            echo "Setting up environment variables..."
+            {
+              echo "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}"
+              echo "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}"
+              echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
+              echo "SPRING_DATA_REDIS_PASSWORD=${{ secrets.SPRING_DATA_REDIS_PASSWORD }}"
+              echo "JWT_SECRET=${{ secrets.JWT_SECRET }}"
+              echo "SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}"
+              echo "SPRING_CLOUD_AWS_CREDENTIALS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}"
+              echo "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}"
+              echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}"
+              echo "KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}"
+              echo "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}"
+              echo "SLACK_WEBHOOK_INQUIRY_URL=${{ secrets.SLACK_WEBHOOK_INQUIRY_URL }}"
+              echo "SLACK_WEBHOOK_REPORT_URL=${{ secrets.SLACK_WEBHOOK_REPORT_URL }}"
+            } | sudo tee /etc/fmi-backend.env > /dev/null
+            
+            # 환경 변수 파일 권한 설정
+            sudo chmod 600 /etc/fmi-backend.env
+            sudo chown $USER:$USER /etc/fmi-backend.env
+            
+            # systemd 서비스 파일에 환경 변수 파일 로드 추가
+            echo "Updating systemd service file..."
+            SERVICE_FILE="/etc/systemd/system/fmi-backend.service"
+            if [ -f "$SERVICE_FILE" ]; then
+              # EnvironmentFile이 없으면 추가
+              if ! sudo grep -q "EnvironmentFile=/etc/fmi-backend.env" "$SERVICE_FILE"; then
+                # [Service] 섹션에 EnvironmentFile 추가
+                sudo sed -i '/\[Service\]/a EnvironmentFile=/etc/fmi-backend.env' "$SERVICE_FILE"
+                echo "EnvironmentFile이 systemd 서비스 파일에 추가되었습니다."
+                sudo systemctl daemon-reload
+              else
+                echo "EnvironmentFile이 이미 설정되어 있습니다."
+              fi
+            else
+              echo "   systemd 서비스 파일을 찾을 수 없습니다: $SERVICE_FILE"
+              echo "   수동으로 EnvironmentFile=/etc/fmi-backend.env을 추가해주세요."
+            fi
+            
             # Build
-            echo "🔨 Building application..."
+            echo "Building application..."
             ./gradlew clean bootJar -x test
             
             # Restart service
-            echo "🔄 Restarting application..."
+            echo "Restarting application..."
             sudo systemctl restart fmi-backend
             
             # Check status
-            echo "✅ Checking status..."
+            echo "Checking status..."
             sleep 5
             sudo systemctl status fmi-backend --no-pager
             
-            echo "🚀 Deployment completed!"
+            echo "Deployment completed!"
 
 
