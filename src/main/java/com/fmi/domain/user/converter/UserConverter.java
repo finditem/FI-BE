@@ -60,7 +60,8 @@ public class UserConverter {
     public static UserOtherPageResponse toUserOtherPageResponse(
             User user,
             List<PostListResponse> posts,
-            List<UserCommentSummaryResponse> comments
+            List<UserCommentSummaryResponse> comments,
+            List<PostListResponse> favorites
     ) {
         return UserOtherPageResponse.builder()
                 .userId(user.getId())
@@ -68,6 +69,7 @@ public class UserConverter {
                 .profileImg(user.getProfile_img())
                 .posts(posts)
                 .comments(comments)
+                .favorites(favorites)
                 .build();
     }
 }
