@@ -18,6 +18,7 @@ public enum ErrorStatus implements BaseErrorCode {
     // 인증/회원 관련
     _INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH401-INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다."),
     _EMAIL_DUPLICATED(HttpStatus.CONFLICT, "AUTH409-EMAIL_DUPLICATED", "이미 사용 중인 이메일입니다."),
+    _EMAIL_INVALID_FORMAT(HttpStatus.BAD_REQUEST, "AUTH400-EMAIL_INVALID", "올바른 이메일 형식이 아닙니다."),
     _EMAIL_RECENTLY_DELETED(HttpStatus.CONFLICT, "AUTH409-EMAIL_RECENTLY_DELETED", "최근 탈퇴한 이메일입니다. 탈퇴 후 7일 이내 재가입할 수 없습니다."),
     _EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "AUTH400-EMAIL_NOT_VERIFIED", "이메일 인증이 완료되지 않았습니다. 이메일 인증을 먼저 완료해주세요."),
     _EMAIL_VERIFY_FAILED(HttpStatus.BAD_REQUEST, "AUTH400-EMAIL_VERIFY_FAILED", "인증 코드가 만료되었거나 일치하지 않습니다."),

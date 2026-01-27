@@ -14,7 +14,6 @@ import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.service.InquiryService;
-import com.fmi.domain.inquiry.web.dto.InquiryReplyCreateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.notice.service.NoticeService;
 import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
@@ -37,6 +36,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -91,8 +92,9 @@ public class AdminController {
                     )
             )
     })
-    public ApiResponse<InquiryDetailDTO> getInquiryDetail(@PathVariable Long inquiryId) {
-        InquiryDetailDTO response = adminService.getInquiryDetail(inquiryId);
+    public ApiResponse<InquiryDetailDTO> getInquiryDetail(@PathVariable Long inquiryId,
+                                                          @AuthenticationPrincipal UserDetails userDetails) {
+        InquiryDetailDTO response = adminService.getInquiryDetail(inquiryId, userDetails);
         return ApiResponse.onSuccess(response);
     }
 
@@ -219,27 +221,6 @@ public class AdminController {
     public ApiResponse<String> deleteNotice(@PathVariable Long noticeId) {
         noticeService.deleteNotice(noticeId);
         return ApiResponse.onSuccess("공지사항 삭제 완료");
-    }
-
-    @PostMapping("/inquiries/{inquiryId}/reply")
-    @Operation(summary = "문의 답변 등록(관리자)")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 답변 등록 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}"
-                            )
-                    )
-            )
-    })
-    public ApiResponse<Long> addInquiryReply(@PathVariable Long inquiryId,
-                                             @RequestBody InquiryReplyCreateRequestDTO request) {
-        Long replyId = inquiryService.addReply(inquiryId, request.getContent(), null);
-        return ApiResponse.onSuccess(replyId);
     }
 
     @PutMapping("/inquiries/{inquiryId}/status")

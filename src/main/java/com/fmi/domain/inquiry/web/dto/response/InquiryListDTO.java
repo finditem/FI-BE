@@ -20,6 +20,8 @@ public class InquiryListDTO {
     private Long inquiryId;
     @Schema(description = "제목", example = "계정 관련 문의")
     private String title;
+    @Schema(description = "내용", example = "비밀번호를 변경하고 싶습니다.")
+    private String content;
     @Schema(description = "카테고리", example = "ACCOUNT")
     private InquiryCategory category;
     @Schema(description = "처리 상태", example = "ANSWERED")
