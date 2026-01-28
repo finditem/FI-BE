@@ -95,10 +95,21 @@ public class PostController {
     }
 
     @GetMapping("/{postId}")
-    @Operation(summary = "게시글 상세 조회")
+    @Operation(
+            summary = "게시글 상세 조회",
+            description = """
+                게시글 상세 정보를 조회합니다.
+                
+                조회수 정책:
+                - 회원: userId 기준으로 하루 1회만 조회수 증가
+                - 비회원: IP(해시) 기준으로 하루 1회만 조회수 증가
+                - '하루'는 Asia/Seoul 기준 00:00 ~ 23:59 입니다.
+                """
+    )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 상세 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다", content = @Content)
     })
     public ResponseEntity<ApiResponse<PostGetResponse>> getPost(@PathVariable Long postId,
                                                                 @AuthenticationPrincipal UserDetails userDetails,
