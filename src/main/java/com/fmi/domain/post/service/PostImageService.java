@@ -21,7 +21,7 @@ public class PostImageService {
     private final PostImageRepository postImageRepository;
 
     @Transactional
-    public void createPostImage(List<MultipartFile> imageList, Post post){
+    public void createPostImageAtS3AndDB(List<MultipartFile> imageList, Post post) {
         List<PostImage> postImageList = new ArrayList<>();
         if (Objects.nonNull(imageList)) {
             postImageList = PostImageConverter.createPostImageList(s3Service.upload(imageList), post);
@@ -31,7 +31,7 @@ public class PostImageService {
     }
 
     @Transactional
-    public void deleteImageByPost(Post post) {
+    public void deleteAllImageByPost(Post post) {
         List<PostImage> postImageList = postImageRepository.findByPost(post);
 
         List<String> urlList = postImageList.stream().map(PostImage::getImgUrl).toList();
@@ -39,5 +39,21 @@ public class PostImageService {
         s3Service.delete(urlList);
 
         postImageList.forEach(postImageRepository::delete);
+    }
+
+    @Transactional
+    public void deleteImageAtS3(List<PostImage> imageList) {
+        List<String> imageUrlList = imageList.stream().map(PostImage::getImgUrl).toList();
+        s3Service.delete(imageUrlList);
+    }
+
+    @Transactional
+    public void deleteImageAtDB(List<PostImage> imageList) {
+        imageList.forEach(postImageRepository::delete);
+    }
+
+    @Transactional
+    public List<PostImage> findAllByPost(Post post) {
+        return postImageRepository.findByPost(post);
     }
 }

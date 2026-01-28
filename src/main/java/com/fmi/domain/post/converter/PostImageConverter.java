@@ -34,7 +34,7 @@ public final class PostImageConverter {
     }
 
     public static PostImageResponse toResponse(PostImage postImage) {
-        return new PostImageResponse(postImage.getImgUrl(), postImage.getImageType());
+        return new PostImageResponse(postImage.getId(), postImage.getImgUrl(), postImage.getImageType());
     }
 
     private PostImageConverter() {

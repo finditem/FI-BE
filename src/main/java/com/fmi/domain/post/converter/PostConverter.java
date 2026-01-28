@@ -7,11 +7,9 @@ import com.fmi.domain.post.web.dto.request.PostCreateRequest;
 import com.fmi.domain.post.web.dto.response.PostCreateResponse;
 import com.fmi.domain.post.web.dto.response.PostGetResponse;
 import com.fmi.domain.post.web.dto.response.PostImageResponse;
-import org.springframework.data.domain.Slice;
+import com.fmi.domain.post.web.dto.response.PostUpdateResponse;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public final class PostConverter {
 
@@ -31,6 +29,10 @@ public final class PostConverter {
 
     public static PostCreateResponse toCreateResponse(Post post) {
         return new PostCreateResponse(post.getId());
+    }
+
+    public static PostUpdateResponse toUpdateResponse(Post post) {
+        return new PostUpdateResponse(post.getId());
     }
 
     public static PostGetResponse toGetResponse(Post post, boolean isFavorite, long viewCount, long chatRoomCount, boolean isNew, boolean isHot, long favoriteCount, long userPostCount, List<PostImageResponse> imageList) {
@@ -79,7 +81,6 @@ public final class PostConverter {
 //    }
 
 
-
 //    public void updatePostFromDto(Post post, UpdatePostDto dto) {
 //        if (dto.getPostType() != null) post.setPostType(dto.getPostType());
 //        if (dto.getTitle() != null) post.setTitle(dto.getTitle());
@@ -111,10 +112,6 @@ public final class PostConverter {
 //    }
 
 
-
-
-
-
 //    public PostShareResponse toShareResponse(Post post) {
 //
 //        return PostShareResponse.builder()
@@ -125,25 +122,32 @@ public final class PostConverter {
 //    }
 
 
-//    public PostListResponse toPostListResponse(Post post, Long hotPostId, Long viewCount, boolean isFavorite) {
-//
-//        return PostListResponse.builder()
-//                .postId(post.getId())
-//                .title(post.getTitle())
+
+    //TODO 이거 물어봐서 해보기
+    public PostListResponse toPostListResponse(Post post, Long hotPostId, Long viewCount, boolean isFavorite) {
+
+        return PostListResponse.builder()
+                .postId(post.getId())
+                .title(post.getTitle())
 //                .summary(createSummary(post, 20))
+                .summary(null)
 //                .thumbnailUrl(createThumbnail(post))
-//                .address(post.getAddress())
+                .thumbnailUrl(null)
+                .address(post.getAddress())
 //                .itemStatus(post.getItemStatus())
+                .itemStatus(null)
 //                .postType(post.getPostType())
+                .postType(null)
 //                .favoriteCount(post.getFavoriteCount())
-//                .category(post.getCategory())
-//                .createdAt(post.getCreatedAt())
-//                .isNew(post.isNew())
-//                .isHot(post.getId().equals(hotPostId))
-//                .viewCount(viewCount)
-//                .favoriteStatus(isFavorite)
-//                .build();
-//    }
+                .favoriteCount(null)
+                .category(post.getCategory())
+                .createdAt(post.getCreatedAt())
+                .isNew(post.isNew())
+                .isHot(post.getId().equals(hotPostId))
+                .viewCount(viewCount)
+                .favoriteStatus(isFavorite)
+                .build();
+    }
 
 //    public FilterResponse toFilterResponse(Slice<Post> slice,
 //                                           Long hotPostId,

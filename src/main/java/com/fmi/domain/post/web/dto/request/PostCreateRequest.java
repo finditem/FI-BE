@@ -22,8 +22,10 @@ public record PostCreateRequest(
         @NotBlank
         String address,
 
+        @NotNull
         Double latitude,
 
+        @NotNull
         Double longitude,
 
         @NotBlank

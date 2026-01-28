@@ -7,6 +7,8 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 @Entity
 @Getter
@@ -89,5 +91,45 @@ public class Post {
 
     public boolean isNew() {
         return this.createdAt.isAfter(LocalDateTime.now().minusHours(24));
+    }
+
+    public void updateRadius(Radius radius) {
+        applyIfNotNull(radius, this::setRadius);
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void update(PostType postType,
+                       String title,
+                       PostStatus postStatus,
+                       LocalDate date,
+                       String address,
+                       Double latitude,
+                       Double longitude,
+                       String content,
+                       Boolean temporarySave,
+                       Radius radius,
+                       Category category) {
+
+        applyIfNotNull(postType, this::setPostType);
+        applyIfNotNull(title, this::setTitle);
+        applyIfNotNull(postStatus, this::setPostStatus);
+        applyIfNotNull(date, this::setDate);
+        applyIfNotNull(address, this::setAddress);
+        applyIfNotNull(latitude, this::setLatitude);
+        applyIfNotNull(longitude, this::setLongitude);
+        applyIfNotNull(content, this::setContent);
+        applyIfNotNull(temporarySave, this::setTemporarySave);
+        applyIfNotNull(radius, this::setRadius);
+        applyIfNotNull(category, this::setCategory);
+
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    private <T> void applyIfNotNull(T value, Consumer<T> setter) {
+        if (Objects.nonNull(value)) setter.accept(value);
+    }
+
+    public void increaseViewCount() {
+        this.viewCount++;
     }
 }

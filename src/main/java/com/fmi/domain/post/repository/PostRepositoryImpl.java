@@ -1,91 +1,226 @@
 package com.fmi.domain.post.repository;
 
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.post.data.Post;
-import com.fmi.domain.post.data.QPost;
-import com.fmi.domain.post.web.dto.PostFilterDto;
+import com.fmi.domain.post.data.*;
+import com.fmi.domain.post.web.dto.response.PostBriefResponse;
+import com.fmi.domain.post.web.dto.response.PostImageResponse;
+import com.fmi.domain.post.web.dto.response.PostPageResponse;
+import com.fmi.domain.postfavorite.data.QPostFavorite;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.fmi.domain.post.data.QPostImage.postImage;
 
 @Repository
 @RequiredArgsConstructor
-public class PostRepositoryImpl implements PostRepositoryCustom{
+public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Slice<Post> findPostsByFilters(PostFilterDto dto, Pageable pageable, Long cursorId){
+    public PostPageResponse searchPostsByFiltersAndSort(PostType postType, PostStatus postStatus, Category category, String address, LocalDate startDate, LocalDate endDate, SortType sortType, Long cursor, int size, Long userId) {
+        QPost post = QPost.post;
+        QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
-        QPost p = QPost.post;
+        BooleanExpression whereQuery = Expressions.allOf(
+                addressStartsWith(post, address),
+                equalsPostType(post, postType),
+                equalsPostStatus(post, postStatus),
+                equalsCategory(post, category),
+                geDate(post, startDate),
+                leDate(post, endDate),
+                cursorCondition(post, sortType, cursor)
+        );
 
-        Post cursor = null;
-        if (cursorId != null) {
-            cursor = queryFactory.selectFrom(p)
-                    .where(p.id.eq(cursorId))
-                    .fetchOne();
+        List<Post> posts;
+        if (Objects.equals(sortType, SortType.MOST_FAVORITED)) {
+            posts = queryFactory.select(post)
+                    .from(post).leftJoin(postFavorite).on(
+                            postFavorite.post.eq(post),
+                            postFavorite.isFavorite.isTrue()
+                    ).where(whereQuery)
+                    .groupBy(post.id)
+                    .orderBy(
+                            postFavorite.favorite_id.count().desc(),
+                            post.id.desc()
+                    )
+                    .limit(size + 1)
+                    .fetch();
+        } else {
+            posts = queryFactory
+                    .selectFrom(post)
+                    .where(whereQuery)
+                    .orderBy(orderBySortType(post, sortType))
+                    .limit(size + 1)
+                    .fetch();
         }
 
-        JPAQuery<Post> query = queryFactory
-                .selectFrom(p)
+        boolean hasNext = posts.size() > size;
+        if (hasNext) {
+            posts = posts.subList(0, size);
+        }
+
+        Long nextCursor = (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
+
+        if (posts.isEmpty()) {
+            return new PostPageResponse(List.of(), null, false);
+        }
+
+        List<Long> postIdList = posts.stream().map(Post::getId).toList();
+
+        Map<Long, PostImageResponse> thumbnailMap = queryFactory
+                .select(postImage.post.id, postImage.id, postImage.imgUrl)
+                .from(postImage)
                 .where(
-                        dto.getCategory() != null ? p.category.eq(dto.getCategory()) : null,
-                        dto.getAddress() != null ? p.address.containsIgnoreCase(dto.getAddress()) : null,
-                        dto.getItemStatus() != null ? p.itemStatus.eq(dto.getItemStatus()) : null,
-                        dto.getStartDate() != null ? p.createdAt.goe(dto.getStartDate().atStartOfDay()) : null,
-                        dto.getEndDate() != null ? p.createdAt.loe(dto.getEndDate().atTime(23,59,59)) : null,
-                        cursorCondition(cursor, dto.getSortType(), p)
+                        postImage.post.id.in(postIdList),
+                        postImage.imageType.eq(ImageType.THUMBNAIL)
                 )
-                .orderBy(getOrderBy(dto.getSortType(), p))
-                .limit(pageable.getPageSize() + 1);
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        t -> t.get(postImage.post.id),
+                        t -> new PostImageResponse(t.get(postImage.id), t.get(postImage.imgUrl), t.get(postImage.imageType))
+                ));
+
+        Map<Long, Long> favoriteCountMap = queryFactory
+                .select(postFavorite.post.id, postFavorite.favorite_id.count())
+                .from(postFavorite)
+                .where(
+                        postFavorite.post.id.in(postIdList),
+                        postFavorite.isFavorite.isTrue()
+                )
+                .groupBy(postFavorite.post.id)
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        t -> t.get(postFavorite.post.id),
+                        t -> t.get(postFavorite.favorite_id.count())
+                ));
 
 
-        List<Post> content = query.fetch();
-        boolean hasNext = content.size() > pageable.getPageSize();
-        if (hasNext) content.remove(pageable.getPageSize());
+        Set<Long> myFavoritePostIds = Objects.isNull(userId) ? Set.of() :
+                new HashSet<>(
+                        queryFactory
+                                .select(postFavorite.post.id)
+                                .from(postFavorite)
+                                .where(
+                                        postFavorite.user.id.eq(userId),
+                                        postFavorite.post.id.in(postIdList),
+                                        postFavorite.isFavorite.isTrue()
+                                )
+                                .fetch()
+                );
 
-        return new SliceImpl<>(content, pageable, hasNext);
+
+        List<PostBriefResponse> postList = posts.stream()
+                .map(p -> {
+                    Long pid = p.getId();
+                    long favCnt = favoriteCountMap.getOrDefault(pid, 0L);
+
+                    boolean isNew = p.isNew();
+
+                    // TODO isHot 기준
+                    boolean isHot = favCnt >= 10 || p.getViewCount() >= 100;
+
+                    return new PostBriefResponse(
+                            pid,
+                            p.getTitle(),
+                            makeSummary(p.getContent()),
+                            thumbnailMap.get(pid),
+                            p.getAddress(),
+                            p.getPostStatus(),
+                            p.getPostType(),
+                            p.getCategory(),
+                            favCnt,
+                            myFavoritePostIds.contains(pid),
+                            p.getViewCount(),
+                            isNew,
+                            isHot,
+                            p.getCreatedAt()
+                    );
+                })
+                .toList();
+
+        return new PostPageResponse(postList, nextCursor, hasNext);
     }
 
-    private OrderSpecifier<?>[] getOrderBy(SortType sortType, QPost p) {
+    private BooleanExpression addressStartsWith(QPost post, String address) {
+        if (Objects.isNull(address) || address.isBlank()) {
+            return null;
+        }
+
+        return post.address.startsWith(address);
+    }
+
+    private BooleanExpression equalsPostType(QPost post, PostType postType) {
+        return Objects.isNull(postType) ? null : post.postType.eq(postType);
+    }
+
+    private BooleanExpression equalsPostStatus(QPost post, PostStatus postStatus) {
+        return Objects.isNull(postStatus) ? null : post.postStatus.eq(postStatus);
+    }
+
+    private BooleanExpression equalsCategory(QPost post, Category category) {
+        return Objects.isNull(category) ? null : post.category.eq(category);
+    }
+
+    private BooleanExpression geDate(QPost post, LocalDate startDate) {
+        return Objects.isNull(startDate) ? null : post.createdAt.goe(startDate.atStartOfDay());
+    }
+
+    private BooleanExpression leDate(QPost post, LocalDate endDate) {
+        return Objects.isNull(endDate) ? null : post.createdAt.loe(endDate.atTime(23, 59, 59));
+    }
+
+    private String makeSummary(String content) {
+        if (Objects.isNull(content)) {
+            return "";
+        }
+        return content.length() <= 50 ? content : content.substring(0, 50) + "...";
+    }
+
+    private OrderSpecifier<?>[] orderBySortType(QPost post, SortType sortType) {
         return switch (sortType) {
-            case OLDEST -> new OrderSpecifier[]{p.createdAt.asc(), p.id.asc()};
-            case LATEST -> new OrderSpecifier[]{p.createdAt.desc(), p.id.desc()};
-            case MOST_FAVORITED -> new OrderSpecifier[]{p.favoriteCount.desc(), p.id.desc()};
-            case MOST_VIEWED -> new OrderSpecifier[]{p.viewCnt.desc(), p.id.desc()};
-            default -> new OrderSpecifier[]{p.id.desc()};
+            case LATEST -> new OrderSpecifier[]{
+                    post.createdAt.desc(),
+                    post.id.desc()
+            };
+
+            case OLDEST -> new OrderSpecifier[]{
+                    post.createdAt.asc(),
+                    post.id.asc()
+            };
+
+            case MOST_VIEWED -> new OrderSpecifier[]{
+                    post.viewCount.desc(),
+                    post.id.desc()
+            };
+
+            case MOST_FAVORITED -> new OrderSpecifier[]{
+                    post.id.desc()
+            };
         };
     }
 
-    private BooleanExpression cursorCondition(Post cursor, SortType sortType, QPost p) {
-        if (cursor == null) return null;
+
+    private BooleanExpression cursorCondition(QPost post, SortType sortType, Long cursor) {
+        if (Objects.isNull(cursor)) {
+            return null;
+        }
 
         return switch (sortType) {
-            case OLDEST ->
-                    p.createdAt.gt(cursor.getCreatedAt())
-                            .or(p.createdAt.eq(cursor.getCreatedAt())
-                                    .and(p.id.gt(cursor.getId())));
-            case LATEST ->
-                    p.createdAt.lt(cursor.getCreatedAt())
-                            .or(p.createdAt.eq(cursor.getCreatedAt())
-                                    .and(p.id.lt(cursor.getId())));
-            case MOST_FAVORITED ->
-                    p.favoriteCount.lt(cursor.getFavoriteCount())
-                            .or(p.favoriteCount.eq(cursor.getFavoriteCount())
-                                .and(p.id.lt(cursor.getId())));
-            case MOST_VIEWED ->
-                    p.viewCnt.lt(cursor.getViewCnt())
-                            .or(p.viewCnt.eq(cursor.getViewCnt())
-                                .and(p.id.lt(cursor.getId())));
-
+            case LATEST, MOST_VIEWED -> post.id.lt(cursor);
+            case OLDEST -> post.id.gt(cursor);
+            case MOST_FAVORITED -> null;
         };
     }
 

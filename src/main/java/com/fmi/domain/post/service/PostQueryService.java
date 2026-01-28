@@ -4,7 +4,6 @@ import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
-import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.converter.PostImageConverter;
 import com.fmi.domain.post.data.Post;
@@ -20,8 +19,9 @@ import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.global.service.S3Service;
 import com.fmi.service.UserQueryService;
+import com.fmi.utils.IpUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -29,10 +29,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,11 +49,12 @@ public class PostQueryService {
     private final PostFavoriteRepository postFavoriteRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final PostFavoriteService postFavoriteService;
+    private final StringRedisTemplate stringRedisTemplate;
 
     // 게시글 단일 조회
-    public PostGetResponse getPost(Long postId, UserDetails userDetails) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
+    @Transactional
+    public PostGetResponse getPost(Long postId, UserDetails userDetails, String clientIp) {
+        Post post = findById(postId);
 
         Long chatRoomCount = chatRoomRepository.countByPostId(postId);
         Long userPostCount = postRepository.countByUserAndTemporarySaveFalse(post.getUser());
@@ -59,6 +62,7 @@ public class PostQueryService {
         List<PostImageResponse> imageList = PostImageConverter.toResponseList(postImageRepository.findByPost(post));
 
         boolean isFavorite = false;
+        boolean canIncreaseViewCount;
 
         if (Objects.nonNull(userDetails)) {
             User user = userQueryService.findUser(userDetails.getUsername());
@@ -67,16 +71,25 @@ public class PostQueryService {
                     .orElse(null);
 
             isFavorite = Objects.nonNull(favorite) && favorite.isFavorite();
+
+            canIncreaseViewCount = canIncreaseViewCount(postId, user.getId());
+        } else {
+            canIncreaseViewCount = canIncreaseViewCount(postId, clientIp);
         }
-//        Long viewCount = increaseViewCount(postId, userDetails);
-        //TODO 조회수 관련 작업 해야함
+
+        long viewCount = post.getViewCount();
+
+        if (canIncreaseViewCount) {
+            postRepository.increaseViewCount(post.getId());
+            viewCount++;
+        }
 
         long favoriteCount = postFavoriteService.countByPostAndIsFavoriteTrue(post);
 
         return PostConverter.toGetResponse(
                 post,
                 isFavorite,
-                0L,
+                viewCount,
                 chatRoomCount,
                 post.isNew(),
                 false,
@@ -86,8 +99,34 @@ public class PostQueryService {
         );
     }
 
+    private boolean canIncreaseViewCount(Long postId, Long userId) {
+        return isFirstToday(postId, "user", String.valueOf(userId));
+    }
 
-    @Transactional(readOnly = true)
+    private boolean canIncreaseViewCount(Long postId, String clientIp) {
+        return isFirstToday(postId, "not-user", IpUtil.hashIp(clientIp));
+    }
+
+    private boolean isFirstToday(Long postId, String sic, String value) {
+        String today = LocalDate.now(ZoneId.of("Asia/Seoul"))
+                .format(DateTimeFormatter.BASIC_ISO_DATE);
+        long ttlSeconds = secondsUntilMidnightSeoul();
+
+        String redisKey = "post:view:" + postId + ":" + today + ":sic:" + sic + ":value:" + value;
+
+        Boolean first = stringRedisTemplate.opsForValue()
+                .setIfAbsent(redisKey, "1", Duration.ofSeconds(ttlSeconds));
+
+        return Boolean.TRUE.equals(first);
+    }
+
+    private long secondsUntilMidnightSeoul() {
+        ZoneId zone = ZoneId.of("Asia/Seoul");
+        LocalDateTime now = LocalDateTime.now(zone);
+        LocalDateTime midnight = now.toLocalDate().plusDays(1).atStartOfDay();
+        return Duration.between(now, midnight).getSeconds();
+    }
+
     public PostPageResponse getPostListByFilterOrSort(PostType postType,
                                                       PostStatus postStatus,
                                                       Category category,
@@ -98,12 +137,25 @@ public class PostQueryService {
                                                       Long cursor,
                                                       int size,
                                                       @AuthenticationPrincipal UserDetails userDetails) {
-        if (Objects.isNull(userDetails)) {
 
-        }
+        User user = userQueryService.findUserIfNullReturnNull(userDetails);
 
+        return postRepository.searchPostsByFiltersAndSort(
+                postType,
+                postStatus,
+                category,
+                address,
+                startDate,
+                endDate,
+                sortType,
+                cursor,
+                size,
+                user.getId());
+    }
 
-        return null;
+    public Post findById(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
     }
 
     public void notUserSearch() {
