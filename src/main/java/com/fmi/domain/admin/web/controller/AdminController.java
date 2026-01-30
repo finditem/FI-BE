@@ -5,6 +5,7 @@ import com.fmi.domain.admin.dto.AdminInquiryResponse;
 import com.fmi.domain.admin.dto.AdminReportResponse;
 import com.fmi.domain.admin.dto.AdminUserDetailResponse;
 import com.fmi.domain.admin.service.AdminService;
+import com.fmi.domain.admin.web.dto.AdminIpBlockRequest;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.response.SignupResponse;
@@ -241,6 +242,48 @@ public class AdminController {
     public ApiResponse<String> updateInquiryStatus(@PathVariable Long inquiryId,
                                                    @Valid @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryStatusUpdateRequestDTO request) {
         inquiryService.updateStatus(inquiryId, request.getStatus());
+        return ApiResponse.onSuccess("OK");
+    }
+
+    @PostMapping("/inquiries/{inquiryId}/block-ip")
+    @Operation(summary = "문의 IP 차단(관리자)", description = "문의에 저장된 IP를 블랙리스트에 등록합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "IP 차단 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "INQUIRY400-IP_NOT_FOUND: 문의에 IP 정보가 없습니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY400-IP_NOT_FOUND\", \"message\": \"문의에 IP 정보가 없습니다.\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description = "INQUIRY409-IP_ALREADY_BLOCKED: 이미 차단된 IP입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY409-IP_ALREADY_BLOCKED\", \"message\": \"이미 차단된 IP입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<String> blockInquiryIp(@PathVariable Long inquiryId,
+                                              @RequestBody(required = false) AdminIpBlockRequest request) {
+        String reason = request != null ? request.getReason() : null;
+        adminService.blockInquiryIp(inquiryId, reason);
         return ApiResponse.onSuccess("OK");
     }
 

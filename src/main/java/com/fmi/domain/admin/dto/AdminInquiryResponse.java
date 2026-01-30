@@ -37,5 +37,8 @@ public class AdminInquiryResponse {
     private String userNickname;
     @Schema(description = "사용자 이메일", example = "user@example.com")
     private String userEmail;
+
+    @Schema(description = "문의 IP", example = "192.0.2.1")
+    private String ip;
 }
 

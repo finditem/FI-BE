@@ -11,8 +11,6 @@ import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.web.dto.ProfileImageUpdateRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.global.apiPayload.ApiResponse;
-import com.fmi.global.apiPayload.code.status.ErrorStatus;
-import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -26,8 +24,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/users")
@@ -36,8 +32,6 @@ import java.util.regex.Pattern;
 public class UserController {
 
     private final UserService userService;
-    private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     @PostMapping("/uploads/images")
     @Operation(summary = "이미지 업로드", description = "여러 장의 이미지를 S3에 업로드하고 URL을 반환합니다. (JPEG, PNG 형식만 지원)")
@@ -100,7 +94,6 @@ public class UserController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         String email = userDetails.getUsername();
-        validateEmail(email);
         UserProfileResponse response = userService.getMyProfile(email);
         return ApiResponse.onSuccess(response);
     }
@@ -176,7 +169,6 @@ public class UserController {
             @Valid @RequestBody UserUpdateRequest request
     ) {
         String email = userDetails.getUsername();
-        validateEmail(email);
         UserProfileResponse response = userService.updateMyProfile(email, request);
         return ApiResponse.onSuccess(response);
     }
@@ -222,7 +214,6 @@ public class UserController {
             @RequestBody ProfileImageUpdateRequest request
     ) {
         String email = userDetails.getUsername();
-        validateEmail(email);
         UserProfileResponse response = userService.updateProfileImage(email, request);
         return ApiResponse.onSuccess(response);
     }
@@ -258,7 +249,6 @@ public class UserController {
             @Valid @RequestBody PasswordVerifyRequest request
     ) {
         String email = userDetails.getUsername();
-        validateEmail(email);
         userService.verifyPasswordWithException(email, request);
         return ApiResponse.onSuccess(null);
     }
@@ -304,7 +294,6 @@ public class UserController {
             @Valid @RequestBody PasswordChangeRequest request
     ) {
         String email = userDetails.getUsername();
-        validateEmail(email);
         userService.changePassword(email, request);
         return ApiResponse.onSuccess(null);
     }
@@ -360,18 +349,8 @@ public class UserController {
             @Valid @RequestBody AccountDeleteRequest request
     ) {
         String email = userDetails.getUsername();
-        validateEmail(email);
         userService.deleteAccount(email, request);
         return ApiResponse.onSuccess(null);
-    }
-
-    private void validateEmail(String email) {
-        if (Objects.isNull(email) || email.isBlank()) {
-            throw new GeneralException(ErrorStatus._EMAIL_INVALID_FORMAT);
-        }
-        if (!EMAIL_PATTERN.matcher(email).matches()) {
-            throw new GeneralException(ErrorStatus._EMAIL_INVALID_FORMAT);
-        }
     }
 }
 

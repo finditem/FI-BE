@@ -47,6 +47,9 @@ public class Inquiry {
     @Column(length = 255)
     private String email;  // 비회원 문의 시 이메일
 
+    @Column(length = 45)
+    private String ip;  // 비회원 문의 시 IP
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
