@@ -10,7 +10,7 @@ public record PostBriefResponse(
         Long id,
         String title,
         String summary,
-        PostImageResponse thumbnailImage,
+        String thumbnailImageUrl,
         String address,
         PostStatus postStatus,
         PostType postType,

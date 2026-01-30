@@ -2,7 +2,7 @@ package com.fmi.domain.user.converter;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.comment.data.Comment;
-import com.fmi.domain.post.response.PostListResponse;
+import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
@@ -59,9 +59,9 @@ public class UserConverter {
 
     public static UserOtherPageResponse toUserOtherPageResponse(
             User user,
-            List<PostListResponse> posts,
+            List<PostBriefResponse> posts,
             List<UserCommentSummaryResponse> comments,
-            List<PostListResponse> favorites
+            List<PostBriefResponse> favorites
     ) {
         return UserOtherPageResponse.builder()
                 .userId(user.getId())

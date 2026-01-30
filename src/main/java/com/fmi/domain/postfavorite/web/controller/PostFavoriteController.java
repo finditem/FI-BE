@@ -1,6 +1,6 @@
 package com.fmi.domain.postfavorite.web.controller;
 
-import com.fmi.domain.post.response.PostListResponse;
+import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,9 +53,9 @@ public class PostFavoriteController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 목록 조회 성공")
     })
     @GetMapping("/users/me/favorites")
-    public ResponseEntity<ApiResponse<List<PostListResponse>>> getFavoritePost(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<PostBriefResponse>>> getFavoritePost(@AuthenticationPrincipal UserDetails userDetails) {
 
-        List<PostListResponse> response = postFavoriteService.getFavoritePost(userDetails);
+        List<PostBriefResponse> response = postFavoriteService.getFavoritePost(userDetails);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }

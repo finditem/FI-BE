@@ -11,9 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +38,7 @@ public class PostImageService {
 
         s3Service.delete(urlList);
 
-        postImageList.forEach(postImageRepository::delete);
+        postImageRepository.deleteAllByPost(post);
     }
 
     @Transactional
@@ -53,7 +52,7 @@ public class PostImageService {
         imageList.forEach(postImageRepository::delete);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<PostImage> findAllByPost(Post post) {
         return postImageRepository.findByPost(post);
     }
@@ -61,5 +60,25 @@ public class PostImageService {
     @Transactional(readOnly = true)
     public PostImage findThumbnailImage(Post post) {
         return postImageRepository.findByPost_IdAndImageType(post.getId(), ImageType.THUMBNAIL).orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, String> findThumbnailUrlByPostList(List<Post> postList) {
+        if (Objects.isNull(postList) || postList.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Long> postIds = postList.stream()
+                .map(Post::getId)
+                .toList();
+
+        List<PostImage> thumbnails =
+                postImageRepository.findThumbnailImagesByPostIds(postIds);
+
+        return thumbnails.stream()
+                .collect(Collectors.toMap(
+                        pi -> pi.getPost().getId(),   // key: postId
+                        PostImage::getImgUrl
+                ));
     }
 }

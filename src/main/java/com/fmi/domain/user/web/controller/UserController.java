@@ -131,11 +131,11 @@ public class UserController {
                     )
             )
     })
-    public ApiResponse<UserOtherPageResponse> getUserOtherPage(
-            @PathVariable Long userId,
-            @RequestParam(required = false, defaultValue = "posts") UserOtherPageType type
+    public ApiResponse<UserOtherPageResponse> getUserOtherPage(@PathVariable Long userId,
+                                                               @RequestParam(required = false, defaultValue = "posts") UserOtherPageType type,
+                                                               @AuthenticationPrincipal UserDetails userDetails
     ) {
-        UserOtherPageResponse response = userService.getOtherUserPage(userId, type);
+        UserOtherPageResponse response = userService.getOtherUserPage(userId, type, userDetails);
         return ApiResponse.onSuccess(response);
     }
 
@@ -174,8 +174,8 @@ public class UserController {
     }
 
     @PatchMapping("/me/profile-image")
-    @Operation(summary = "프로필 이미지 업데이트 및 삭제", 
-               description = "프로필 이미지를 업데이트하거나 삭제합니다. profileImageUrl이 null이면 삭제, 값이 있으면 업데이트됩니다.")
+    @Operation(summary = "프로필 이미지 업데이트 및 삭제",
+            description = "프로필 이미지를 업데이트하거나 삭제합니다. profileImageUrl이 null이면 삭제, 값이 있으면 업데이트됩니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 이미지 업데이트/삭제 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -219,8 +219,8 @@ public class UserController {
     }
 
     @PostMapping("/me/password/verify")
-    @Operation(summary = "현재 비밀번호 검증", 
-               description = "현재 비밀번호가 올바른지 검증합니다. 비밀번호 변경 전에 먼저 호출하여 비밀번호를 확인해야 합니다.")
+    @Operation(summary = "현재 비밀번호 검증",
+            description = "현재 비밀번호가 올바른지 검증합니다. 비밀번호 변경 전에 먼저 호출하여 비밀번호를 확인해야 합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비밀번호 검증 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -254,8 +254,8 @@ public class UserController {
     }
 
     @PatchMapping("/me/password")
-    @Operation(summary = "비밀번호 변경", 
-               description = "새 비밀번호로 변경합니다. 비밀번호 검증은 별도 엔드포인트(/users/me/password/verify)에서 먼저 완료해야 합니다. 새 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.")
+    @Operation(summary = "비밀번호 변경",
+            description = "새 비밀번호로 변경합니다. 비밀번호 검증은 별도 엔드포인트(/users/me/password/verify)에서 먼저 완료해야 합니다. 새 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -299,28 +299,28 @@ public class UserController {
     }
 
     @DeleteMapping("/me")
-    @Operation(summary = "회원 탈퇴", 
-               description = """
-                   현재 로그인한 사용자의 계정을 소프트 삭제합니다.
-                   
-                   **삭제 방식:**
-                   - 즉시 소프트 삭제: 계정은 삭제 표시되지만 30일간 데이터가 보관됩니다
-                   - 프로필 이미지는 즉시 S3에서 삭제됩니다
-                   - 30일 후 자동으로 완전 삭제(하드 삭제)됩니다
-                   
-                   **복구 및 재가입:**
-                   - 30일 이내에는 복구가 가능합니다 (관리자 문의)
-                   - 탈퇴 후 7일 이내에는 동일한 이메일로 재가입할 수 없습니다
-                   - 7일 경과 후에는 동일한 이메일로 재가입이 가능합니다
-                   
-                   **주의사항:**
-                   - 탈퇴 후에는 로그인 및 서비스 이용이 불가능합니다
-                   - 작성한 게시글과 댓글은 자동으로 삭제되지 않으며, 익명화 처리될 수 있습니다
-                   
-                   **탈퇴 사유:**
-                   - 탈퇴 사유를 선택해야 합니다
-                   - reason이 OTHER인 경우 otherReason에 상세 사유를 입력할 수 있습니다
-                   """)
+    @Operation(summary = "회원 탈퇴",
+            description = """
+                    현재 로그인한 사용자의 계정을 소프트 삭제합니다.
+                    
+                    **삭제 방식:**
+                    - 즉시 소프트 삭제: 계정은 삭제 표시되지만 30일간 데이터가 보관됩니다
+                    - 프로필 이미지는 즉시 S3에서 삭제됩니다
+                    - 30일 후 자동으로 완전 삭제(하드 삭제)됩니다
+                    
+                    **복구 및 재가입:**
+                    - 30일 이내에는 복구가 가능합니다 (관리자 문의)
+                    - 탈퇴 후 7일 이내에는 동일한 이메일로 재가입할 수 없습니다
+                    - 7일 경과 후에는 동일한 이메일로 재가입이 가능합니다
+                    
+                    **주의사항:**
+                    - 탈퇴 후에는 로그인 및 서비스 이용이 불가능합니다
+                    - 작성한 게시글과 댓글은 자동으로 삭제되지 않으며, 익명화 처리될 수 있습니다
+                    
+                    **탈퇴 사유:**
+                    - 탈퇴 사유를 선택해야 합니다
+                    - reason이 OTHER인 경우 otherReason에 상세 사유를 입력할 수 있습니다
+                    """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원 탈퇴 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(

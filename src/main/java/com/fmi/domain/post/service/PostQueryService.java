@@ -11,6 +11,7 @@ import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostImageRepository;
 import com.fmi.domain.post.repository.PostRepository;
+import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostGetResponse;
 import com.fmi.domain.post.web.dto.response.PostImageResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
@@ -21,11 +22,9 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
 import com.fmi.utils.IpUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +34,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
@@ -48,7 +49,9 @@ public class PostQueryService {
     private final PostFavoriteRepository postFavoriteRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final PostFavoriteService postFavoriteService;
+    private final PostImageService postImageService;
     private final StringRedisTemplate stringRedisTemplate;
+
 
     // 게시글 단일 조회
     @Transactional
@@ -153,8 +156,29 @@ public class PostQueryService {
                 user.getId());
     }
 
+    @Transactional(readOnly = true)
     public Post findById(Long postId) {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public List<PostBriefResponse> getPostBriefResponseList(List<Post> postList, User user) {
+        if (postList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, Boolean> favoriteMap = postFavoriteService.getIsFavoriteMap(user, postList);
+        Map<Long, Long> favoriteCountMap = postFavoriteService.getFavoriteCountMap(postList);
+        Map<Long, String> thumbNailUrlMap = postImageService.findThumbnailUrlByPostList(postList);
+
+        return postList.stream()
+                .map(post ->
+                        PostConverter.toPostBriefResponse(
+                                post,
+                                favoriteMap.getOrDefault(post.getId(), false),
+                                thumbNailUrlMap.getOrDefault(post.getId(), ""),
+                                favoriteCountMap.getOrDefault(post.getId(), 0L)
+                        )).toList();
     }
 }

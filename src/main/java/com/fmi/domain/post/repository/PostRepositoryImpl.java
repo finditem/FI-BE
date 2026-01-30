@@ -4,7 +4,6 @@ import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.post.data.*;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
-import com.fmi.domain.post.web.dto.response.PostImageResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
 import com.querydsl.core.types.OrderSpecifier;
@@ -77,7 +76,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
         List<Long> postIdList = posts.stream().map(Post::getId).toList();
 
-        Map<Long, PostImageResponse> thumbnailMap = queryFactory
+        Map<Long, String> thumbnailMap = queryFactory
                 .select(postImage.post.id, postImage.id, postImage.imgUrl)
                 .from(postImage)
                 .where(
@@ -87,8 +86,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .fetch()
                 .stream()
                 .collect(Collectors.toMap(
-                        t -> t.get(postImage.post.id),
-                        t -> new PostImageResponse(t.get(postImage.id), t.get(postImage.imgUrl), t.get(postImage.imageType))
+                        t -> Objects.requireNonNull(t.get(postImage.post.id)),
+                        t -> Objects.requireNonNull(t.get(postImage.imgUrl))
                 ));
 
         Map<Long, Long> favoriteCountMap = queryFactory
@@ -102,8 +101,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .fetch()
                 .stream()
                 .collect(Collectors.toMap(
-                        t -> t.get(postFavorite.post.id),
-                        t -> t.get(postFavorite.favorite_id.count())
+                        t -> Objects.requireNonNull(t.get(postFavorite.post.id)),
+                        t -> Objects.requireNonNull(t.get(postFavorite.favorite_id.count()))
                 ));
 
 
@@ -134,7 +133,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                     return new PostBriefResponse(
                             pid,
                             p.getTitle(),
-                            makeSummary(p.getContent()),
+                            p.makeSummary(),
                             thumbnailMap.get(pid),
                             p.getAddress(),
                             p.getPostStatus(),
@@ -179,13 +178,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private BooleanExpression leDate(QPost post, LocalDate endDate) {
         return Objects.isNull(endDate) ? null : post.createdAt.loe(endDate.atTime(23, 59, 59));
-    }
-
-    private String makeSummary(String content) {
-        if (Objects.isNull(content)) {
-            return "";
-        }
-        return content.length() <= 50 ? content : content.substring(0, 50) + "...";
     }
 
     private OrderSpecifier<?>[] orderBySortType(QPost post, SortType sortType) {
