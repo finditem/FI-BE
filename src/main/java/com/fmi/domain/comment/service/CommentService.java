@@ -75,7 +75,7 @@ public class CommentService {
 //            post.setImages(postImages);
 //        }
 
-        post.increaseCommentCount();
+//        post.increaseCommentCount();
         boolean isReply = parentComment != null;
 
         Set<Long> mentionedUserIds = handleMentions(savedComment, dto);
@@ -208,7 +208,7 @@ public class CommentService {
             throw new RuntimeException("작성자 또는 관리자만 삭제할 수 있습니다.");
         }
 
-        comment.getPost().decreaseCommentCount(); // 댓글 수 감소
+//        comment.getPost().decreaseCommentCount(); // 댓글 수 감소
 
         commentRepository.delete(comment);
 
