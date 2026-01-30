@@ -2,12 +2,8 @@ package com.fmi.domain.post.converter;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
-import com.fmi.domain.post.response.*;
 import com.fmi.domain.post.web.dto.request.PostCreateRequest;
-import com.fmi.domain.post.web.dto.response.PostCreateResponse;
-import com.fmi.domain.post.web.dto.response.PostGetResponse;
-import com.fmi.domain.post.web.dto.response.PostImageResponse;
-import com.fmi.domain.post.web.dto.response.PostUpdateResponse;
+import com.fmi.domain.post.web.dto.response.*;
 
 import java.util.List;
 
@@ -56,6 +52,25 @@ public final class PostConverter {
                 chatRoomCount,
                 userPostCount,
                 imageList
+        );
+    }
+
+    public static PostBriefResponse toPostBriefResponse(Post post, boolean isFavorite, String thumbnailImageUrl, Long favoriteCount) {
+        return new PostBriefResponse(
+                post.getId(),
+                post.getTitle(),
+                post.makeSummary(),
+                thumbnailImageUrl,
+                post.getAddress(),
+                post.getPostStatus(),
+                post.getPostType(),
+                post.getCategory(),
+                favoriteCount,
+                isFavorite,
+                post.getViewCount(),
+                post.isNew(),
+                false,
+                post.getCreatedAt()
         );
     }
 
@@ -121,33 +136,6 @@ public final class PostConverter {
 //                .build();
 //    }
 
-
-
-    //TODO 이거 물어봐서 해보기
-    public PostListResponse toPostListResponse(Post post, Long hotPostId, Long viewCount, boolean isFavorite) {
-
-        return PostListResponse.builder()
-                .postId(post.getId())
-                .title(post.getTitle())
-//                .summary(createSummary(post, 20))
-                .summary(null)
-//                .thumbnailUrl(createThumbnail(post))
-                .thumbnailUrl(null)
-                .address(post.getAddress())
-//                .itemStatus(post.getItemStatus())
-                .itemStatus(null)
-//                .postType(post.getPostType())
-                .postType(null)
-//                .favoriteCount(post.getFavoriteCount())
-                .favoriteCount(null)
-                .category(post.getCategory())
-                .createdAt(post.getCreatedAt())
-                .isNew(post.isNew())
-                .isHot(post.getId().equals(hotPostId))
-                .viewCount(viewCount)
-                .favoriteStatus(isFavorite)
-                .build();
-    }
 
 //    public FilterResponse toFilterResponse(Slice<Post> slice,
 //                                           Long hotPostId,
