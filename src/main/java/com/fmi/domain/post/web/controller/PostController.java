@@ -4,7 +4,6 @@ import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
-import com.fmi.domain.post.response.*;
 import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.post.web.dto.request.PostCreateRequest;
