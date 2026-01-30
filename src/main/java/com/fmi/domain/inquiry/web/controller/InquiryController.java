@@ -39,9 +39,29 @@ public class InquiryController {
      * POST /api/inquiries
      */
     @PostMapping
-    @Operation(summary = "1:1 개인 문의 작성", description = "비회원도 가능하며, 비회원인 경우 email을 포함할 수 있습니다.")
+    @Operation(summary = "1:1 개인 문의 작성", description = "비회원도 가능하며, 비회원인 경우 email 필수입니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 작성 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 작성 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "INQUIRY400-GUEST_EMAIL_REQUIRED: 비회원 문의는 이메일이 필수입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY400-GUEST_EMAIL_REQUIRED\", \"message\": \"비회원 문의는 이메일이 필수입니다.\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "INQUIRY403-IP_BLOCKED: 차단된 IP입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY403-IP_BLOCKED\", \"message\": \"차단된 IP입니다.\"}"
+                            )
+                    )
+            )
     })
     public ApiResponse<Long> createInquiry(
             @Valid @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO request,
