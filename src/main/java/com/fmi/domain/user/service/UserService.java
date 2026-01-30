@@ -4,11 +4,10 @@ import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
-import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
-import com.fmi.domain.post.response.PostListResponse;
-import com.fmi.domain.post.service.PostService;
+import com.fmi.domain.post.service.PostQueryService;
+import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.user.converter.UserConverter;
@@ -25,8 +24,10 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import com.fmi.service.EmailService;
+import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+
 
 @Slf4j
 @Service
@@ -47,11 +48,11 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final S3Service s3Service;
     private final PostRepository postRepository;
-    private final PostConverter postConverter;
     private final CommentRepository commentRepository;
     private final EmailService emailService;
     private final PostFavoriteRepository postFavoriteRepository;
-    private final PostService postService;
+    private final PostQueryService postQueryService;
+    private final UserQueryService userQueryService;
 
     /**
      * 내 정보 조회
@@ -60,7 +61,7 @@ public class UserService {
     public UserProfileResponse getMyProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        
+
         return UserConverter.toUserProfileResponse(user);
     }
 
@@ -73,54 +74,44 @@ public class UserService {
      * - 미지정 또는 기본값: posts (게시글만 조회)
      */
     @Transactional(readOnly = true)
-    public UserOtherPageResponse getOtherUserPage(Long userId, UserOtherPageType type) {
+    public UserOtherPageResponse getOtherUserPage(Long userId, UserOtherPageType type, UserDetails userDetails) {
 
-        User user = userRepository.findById(userId)
+        User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
+        User me = userQueryService.findUserIfNullReturnNull(userDetails);
+
         // type에 따라 필요한 데이터만 조회
-        List<PostListResponse> posts = Collections.emptyList();
+        List<PostBriefResponse> posts = Collections.emptyList();
         List<UserCommentSummaryResponse> comments = Collections.emptyList();
-        List<PostListResponse> favorites = Collections.emptyList();
+        List<PostBriefResponse> favorites = Collections.emptyList();
 
         UserOtherPageType resolvedType = type == null ? UserOtherPageType.POSTS : type;
         switch (resolvedType) {
-            case POSTS -> posts = postRepository.findAllPublishedWithImagesByUser(user).stream()
-                    .map(post -> postConverter.toPostListResponse(post, null, null, false))
-                    .toList();
-            case COMMENTS -> comments = commentRepository.findAllWithPostByUser(user).stream()
+            case POSTS -> {
+                List<Post> postList = postRepository.findAllPublishedWithImagesByUser(targetUser);
+                posts = postQueryService.getPostBriefResponseList(postList, me);
+            }
+
+            case COMMENTS -> comments = commentRepository.findAllWithPostByUser(targetUser).stream()
                     .map(UserConverter::toUserCommentSummaryResponse)
                     .toList();
-            case FAVORITES -> favorites = getFavoritePostsByUser(user);
+            case FAVORITES -> favorites = getFavoritePostsByUser(targetUser, me);
         }
 
-        return UserConverter.toUserOtherPageResponse(user, posts, comments, favorites);
+        return UserConverter.toUserOtherPageResponse(targetUser, posts, comments, favorites);
     }
 
     /**
      * 특정 사용자의 즐겨찾기 게시글 조회
      */
-    private List<PostListResponse> getFavoritePostsByUser(User user) {
-        List<PostFavorite> favorites = postFavoriteRepository.findByUserAndIsFavoriteTrue(user);
-        List<Post> posts = favorites.stream()
+    private List<PostBriefResponse> getFavoritePostsByUser(User targetUser, User me) {
+        List<PostFavorite> favorites = postFavoriteRepository.findByUserAndIsFavoriteTrue(targetUser);
+        List<Post> postList = favorites.stream()
                 .map(PostFavorite::getPost)
                 .toList();
 
-        if (posts.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Long> postIds = posts.stream().map(Post::getId).toList();
-        Map<Long, Long> viewCounts = postService.getViewCountsFromRedis(postIds);
-
-        return posts.stream()
-                .map(post -> postConverter.toPostListResponse(
-                        post,
-                        null,
-                        viewCounts.getOrDefault(post.getId(), 0L),
-                        true
-                ))
-                .toList();
+        return postQueryService.getPostBriefResponseList(postList, me);
     }
 
     /**
@@ -140,7 +131,7 @@ public class UserService {
         // User 닉네임 업데이트
         UserConverter.updateUserFromRequest(user, request);
         user.setUpdatedAt(LocalDateTime.now());
-        
+
         User updatedUser = userRepository.save(user);
         return UserConverter.toUserProfileResponse(updatedUser);
     }
@@ -164,7 +155,7 @@ public class UserService {
         // 새 이미지 설정 (null이면 삭제, 값이 있으면 업데이트)
         user.setProfile_img(request.getProfileImageUrl());
         user.setUpdatedAt(LocalDateTime.now());
-        
+
         User updatedUser = userRepository.save(user);
         return UserConverter.toUserProfileResponse(updatedUser);
     }
@@ -177,12 +168,12 @@ public class UserService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         boolean passwordMatches = false;
-        
+
         // 임시 비밀번호가 활성화되어 있는지 확인
-        boolean hasActiveTemporaryPassword = user.getTemporaryPassword() != null 
+        boolean hasActiveTemporaryPassword = user.getTemporaryPassword() != null
                 && user.getTemporaryPasswordExpiresAt() != null
                 && LocalDateTime.now().isBefore(user.getTemporaryPasswordExpiresAt());
-        
+
         // 임시 비밀번호가 활성화되어 있으면 임시 비밀번호와 원래 비밀번호 모두 확인
         if (hasActiveTemporaryPassword) {
             // 임시 비밀번호 확인
@@ -190,7 +181,7 @@ public class UserService {
                 passwordMatches = true;
             }
             // 원래 비밀번호 확인
-            else if (user.getOriginalPassword() != null 
+            else if (user.getOriginalPassword() != null
                     && passwordEncoder.matches(currentPassword, user.getOriginalPassword())) {
                 passwordMatches = true;
             }
@@ -205,7 +196,7 @@ public class UserService {
                 passwordMatches = true;
             }
         }
-        
+
         return passwordMatches;
     }
 
@@ -234,7 +225,7 @@ public class UserService {
         // 비밀번호 변경: 새 비밀번호로 설정
         String newPasswordHash = passwordEncoder.encode(request.getNewPassword());
         user.setPassword(newPasswordHash);
-        
+
         // 임시 비밀번호 관련 정보 제거
         user.setOriginalPassword(null);  // originalPassword 제거
         user.setTemporaryPassword(null);  // 임시 비밀번호 제거
@@ -272,29 +263,29 @@ public class UserService {
         // Soft Delete (deletedAt 설정)
         user.setDeletedAt(LocalDateTime.now());
         userRepository.save(user);
-        
+
         // 계정 삭제 이메일 발송
         try {
             String nickname = user.getNickname() != null ? user.getNickname() : "회원";
             String userEmail = user.getEmail();
             String deletionDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                     .format(LocalDateTime.now());
-            
+
             emailService.sendHtmlEmail(
-                userEmail,
-                "계정이 삭제되었습니다",
-                "account-deletion-email.html",
-                java.util.Map.of(
-                    "NAME", nickname,
-                    "USER", userEmail,
-                    "DATE", deletionDate
-                )
+                    userEmail,
+                    "계정이 삭제되었습니다",
+                    "account-deletion-email.html",
+                    java.util.Map.of(
+                            "NAME", nickname,
+                            "USER", userEmail,
+                            "DATE", deletionDate
+                    )
             );
         } catch (Exception e) {
             // 이메일 발송 실패해도 계정 삭제는 성공 처리
             log.warn("계정 삭제 이메일 발송 실패: {}", e.getMessage());
         }
-        
+
         log.info("사용자 탈퇴 완료: userId={}, email={}, reason={}", user.getId(), email, request.getReason());
     }
 
