@@ -248,11 +248,24 @@ public class InquiryService {
     }
 
     private void checkGuestRateLimit(String ip) {
-        String key = "inquiry:guest:lock:" + ip;
-        Boolean isFirstRequest = stringRedisTemplate.opsForValue()
-                .setIfAbsent(key, "y", Duration.ofMinutes(5));
-        if (!Boolean.TRUE.equals(isFirstRequest)) {
-            throw new GeneralException(ErrorStatus._INQUIRY_GUEST_RATE_LIMIT);
+        String countKey = "inquiry:guest:count:" + ip;
+
+        // 요청 횟수 증가
+        Long count = stringRedisTemplate.opsForValue().increment(countKey);
+
+        // 첫 요청이면 3분 TTL 설정
+        if (count != null && count == 1) {
+            stringRedisTemplate.expire(countKey, Duration.ofMinutes(3));
+        }
+
+        // 5회 이상이면 자동 블랙리스트 등록
+        if (count != null && count >= 5) {
+            // 아직 블랙리스트에 없으면 추가
+            if (!ipBlacklistService.isBlocked(ip)) {
+                ipBlacklistService.blockIp(ip, "자동 차단: 3분 내 5회 이상 문의 요청");
+            }
+            stringRedisTemplate.delete(countKey);
+            throw new GeneralException(ErrorStatus._INQUIRY_IP_BLOCKED);
         }
     }
 
