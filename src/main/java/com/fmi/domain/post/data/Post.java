@@ -125,6 +125,13 @@ public class Post {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public String makeSummary() {
+        if (Objects.isNull(this.content)) {
+            return "";
+        }
+        return content.length() <= 50 ? content : content.substring(0, 50) + "...";
+    }
+
     private <T> void applyIfNotNull(T value, Consumer<T> setter) {
         if (Objects.nonNull(value)) setter.accept(value);
     }
