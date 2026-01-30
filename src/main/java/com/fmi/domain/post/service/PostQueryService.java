@@ -41,7 +41,6 @@ import java.util.Objects;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class PostQueryService {
     private final PostRepository postRepository;
     private final PostImageRepository postImageRepository;
@@ -127,6 +126,7 @@ public class PostQueryService {
         return Duration.between(now, midnight).getSeconds();
     }
 
+    @Transactional(readOnly = true)
     public PostPageResponse getPostListByFilterOrSort(PostType postType,
                                                       PostStatus postStatus,
                                                       Category category,
@@ -136,7 +136,7 @@ public class PostQueryService {
                                                       SortType sortType,
                                                       Long cursor,
                                                       int size,
-                                                      @AuthenticationPrincipal UserDetails userDetails) {
+                                                      UserDetails userDetails) {
 
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
 
@@ -156,17 +156,5 @@ public class PostQueryService {
     public Post findById(Long postId) {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
-    }
-
-    public void notUserSearch() {
-
-    }
-
-    public void userSearch(UserDetails userDetails) {
-
-    }
-
-    public void searchPostList() {
-
     }
 }

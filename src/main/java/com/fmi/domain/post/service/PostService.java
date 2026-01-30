@@ -9,7 +9,6 @@ import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.Radius;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.response.*;
 import com.fmi.domain.post.web.dto.request.PostCreateRequest;
@@ -26,10 +25,7 @@ import lombok.RequiredArgsConstructor;
 import com.fmi.domain.notification.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -296,42 +292,42 @@ public class PostService {
 //        return postConverter.toFilterResponse(slice, hotPostId, viewCounts, favoritePostIds);
 //    }
 
-    @Scheduled(cron = "0 0 * * * *")
-    public void syncViewCountsToDb() {
-        ScanOptions options = ScanOptions.scanOptions().match("post:view:count:*").build();
-        try (Cursor<String> cursor = stringRedisTemplate.scan(options)) {
+//    @Scheduled(cron = "0 0 * * * *")
+//    public void syncViewCountsToDb() {
+//        ScanOptions options = ScanOptions.scanOptions().match("post:view:count:*").build();
+//        try (Cursor<String> cursor = stringRedisTemplate.scan(options)) {
+//
+//            Map<Long, Long> viewCountMap = new HashMap<>();
+//
+//            while (cursor.hasNext()) {
+//                String key = cursor.next();
+//                Long postId = Long.parseLong(key.substring("post:view:count:".length()));
+//                Long count = Optional.ofNullable(stringRedisTemplate.opsForValue().get(key))
+//                        .map(Long::parseLong)
+//                        .orElse(0L);
+//
+//                if (count > 0) {
+//                    viewCountMap.put(postId, count);
+//                }
+//                stringRedisTemplate.delete(key);
+//
+//            }
+//
+//            if (!viewCountMap.isEmpty()) {
+//                postRepository.batchIncrementViewCounts(viewCountMap);
+//            }
+//
+//
+//        }
+//    }
 
-            Map<Long, Long> viewCountMap = new HashMap<>();
-
-            while (cursor.hasNext()) {
-                String key = cursor.next();
-                Long postId = Long.parseLong(key.substring("post:view:count:".length()));
-                Long count = Optional.ofNullable(stringRedisTemplate.opsForValue().get(key))
-                        .map(Long::parseLong)
-                        .orElse(0L);
-
-                if (count > 0) {
-                    viewCountMap.put(postId, count);
-                }
-                stringRedisTemplate.delete(key);
-
-            }
-
-            if (!viewCountMap.isEmpty()) {
-                postRepository.batchIncrementViewCounts(viewCountMap);
-            }
-
-
-        }
-    }
-
-    public Long getHotPostId() {
-        return postRepository.findHotPost(PageRequest.of(0, 1))
-                .stream()
-                .findFirst()
-                .map(Post::getId)
-                .orElse(null);
-    }
+//    public Long getHotPostId() {
+//        return postRepository.findHotPost(PageRequest.of(0, 1))
+//                .stream()
+//                .findFirst()
+//                .map(Post::getId)
+//                .orElse(null);
+//    }
 
     private Set<Long> getFavoritePostIds(UserDetails userDetails, List<Post> posts) {
 

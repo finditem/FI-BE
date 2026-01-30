@@ -128,8 +128,4 @@ public class Post {
     private <T> void applyIfNotNull(T value, Consumer<T> setter) {
         if (Objects.nonNull(value)) setter.accept(value);
     }
-
-    public void increaseViewCount() {
-        this.viewCount++;
-    }
 }

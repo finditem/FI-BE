@@ -1,6 +1,7 @@
 package com.fmi.domain.post.service;
 
 import com.fmi.domain.post.converter.PostImageConverter;
+import com.fmi.domain.post.data.ImageType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.repository.PostImageRepository;
@@ -55,5 +56,10 @@ public class PostImageService {
     @Transactional
     public List<PostImage> findAllByPost(Post post) {
         return postImageRepository.findByPost(post);
+    }
+
+    @Transactional(readOnly = true)
+    public PostImage findThumbnailImage(Post post) {
+        return postImageRepository.findByPost_IdAndImageType(post.getId(), ImageType.THUMBNAIL).orElse(null);
     }
 }
