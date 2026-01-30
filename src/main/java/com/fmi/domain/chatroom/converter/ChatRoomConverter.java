@@ -13,10 +13,7 @@ import java.util.stream.Collectors;
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.*;
 
 public class ChatRoomConverter {
-    public static ChatRoomResultDTO toChatRoomResultDTO(ChatRoom chatRoom, User user, Post post) {
-
-        String thumbnailUrl = post.getImages().isEmpty() ? null : post.getImages().get(0).getImgUrl();
-
+    public static ChatRoomResultDTO toChatRoomResultDTO(ChatRoom chatRoom, User user, Post post, String thumbnailUrl) {
         var opponentUser = opponentUserDTO.builder()
                 .opponentUserId(user.getId())
                 .nickname(user.getNickname())
@@ -59,8 +56,8 @@ public class ChatRoomConverter {
                 .build();
 
         Post post = participant.getChatRoom().getPost();
-        String thumbnailUrl = post.getImages().isEmpty() ? null : post.getImages().get(0).getImgUrl();
-
+//        String thumbnailUrl = post.getImages().isEmpty() ? null : post.getImages().get(0).getImgUrl();
+        String thumbnailUrl = null;
         PostInfoDTO postInfoDTO = PostInfoDTO.builder()
                 .postId(post.getId())
                 .postType(post.getPostType())
@@ -75,7 +72,7 @@ public class ChatRoomConverter {
 
         if (lastMessage != null) {
             content = lastMessage.getContent();
-            messageType=lastMessage.getMessageType();
+            messageType = lastMessage.getMessageType();
         }
 
         return ChatRoomSummaryDTO.builder()
@@ -91,5 +88,8 @@ public class ChatRoomConverter {
 
     private static boolean isImageMessage(ChatMessage message) {
         return message.getMessageType() == MessageType.IMAGE;
+    }
+
+    private ChatRoomConverter() {
     }
 }
