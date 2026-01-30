@@ -8,6 +8,7 @@ import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.data.QChatRoom;
 import com.fmi.domain.chatroom.data.QChatRoomParticipant;
 import com.fmi.domain.chatroom.data.enums.ParticipantState;
+import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.data.QPost;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -30,7 +31,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
     }
 
     @Override
-    public Slice<ChatRoomParticipant> findMyChatRooms(Long userId, Long cursorId, Pageable pageable, Type type, String address, SortType sort) {
+    public Slice<ChatRoomParticipant> findMyChatRooms(Long userId, Long cursorId, Pageable pageable, PostType type, String address, SortType sort) {
 
         QChatRoomParticipant pt = QChatRoomParticipant.chatRoomParticipant;
         QChatRoom cr = QChatRoom.chatRoom;
@@ -104,7 +105,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
         return new SliceImpl<>(participants, pageable, hasNext);
     }
 
-    private BooleanExpression typeEq(Type type) {
+    private BooleanExpression typeEq(PostType type) {
         return type != null ? QPost.post.postType.eq(type) : null;
     }
 
