@@ -20,5 +20,7 @@ public class UserOtherPageResponse {
     private List<PostListResponse> posts;
     private List<UserCommentSummaryResponse> comments;
     private List<PostListResponse> favorites;
+    private Long nextCursor;
+    private boolean hasNext;
 }
 

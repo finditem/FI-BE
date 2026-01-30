@@ -101,12 +101,17 @@ public class UserController {
     @GetMapping("/{userId}/page")
     @Operation(summary = "타인 페이지 조회", description = """
             다른 사용자의 닉네임, 프로필 이미지, 게시글, 작성 댓글, 즐겨찾기 목록을 조회합니다.
-            
+
             **type 파라미터:**
             - type=posts → 게시글만 조회
             - type=comments → 댓글만 조회
             - type=favorites → 즐겨찾기만 조회
             - type 미지정 → 기본 탭(posts) 조회
+
+            **페이지네이션:**
+            - cursor: 다음 페이지 시작점 (이전 응답의 nextCursor 값)
+            - size: 한 페이지당 항목 수 (기본값 10)
+            - 응답의 hasNext가 true이면 nextCursor로 다음 페이지 요청 가능
             """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "타인 페이지 조회 성공"),
@@ -133,9 +138,11 @@ public class UserController {
     })
     public ApiResponse<UserOtherPageResponse> getUserOtherPage(
             @PathVariable Long userId,
-            @RequestParam(required = false, defaultValue = "posts") UserOtherPageType type
+            @RequestParam(required = false, defaultValue = "posts") UserOtherPageType type,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        UserOtherPageResponse response = userService.getOtherUserPage(userId, type);
+        UserOtherPageResponse response = userService.getOtherUserPage(userId, type, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 

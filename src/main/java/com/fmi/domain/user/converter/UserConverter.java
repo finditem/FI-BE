@@ -72,5 +72,25 @@ public class UserConverter {
                 .favorites(favorites)
                 .build();
     }
+
+    public static UserOtherPageResponse toUserOtherPageResponse(
+            User user,
+            List<PostListResponse> posts,
+            List<UserCommentSummaryResponse> comments,
+            List<PostListResponse> favorites,
+            Long nextCursor,
+            boolean hasNext
+    ) {
+        return UserOtherPageResponse.builder()
+                .userId(user.getId())
+                .nickname(user.getNickname())
+                .profileImg(user.getProfile_img())
+                .posts(posts)
+                .comments(comments)
+                .favorites(favorites)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .build();
+    }
 }
 
