@@ -1,8 +1,6 @@
 package com.fmi.domain.post.service;
 
-import com.fmi.domain.Enum.Status;
 import com.fmi.domain.auth.data.User;
-import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.post.converter.PostConverter;
@@ -10,7 +8,6 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.repository.PostRepository;
-import com.fmi.domain.post.response.*;
 import com.fmi.domain.post.web.dto.request.PostCreateRequest;
 import com.fmi.domain.post.web.dto.request.PostRadiusUpdateRequest;
 import com.fmi.domain.post.web.dto.request.PostUpdateRequest;
@@ -19,19 +16,16 @@ import com.fmi.domain.post.web.dto.response.PostUpdateResponse;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import com.fmi.domain.notification.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Duration;
 import java.util.*;
 
 @Slf4j
@@ -39,11 +33,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final PostFavoriteRepository postFavoriteRepository;
-    private final StringRedisTemplate stringRedisTemplate;
-    private final ChatRoomRepository chatRoomRepository;
     private final UserQueryService userQueryService;
     private final PostImageService postImageService;
     private final PostQueryService postQueryService;
@@ -107,10 +98,10 @@ public class PostService {
             postImageService.createPostImageAtS3AndDB(images, post);
         }
 
-        //TODO 좋아요 누른 사람들한테 알람
-//        if (!previousStatus.equals(post.getItemStatus())) {
-//            notifyFavoritedUsers(post, post.getItemStatus());
-//        }
+
+        if (!previousStatus.equals(post.getPostStatus())) {
+            notifyFavoriteUsers(post, post.getPostStatus());
+        }
 
         return PostConverter.toUpdateResponse(post);
     }
@@ -128,22 +119,21 @@ public class PostService {
     public void updateRadius(Long postId, PostRadiusUpdateRequest request, UserDetails userDetails) {
         Post post = postQueryService.findById(postId);
         checkPostAccessDenied(post, userDetails.getUsername());
-
         post.updateRadius(request.radius());
     }
 
-    private void checkPostAccessDenied(Post post, String userEmail){
+    private void checkPostAccessDenied(Post post, String userEmail) {
         if (!post.getUser().getEmail().equals(userEmail)) {
             throw new GeneralException(ErrorStatus._POST_ACCESS_DENIED);
         }
     }
 
     //즐찾 알림
-    private void notifyFavoritedUsers(Post post, Status newStatus) {
+    private void notifyFavoriteUsers(Post post, PostStatus newStatus) {
 
-        List<User> favoritedUsers = postFavoriteRepository.findUsersByPost(post);
+        List<User> favoriteUserList = postFavoriteRepository.findUsersByPost(post);
 
-        if (favoritedUsers.isEmpty()) return;
+        if (favoriteUserList.isEmpty()) return;
 
         String title = "즐겨찾기한 게시글 상태 변경";
         String message = switch (newStatus) {
@@ -153,7 +143,7 @@ public class PostService {
 
         Long postOwnerId = post.getUser().getId();
 
-        for (User user : favoritedUsers) {
+        for (User user : favoriteUserList) {
 
             if (user.getId().equals(postOwnerId)) continue;
 
@@ -167,27 +157,6 @@ public class PostService {
             );
             log.info("알림 생성: userId={}, postId={}, newStatus={}", user.getId(), post.getId(), newStatus);
         }
-    }
-
-    //게시글 삭제
-
-
-    // 레디스에 게시글 조회수 가져오기
-    public Map<Long, Long> getViewCountsFromRedis(List<Long> postIds) {
-        if (postIds.isEmpty()) return Collections.emptyMap();
-
-        List<String> keys = postIds.stream()
-                .map(id -> "post:view:count:" + id)
-                .toList();
-
-        List<String> values = stringRedisTemplate.opsForValue().multiGet(keys);
-
-        Map<Long, Long> viewCountMap = new HashMap<>();
-        for (int i = 0; i < postIds.size(); i++) {
-            String val = values.get(i);
-            viewCountMap.put(postIds.get(i), val != null ? Long.parseLong(val) : 0L);
-        }
-        return viewCountMap;
     }
 
 //    @Transactional
@@ -328,16 +297,4 @@ public class PostService {
 //                .map(Post::getId)
 //                .orElse(null);
 //    }
-
-    private Set<Long> getFavoritePostIds(UserDetails userDetails, List<Post> posts) {
-
-        if (userDetails == null || posts.isEmpty()) {
-            return Collections.emptySet();
-        }
-
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
-        return postFavoriteRepository.findPostIdsByUserAndPostIn(user, posts);
-    }
 }
