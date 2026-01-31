@@ -127,14 +127,13 @@ public final class PostConverter {
 //    }
 
 
-//    public PostShareResponse toShareResponse(Post post) {
-//
-//        return PostShareResponse.builder()
-//                .title(post.getTitle())
-//                .summary(createSummary(post, 100))
-//                .thumbnailUrl(createThumbnail(post))
-//                .build();
-//    }
+    public static PostShareResponse toShareResponse(Post post, String thumbNailUrl) {
+        return new PostShareResponse(
+                post.getTitle(),
+                post.makeSummary(),
+                thumbNailUrl
+        );
+    }
 
 
 //    public FilterResponse toFilterResponse(Slice<Post> slice,

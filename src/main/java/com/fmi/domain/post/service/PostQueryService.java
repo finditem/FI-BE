@@ -7,14 +7,12 @@ import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.converter.PostImageConverter;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostImageRepository;
 import com.fmi.domain.post.repository.PostRepository;
-import com.fmi.domain.post.web.dto.response.PostBriefResponse;
-import com.fmi.domain.post.web.dto.response.PostGetResponse;
-import com.fmi.domain.post.web.dto.response.PostImageResponse;
-import com.fmi.domain.post.web.dto.response.PostPageResponse;
+import com.fmi.domain.post.web.dto.response.*;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
@@ -34,10 +32,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -142,6 +137,7 @@ public class PostQueryService {
                                                       UserDetails userDetails) {
 
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
+        Long userId = (Objects.isNull(user) ? null : user.getId());
 
         return postRepository.searchPostsByFiltersAndSort(
                 postType,
@@ -153,7 +149,7 @@ public class PostQueryService {
                 sortType,
                 cursor,
                 size,
-                user.getId());
+                userId);
     }
 
     @Transactional(readOnly = true)
@@ -180,5 +176,17 @@ public class PostQueryService {
                                 thumbNailUrlMap.getOrDefault(post.getId(), ""),
                                 favoriteCountMap.getOrDefault(post.getId(), 0L)
                         )).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PostShareResponse getSharePost(Long postId) {
+        Post post = findById(postId);
+
+        String thumbnailImageUrl = Optional.ofNullable(
+                        postImageService.findThumbnailImage(post)
+                ).map(PostImage::getImgUrl)
+                .orElse(null);
+
+        return PostConverter.toShareResponse(post, thumbnailImageUrl);
     }
 }
