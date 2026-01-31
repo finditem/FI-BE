@@ -14,6 +14,7 @@ import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
+import com.fmi.domain.ipblock.service.IpBlacklistService;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.data.enums.ReportStatus;
@@ -52,6 +53,7 @@ public class AdminService {
     private final CommentRepository commentRepository;
     private final UserCategoryRepository userCategoryRepository;
     private final InquiryCommentService inquiryCommentService;
+    private final IpBlacklistService ipBlacklistService;
 
     public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
                                                      InquiryStatus status,
@@ -69,6 +71,7 @@ public class AdminService {
                 .userNickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
                 .userEmail(inquiry.getEmail() != null ? inquiry.getEmail() :
                         inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
+                .ip(inquiry.getIp())
                 .build());
     }
 
@@ -134,6 +137,13 @@ public class AdminService {
         List<InquiryCommentResponse> comments =
                 inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
         return inquiryConverter.toDetailDTO(inquiry, comments);
+    }
+
+    @Transactional
+    public void blockInquiryIp(Long inquiryId, String reason) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
+        ipBlacklistService.blockIp(inquiry.getIp(), reason);
     }
 
     /**

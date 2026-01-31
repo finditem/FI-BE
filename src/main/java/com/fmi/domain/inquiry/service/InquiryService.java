@@ -13,6 +13,7 @@ import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
 import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
 import com.fmi.domain.inquirycomment.service.InquiryCommentService;
+import com.fmi.domain.ipblock.service.IpBlacklistService;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
@@ -23,10 +24,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -40,15 +44,22 @@ public class InquiryService {
     private final ApplicationEventPublisher eventPublisher;
     private final UserRepository userRepository;
     private final InquiryCommentService inquiryCommentService;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final IpBlacklistService ipBlacklistService;
 
     /**
      * 1:1 개인 문의 생성
      */
     @Transactional
-    public Long createInquiry(InquiryCreateRequestDTO request, UserDetails userDetails) {
+    public Long createInquiry(InquiryCreateRequestDTO request, UserDetails userDetails, String clientIp) {
 
         User user = null;
         String resolvedEmail;
+        String normalizedIp = normalizeIp(clientIp);
+
+        if (ipBlacklistService.isBlocked(normalizedIp)) {
+            throw new GeneralException(ErrorStatus._INQUIRY_IP_BLOCKED);
+        }
 
         if (userDetails != null) {
             user = userRepository.findByEmail(userDetails.getUsername())
@@ -59,6 +70,7 @@ public class InquiryService {
                 throw new GeneralException(ErrorStatus._INQUIRY_GUEST_EMAIL_REQUIRED);
             }
             resolvedEmail = request.getEmail().trim();
+            checkGuestRateLimit(normalizedIp);
         }
 
         Inquiry saved = inquiryRepository.save(
@@ -69,6 +81,7 @@ public class InquiryService {
                         .inquiryType(InquiryType.PRIVATE)
                         .user(user) // 회원이면 user 세팅
                         .email(user == null ? resolvedEmail : null) // 비회원이면 email 컬럼 세팅
+                        .ip(normalizedIp)
                         .build()
         );
 
@@ -225,6 +238,35 @@ public class InquiryService {
             case PENDING -> "보류";
             case ANSWERED -> "답변완료";
         };
+    }
+
+    private String normalizeIp(String ip) {
+        if (ip == null || ip.isBlank()) {
+            return "unknown";
+        }
+        return ip.trim();
+    }
+
+    private void checkGuestRateLimit(String ip) {
+        String countKey = "inquiry:guest:count:" + ip;
+
+        // 요청 횟수 증가
+        Long count = stringRedisTemplate.opsForValue().increment(countKey);
+
+        // 첫 요청이면 3분 TTL 설정
+        if (count != null && count == 1) {
+            stringRedisTemplate.expire(countKey, Duration.ofMinutes(3));
+        }
+
+        // 5회 이상이면 자동 블랙리스트 등록
+        if (count != null && count >= 5) {
+            // 아직 블랙리스트에 없으면 추가
+            if (!ipBlacklistService.isBlocked(ip)) {
+                ipBlacklistService.blockIp(ip, "자동 차단: 3분 내 5회 이상 문의 요청");
+            }
+            stringRedisTemplate.delete(countKey);
+            throw new GeneralException(ErrorStatus._INQUIRY_IP_BLOCKED);
+        }
     }
 
     private boolean isAdmin(UserDetails userDetails) {

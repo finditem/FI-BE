@@ -3,6 +3,7 @@ package com.fmi.domain.user.service;
 import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
@@ -32,6 +33,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -66,7 +70,7 @@ public class UserService {
     }
 
     /**
-     * 타인 페이지 조회
+     * 타인 페이지 조회 (커서 기반 페이지네이션)
      * type 파라미터에 따라 조회할 데이터를 분리합니다.
      * - posts: 게시글만 조회
      * - comments: 댓글만 조회
@@ -74,7 +78,7 @@ public class UserService {
      * - 미지정 또는 기본값: posts (게시글만 조회)
      */
     @Transactional(readOnly = true)
-    public UserOtherPageResponse getOtherUserPage(Long userId, UserOtherPageType type, UserDetails userDetails) {
+    public UserOtherPageResponse getOtherUserPage(Long userId, UserOtherPageType type, UserDetails userDetails, Long cursor, int size) {
 
         User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
@@ -85,21 +89,61 @@ public class UserService {
         List<PostBriefResponse> posts = Collections.emptyList();
         List<UserCommentSummaryResponse> comments = Collections.emptyList();
         List<PostBriefResponse> favorites = Collections.emptyList();
+        Long nextCursor = null;
+        boolean hasNext = false;
 
         UserOtherPageType resolvedType = type == null ? UserOtherPageType.POSTS : type;
+        PageRequest pageRequest = PageRequest.of(0, size);
+
         switch (resolvedType) {
             case POSTS -> {
-                List<Post> postList = postRepository.findAllPublishedWithImagesByUser(targetUser);
+                Slice<Post> postSlice = (cursor == null)
+                        ? postRepository.findPublishedByUserOrderByIdDesc(targetUser, pageRequest)
+                        : postRepository.findPublishedByUserAndIdLessThanOrderByIdDesc(targetUser, cursor, pageRequest);
+
+                List<Post> postList = postSlice.getContent();
                 posts = postQueryService.getPostBriefResponseList(postList, me);
+
+                hasNext = postSlice.hasNext();
+                if (hasNext && !postList.isEmpty()) {
+                    nextCursor = postList.get(postList.size() - 1).getId();
+                }
+            }
+            case COMMENTS -> {
+                Slice<Comment> commentSlice = (cursor == null)
+                        ? commentRepository.findByUserOrderByIdDesc(targetUser, pageRequest)
+                        : commentRepository.findByUserAndIdLessThanOrderByIdDesc(targetUser, cursor, pageRequest);
+
+                List<Comment> commentList = commentSlice.getContent();
+                comments = commentList.stream()
+                        .map(UserConverter::toUserCommentSummaryResponse)
+                        .toList();
+
+                hasNext = commentSlice.hasNext();
+                if (hasNext && !commentList.isEmpty()) {
+                    nextCursor = commentList.get(commentList.size() - 1).getId();
+                }
             }
 
-            case COMMENTS -> comments = commentRepository.findAllWithPostByUser(targetUser).stream()
-                    .map(UserConverter::toUserCommentSummaryResponse)
-                    .toList();
-            case FAVORITES -> favorites = getFavoritePostsByUser(targetUser, me);
+            case FAVORITES -> {
+                Slice<PostFavorite> favoriteSlice = (cursor == null)
+                        ? postFavoriteRepository.findByUserAndIsFavoriteTrueOrderByIdDesc(targetUser, pageRequest)
+                        : postFavoriteRepository.findByUserAndIsFavoriteTrueAndIdLessThanOrderByIdDesc(targetUser, cursor, pageRequest);
+
+                List<Post> favoritePosts = favoriteSlice.getContent().stream()
+                        .map(PostFavorite::getPost)
+                        .toList();
+
+                favorites = postQueryService.getPostBriefResponseList(favoritePosts, me);
+
+                hasNext = favoriteSlice.hasNext();
+                if (hasNext && !favoriteSlice.getContent().isEmpty()) {
+                    nextCursor = favoriteSlice.getContent().get(favoriteSlice.getContent().size() - 1).getFavorite_id();
+                }
+            }
         }
 
-        return UserConverter.toUserOtherPageResponse(targetUser, posts, comments, favorites);
+        return UserConverter.toUserOtherPageResponse(targetUser, posts, comments, favorites, nextCursor, hasNext);
     }
 
     /**
