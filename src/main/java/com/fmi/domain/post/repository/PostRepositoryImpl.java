@@ -119,6 +119,18 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                                 .fetch()
                 );
 
+        Map<Long, Integer> imageCountMap = queryFactory
+                .select(postImage.post.id, postImage.id.count())
+                .from(postImage)
+                .where(postImage.post.id.in(postIdList))
+                .groupBy(postImage.post.id)
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        t -> Objects.requireNonNull(t.get(postImage.post.id)),
+                        t -> Objects.requireNonNull(t.get(postImage.id.count())).intValue()
+                ));
+
 
         List<PostBriefResponse> postList = posts.stream()
                 .map(p -> {
@@ -144,7 +156,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                             p.getViewCount(),
                             isNew,
                             isHot,
-                            p.getCreatedAt()
+                            p.getCreatedAt(),
+                            imageCountMap.getOrDefault(pid, 0)
                     );
                 })
                 .toList();

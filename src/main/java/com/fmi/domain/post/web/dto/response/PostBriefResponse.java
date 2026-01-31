@@ -20,5 +20,6 @@ public record PostBriefResponse(
         Long viewCount,
         boolean isNew,
         boolean isHot,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt,
+        Integer imageCount) {
 }
