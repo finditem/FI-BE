@@ -81,4 +81,17 @@ public class PostImageService {
                         PostImage::getImgUrl
                 ));
     }
+
+    @Transactional(readOnly = true)
+    public Map<Long, Integer> countImageByPostList(List<Post> postList) {
+        if (Objects.isNull(postList) || postList.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Long> postIds = postList.stream()
+                .map(Post::getId)
+                .toList();
+
+        return postImageRepository.countImagesGroupByPostId(postIds);
+    }
 }

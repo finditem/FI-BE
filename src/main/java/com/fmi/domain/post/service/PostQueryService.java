@@ -167,6 +167,7 @@ public class PostQueryService {
         Map<Long, Boolean> favoriteMap = postFavoriteService.getIsFavoriteMap(user, postList);
         Map<Long, Long> favoriteCountMap = postFavoriteService.getFavoriteCountMap(postList);
         Map<Long, String> thumbNailUrlMap = postImageService.findThumbnailUrlByPostList(postList);
+        Map<Long, Integer> postImageCountMap = postImageService.countImageByPostList(postList);
 
         return postList.stream()
                 .map(post ->
@@ -174,7 +175,8 @@ public class PostQueryService {
                                 post,
                                 favoriteMap.getOrDefault(post.getId(), false),
                                 thumbNailUrlMap.getOrDefault(post.getId(), ""),
-                                favoriteCountMap.getOrDefault(post.getId(), 0L)
+                                favoriteCountMap.getOrDefault(post.getId(), 0L),
+                                postImageCountMap.getOrDefault(post.getId(), 0)
                         )).toList();
     }
 

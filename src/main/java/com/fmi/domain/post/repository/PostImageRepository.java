@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PostImageRepository extends JpaRepository<PostImage, Long> {
+public interface PostImageRepository extends JpaRepository<PostImage, Long>, PostImageRepositoryCustom {
 
     List<PostImage> findByPost(Post post);
 
