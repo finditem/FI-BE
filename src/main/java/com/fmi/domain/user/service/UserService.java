@@ -124,7 +124,7 @@ public class UserService {
                 favorites = getFavoritePostsFromSlice(favoriteSlice);
                 hasNext = favoriteSlice.hasNext();
                 if (hasNext && !favoriteSlice.getContent().isEmpty()) {
-                    nextCursor = favoriteSlice.getContent().get(favoriteSlice.getContent().size() - 1).getId();
+                    nextCursor = favoriteSlice.getContent().get(favoriteSlice.getContent().size() - 1).getFavorite_id();
                 }
             }
         }
