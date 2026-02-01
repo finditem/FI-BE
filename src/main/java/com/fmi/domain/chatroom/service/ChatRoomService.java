@@ -59,7 +59,10 @@ public class ChatRoomService {
         // 채팅방이 이미 존재하는 경우
         if (optionalChatRoom.isPresent()) {
             ChatRoom existingRoom = optionalChatRoom.get();
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(existingRoom, opponentUser, post);
+
+            Long unreadCount = existingRoom.getParticipant(contactUserId).getUnreadCount();
+
+            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(existingRoom, opponentUser, post, unreadCount);
             return Pair.of(dto, false);
         }
 
@@ -87,7 +90,7 @@ public class ChatRoomService {
 
             chatRoomRepository.save(newRoom);
 
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(newRoom, opponentUser, post);
+            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(newRoom, opponentUser, post, 0L);
             return Pair.of(dto, true);
         }
     }
@@ -138,15 +141,13 @@ public class ChatRoomService {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
 
-        if (!chatRoom.isParticipant(user)) {
-            throw new GeneralException(ErrorStatus._CHATROOM_ACCESS_DENIED);
-        }
+        Long unreadCount = chatRoom.getParticipant(user.getId()).getUnreadCount();
 
         User opponent = chatRoom.getOtherParticipant(user.getId());
 
         Post post = chatRoom.getPost();
 
-        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post);
+        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount);
     }
 
 }
