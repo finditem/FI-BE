@@ -52,6 +52,17 @@ public class ChatRoom {
     }
 
     /**
+     * 특정 유저의 참여 정보(participant)를 가져오기
+     */
+    public ChatRoomParticipant getParticipant(Long userId) {
+        return this.participants.stream()
+                .filter(p -> p.getUser().getId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new
+                        GeneralException(ErrorStatus._CHATROOM_ACCESS_DENIED));
+    }
+
+    /**
      * 사용자가 채팅방의 참여자인지 확인하는 메서드
      */
     public boolean isParticipant(User user) {
