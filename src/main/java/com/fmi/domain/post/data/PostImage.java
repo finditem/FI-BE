@@ -8,7 +8,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class PostImage {
 
     @Id
@@ -18,11 +17,21 @@ public class PostImage {
     @Column(name = "img_url", nullable = false)
     private String imgUrl;
 
-    @Column(name = "displayOrder", nullable = false)
-    private int displayOrder;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "image_type", nullable = false)
+    private ImageType imageType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post", nullable = false)
     private Post post;
 
+    private PostImage(String imgUrl, ImageType imageType, Post post) {
+        this.imgUrl = imgUrl;
+        this.imageType = imageType;
+        this.post = post;
+    }
+
+    public static PostImage create(String imgUrl, ImageType imageType, Post post) {
+        return new PostImage(imgUrl, imageType, post);
+    }
 }

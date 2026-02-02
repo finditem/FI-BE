@@ -16,18 +16,37 @@ import java.util.Optional;
 import java.util.Set;
 
 @Repository
-public interface PostFavoriteRepository extends JpaRepository<PostFavorite,Long> {
+public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long> {
     Optional<PostFavorite> findByUserAndPost(User user, Post post);
 
     List<PostFavorite> findByUserAndIsFavoriteTrue(User user);
-
-    boolean existsByUserAndPost(User user,Post post);
 
     @Query("SELECT pf.user FROM PostFavorite pf WHERE pf.post = :post AND pf.isFavorite = true")
     List<User> findUsersByPost(@Param("post") Post post);
 
     @Query("SELECT pf.post.id FROM PostFavorite pf WHERE pf.user = :user AND pf.post IN :posts AND pf.isFavorite = true")
     Set<Long> findPostIdsByUserAndPostIn(@Param("user") User user, @Param("posts") List<Post> posts);
+
+    long countByPostAndIsFavoriteTrue(Post post);
+
+    @Query("""
+                SELECT pf.post.id, COUNT(pf)
+                FROM PostFavorite pf
+                WHERE pf.post IN :posts AND pf.isFavorite = true
+                GROUP BY pf.post.id
+            """)
+    List<Object[]> countFavoritesByPosts(@Param("posts") List<Post> posts);
+
+    @Query("""
+                select pf.post.id
+                from PostFavorite pf
+                where pf.user = :user
+                  and pf.post.id in :postIds
+                  and pf.isFavorite = true
+            """)
+    List<Long> findFavoritePostIdsByUserAndPostIds(@Param("user") User user,
+                                                   @Param("postIds") List<Long> postIds);
+
 
     @Query("SELECT pf FROM PostFavorite pf JOIN FETCH pf.post p LEFT JOIN FETCH p.images WHERE pf.user = :user AND pf.isFavorite = true ORDER BY pf.id DESC")
     Slice<PostFavorite> findByUserAndIsFavoriteTrueOrderByIdDesc(@Param("user") User user, Pageable pageable);

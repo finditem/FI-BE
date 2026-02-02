@@ -1,6 +1,6 @@
 package com.fmi.domain.user.response;
 
-import com.fmi.domain.post.response.PostListResponse;
+import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,9 +17,9 @@ public class UserOtherPageResponse {
     private Long userId;
     private String nickname;
     private String profileImg;
-    private List<PostListResponse> posts;
+    private List<PostBriefResponse> posts;
     private List<UserCommentSummaryResponse> comments;
-    private List<PostListResponse> favorites;
+    private List<PostBriefResponse> favorites;
     private Long nextCursor;
     private boolean hasNext;
 }

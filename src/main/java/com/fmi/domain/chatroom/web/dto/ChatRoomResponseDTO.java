@@ -1,7 +1,7 @@
 package com.fmi.domain.chatroom.web.dto;
 
-import com.fmi.domain.Enum.Type;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
+import com.fmi.domain.post.data.PostType;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +35,7 @@ public class ChatRoomResponseDTO {
     @Getter
     public static class PostInfoDTO {
         private Long postId;
-        private Type postType;
+        private PostType postType;
         private String title;
         private String address;
         private String thumbnailUrl;
