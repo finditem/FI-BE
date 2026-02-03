@@ -1,7 +1,6 @@
 package com.fmi.domain.chatroom.service;
 
 import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.data.ChatMessage;
@@ -13,7 +12,9 @@ import com.fmi.domain.chatroom.data.enums.ParticipantState;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
+import com.fmi.domain.post.service.PostImageService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class ChatRoomService {
     private final UserRepository userRepository;
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final PostImageService postImageService;
 
     public Pair<ChatRoomResultDTO, Boolean> createChatRoom(Long postId, Long contactUserId) {
 
@@ -55,6 +57,7 @@ public class ChatRoomService {
         Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findChatRoomByPostAndUsers(postId, post.getUser().getId(), contactUserId);
 
         User opponentUser = post.getUser();
+        String thumbnailImageUrl = postImageService.findThumbnailImage(post).getImgUrl();
 
         // 채팅방이 이미 존재하는 경우
         if (optionalChatRoom.isPresent()) {
@@ -62,7 +65,8 @@ public class ChatRoomService {
 
             Long unreadCount = existingRoom.getParticipant(contactUserId).getUnreadCount();
 
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(existingRoom, opponentUser, post, unreadCount);
+            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(existingRoom, opponentUser, post, unreadCount, thumbnailImageUrl);
+
             return Pair.of(dto, false);
         }
 
@@ -90,12 +94,13 @@ public class ChatRoomService {
 
             chatRoomRepository.save(newRoom);
 
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(newRoom, opponentUser, post, 0L);
+            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(newRoom, opponentUser, post, 0L, thumbnailImageUrl);
+
             return Pair.of(dto, true);
         }
     }
 
-    public MyChatListDTO getMyPostChatRooms(User user, Long cursorId, int size, Type type, String address, SortType sort) {
+    public MyChatListDTO getMyPostChatRooms(User user, Long cursorId, int size, PostType type, String address, SortType sort) {
 
         PageRequest pageable = PageRequest.of(0, size);
 
@@ -147,7 +152,10 @@ public class ChatRoomService {
 
         Post post = chatRoom.getPost();
 
-        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount);
+        String thumbnailImage = postImageService.findThumbnailImage(post).getImgUrl();
+
+        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount, thumbnailImage);
+
     }
 
 }

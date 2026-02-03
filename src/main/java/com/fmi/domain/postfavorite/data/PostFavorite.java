@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class PostFavorite {
 
     @Id
@@ -23,7 +22,7 @@ public class PostFavorite {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "isfavorite")
+    @Column(name = "is_favorite")
     private boolean isFavorite;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -33,4 +32,19 @@ public class PostFavorite {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
+
+    private PostFavorite(User user, Post post) {
+        this.user = user;
+        this.post = post;
+        createdAt = LocalDateTime.now();
+        isFavorite = true;
+    }
+
+    public static PostFavorite create(User user, Post post) {
+        return new PostFavorite(user, post);
+    }
+
+    public void toggleFavorite() {
+        isFavorite = !isFavorite;
+    }
 }

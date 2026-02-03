@@ -5,6 +5,7 @@ import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.domain.chatroom.service.ChatRoomService;
+import com.fmi.domain.post.data.PostType;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
 import com.fmi.service.UserQueryService;
@@ -83,9 +84,9 @@ public class ChatRoomController {
     public ApiResponse<MyChatListDTO> getMyPostChatRooms(
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(name = "type", required = false) Type type,
+            @RequestParam(name = "type", required = false) PostType type,
             @RequestParam(name = "address", required = false) String address,
-            @RequestParam(name= "sort", required = false, defaultValue = "LATEST") SortType sort,
+            @RequestParam(name = "sort", required = false, defaultValue = "LATEST") SortType sort,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = userService.findUser(userDetails.getUsername());

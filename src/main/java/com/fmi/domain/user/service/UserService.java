@@ -5,11 +5,10 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
-import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
-import com.fmi.domain.post.response.PostListResponse;
-import com.fmi.domain.post.service.PostService;
+import com.fmi.domain.post.service.PostQueryService;
+import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.user.converter.UserConverter;
@@ -26,8 +25,10 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import com.fmi.service.EmailService;
+import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +40,7 @@ import org.springframework.data.domain.Slice;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+
 
 @Slf4j
 @Service
@@ -51,11 +52,11 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final S3Service s3Service;
     private final PostRepository postRepository;
-    private final PostConverter postConverter;
     private final CommentRepository commentRepository;
     private final EmailService emailService;
     private final PostFavoriteRepository postFavoriteRepository;
-    private final PostService postService;
+    private final PostQueryService postQueryService;
+    private final UserQueryService userQueryService;
 
     /**
      * 내 정보 조회
@@ -64,7 +65,7 @@ public class UserService {
     public UserProfileResponse getMyProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        
+
         return UserConverter.toUserProfileResponse(user);
     }
 
@@ -77,15 +78,17 @@ public class UserService {
      * - 미지정 또는 기본값: posts (게시글만 조회)
      */
     @Transactional(readOnly = true)
-    public UserOtherPageResponse getOtherUserPage(Long userId, UserOtherPageType type, Long cursor, int size) {
+    public UserOtherPageResponse getOtherUserPage(Long userId, UserOtherPageType type, UserDetails userDetails, Long cursor, int size) {
 
-        User user = userRepository.findById(userId)
+        User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
+        User me = userQueryService.findUserIfNullReturnNull(userDetails);
+
         // type에 따라 필요한 데이터만 조회
-        List<PostListResponse> posts = Collections.emptyList();
+        List<PostBriefResponse> posts = Collections.emptyList();
         List<UserCommentSummaryResponse> comments = Collections.emptyList();
-        List<PostListResponse> favorites = Collections.emptyList();
+        List<PostBriefResponse> favorites = Collections.emptyList();
         Long nextCursor = null;
         boolean hasNext = false;
 
@@ -94,34 +97,45 @@ public class UserService {
 
         switch (resolvedType) {
             case POSTS -> {
-                Slice<Post> postSlice = cursor == null
-                        ? postRepository.findPublishedByUserOrderByIdDesc(user, pageRequest)
-                        : postRepository.findPublishedByUserAndIdLessThanOrderByIdDesc(user, cursor, pageRequest);
-                posts = postSlice.getContent().stream()
-                        .map(post -> postConverter.toPostListResponse(post, null, null, false))
-                        .toList();
+                Slice<Post> postSlice = (cursor == null)
+                        ? postRepository.findPublishedByUserOrderByIdDesc(targetUser, pageRequest)
+                        : postRepository.findPublishedByUserAndIdLessThanOrderByIdDesc(targetUser, cursor, pageRequest);
+
+                List<Post> postList = postSlice.getContent();
+                posts = postQueryService.getPostBriefResponseList(postList, me);
+
                 hasNext = postSlice.hasNext();
-                if (hasNext && !postSlice.getContent().isEmpty()) {
-                    nextCursor = postSlice.getContent().get(postSlice.getContent().size() - 1).getId();
+                if (hasNext && !postList.isEmpty()) {
+                    nextCursor = postList.get(postList.size() - 1).getId();
                 }
             }
             case COMMENTS -> {
-                Slice<Comment> commentSlice = cursor == null
-                        ? commentRepository.findByUserOrderByIdDesc(user, pageRequest)
-                        : commentRepository.findByUserAndIdLessThanOrderByIdDesc(user, cursor, pageRequest);
-                comments = commentSlice.getContent().stream()
+                Slice<Comment> commentSlice = (cursor == null)
+                        ? commentRepository.findByUserOrderByIdDesc(targetUser, pageRequest)
+                        : commentRepository.findByUserAndIdLessThanOrderByIdDesc(targetUser, cursor, pageRequest);
+
+                List<Comment> commentList = commentSlice.getContent();
+                comments = commentList.stream()
                         .map(UserConverter::toUserCommentSummaryResponse)
                         .toList();
+
                 hasNext = commentSlice.hasNext();
-                if (hasNext && !commentSlice.getContent().isEmpty()) {
-                    nextCursor = commentSlice.getContent().get(commentSlice.getContent().size() - 1).getId();
+                if (hasNext && !commentList.isEmpty()) {
+                    nextCursor = commentList.get(commentList.size() - 1).getId();
                 }
             }
+
             case FAVORITES -> {
-                Slice<PostFavorite> favoriteSlice = cursor == null
-                        ? postFavoriteRepository.findByUserAndIsFavoriteTrueOrderByIdDesc(user, pageRequest)
-                        : postFavoriteRepository.findByUserAndIsFavoriteTrueAndIdLessThanOrderByIdDesc(user, cursor, pageRequest);
-                favorites = getFavoritePostsFromSlice(favoriteSlice);
+                Slice<PostFavorite> favoriteSlice = (cursor == null)
+                        ? postFavoriteRepository.findByUserAndIsFavoriteTrueOrderByIdDesc(targetUser, pageRequest)
+                        : postFavoriteRepository.findByUserAndIsFavoriteTrueAndIdLessThanOrderByIdDesc(targetUser, cursor, pageRequest);
+
+                List<Post> favoritePosts = favoriteSlice.getContent().stream()
+                        .map(PostFavorite::getPost)
+                        .toList();
+
+                favorites = postQueryService.getPostBriefResponseList(favoritePosts, me);
+
                 hasNext = favoriteSlice.hasNext();
                 if (hasNext && !favoriteSlice.getContent().isEmpty()) {
                     nextCursor = favoriteSlice.getContent().get(favoriteSlice.getContent().size() - 1).getFavorite_id();
@@ -129,32 +143,19 @@ public class UserService {
             }
         }
 
-        return UserConverter.toUserOtherPageResponse(user, posts, comments, favorites, nextCursor, hasNext);
+        return UserConverter.toUserOtherPageResponse(targetUser, posts, comments, favorites, nextCursor, hasNext);
     }
 
     /**
-     * Slice에서 즐겨찾기 게시글 목록 변환
+     * 특정 사용자의 즐겨찾기 게시글 조회
      */
-    private List<PostListResponse> getFavoritePostsFromSlice(Slice<PostFavorite> favoriteSlice) {
-        List<Post> posts = favoriteSlice.getContent().stream()
+    private List<PostBriefResponse> getFavoritePostsByUser(User targetUser, User me) {
+        List<PostFavorite> favorites = postFavoriteRepository.findByUserAndIsFavoriteTrue(targetUser);
+        List<Post> postList = favorites.stream()
                 .map(PostFavorite::getPost)
                 .toList();
 
-        if (posts.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Long> postIds = posts.stream().map(Post::getId).toList();
-        Map<Long, Long> viewCounts = postService.getViewCountsFromRedis(postIds);
-
-        return posts.stream()
-                .map(post -> postConverter.toPostListResponse(
-                        post,
-                        null,
-                        viewCounts.getOrDefault(post.getId(), 0L),
-                        true
-                ))
-                .toList();
+        return postQueryService.getPostBriefResponseList(postList, me);
     }
 
     /**
@@ -174,7 +175,7 @@ public class UserService {
         // User 닉네임 업데이트
         UserConverter.updateUserFromRequest(user, request);
         user.setUpdatedAt(LocalDateTime.now());
-        
+
         User updatedUser = userRepository.save(user);
         return UserConverter.toUserProfileResponse(updatedUser);
     }
@@ -198,7 +199,7 @@ public class UserService {
         // 새 이미지 설정 (null이면 삭제, 값이 있으면 업데이트)
         user.setProfile_img(request.getProfileImageUrl());
         user.setUpdatedAt(LocalDateTime.now());
-        
+
         User updatedUser = userRepository.save(user);
         return UserConverter.toUserProfileResponse(updatedUser);
     }
@@ -211,12 +212,12 @@ public class UserService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         boolean passwordMatches = false;
-        
+
         // 임시 비밀번호가 활성화되어 있는지 확인
-        boolean hasActiveTemporaryPassword = user.getTemporaryPassword() != null 
+        boolean hasActiveTemporaryPassword = user.getTemporaryPassword() != null
                 && user.getTemporaryPasswordExpiresAt() != null
                 && LocalDateTime.now().isBefore(user.getTemporaryPasswordExpiresAt());
-        
+
         // 임시 비밀번호가 활성화되어 있으면 임시 비밀번호와 원래 비밀번호 모두 확인
         if (hasActiveTemporaryPassword) {
             // 임시 비밀번호 확인
@@ -224,7 +225,7 @@ public class UserService {
                 passwordMatches = true;
             }
             // 원래 비밀번호 확인
-            else if (user.getOriginalPassword() != null 
+            else if (user.getOriginalPassword() != null
                     && passwordEncoder.matches(currentPassword, user.getOriginalPassword())) {
                 passwordMatches = true;
             }
@@ -239,7 +240,7 @@ public class UserService {
                 passwordMatches = true;
             }
         }
-        
+
         return passwordMatches;
     }
 
@@ -268,7 +269,7 @@ public class UserService {
         // 비밀번호 변경: 새 비밀번호로 설정
         String newPasswordHash = passwordEncoder.encode(request.getNewPassword());
         user.setPassword(newPasswordHash);
-        
+
         // 임시 비밀번호 관련 정보 제거
         user.setOriginalPassword(null);  // originalPassword 제거
         user.setTemporaryPassword(null);  // 임시 비밀번호 제거
@@ -306,29 +307,29 @@ public class UserService {
         // Soft Delete (deletedAt 설정)
         user.setDeletedAt(LocalDateTime.now());
         userRepository.save(user);
-        
+
         // 계정 삭제 이메일 발송
         try {
             String nickname = user.getNickname() != null ? user.getNickname() : "회원";
             String userEmail = user.getEmail();
             String deletionDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                     .format(LocalDateTime.now());
-            
+
             emailService.sendHtmlEmail(
-                userEmail,
-                "계정이 삭제되었습니다",
-                "account-deletion-email.html",
-                java.util.Map.of(
-                    "NAME", nickname,
-                    "USER", userEmail,
-                    "DATE", deletionDate
-                )
+                    userEmail,
+                    "계정이 삭제되었습니다",
+                    "account-deletion-email.html",
+                    java.util.Map.of(
+                            "NAME", nickname,
+                            "USER", userEmail,
+                            "DATE", deletionDate
+                    )
             );
         } catch (Exception e) {
             // 이메일 발송 실패해도 계정 삭제는 성공 처리
             log.warn("계정 삭제 이메일 발송 실패: {}", e.getMessage());
         }
-        
+
         log.info("사용자 탈퇴 완료: userId={}, email={}, reason={}", user.getId(), email, request.getReason());
     }
 
