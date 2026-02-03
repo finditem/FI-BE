@@ -4,6 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.web.dto.request.PostCreateRequest;
 import com.fmi.domain.post.web.dto.response.*;
+import com.fmi.domain.user.web.dto.response.UserPostResponse;
 
 import java.util.List;
 
@@ -31,7 +32,7 @@ public final class PostConverter {
         return new PostUpdateResponse(post.getId());
     }
 
-    public static PostGetResponse toGetResponse(Post post, boolean isFavorite, long viewCount, long chatRoomCount, boolean isNew, boolean isHot, long favoriteCount, long userPostCount, List<PostImageResponse> imageList) {
+    public static PostGetResponse toGetResponse(Post post, boolean isFavorite, long viewCount, boolean isNew, boolean isHot, long favoriteCount, List<PostImageResponse> imageList, UserPostResponse userPostResponse) {
         return new PostGetResponse(
                 post.getId(),
                 post.getTitle(),
@@ -49,9 +50,8 @@ public final class PostConverter {
                 isNew,
                 isHot,
                 post.getCreatedAt(),
-                chatRoomCount,
-                userPostCount,
-                imageList
+                imageList,
+                userPostResponse
         );
     }
 
