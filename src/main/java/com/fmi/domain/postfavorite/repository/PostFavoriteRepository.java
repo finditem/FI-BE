@@ -47,10 +47,25 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long
     List<Long> findFavoritePostIdsByUserAndPostIds(@Param("user") User user,
                                                    @Param("postIds") List<Long> postIds);
 
-
-    @Query("SELECT pf FROM PostFavorite pf JOIN FETCH pf.post p LEFT JOIN FETCH p.images WHERE pf.user = :user AND pf.isFavorite = true ORDER BY pf.id DESC")
+    @Query("""
+                SELECT pf
+                FROM PostFavorite pf
+                JOIN FETCH pf.post p
+                WHERE pf.user = :user
+                  AND pf.isFavorite = true
+                ORDER BY pf.id DESC
+            """)
     Slice<PostFavorite> findByUserAndIsFavoriteTrueOrderByIdDesc(@Param("user") User user, Pageable pageable);
 
-    @Query("SELECT pf FROM PostFavorite pf JOIN FETCH pf.post p LEFT JOIN FETCH p.images WHERE pf.user = :user AND pf.isFavorite = true AND pf.id < :cursor ORDER BY pf.id DESC")
-    Slice<PostFavorite> findByUserAndIsFavoriteTrueAndIdLessThanOrderByIdDesc(@Param("user") User user, @Param("cursor") Long cursor, Pageable pageable);
+    @Query("""
+                SELECT pf
+                FROM PostFavorite pf
+                JOIN FETCH pf.post p
+                WHERE pf.user = :user
+                  AND pf.isFavorite = true
+                  AND pf.id < :cursor
+                ORDER BY pf.id DESC
+            """)
+    Slice<PostFavorite> findByUserAndIsFavoriteTrueAndIdLessThanOrderByIdDesc(@Param("user") User user, @Param("cursor") Long cursor, Pageable pageable
+    );
 }
