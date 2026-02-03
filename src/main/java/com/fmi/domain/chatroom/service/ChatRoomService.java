@@ -57,7 +57,8 @@ public class ChatRoomService {
         Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findChatRoomByPostAndUsers(postId, post.getUser().getId(), contactUserId);
 
         User opponentUser = post.getUser();
-        String thumbnailImageUrl = postImageService.findThumbnailImage(post).getImgUrl();
+
+        String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
 
         // 채팅방이 이미 존재하는 경우
         if (optionalChatRoom.isPresent()) {
@@ -152,9 +153,9 @@ public class ChatRoomService {
 
         Post post = chatRoom.getPost();
 
-        String thumbnailImage = postImageService.findThumbnailImage(post).getImgUrl();
+        String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
 
-        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount, thumbnailImage);
+        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount, thumbnailImageUrl);
 
     }
 

@@ -63,6 +63,12 @@ public class PostImageService {
     }
 
     @Transactional(readOnly = true)
+    public String findThumbnailImageUrl(Post post) {
+        PostImage thumbnail = findThumbnailImage(post);
+        return thumbnail != null ? thumbnail.getImgUrl() : null;
+    }
+
+    @Transactional(readOnly = true)
     public Map<Long, String> findThumbnailUrlByPostList(List<Post> postList) {
         if (Objects.isNull(postList) || postList.isEmpty()) {
             return Collections.emptyMap();
