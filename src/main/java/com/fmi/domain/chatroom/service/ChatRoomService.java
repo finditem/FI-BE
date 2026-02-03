@@ -57,12 +57,17 @@ public class ChatRoomService {
         Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findChatRoomByPostAndUsers(postId, post.getUser().getId(), contactUserId);
 
         User opponentUser = post.getUser();
-        String thumbnailImageUrl = postImageService.findThumbnailImage(post).getImgUrl();
+
+        String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
 
         // 채팅방이 이미 존재하는 경우
         if (optionalChatRoom.isPresent()) {
             ChatRoom existingRoom = optionalChatRoom.get();
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(existingRoom, opponentUser, post, thumbnailImageUrl);
+
+            Long unreadCount = existingRoom.getParticipant(contactUserId).getUnreadCount();
+
+            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(existingRoom, opponentUser, post, unreadCount, thumbnailImageUrl);
+
             return Pair.of(dto, false);
         }
 
@@ -90,7 +95,8 @@ public class ChatRoomService {
 
             chatRoomRepository.save(newRoom);
 
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(newRoom, opponentUser, post, thumbnailImageUrl);
+            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(newRoom, opponentUser, post, 0L, thumbnailImageUrl);
+
             return Pair.of(dto, true);
         }
     }
@@ -141,17 +147,16 @@ public class ChatRoomService {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
 
-        if (!chatRoom.isParticipant(user)) {
-            throw new GeneralException(ErrorStatus._CHATROOM_ACCESS_DENIED);
-        }
+        Long unreadCount = chatRoom.getParticipant(user.getId()).getUnreadCount();
 
         User opponent = chatRoom.getOtherParticipant(user.getId());
 
         Post post = chatRoom.getPost();
 
-        String thumbnailImage = postImageService.findThumbnailImage(post).getImgUrl();
+        String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
 
-        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, thumbnailImage);
+        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount, thumbnailImageUrl);
+
     }
 
 }

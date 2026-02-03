@@ -14,6 +14,7 @@ public class ChatRoomResponseDTO {
     @Getter
     public static class ChatRoomResultDTO{
         private Long roomId;
+        private Long unreadCount;
         private opponentUserDTO opponentUser;
         private PostInfoDTO postInfo;
     }
