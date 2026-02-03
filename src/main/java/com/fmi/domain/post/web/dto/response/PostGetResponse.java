@@ -4,6 +4,7 @@ import com.fmi.domain.Enum.Category;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.data.Radius;
+import com.fmi.domain.user.web.dto.response.UserPostResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,7 +26,6 @@ public record PostGetResponse(
         boolean isNew,
         boolean isHot,
         LocalDateTime createdAt,
-        Long chatRoomCount,
-        Long userPostCount,
-        List<PostImageResponse> imageResponseList) {
+        List<PostImageResponse> imageResponseList,
+        UserPostResponse postUserInformation) {
 }
