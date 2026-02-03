@@ -191,4 +191,18 @@ public class PostQueryService {
 
         return PostConverter.toShareResponse(post, thumbnailImageUrl);
     }
+
+
+    //즐찾 조회
+    @Transactional(readOnly = true)
+    public List<PostBriefResponse> getFavoritePost(UserDetails userDetails) {
+        User user = userQueryService.findUser(userDetails.getUsername());
+
+        List<PostFavorite> favorites = postFavoriteRepository.findByUserAndIsFavoriteTrue(user);
+        List<Post> posts = favorites.stream()
+                .map(PostFavorite::getPost)
+                .toList();
+
+        return getPostBriefResponseList(posts, user);
+    }
 }

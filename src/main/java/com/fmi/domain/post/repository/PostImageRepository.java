@@ -20,10 +20,10 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long>, Pos
     Optional<PostImage> findByPost_IdAndImageType(Long postId, ImageType imageType);
 
     @Query("""
-                select pi
-                from PostImage pi
-                where pi.post.id in :postIds
-                  and pi.isThumbnail = true
+            select pi
+            from PostImage pi
+            where pi.post.id in :postIds
+              and pi.imageType = com.fmi.domain.post.data.ImageType.THUMBNAIL
             """)
     List<PostImage> findThumbnailImagesByPostIds(@Param("postIds") List<Long> postIds);
 
