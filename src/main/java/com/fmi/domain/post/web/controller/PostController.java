@@ -78,14 +78,12 @@ public class PostController {
     public ResponseEntity<ApiResponse<PostPageResponse>> searchPostFilterOrSort(@RequestParam(required = false) PostType postType,
                                                                                 @RequestParam(required = false, defaultValue = "SEARCHING") PostStatus postStatus,
                                                                                 @RequestParam(required = false) Category category,
-                                                                                @RequestParam String address,
-                                                                                @RequestParam(required = false) LocalDate startDate,
-                                                                                @RequestParam(required = false) LocalDate endDate,
+                                                                                @RequestParam(required = false) String address,
                                                                                 @RequestParam(required = false, defaultValue = "LATEST") SortType sortType,
                                                                                 @AuthenticationPrincipal UserDetails userDetails,
                                                                                 @RequestParam(required = false) Long cursor,
                                                                                 @RequestParam(required = false, defaultValue = "20") int size) {
-        PostPageResponse response = postQueryService.getPostListByFilterOrSort(postType, postStatus, category, address, startDate, endDate, sortType, cursor, size, userDetails);
+        PostPageResponse response = postQueryService.getPostListByFilterOrSort(postType, postStatus, category, address, sortType, cursor, size, userDetails);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }

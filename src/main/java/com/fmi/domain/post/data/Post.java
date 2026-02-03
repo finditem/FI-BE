@@ -57,6 +57,7 @@ public class Post {
     private LocalDate date;
 
     @Column(name = "radius")
+    @Enumerated(EnumType.STRING)
     private Radius radius;
 
     @Column(name = "updated_at")

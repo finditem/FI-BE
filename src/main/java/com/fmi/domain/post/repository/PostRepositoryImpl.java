@@ -13,7 +13,6 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,7 +25,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public PostPageResponse searchPostsByFiltersAndSort(PostType postType, PostStatus postStatus, Category category, String address, LocalDate startDate, LocalDate endDate, SortType sortType, Long cursor, int size, Long userId) {
+    public PostPageResponse searchPostsByFiltersAndSort(PostType postType, PostStatus postStatus, Category category, String address, SortType sortType, Long cursor, int size, Long userId) {
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
@@ -35,8 +34,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 equalsPostType(post, postType),
                 equalsPostStatus(post, postStatus),
                 equalsCategory(post, category),
-                geDate(post, startDate),
-                leDate(post, endDate),
                 cursorCondition(post, sortType, cursor)
         );
 
@@ -183,14 +180,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private BooleanExpression equalsCategory(QPost post, Category category) {
         return Objects.isNull(category) ? null : post.category.eq(category);
-    }
-
-    private BooleanExpression geDate(QPost post, LocalDate startDate) {
-        return Objects.isNull(startDate) ? null : post.createdAt.goe(startDate.atStartOfDay());
-    }
-
-    private BooleanExpression leDate(QPost post, LocalDate endDate) {
-        return Objects.isNull(endDate) ? null : post.createdAt.loe(endDate.atTime(23, 59, 59));
     }
 
     private OrderSpecifier<?>[] orderBySortType(QPost post, SortType sortType) {

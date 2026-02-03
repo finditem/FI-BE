@@ -3,7 +3,7 @@ package com.fmi.domain.post.service;
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.auth.data.User;
-import com.fmi.domain.chatroom.repository.ChatRoomRepository;
+import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.post.converter.PostConverter;
 import com.fmi.domain.post.converter.PostImageConverter;
 import com.fmi.domain.post.data.Post;
@@ -16,6 +16,7 @@ import com.fmi.domain.post.web.dto.response.*;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
+import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
@@ -42,19 +43,16 @@ public class PostQueryService {
     private final PostImageRepository postImageRepository;
     private final UserQueryService userQueryService;
     private final PostFavoriteRepository postFavoriteRepository;
-    private final ChatRoomRepository chatRoomRepository;
     private final PostFavoriteService postFavoriteService;
     private final PostImageService postImageService;
     private final StringRedisTemplate stringRedisTemplate;
+    private final ChatRoomParticipantRepository chatRoomParticipantRepository;
 
 
     // 게시글 단일 조회
     @Transactional
     public PostGetResponse getPost(Long postId, UserDetails userDetails, String clientIp) {
         Post post = findById(postId);
-
-        Long chatRoomCount = chatRoomRepository.countByPostId(postId);
-        Long userPostCount = postRepository.countByUserAndTemporarySaveFalse(post.getUser());
 
         List<PostImageResponse> imageList = PostImageConverter.toResponseList(postImageRepository.findByPost(post));
 
@@ -83,16 +81,20 @@ public class PostQueryService {
 
         long favoriteCount = postFavoriteService.countByPostAndIsFavoriteTrue(post);
 
+        User user = post.getUser();
+        long userPostCount = postRepository.countByUserAndTemporarySaveFalse(user);
+        long chatRoomCount = chatRoomParticipantRepository.countActiveChatRoomsByUser(user);
+
+
         return PostConverter.toGetResponse(
                 post,
                 isFavorite,
                 viewCount,
-                chatRoomCount,
                 post.isNew(),
                 false,
                 favoriteCount,
-                userPostCount,
-                imageList
+                imageList,
+                UserConverter.toUserPostResponse(user, userPostCount, chatRoomCount)
         );
     }
 
@@ -129,8 +131,6 @@ public class PostQueryService {
                                                       PostStatus postStatus,
                                                       Category category,
                                                       String address,
-                                                      LocalDate startDate,
-                                                      LocalDate endDate,
                                                       SortType sortType,
                                                       Long cursor,
                                                       int size,
@@ -144,8 +144,6 @@ public class PostQueryService {
                 postStatus,
                 category,
                 address,
-                startDate,
-                endDate,
                 sortType,
                 cursor,
                 size,
@@ -190,5 +188,19 @@ public class PostQueryService {
                 .orElse(null);
 
         return PostConverter.toShareResponse(post, thumbnailImageUrl);
+    }
+
+
+    //즐찾 조회
+    @Transactional(readOnly = true)
+    public List<PostBriefResponse> getFavoritePost(UserDetails userDetails) {
+        User user = userQueryService.findUser(userDetails.getUsername());
+
+        List<PostFavorite> favorites = postFavoriteRepository.findByUserAndIsFavoriteTrue(user);
+        List<Post> posts = favorites.stream()
+                .map(PostFavorite::getPost)
+                .toList();
+
+        return getPostBriefResponseList(posts, user);
     }
 }
