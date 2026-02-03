@@ -1,5 +1,6 @@
 package com.fmi.domain.chatroom.repository;
 
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -9,8 +10,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomParticipant,Long>, ChatRoomParticipantRepositoryCustom {
+public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomParticipant, Long>, ChatRoomParticipantRepositoryCustom {
     boolean existsByUser_IdAndChatRoom_Id(Long userId, Long roomId);
+
     Optional<ChatRoomParticipant> findByUser_IdAndChatRoom_Id(Long userId, Long roomId);
 
     Optional<ChatRoomParticipant> findByChatRoom_IdAndUser_Id(Long roomId, Long userId);
@@ -18,11 +20,19 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
     List<ChatRoomParticipant> findAllByChatRoom_Id(Long roomId);
 
     @Query("SELECT cp FROM ChatRoomParticipant cp " +
-           "JOIN FETCH cp.user u " +
-           "JOIN NotificationSettings ns ON ns.user = cp.user " +
-           "WHERE cp.unreadCount > 0 " +
-           "AND cp.firstUnreadAt <= :threshold " +
-           "AND ns.chatEnabled = true " +
-           "AND cp.lastRemindedAt IS NULL")
+            "JOIN FETCH cp.user u " +
+            "JOIN NotificationSettings ns ON ns.user = cp.user " +
+            "WHERE cp.unreadCount > 0 " +
+            "AND cp.firstUnreadAt <= :threshold " +
+            "AND ns.chatEnabled = true " +
+            "AND cp.lastRemindedAt IS NULL")
     List<ChatRoomParticipant> findParticipantsForReminder(@Param("threshold") LocalDateTime threshold);
+
+    @Query("""
+                SELECT COUNT(crp)
+                FROM ChatRoomParticipant crp
+                WHERE crp.user = :user
+                  AND crp.participantState = 'ACTIVE'
+            """)
+    long countActiveChatRoomsByUser(@Param("user") User user);
 }

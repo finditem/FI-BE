@@ -14,8 +14,6 @@ public interface PostRepositoryCustom {
                                                  PostStatus postStatus,
                                                  Category category,
                                                  String address,
-                                                 LocalDate startDate,
-                                                 LocalDate endDate,
                                                  SortType sortType,
                                                  Long cursor,
                                                  int size,
