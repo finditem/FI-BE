@@ -4,6 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +13,10 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(
+        name = "post_favorite",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "post_id"})
+)
 public class PostFavorite {
 
     @Id
@@ -19,6 +24,7 @@ public class PostFavorite {
     @Column(name = "favorite_id")
     private Long favorite_id;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -36,7 +42,6 @@ public class PostFavorite {
     private PostFavorite(User user, Post post) {
         this.user = user;
         this.post = post;
-        createdAt = LocalDateTime.now();
         isFavorite = true;
     }
 
@@ -44,7 +49,11 @@ public class PostFavorite {
         return new PostFavorite(user, post);
     }
 
-    public void toggleFavorite() {
-        isFavorite = !isFavorite;
+    public void activate() {
+        this.isFavorite = true;
+    }
+
+    public void deactivate() {
+        this.isFavorite = false;
     }
 }
