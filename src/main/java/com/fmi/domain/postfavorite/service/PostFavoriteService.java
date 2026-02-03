@@ -1,11 +1,12 @@
 package com.fmi.domain.postfavorite.service;
 
 import com.fmi.domain.auth.data.User;
-import com.fmi.domain.post.service.PostQueryService;
-import com.fmi.domain.post.web.dto.response.PostBriefResponse;
+import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.post.data.Post;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,13 +21,14 @@ import java.util.stream.Collectors;
 public class PostFavoriteService {
     private final PostFavoriteRepository favoriteRepository;
     private final UserQueryService userQueryService;
-    private final PostQueryService postQueryService;
+    private final PostRepository postRepository;
 
 
     @Transactional
     public void togglePostFavorite(UserDetails userDetails, Long postId) {
         User user = userQueryService.findUser(userDetails.getUsername());
-        Post post = postQueryService.findById(postId);
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
 
         PostFavorite postFavorite = favoriteRepository.findByUserAndPost(user, post).orElse(null);
 
@@ -43,20 +45,6 @@ public class PostFavoriteService {
         PostFavorite postFavorite = PostFavorite.create(user, post);
 
         favoriteRepository.save(postFavorite);
-    }
-
-
-    //즐찾 조회
-    @Transactional(readOnly = true)
-    public List<PostBriefResponse> getFavoritePost(UserDetails userDetails) {
-        User user = userQueryService.findUser(userDetails.getUsername());
-
-        List<PostFavorite> favorites = favoriteRepository.findByUserAndIsFavoriteTrue(user);
-        List<Post> posts = favorites.stream()
-                .map(PostFavorite::getPost)
-                .toList();
-
-        return postQueryService.getPostBriefResponseList(posts, user);
     }
 
     @Transactional(readOnly = true)

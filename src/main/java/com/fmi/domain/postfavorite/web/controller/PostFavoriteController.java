@@ -1,5 +1,6 @@
 package com.fmi.domain.postfavorite.web.controller;
 
+import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -20,6 +21,7 @@ import java.util.List;
 @Tag(name = "Post", description = "게시글 관련 API")
 public class PostFavoriteController {
     private final PostFavoriteService postFavoriteService;
+    private final PostQueryService postQueryService;
 
     @PutMapping("/post/{postId}/favorites")
     @Operation(
@@ -55,7 +57,7 @@ public class PostFavoriteController {
     @GetMapping("/users/me/favorites")
     public ResponseEntity<ApiResponse<List<PostBriefResponse>>> getFavoritePost(@AuthenticationPrincipal UserDetails userDetails) {
 
-        List<PostBriefResponse> response = postFavoriteService.getFavoritePost(userDetails);
+        List<PostBriefResponse> response = postQueryService.getFavoritePost(userDetails);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
