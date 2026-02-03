@@ -44,12 +44,9 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     @Query("SELECT DISTINCT p FROM Post p WHERE p.user = :user AND p.temporarySave = false")
     List<Post> findAllPublishedWithImagesByUser(@Param("user") User user);
 
-    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.images WHERE p.user = :user AND p.temporarySave = false ORDER BY p.id DESC")
-    Slice<Post> findPublishedByUserOrderByIdDesc(@Param("user") User user, Pageable pageable);
+    Slice<Post> findByUserAndTemporarySaveFalseOrderByIdDesc(User user, Pageable pageable);
 
-    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.images WHERE p.user = :user AND p.temporarySave = false AND p.id < :cursor ORDER BY p.id DESC")
-    Slice<Post> findPublishedByUserAndIdLessThanOrderByIdDesc(@Param("user") User user, @Param("cursor") Long cursor, Pageable pageable);
-
+    Slice<Post> findByUserAndTemporarySaveFalseAndIdLessThanOrderByIdDesc(User user, Long cursor, Pageable pageable);
     long countByUser(User user);
 
 
