@@ -56,6 +56,7 @@ public enum ErrorStatus implements BaseErrorCode {
     _POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST404-NOT_FOUND", "존재하지 않는 게시글입니다."),
     _POST_ACCESS_DENIED(HttpStatus.FORBIDDEN, "POST403-ACCESS_DENIED", "해당 글에 접근 권한이 없습니다"),
     _POST_FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "POST-FAVORITE-NOT_FOUND", "해당 게시글에 대한 즐겨찾기를 하지 않았습니다."),
+    _POST_RADIUS_NOT_MATCH(HttpStatus.BAD_REQUEST, "POST-RADIUS-NOT_MATCH", "유효하지 않는 Radius 값입니다."),
 
     // 목록 관련 응답
     _INVALID_CURSOR(HttpStatus.BAD_REQUEST, "LIST400-INVALID_CURSOR", "유효하지 않은 커서입니다. cursor 값을 확인해주세요."),

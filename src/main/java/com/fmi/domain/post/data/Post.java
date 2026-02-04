@@ -2,6 +2,7 @@ package com.fmi.domain.post.data;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.post.converter.RadiusConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -57,7 +58,6 @@ public class Post {
     private LocalDate date;
 
     @Column(name = "radius")
-    @Enumerated(EnumType.STRING)
     private Radius radius;
 
     @Column(name = "updated_at")
