@@ -4,13 +4,37 @@ on:
   push:
     branches:
       - develop
+  pull_request:
+    branches:
+      - develop
   workflow_dispatch:  # 수동 실행도 가능
 
 permissions:
   contents: read
 
 jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Github Repository 파일 불러오기
+        uses: actions/checkout@v4
+
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: 빌드하기
+        run: ./gradlew clean build -x test
+
   deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
