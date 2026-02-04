@@ -12,7 +12,6 @@ import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
-import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.ipblock.service.IpBlacklistService;
 import com.fmi.domain.post.repository.PostRepository;
@@ -55,15 +54,13 @@ public class AdminService {
     private final InquiryCommentService inquiryCommentService;
     private final IpBlacklistService ipBlacklistService;
 
-    public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
-                                                     InquiryStatus status,
+    public Page<AdminInquiryResponse> getInquiryPage(InquiryStatus status,
                                                      InquiryCategory category,
                                                      Pageable pageable) {
-        Page<Inquiry> inquiries = inquiryRepository.findAllForAdmin(type, status, category, pageable);
+        Page<Inquiry> inquiries = inquiryRepository.findAllForAdmin(status, category, pageable);
         return inquiries.map(inquiry -> AdminInquiryResponse.builder()
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
-                .inquiryType(inquiry.getInquiryType())
                 .category(inquiry.getCategory())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())

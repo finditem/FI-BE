@@ -13,7 +13,6 @@ import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
-import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.service.InquiryService;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.notice.service.NoticeService;
@@ -67,14 +66,13 @@ public class AdminController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 목록 조회 성공")
     })
     public ApiResponse<Page<AdminInquiryResponse>> getInquiries(
-            @RequestParam(required = false) InquiryType type,
             @RequestParam(required = false) InquiryStatus status,
             @RequestParam(required = false) InquiryCategory category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<AdminInquiryResponse> response = adminService.getInquiryPage(type, status, category, pageable);
+        Page<AdminInquiryResponse> response = adminService.getInquiryPage(status, category, pageable);
         return ApiResponse.onSuccess(response);
     }
 
