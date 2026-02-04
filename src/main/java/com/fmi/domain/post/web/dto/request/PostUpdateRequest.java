@@ -7,7 +7,7 @@ import com.fmi.domain.post.data.Radius;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -19,7 +19,7 @@ public record PostUpdateRequest(
 
         PostStatus postStatus,
 
-        LocalDate date,
+        LocalDateTime date,
 
         @Size(min = 1)
         String address,
