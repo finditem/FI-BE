@@ -5,7 +5,6 @@ import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
 import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
-import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.event.InquiryEvent;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO;
@@ -78,7 +77,6 @@ public class InquiryService {
                         .title(request.getTitle())
                         .content(request.getContent())
                         .category(request.getCategory())
-                        .inquiryType(InquiryType.PRIVATE)
                         .user(user) // 회원이면 user 세팅
                         .email(user == null ? resolvedEmail : null) // 비회원이면 email 컬럼 세팅
                         .ip(normalizedIp)
