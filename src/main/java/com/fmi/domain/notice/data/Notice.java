@@ -38,6 +38,14 @@ public class Notice {
     @Builder.Default
     private Integer viewCount = 0;
 
+    @Column(name = "like_count")
+    @Builder.Default
+    private Integer likeCount = 0;
+
+    @Column(name = "draft")
+    @Builder.Default
+    private Boolean draft = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -57,6 +65,16 @@ public class Notice {
 
     public void increaseViewCount() {
         this.viewCount++;
+    }
+
+    public void increaseLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decreaseLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
     }
     
     public void setViewCount(Integer viewCount) {
