@@ -45,5 +45,8 @@ public class AdminReportResponse {
     private String reporterNickname;
     @Schema(description = "신고자 이메일", example = "reporter@example.com")
     private String reporterEmail;
+
+    @Schema(description = "답변 여부", example = "true")
+    private Boolean answered;
 }
 

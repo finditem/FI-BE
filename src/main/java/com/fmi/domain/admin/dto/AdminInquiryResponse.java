@@ -1,6 +1,5 @@
 package com.fmi.domain.admin.dto;
 
-import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -22,10 +21,8 @@ public class AdminInquiryResponse {
     private Long inquiryId;
     @Schema(description = "제목", example = "계정 관련 문의")
     private String title;
-    @Schema(description = "문의 타입", example = "PRIVATE")
+    @Schema(description = "문의 타입", example = "ACCOUNT")
     private InquiryType inquiryType;
-    @Schema(description = "카테고리", example = "ACCOUNT")
-    private InquiryCategory category;
     @Schema(description = "처리 상태", example = "ANSWERED")
     private InquiryStatus status;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
@@ -37,6 +34,9 @@ public class AdminInquiryResponse {
     private String userNickname;
     @Schema(description = "사용자 이메일", example = "user@example.com")
     private String userEmail;
+
+    @Schema(description = "문의 내용", example = "계정이 잠겼어요.")
+    private String content;
 
     @Schema(description = "문의 IP", example = "192.0.2.1")
     private String ip;
