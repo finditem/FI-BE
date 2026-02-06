@@ -3,7 +3,10 @@ package com.fmi.domain.notice.web.dto;
 import com.fmi.domain.notice.data.enums.NoticeCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class NoticeUpdateRequestDTO {
@@ -17,4 +20,7 @@ public class NoticeUpdateRequestDTO {
     private NoticeCategory category;
     @Schema(description = "상단 고정 여부", example = "false")
     private Boolean pinned;
+    @Schema(description = "이미지 URL 목록 (최대 5개)")
+    @Size(max = 5)
+    private List<String> imageUrls;
 }
