@@ -10,6 +10,8 @@ import com.fmi.domain.noticecomment.repository.NoticeCommentRepository;
 import com.fmi.domain.noticecomment.response.NoticeCommentResponse;
 import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
+import com.fmi.domain.noticecommentlike.data.NoticeCommentLike;
+import com.fmi.domain.noticecommentlike.repository.NoticeCommentLikeRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class NoticeCommentService {
     private final UserRepository userRepository;
     private final NoticeCommentRepository noticeCommentRepository;
     private final NoticeCommentConverter noticeCommentConverter;
+    private final NoticeCommentLikeRepository noticeCommentLikeRepository;
 
     @Transactional
     public NoticeCommentResponse createComment(Long noticeId, CreateNoticeCommentDto dto, UserDetails userDetails) {
@@ -132,6 +135,34 @@ public class NoticeCommentService {
         return userDetails != null
                 && comment.getUser() != null
                 && comment.getUser().getEmail().equals(userDetails.getUsername());
+    }
+
+    /**
+     * 댓글 추천 토글
+     */
+    @Transactional
+    public boolean toggleCommentLike(Long commentId, String email) {
+        NoticeComment comment = noticeCommentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        java.util.Optional<NoticeCommentLike> existingLike =
+                noticeCommentLikeRepository.findByUserAndComment(user, comment);
+
+        if (existingLike.isPresent()) {
+            noticeCommentLikeRepository.delete(existingLike.get());
+            comment.decreaseLikeCount();
+            return false;
+        } else {
+            noticeCommentLikeRepository.save(NoticeCommentLike.builder()
+                    .user(user)
+                    .comment(comment)
+                    .build());
+            comment.increaseLikeCount();
+            return true;
+        }
     }
 
     private boolean isAdmin(UserDetails userDetails) {

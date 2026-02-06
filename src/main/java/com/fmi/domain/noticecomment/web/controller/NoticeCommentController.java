@@ -5,6 +5,7 @@ import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecomment.service.NoticeCommentService;
 import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
 import com.fmi.global.apiPayload.ApiResponse;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -133,6 +134,18 @@ public class NoticeCommentController {
 
         NoticeCommentResponse response = noticeCommentService.updateComment(commentId, request, userDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @PostMapping("/comments/{commentId}/like")
+    @Operation(summary = "공지사항 댓글 추천 토글", description = "이미 추천한 경우 취소, 아닌 경우 추천합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 추천 토글 성공")
+    })
+    public ResponseEntity<ApiResponse<Boolean>> toggleCommentLike(
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        boolean liked = noticeCommentService.toggleCommentLike(commentId, userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.onSuccess(liked));
     }
 
     @DeleteMapping("/comments/{commentId}")
