@@ -40,20 +40,16 @@ public class NoticeController {
     })
     public ApiResponse<Page<NoticeListDTO>> getNoticeList(
             @RequestParam(required = false) NoticeCategory category,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
-        Pageable pageable = PageRequest.of(page, size, 
+
+        Pageable pageable = PageRequest.of(page, size,
                 Sort.by(Sort.Direction.DESC, "pinned")
                     .and(Sort.by(Sort.Direction.DESC, "createdAt")));
-        
-        Page<NoticeListDTO> notices;
-        if (category != null) {
-            notices = noticeService.getNoticeListByCategory(category, pageable);
-        } else {
-            notices = noticeService.getNoticeList(pageable);
-        }
-        
+
+        Page<NoticeListDTO> notices = noticeService.getNoticeList(category, keyword, pageable);
+
         return ApiResponse.onSuccess(notices);
     }
     
@@ -98,6 +94,22 @@ public class NoticeController {
         return ApiResponse.onSuccess(notice);
     }
     
+    /**
+     * 공지사항 추천(좋아요) 토글
+     * POST /notices/{noticeId}/like
+     */
+    @PostMapping("/{noticeId}/like")
+    @Operation(summary = "공지사항 추천 토글", description = "이미 추천한 경우 취소, 아닌 경우 추천합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 토글 성공")
+    })
+    public ApiResponse<Boolean> toggleLike(
+            @PathVariable Long noticeId,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal UserDetails userDetails) {
+        boolean liked = noticeService.toggleLike(noticeId, userDetails.getUsername());
+        return ApiResponse.onSuccess(liked);
+    }
+
     /**
      * 클라이언트 IP 주소 추출 (비로그인 사용자 개별 식별용)
      */
