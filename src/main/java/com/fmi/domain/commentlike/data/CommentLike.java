@@ -5,14 +5,15 @@ import com.fmi.domain.comment.data.Comment;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Table(
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "comment_id"})
+)
 public class CommentLike {
 
     @Id
@@ -25,9 +26,6 @@ public class CommentLike {
     @ManyToOne(fetch = FetchType.LAZY)
     private Comment comment;
 
-    @Builder.Default
-    private boolean isLiked = true;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "is_like")
+    private boolean isLike;
 }
