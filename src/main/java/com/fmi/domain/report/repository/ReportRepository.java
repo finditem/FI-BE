@@ -35,9 +35,15 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
             SELECT r FROM Report r
             WHERE (:status IS NULL OR r.status = :status)
               AND (:targetType IS NULL OR r.targetType = :targetType)
+              AND (:answered IS NULL
+                   OR (:answered = true AND r.adminNote IS NOT NULL AND r.adminNote <> '')
+                   OR (:answered = false AND (r.adminNote IS NULL OR r.adminNote = '')))
+              AND (:keyword IS NULL OR r.reason LIKE CONCAT('%', :keyword, '%'))
             """)
     Page<Report> findAllForAdmin(@Param("status") ReportStatus status,
                                  @Param("targetType") ReportTargetType targetType,
+                                 @Param("answered") Boolean answered,
+                                 @Param("keyword") String keyword,
                                  Pageable pageable);
 
     long countByReporter(User reporter);

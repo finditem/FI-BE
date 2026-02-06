@@ -2,7 +2,6 @@ package com.fmi.domain.inquiry.repository;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.inquiry.data.Inquiry;
-import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import org.springframework.data.domain.Page;
@@ -32,11 +31,12 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
             SELECT i FROM Inquiry i
             WHERE (:type IS NULL OR i.inquiryType = :type)
               AND (:status IS NULL OR i.answerStatus = :status)
-              AND (:category IS NULL OR i.category = :category)
+              AND (:keyword IS NULL OR i.title LIKE CONCAT('%', :keyword, '%')
+                   OR i.content LIKE CONCAT('%', :keyword, '%'))
             """)
     Page<Inquiry> findAllForAdmin(@Param("type") InquiryType type,
                                   @Param("status") InquiryStatus status,
-                                  @Param("category") InquiryCategory category,
+                                  @Param("keyword") String keyword,
                                   Pageable pageable);
 }
 

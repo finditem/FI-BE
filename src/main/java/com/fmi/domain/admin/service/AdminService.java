@@ -10,7 +10,6 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.inquiry.data.Inquiry;
-import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
@@ -57,28 +56,30 @@ public class AdminService {
 
     public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
                                                      InquiryStatus status,
-                                                     InquiryCategory category,
+                                                     String keyword,
                                                      Pageable pageable) {
-        Page<Inquiry> inquiries = inquiryRepository.findAllForAdmin(type, status, category, pageable);
+        Page<Inquiry> inquiries = inquiryRepository.findAllForAdmin(type, status, keyword, pageable);
         return inquiries.map(inquiry -> AdminInquiryResponse.builder()
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
                 .inquiryType(inquiry.getInquiryType())
-                .category(inquiry.getCategory())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
                 .userId(inquiry.getUser() != null ? inquiry.getUser().getId() : null)
                 .userNickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
                 .userEmail(inquiry.getEmail() != null ? inquiry.getEmail() :
                         inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
+                .content(inquiry.getContent())
                 .ip(inquiry.getIp())
                 .build());
     }
 
     public Page<AdminReportResponse> getReportPage(ReportStatus status,
                                                    ReportTargetType targetType,
+                                                   Boolean answered,
+                                                   String keyword,
                                                    Pageable pageable) {
-        Page<Report> reports = reportRepository.findAllForAdmin(status, targetType, pageable);
+        Page<Report> reports = reportRepository.findAllForAdmin(status, targetType, answered, keyword, pageable);
         return reports.map(report -> AdminReportResponse.builder()
                 .reportId(report.getReportId())
                 .targetType(report.getTargetType())
@@ -93,6 +94,7 @@ public class AdminService {
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
                 .reporterNickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
                 .reporterEmail(report.getReporter() != null ? report.getReporter().getEmail() : null)
+                .answered(report.getAdminNote() != null && !report.getAdminNote().isBlank())
                 .build());
     }
 
