@@ -4,7 +4,13 @@ import lombok.Getter;
 
 @Getter
 public enum InquiryType {
-    PRIVATE("1:1 개인 문의");
+    GENERAL("일반 문의"),
+    TECHNICAL("기술 지원"),
+    ACCOUNT("계정 문의"),
+    PAYMENT("결제/환불"),
+    REPORT_ISSUE("신고 관련"),
+    SERVICE("서비스 문의"),
+    ETC("기타");
 
     private final String description;
 
