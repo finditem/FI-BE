@@ -8,7 +8,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class CommentImage {
 
     @Id
@@ -21,4 +20,13 @@ public class CommentImage {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id", nullable = false)
     private Comment comment;
+
+    private CommentImage(String imgUrl, Comment comment) {
+        this.imgUrl = imgUrl;
+        this.comment = comment;
+    }
+
+    public static CommentImage create(String imgUrl, Comment comment) {
+        return new CommentImage(imgUrl, comment);
+    }
 }

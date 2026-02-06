@@ -1,48 +1,87 @@
 package com.fmi.domain.comment.converter;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.comment.data.Comment;
-import com.fmi.domain.comment.response.CommentResponse;
-import com.fmi.domain.comment.web.dto.CreateCommentDto;
-import com.fmi.domain.post.data.Post;
-import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import com.fmi.domain.comment.web.dto.response.CommentCreateResponse;
+import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
+import com.fmi.domain.comment.web.dto.response.CommentResponse;
+import com.fmi.domain.user.web.dto.response.UserCommentResponse;
 
-@Component
+import java.util.List;
+
 public class CommentConverter {
 
-    public Comment toCommentEntity(CreateCommentDto dto, User user, Post post, Comment parent) {
-        return Comment.builder()
-                .user(user)
-                .post(post)
-                .parent(parent)
-                .content(dto.getContent())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+    public static CommentCreateResponse toCommentCreateResponse(Comment comment,
+                                                                int likeCount,
+                                                                boolean isAuthor,
+                                                                UserCommentResponse userCommentResponse,
+                                                                List<CommentImageResponse> commentImageResponseList) {
+        return new CommentCreateResponse(
+                comment.getId(),
+                comment.getContent(),
+                comment.getCreatedAt(),
+                likeCount,
+                isAuthor && !comment.isDeleted(),
+                isAuthor && !comment.isDeleted(),
+                userCommentResponse,
+                commentImageResponseList
+        );
     }
 
-    public CommentResponse toCommentResponse(Comment comment) {
-        return toCommentResponse(comment, false, false);
+    public static CommentResponse toCommentResponse(Comment comment,
+                                                    UserCommentResponse authorResponse,
+                                                    List<CommentImageResponse> imageList,
+                                                    long replyCount,
+                                                    Long nextReplyCursor,
+                                                    List<CommentResponse> childrenCommentList,
+                                                    long likeCount,
+                                                    boolean isLike) {
+        return new CommentResponse(
+                comment.getId(),
+                comment.isDeleted(),
+                comment.getDepth(),
+                comment.getCreatedAt(),
+                authorResponse,
+                replyCount,
+                nextReplyCursor,
+                imageList,
+                childrenCommentList,
+                likeCount,
+                isLike
+        );
     }
 
-    public CommentResponse toCommentResponse(Comment comment, boolean canEdit, boolean canDelete) {
-        User author = comment.getUser();
-        Long authorId = author != null ? author.getId() : null;
-        String authorName = author != null ? author.getNickname() : null;
-
-        return CommentResponse.builder()
-                .id(comment.getId())
-                .content(comment.getContent())
-                .authorId(authorId)
-                .authorName(authorName)
-                .createdAt(comment.getCreatedAt())
-                .likeCount(comment.getLikeCount())
-                .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
-                .canEdit(canEdit)
-                .canDelete(canDelete)
-                .build();
-    }
+//    public Comment toCommentEntity(CreateCommentDto dto, User user, Post post, Comment parent) {
+//        return Comment.builder()
+//                .user(user)
+//                .post(post)
+//                .parent(parent)
+//                .content(dto.getContent())
+//                .createdAt(LocalDateTime.now())
+//                .updatedAt(LocalDateTime.now())
+//                .build();
+//    }
+//
+//    public CommentCreateResponse toCommentResponse(Comment comment) {
+//        return toCommentResponse(comment, false, false);
+//    }
+//
+//    public CommentCreateResponse toCommentResponse(Comment comment, boolean canEdit, boolean canDelete) {
+//        User author = comment.getUser();
+//        Long authorId = author != null ? author.getId() : null;
+//        String authorName = author != null ? author.getNickname() : null;
+//
+//        return CommentCreateResponse.builder()
+//                .id(comment.getId())
+//                .content(comment.getContent())
+//                .authorId(authorId)
+//                .authorName(authorName)
+//                .createdAt(comment.getCreatedAt())
+//                .likeCount(comment.getLikeCount())
+//                .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
+//                .canEdit(canEdit)
+//                .canDelete(canDelete)
+//                .build();
+//    }
 
 }

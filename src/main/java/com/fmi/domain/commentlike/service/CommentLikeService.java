@@ -22,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,59 +39,80 @@ public class CommentLikeService {
 
     private static final String LIKE_QUEUE_KEY = "comment:like:queue:";
 
-    @Transactional
-    public boolean toggleLike(Long commentId, UserDetails userDetails) {
+    @Transactional(readOnly = true)
+    public Map<Long, Long> buildLikeCountMap(List<Long> commentIds) {
+        if (commentIds.isEmpty()) return Map.of();
 
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
-
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
-        CommentLike status = commentLikeRepository.findByUserAndComment(user, comment).orElse(null);
-
-        boolean isLikedNow;
-
-        if (status == null || !status.isLiked()) {
-            // 좋아요 추가
-            if (status == null) {
-                commentLikeRepository.save(commentLikeConverter.toTrueEntity(user, comment));
-                isLikedNow = true;
-            } else {
-                status.setLiked(true);
-                isLikedNow=true;
-            }
-        } else {
-            // 좋아요 상태 -> 좋아요 취소
-            commentLikeRepository.delete(status);
-            isLikedNow= false;
-        }
-
-        String key = "comment:like:queue:" + commentId;
-        // 이미 Redis에 key가 있는지 확인
-        boolean exists = Boolean.TRUE.equals(stringRedisTemplate.hasKey(key));
-
-        if (!comment.getUser().getId().equals(user.getId())) {
-            if (!exists) {
-                notificationService.createNotification(
-                        comment.getUser(),
-                        NotificationType.LIKE,
-                        "댓글에 좋아요가 달렸습니다.",
-                        String.format("%s님이 회원님의 댓글을 좋아했습니다.", user.getNickname()),
-                        ReferenceType.COMMENT,
-                        comment.getId()
-                );
-                taskScheduler.schedule(() -> sendAccumulatedLikeNotification(commentId),
-                        Instant.now().plus(Duration.ofMinutes(3)));
-
-                stringRedisTemplate.opsForSet().add(key, "_init");
-
-            } else {
-                stringRedisTemplate.opsForSet().add(key, String.valueOf(user.getId()));
-            }
-        }
-        return isLikedNow;
+        return commentLikeRepository.countLikesByCommentIds(commentIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
     }
+
+    @Transactional(readOnly = true)
+    public Set<Long> buildMyLikeSet(List<Long> commentIds, User user) {
+        if (commentIds.isEmpty() || Objects.isNull(user)) return Set.of();
+
+        return new HashSet<>(
+                commentLikeRepository.findLikedCommentIds(commentIds, user)
+        );
+    }
+
+//    @Transactional
+//    public boolean toggleLike(Long commentId, UserDetails userDetails) {
+//
+//        Comment comment = commentRepository.findById(commentId)
+//                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
+//
+//        User user = userRepository.findByEmail(userDetails.getUsername())
+//                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+//
+//        CommentLike status = commentLikeRepository.findByUserAndComment(user, comment).orElse(null);
+//
+//        boolean isLikedNow;
+//
+//        if (status == null || !status.isLiked()) {
+//            // 좋아요 추가
+//            if (status == null) {
+//                commentLikeRepository.save(commentLikeConverter.toTrueEntity(user, comment));
+//                isLikedNow = true;
+//            } else {
+//                status.setLiked(true);
+//                isLikedNow = true;
+//            }
+//        } else {
+//            // 좋아요 상태 -> 좋아요 취소
+//            commentLikeRepository.delete(status);
+//            isLikedNow = false;
+//        }
+//
+//        String key = "comment:like:queue:" + commentId;
+//        // 이미 Redis에 key가 있는지 확인
+//        boolean exists = Boolean.TRUE.equals(stringRedisTemplate.hasKey(key));
+//
+//        if (!comment.getUser().getId().equals(user.getId())) {
+//            if (!exists) {
+//                notificationService.createNotification(
+//                        comment.getUser(),
+//                        NotificationType.LIKE,
+//                        "댓글에 좋아요가 달렸습니다.",
+//                        String.format("%s님이 회원님의 댓글을 좋아했습니다.", user.getNickname()),
+//                        ReferenceType.COMMENT,
+//                        comment.getId()
+//                );
+//                taskScheduler.schedule(() -> sendAccumulatedLikeNotification(commentId),
+//                        Instant.now().plus(Duration.ofMinutes(3)));
+//
+//                stringRedisTemplate.opsForSet().add(key, "_init");
+//
+//            } else {
+//                stringRedisTemplate.opsForSet().add(key, String.valueOf(user.getId()));
+//            }
+//        }
+//        return isLikedNow;
+//    }
 
 
     private void sendAccumulatedLikeNotification(Long commentId) {

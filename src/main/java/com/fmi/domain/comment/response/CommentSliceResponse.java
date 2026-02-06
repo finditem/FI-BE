@@ -1,5 +1,6 @@
 package com.fmi.domain.comment.response;
 
+import com.fmi.domain.comment.web.dto.response.CommentResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

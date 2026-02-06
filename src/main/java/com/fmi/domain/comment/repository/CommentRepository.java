@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface CommentRepository extends JpaRepository<Comment,Long> {
+public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     // 특정 사용자의 댓글 조회 (익명화 처리용)
     List<Comment> findByUser(User user);
@@ -34,4 +34,52 @@ public interface CommentRepository extends JpaRepository<Comment,Long> {
     @Query("select c from Comment c where c.post.id = :postId and c.id < :cursor order by c.id desc")
     Slice<Comment> findByPostIdAndIdLessThanOrderByIdDesc(@Param("postId") Long postId, @Param("cursor") Long cursor, Pageable pageable);
 
+
+    @Query("""
+                select c
+                from Comment c
+                where c.post.id = :postId
+                    and c.parent is null
+                order by c.id desc
+            """)
+    List<Comment> findParentComments(@Param("postId") Long postId, Pageable pageable);
+
+    @Query("""
+                select c
+                from Comment c
+                where c.post.id = :postId
+                  and c.parent is null
+                  and c.id < :cursor
+                order by c.id desc
+            """)
+    List<Comment> findParentCommentsWithCursor(@Param("postId") Long postId,
+                                               @Param("cursor") Long cursor,
+                                               Pageable pageable);
+
+    @Query("""
+                select c
+                from Comment c
+                where c.parent.id = :parentId
+                order by c.id desc
+            """)
+    List<Comment> findReplies(@Param("parentId") Long parentId, Pageable pageable);
+
+    @Query("""
+                select c
+                from Comment c
+                where c.parent.id = :parentId
+                  and c.id < :cursor
+                order by c.id desc
+            """)
+    List<Comment> findRepliesWithCursor(@Param("parentId") Long parentId,
+                                        @Param("cursor") Long cursor,
+                                        Pageable pageable);
+
+    @Query("""
+                select c.parent.id, count(c)
+                from Comment c
+                where c.parent.id in :parentIds
+                group by c.parent.id
+            """)
+    List<Object[]> countRepliesByParentIds(@Param("parentIds") List<Long> parentIds);
 }
