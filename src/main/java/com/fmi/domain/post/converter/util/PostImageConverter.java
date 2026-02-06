@@ -1,4 +1,4 @@
-package com.fmi.domain.post.converter;
+package com.fmi.domain.post.converter.util;
 
 import com.fmi.domain.post.data.ImageType;
 import com.fmi.domain.post.data.Post;

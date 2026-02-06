@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -39,7 +40,7 @@ public class PostController {
     private final PostService postService;
     private final PostQueryService postQueryService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "게시글 생성")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 생성 성공"),

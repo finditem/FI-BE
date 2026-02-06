@@ -1,4 +1,4 @@
-package com.fmi.domain.post.converter;
+package com.fmi.domain.post.converter.util;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
