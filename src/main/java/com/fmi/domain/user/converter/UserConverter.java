@@ -8,6 +8,7 @@ import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
+import com.fmi.domain.user.web.dto.response.UserCommentResponse;
 import com.fmi.domain.user.web.dto.response.UserPostResponse;
 import org.springframework.stereotype.Component;
 
@@ -101,6 +102,14 @@ public class UserConverter {
                 user.getProfile_img(),
                 postCount,
                 chattingCount
+        );
+    }
+
+    public static UserCommentResponse toUserCommentResponse(User user) {
+        return new UserCommentResponse(
+                user.getId(),
+                user.getNickname(),
+                user.getProfile_img()
         );
     }
 }
