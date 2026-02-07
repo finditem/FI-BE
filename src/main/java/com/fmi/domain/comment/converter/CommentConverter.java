@@ -35,7 +35,8 @@ public class CommentConverter {
                                                     Long nextReplyCursor,
                                                     List<CommentResponse> childrenCommentList,
                                                     long likeCount,
-                                                    boolean isLike) {
+                                                    boolean isLike,
+                                                    boolean isAuthor) {
         return new CommentResponse(
                 comment.getId(),
                 comment.isDeleted(),
@@ -47,7 +48,9 @@ public class CommentConverter {
                 imageList,
                 childrenCommentList,
                 likeCount,
-                isLike
+                isLike,
+                isAuthor && !comment.isDeleted(),
+                isAuthor && !comment.isDeleted()
         );
     }
 

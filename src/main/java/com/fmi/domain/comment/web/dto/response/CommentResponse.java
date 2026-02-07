@@ -16,6 +16,8 @@ public record CommentResponse(
         List<CommentImageResponse> imageList,
         List<CommentResponse> childrenCommentList,
         long likeCount,
-        boolean isLike
+        boolean isLike,
+        boolean canEdit,
+        boolean canDelete
 ) {
 }

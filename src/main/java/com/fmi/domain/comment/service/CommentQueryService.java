@@ -60,16 +60,20 @@ public class CommentQueryService {
         Set<Long> myLikePostSet = commentLikeService.buildMyLikeSet(parentIds, user);
 
         List<CommentResponse> responses = fetched.stream()
-                .map(comment -> CommentConverter.toCommentResponse(
-                        comment,
-                        UserConverter.toUserCommentResponse(comment.getUser()),
-                        imageMap.getOrDefault(comment.getId(), List.of()),
-                        replyCountMap.getOrDefault(comment.getId(), 0L),
-                        null,
-                        List.of(),
-                        likeCountMap.getOrDefault(comment.getId(), 0L),
-                        myLikePostSet.contains(comment.getId())
-                ))
+                .map(comment -> {
+                    boolean isAuthor = Objects.nonNull(user) && Objects.equals(comment.getUser().getId(), user.getId());
+                    return CommentConverter.toCommentResponse(
+                            comment,
+                            UserConverter.toUserCommentResponse(comment.getUser()),
+                            imageMap.getOrDefault(comment.getId(), List.of()),
+                            replyCountMap.getOrDefault(comment.getId(), 0L),
+                            null,
+                            List.of(),
+                            likeCountMap.getOrDefault(comment.getId(), 0L),
+                            myLikePostSet.contains(comment.getId()),
+                            isAuthor
+                    );
+                })
                 .toList();
 
         return new CommentPageResponse(responses, hasNext, nextCursor);
@@ -103,18 +107,20 @@ public class CommentQueryService {
         Set<Long> myLikeSet = commentLikeService.buildMyLikeSet(replyIds, user);
 
         List<CommentResponse> responses = fetched.stream()
-                .map(reply -> CommentConverter.toCommentResponse(
-                        reply,
-                        UserConverter.toUserCommentResponse(reply.getUser()),
-                        imageMap.getOrDefault(reply.getId(), List.of()),
-                        (reply.getDepth() < 2)
-                                ? replyCountMap.getOrDefault(reply.getId(), 0L)
-                                : 0L,
-                        null,
-                        List.of(),
-                        likeCountMap.getOrDefault(reply.getId(), 0L),
-                        myLikeSet.contains(reply.getId())
-                ))
+                .map(reply -> {
+                    boolean isAuthor = Objects.nonNull(user) && Objects.equals(reply.getUser().getId(), user.getId());
+                    return CommentConverter.toCommentResponse(
+                            reply,
+                            UserConverter.toUserCommentResponse(reply.getUser()),
+                            imageMap.getOrDefault(reply.getId(), List.of()),
+                            (reply.getDepth() < 2) ? replyCountMap.getOrDefault(reply.getId(), 0L) : 0L,
+                            null,
+                            List.of(),
+                            likeCountMap.getOrDefault(reply.getId(), 0L),
+                            myLikeSet.contains(reply.getId()),
+                            isAuthor
+                    );
+                })
                 .toList();
 
         return new CommentPageResponse(responses, hasNext, nextCursor);
