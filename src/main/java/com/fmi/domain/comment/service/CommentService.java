@@ -8,8 +8,11 @@ import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.comment.response.CommentSliceResponse;
 import com.fmi.domain.comment.web.dto.CreateCommentDto;
 import com.fmi.domain.comment.web.dto.request.CommentCreateRequest;
+import com.fmi.domain.comment.web.dto.request.CommentUpdateRequest;
 import com.fmi.domain.comment.web.dto.response.CommentCreateResponse;
+import com.fmi.domain.comment.web.dto.response.CommentDeleteResponse;
 import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
+import com.fmi.domain.commentlike.service.CommentLikeService;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
@@ -44,7 +47,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final NotificationService notificationService;
     private final CommentImageService commentImageService;
-    private final S3Service s3Service;
+    private final CommentLikeService commentLikeService;
 
     @Transactional
     public CommentCreateResponse createCommentByPost(CommentCreateRequest request, UserDetails userDetails, Long postId, List<MultipartFile> images) {
@@ -169,46 +172,58 @@ public class CommentService {
         );
     }
 
-//    @Transactional
-//    public CommentCreateResponse updateComment(CreateCommentDto dto, UserDetails userDetails, Long commentId) {
-//
-//        Comment comment = commentRepository.findById(commentId)
-//                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다"));
-//
-//        if (!comment.getUser().getEmail().equals(userDetails.getUsername())) {
-//            throw new RuntimeException("작성자만 수정할 수 있습니다.");
-//        }
-//
-//        comment.setContent(dto.getContent());
-//        comment.setUpdatedAt(LocalDateTime.now());
-//
-//        return toResponse(comment, userDetails);
-//    }
-//
-//    @Transactional
-//    public CommentCreateResponse deleteComment(UserDetails userDetails, Long commentId) {
-//
-//        Comment comment = commentRepository.findById(commentId)
-//                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다"));
-//
-//        // 작성자이거나 관리자인 경우 삭제 가능
-//        boolean isOwner = comment.getUser().getEmail().equals(userDetails.getUsername());
-//        boolean isAdmin = userDetails.getAuthorities().stream()
-//                .map(GrantedAuthority::getAuthority)
-//                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
-//
-//        if (!isOwner && !isAdmin) {
-//            throw new RuntimeException("작성자 또는 관리자만 삭제할 수 있습니다.");
-//        }
-//
-////        comment.getPost().decreaseCommentCount(); // 댓글 수 감소
-//
-//        commentRepository.delete(comment);
-//
-//        return toResponse(comment, userDetails);
-//    }
+    @Transactional
+    public CommentCreateResponse updateComment(CommentUpdateRequest request, UserDetails userDetails, Long commentId, List<MultipartFile> addImageList) {
+        User user = userQueryService.findUser(userDetails.getUsername());
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
+
+        if (comment.isDeleted()) {
+            throw new GeneralException(ErrorStatus._COMMENT_ALREADY_DELETED);
+        }
+
+        if (!Objects.equals(user.getId(), comment.getUser().getId())) {
+            throw new GeneralException(ErrorStatus._COMMENT_ACCESS_DENIED);
+        }
+
+        comment.updateContent(request.content());
+        commentImageService.createCommentImageAtS3AndDB(addImageList, comment);
+        commentImageService.deleteCommentImageAtS3AndDBByImageIdList(request.deleteImageIds(), comment.getId());
+
+        List<CommentImageResponse> imageList = commentImageService.findCommentImageListByComment(comment);
+
+        int likeCount = commentLikeService.getLikeCount(comment.getId());
 
 
+        return CommentConverter.toCommentCreateResponse(
+                comment,
+                likeCount,
+                true,
+                UserConverter.toUserCommentResponse(user),
+                imageList);
+    }
+
+    @Transactional
+    public CommentDeleteResponse deleteComment(Long commentId, UserDetails userDetails) {
+        User user = userQueryService.findUser(userDetails.getUsername());
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
+
+        if (comment.isDeleted()) {
+            throw new GeneralException(ErrorStatus._COMMENT_ALREADY_DELETED);
+        }
+
+        if (!Objects.equals(user.getId(), comment.getUser().getId())) {
+            throw new GeneralException(ErrorStatus._COMMENT_ACCESS_DENIED);
+        }
+
+        comment.delete();
+
+        commentImageService.deleteAllCommentImage(comment);
+        commentLikeService.deleteByComment(comment);
+
+        return CommentConverter.toDeleteResponse(comment);
+    }
 
     private boolean isOwner(Comment comment, UserDetails userDetails) {
         return userDetails != null

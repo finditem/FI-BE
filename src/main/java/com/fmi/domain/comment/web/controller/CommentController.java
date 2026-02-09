@@ -1,11 +1,11 @@
 package com.fmi.domain.comment.web.controller;
 
-import com.fmi.domain.comment.response.CommentSliceResponse;
 import com.fmi.domain.comment.service.CommentQueryService;
 import com.fmi.domain.comment.service.CommentService;
-import com.fmi.domain.comment.web.dto.CreateCommentDto;
 import com.fmi.domain.comment.web.dto.request.CommentCreateRequest;
+import com.fmi.domain.comment.web.dto.request.CommentUpdateRequest;
 import com.fmi.domain.comment.web.dto.response.CommentCreateResponse;
+import com.fmi.domain.comment.web.dto.response.CommentDeleteResponse;
 import com.fmi.domain.comment.web.dto.response.CommentPageResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -239,59 +239,115 @@ public class CommentController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-//    @PutMapping(value = "/{commentId}")
-//    @Operation(summary = "댓글 수정", description = "작성자만 수정할 수 있습니다.")
-//    @ApiResponses({
-//            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-//                    responseCode = "200",
-//                    description = "댓글 수정 성공",
-//                    content = @Content(
-//                            mediaType = "application/json",
-//                            examples = @ExampleObject(
-//                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"id\": 12, \"content\": \"수정된 댓글\", \"authorId\": 34, \"authorName\": \"닉네임\", \"createdAt\": \"2024-01-01T00:00:00\", \"likeCount\": 1, \"parentId\": null, \"canEdit\": true, \"canDelete\": true}}"
-//                            )
-//                    )
-//            ),
-//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMON400: 잘못된 요청입니다"),
-//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
-//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "COMMON403: 금지된 요청입니다"),
-//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 않는 댓글입니다"),
-//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
-//    })
-//    public ResponseEntity<ApiResponse<CommentCreateResponse>> updateComment(
-//            @RequestBody CreateCommentDto request,
-//            @AuthenticationPrincipal UserDetails userDetails,
-//            @PathVariable Long commentId) {
-//
-//        CommentCreateResponse response = commentService.updateComment(request, userDetails, commentId);
-//
-//        return ResponseEntity.ok(ApiResponse.onSuccess(response));
-//    }
+    @PutMapping(value = "/{commentId}")
+    @Operation(
+            summary = "댓글 수정",
+            description = """
+                    작성자만 댓글을 수정할 수 있습니다.
+                    
+                    - 삭제된 댓글은 수정할 수 없습니다.
+                    - 이미지 추가/삭제를 지원합니다.
+                      - image: 추가할 이미지 파일 리스트 (optional)
+                      - deleteImageIds: 삭제할 이미지 ID 리스트 (optional)
+                    """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "댓글 수정 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "isSuccess": true,
+                                              "code": "COMMON200",
+                                              "message": "성공",
+                                              "result": {
+                                                "id": 12,
+                                                "content": "수정된 댓글",
+                                                "createdAt": "2024-01-01T00:00:00",
+                                                "likeCount": 0,
+                                                "canEdit": true,
+                                                "canDelete": true,
+                                                "authorResponse": {
+                                                  "userId": 34,
+                                                  "nickName": "닉네임",
+                                                  "profileImage": "https://example.com/profile.png"
+                                                },
+                                                "commentImageResponseList": [
+                                                  {
+                                                    "id": 1,
+                                                    "imageUrl": "https://example.com/comment/1.png"
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMON400: 잘못된 요청입니다", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMENT400-ALREADY_DELETED: 이미 삭제된 댓글입니다.", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMENT400-IMAGE_NOT_OWNED: 해당 댓글에 속하지 않는 이미지입니다.", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "COMMENT403-ACCESS_DENIED: 댓글에 접근 권한이 없습니다", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 않는 댓글입니다", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러", content = @Content)
+    })
+    public ResponseEntity<ApiResponse<CommentCreateResponse>> updateComment(@RequestBody CommentUpdateRequest request,
+                                                                            @AuthenticationPrincipal UserDetails userDetails,
+                                                                            @PathVariable Long commentId,
+                                                                            @RequestPart(value = "image", required = false) List<MultipartFile> images) {
 
-//    @DeleteMapping(value = "/{commentId}")
-//    @Operation(summary = "댓글 삭제", description = "작성자 또는 관리자(ROLE_ADMIN)만 삭제할 수 있습니다.")
-//    @ApiResponses({
-//            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-//                    responseCode = "200",
-//                    description = "댓글 삭제 성공",
-//                    content = @Content(
-//                            mediaType = "application/json",
-//                            examples = @ExampleObject(
-//                                    value = "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"id\": 12, \"content\": \"삭제된 댓글\", \"authorId\": 34, \"authorName\": \"닉네임\", \"createdAt\": \"2024-01-01T00:00:00\", \"likeCount\": 1, \"parentId\": null, \"canEdit\": false, \"canDelete\": true}}"
-//                            )
-//                    )
-//            ),
-//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다"),
-//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "COMMON403: 금지된 요청입니다"),
-//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 않는 댓글입니다"),
-//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러")
-//    })
-//    public ResponseEntity<ApiResponse<CommentCreateResponse>> deleteComment(
-//            @AuthenticationPrincipal UserDetails userDetails,
-//            @PathVariable Long commentId) {
-//
-//        CommentCreateResponse response = commentService.deleteComment(userDetails, commentId);
-//
-//        return ResponseEntity.ok(ApiResponse.onSuccess(response));
-//    }
+        CommentCreateResponse response = commentService.updateComment(request, userDetails, commentId, images);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @DeleteMapping("/{commentId}")
+    @Operation(
+            summary = "댓글 삭제",
+            description = """
+                    댓글을 삭제합니다. (Soft Delete)
+                    
+                    - 작성자만 삭제할 수 있습니다.
+                    - 삭제된 댓글은 deleted=true 처리되며, content는 '삭제된 댓글입니다.'로 변경됩니다.
+                    - 댓글 이미지/좋아요는 함께 정리됩니다.
+                    """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "댓글 삭제 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "isSuccess": true,
+                                              "code": "COMMON200",
+                                              "message": "성공",
+                                              "result": {
+                                                "id": 12,
+                                                "content": "삭제된 댓글입니다."
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "COMMENT403-ACCESS_DENIED: 댓글에 접근 권한이 없습니다", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 댓글입니다.", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMENT400-ALREADY_DELETED: 이미 삭제된 댓글입니다.", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러", content = @Content)
+    })
+    public ResponseEntity<ApiResponse<CommentDeleteResponse>> deleteComment(@AuthenticationPrincipal UserDetails userDetails,
+                                                                            @PathVariable Long commentId) {
+
+        CommentDeleteResponse response = commentService.deleteComment(commentId, userDetails);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
 }

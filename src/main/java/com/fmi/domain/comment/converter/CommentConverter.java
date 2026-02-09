@@ -3,6 +3,7 @@ package com.fmi.domain.comment.converter;
 import com.fmi.domain.comment.data.Comment;
 
 import com.fmi.domain.comment.web.dto.response.CommentCreateResponse;
+import com.fmi.domain.comment.web.dto.response.CommentDeleteResponse;
 import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
 import com.fmi.domain.comment.web.dto.response.CommentResponse;
 import com.fmi.domain.user.web.dto.response.UserCommentResponse;
@@ -52,6 +53,10 @@ public class CommentConverter {
                 isAuthor && !comment.isDeleted(),
                 isAuthor && !comment.isDeleted()
         );
+    }
+
+    public static CommentDeleteResponse toDeleteResponse(Comment comment) {
+        return new CommentDeleteResponse(comment.getId(), comment.getContent());
     }
 
 //    public Comment toCommentEntity(CreateCommentDto dto, User user, Post post, Comment parent) {

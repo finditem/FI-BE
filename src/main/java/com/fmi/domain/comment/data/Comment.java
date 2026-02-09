@@ -80,4 +80,9 @@ public class Comment {
 
         return new Comment(user, post, content, parent, nextDepth);
     }
+
+    public void updateContent(String content) {
+        this.content = content;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
