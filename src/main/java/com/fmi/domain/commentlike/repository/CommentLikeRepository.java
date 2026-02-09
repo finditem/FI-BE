@@ -36,4 +36,9 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> 
             @Param("commentIds") List<Long> commentIds,
             @Param("user") User user
     );
+
+    int countByComment_IdAndIsLikeTrue(Long commentId);
+
+    void deleteAllByComment(Comment comment);
+
 }

@@ -28,4 +28,22 @@ public class CommentLike {
 
     @Column(name = "is_like")
     private boolean isLike;
+
+    private CommentLike(User user, Comment comment) {
+        this.user = user;
+        this.comment = comment;
+        this.isLike = true;
+    }
+
+    public static CommentLike create(User user, Comment comment) {
+        return new CommentLike(user, comment);
+    }
+
+    public void activate() {
+        this.isLike = true;
+    }
+
+    public void deactivate() {
+        this.isLike = false;
+    }
 }

@@ -11,9 +11,12 @@ import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.commentlike.repository.CommentLikeRepository;
+import com.fmi.domain.user.service.UserService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,6 +39,7 @@ public class CommentLikeService {
     private final TaskScheduler taskScheduler;
     private final UserRepository userRepository;
     private final CommentLikeConverter commentLikeConverter;
+    private final UserQueryService userQueryService;
 
     private static final String LIKE_QUEUE_KEY = "comment:like:queue:";
 
@@ -58,6 +62,62 @@ public class CommentLikeService {
         return new HashSet<>(
                 commentLikeRepository.findLikedCommentIds(commentIds, user)
         );
+    }
+
+    @Transactional(readOnly = true)
+    public int getLikeCount(Long commentId) {
+        return commentLikeRepository.countByComment_IdAndIsLikeTrue(commentId);
+    }
+
+    @Transactional
+    public void deleteByComment(Comment comment) {
+        if (Objects.isNull(comment)) {
+            return;
+        }
+        commentLikeRepository.deleteAllByComment(comment);
+    }
+
+    @Transactional
+    public void createLike(Long commentId, UserDetails userDetails) {
+        User user = userQueryService.findUser(userDetails.getUsername());
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException((ErrorStatus._COMMENT_NOT_FOUND)));
+
+        if (comment.isDeleted()) {
+            throw new GeneralException(ErrorStatus._COMMENT_ALREADY_DELETED);
+        }
+
+        CommentLike commentLike = commentLikeRepository.findByUserAndComment(user, comment).orElse(null);
+
+        if (Objects.isNull(commentLike)) {
+            try {
+                commentLikeRepository.save(CommentLike.create(user, comment));
+            } catch (DataIntegrityViolationException e) {
+                commentLike = commentLikeRepository.findByUserAndComment(user, comment)
+                        .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_LIKE_NOT_FOUND));
+                commentLike.activate();
+            }
+        } else {
+            commentLike.activate();
+        }
+    }
+
+    @Transactional
+    public void deleteLike(Long commentId, UserDetails userDetails){
+        User user = userQueryService.findUser(userDetails.getUsername());
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException((ErrorStatus._COMMENT_NOT_FOUND)));
+
+        if (comment.isDeleted()) {
+            throw new GeneralException(ErrorStatus._COMMENT_ALREADY_DELETED);
+        }
+
+        CommentLike commentLike = commentLikeRepository.findByUserAndComment(user, comment)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_LIKE_NOT_FOUND));
+
+        commentLike.deactivate();
     }
 
 //    @Transactional
