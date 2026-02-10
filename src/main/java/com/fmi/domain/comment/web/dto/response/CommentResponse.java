@@ -7,6 +7,7 @@ import java.util.List;
 
 public record CommentResponse(
         Long id,
+        String content,
         boolean deleted,
         int depth,
         LocalDateTime createdAt,

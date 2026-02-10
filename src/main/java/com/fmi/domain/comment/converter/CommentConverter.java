@@ -40,6 +40,7 @@ public class CommentConverter {
                                                     boolean isAuthor) {
         return new CommentResponse(
                 comment.getId(),
+                comment.getContent(),
                 comment.isDeleted(),
                 comment.getDepth(),
                 comment.getCreatedAt(),
