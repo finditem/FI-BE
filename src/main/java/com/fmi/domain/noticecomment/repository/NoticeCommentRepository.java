@@ -24,11 +24,11 @@ public interface NoticeCommentRepository extends JpaRepository<NoticeComment, Lo
 
     void deleteByNoticeNoticeId(Long noticeId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE NoticeComment c SET c.likeCount = c.likeCount + 1 WHERE c.id = :commentId")
     void incrementLikeCount(@Param("commentId") Long commentId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE NoticeComment c SET c.likeCount = c.likeCount - 1 WHERE c.id = :commentId AND c.likeCount > 0")
     void decrementLikeCount(@Param("commentId") Long commentId);
 }

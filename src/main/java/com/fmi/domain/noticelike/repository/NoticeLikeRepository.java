@@ -16,7 +16,7 @@ public interface NoticeLikeRepository extends JpaRepository<NoticeLike, Long> {
 
     Optional<NoticeLike> findByUserAndNotice(User user, Notice notice);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM NoticeLike nl WHERE nl.notice.noticeId = :noticeId")
     void deleteByNoticeNoticeId(@Param("noticeId") Long noticeId);
 }

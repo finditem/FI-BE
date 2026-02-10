@@ -16,7 +16,7 @@ public interface NoticeCommentLikeRepository extends JpaRepository<NoticeComment
 
     Optional<NoticeCommentLike> findByUserAndComment(User user, NoticeComment comment);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM NoticeCommentLike ncl WHERE ncl.comment.id IN " +
             "(SELECT c.id FROM NoticeComment c WHERE c.notice.noticeId = :noticeId)")
     void deleteAllByNoticeId(@Param("noticeId") Long noticeId);
