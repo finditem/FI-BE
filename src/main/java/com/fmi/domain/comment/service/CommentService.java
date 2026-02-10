@@ -213,7 +213,10 @@ public class CommentService {
             throw new GeneralException(ErrorStatus._COMMENT_ALREADY_DELETED);
         }
 
-        if (!Objects.equals(user.getId(), comment.getUser().getId())) {
+        if (!Objects.equals(user.getId(), comment.getUser().getId()) &&
+                userDetails.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .noneMatch(authority -> authority.equals("ROLE_ADMIN"))) {
             throw new GeneralException(ErrorStatus._COMMENT_ACCESS_DENIED);
         }
 
