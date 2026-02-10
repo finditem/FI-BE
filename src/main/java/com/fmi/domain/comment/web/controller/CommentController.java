@@ -63,14 +63,18 @@ public class CommentController {
                                                 "canEdit": true,
                                                 "canDelete": true,
                                                 "authorResponse": {
-                                                  "id": 34,
-                                                  "nickname": "닉네임",
-                                                  "profileImageUrl": "https://example.com/profile.png"
+                                                  "userId": 34,
+                                                  "nickName": "닉네임",
+                                                  "profileImage": "https://example.com/profile.png"
                                                 },
                                                 "commentImageResponseList": [
                                                   {
                                                     "id": 1,
                                                     "imageUrl": "https://example.com/comment-image.png"
+                                                  },
+                                                  {
+                                                    "id": 2,
+                                                    "imageUrl": "https://example.com/comment-image-2.png"
                                                   }
                                                 ]
                                               }
@@ -86,7 +90,7 @@ public class CommentController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMENT400_DEPTH-EXCEEDED: 대댓글은 3단계까지만 작성할 수 있습니다.", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러", content = @Content)
     })
-    public ResponseEntity<ApiResponse<CommentCreateResponse>> createComment(@RequestBody CommentCreateRequest request,
+    public ResponseEntity<ApiResponse<CommentCreateResponse>> createComment(@RequestPart("request") CommentCreateRequest request,
                                                                             @RequestPart(value = "image", required = false) List<MultipartFile> images,
                                                                             @AuthenticationPrincipal UserDetails userDetails,
                                                                             @PathVariable Long postId) {
@@ -339,7 +343,7 @@ public class CommentController {
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "COMMENT403-ACCESS_DENIED: 댓글에 접근 권한이 없습니다", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 댓글입니다.", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 않는 댓글입니다.", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMENT400-ALREADY_DELETED: 이미 삭제된 댓글입니다.", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러", content = @Content)
     })
