@@ -5,7 +5,6 @@ import com.fmi.domain.auth.data.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -54,10 +53,9 @@ public class Post {
     private boolean temporarySave;
 
     @Column(name = "date")
-    private LocalDate date;
+    private LocalDateTime date;
 
     @Column(name = "radius")
-    @Enumerated(EnumType.STRING)
     private Radius radius;
 
     @Column(name = "updated_at")
@@ -70,7 +68,7 @@ public class Post {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private Post(String title, String address, double latitude, double longitude, PostType postType, Category category, boolean temporarySave, LocalDate date, Radius radius, User user) {
+    private Post(String title, String address, double latitude, double longitude, PostType postType, Category category, boolean temporarySave, LocalDateTime date, Radius radius, User user) {
         this.title = title;
         this.address = address;
         this.latitude = latitude;
@@ -86,7 +84,7 @@ public class Post {
         this.viewCount = 0;
     }
 
-    public static Post create(String title, String address, double latitude, double longitude, PostType postType, Category category, boolean temporarySave, LocalDate date, Radius radius, User user) {
+    public static Post create(String title, String address, double latitude, double longitude, PostType postType, Category category, boolean temporarySave, LocalDateTime date, Radius radius, User user) {
         return new Post(title, address, latitude, longitude, postType, category, temporarySave, date, radius, user);
     }
 
@@ -102,7 +100,7 @@ public class Post {
     public void update(PostType postType,
                        String title,
                        PostStatus postStatus,
-                       LocalDate date,
+                       LocalDateTime date,
                        String address,
                        Double latitude,
                        Double longitude,

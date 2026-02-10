@@ -2,6 +2,7 @@ package com.fmi.domain.postfavorite.web.controller;
 
 import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
+import com.fmi.domain.postfavorite.response.PostFavoriteResponse;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,31 +24,33 @@ public class PostFavoriteController {
     private final PostFavoriteService postFavoriteService;
     private final PostQueryService postQueryService;
 
-    @PutMapping("/post/{postId}/favorites")
-    @Operation(
-            summary = "게시글 즐겨찾기(좋아요) 토글",
-            description = """
-                    로그인 사용자가 특정 게시글을 즐겨찾기(좋아요) 처리/취소합니다.
-                    
-                    동작:
-                    - 해당 게시글에 대한 즐겨찾기 기록이 없으면 새로 생성 후 즐겨찾기 처리
-                    - 기록이 있으면 isFavorite 값을 토글(true ↔ false)
-                    
-                    응답:
-                    - 성공 시 204 No Content (응답 바디 없음)
-                    """
-    )
+    @Operation(summary = "즐겨찾기 추가", description = "즐겨찾기를 추가합니다.", tags = {"Post"})
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "토글 성공 (응답 바디 없음)"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음", content = @Content)
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 추가 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다")
     })
-    public ResponseEntity<Void> toggleFavorite(@PathVariable Long postId,
-                                               @AuthenticationPrincipal UserDetails userDetails) {
-        postFavoriteService.togglePostFavorite(userDetails, postId);
+    @PostMapping("/posts/{postId}/favorites")
+    public ResponseEntity<ApiResponse<PostFavoriteResponse>> createFavorite(@PathVariable Long postId,
+                                                                            @AuthenticationPrincipal UserDetails userDetails) {
 
-        return ResponseEntity.noContent().build();
+        PostFavoriteResponse response = postFavoriteService.addFavorite(postId, userDetails);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @Operation(summary = "즐겨찾기 삭제", description = "즐겨찾기를 삭제합니다.", tags = {"Post"})
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "_POST_FAVORITE_NOT_FOUND: 해당 게시글에 대한 즐겨찾기를 하지 않았습니다.")
+    })
+    @DeleteMapping("/posts/{postId}/favorites")
+    public ResponseEntity<ApiResponse<PostFavoriteResponse>> deleteFavorite(@PathVariable Long postId,
+                                                                            @AuthenticationPrincipal UserDetails userDetails) {
+        PostFavoriteResponse response = postFavoriteService.deleteFavorite(postId, userDetails);
+
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
     @Operation(summary = "즐겨찾기 목록 조회", tags = {"User"})

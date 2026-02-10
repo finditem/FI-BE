@@ -5,10 +5,12 @@ import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.postfavorite.response.PostFavoriteResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,26 +27,38 @@ public class PostFavoriteService {
 
 
     @Transactional
-    public void togglePostFavorite(UserDetails userDetails, Long postId) {
+    public PostFavoriteResponse addFavorite(Long postId, UserDetails userDetails) {
+        User user = userQueryService.findUser(userDetails.getUsername());
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
+        PostFavorite postFavorite = favoriteRepository.findByUserAndPost(user, post).orElse(null);
+
+        if (Objects.isNull(postFavorite)) {
+            try {
+                favoriteRepository.save(PostFavorite.create(user, post));
+            } catch (DataIntegrityViolationException exception) {
+                postFavorite = favoriteRepository.findByUserAndPost(user, post).orElseThrow();
+                postFavorite.activate();
+            }
+        } else {
+            postFavorite.activate();
+        }
+
+        return new PostFavoriteResponse(post.getId(), true);
+    }
+
+    @Transactional
+    public PostFavoriteResponse deleteFavorite(Long postId, UserDetails userDetails) {
         User user = userQueryService.findUser(userDetails.getUsername());
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
 
-        PostFavorite postFavorite = favoriteRepository.findByUserAndPost(user, post).orElse(null);
+        PostFavorite postFavorite = favoriteRepository.findByUserAndPost(user, post)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_FAVORITE_NOT_FOUND));
 
-        if (Objects.isNull(postFavorite)) {
-            addFavorite(user, post);
-            return;
-        }
+        postFavorite.deactivate();
 
-        postFavorite.toggleFavorite();
-    }
-
-    private void addFavorite(User user, Post post) {
-
-        PostFavorite postFavorite = PostFavorite.create(user, post);
-
-        favoriteRepository.save(postFavorite);
+        return new PostFavoriteResponse(post.getId(), false);
     }
 
     @Transactional(readOnly = true)

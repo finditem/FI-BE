@@ -6,7 +6,7 @@ import com.fmi.domain.post.data.Radius;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record PostCreateRequest(
 
@@ -17,7 +17,7 @@ public record PostCreateRequest(
         String title,
 
         @NotNull
-        LocalDate date,
+        LocalDateTime date,
 
         @NotBlank
         String address,

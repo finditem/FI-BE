@@ -65,6 +65,8 @@ jobs:
               echo "JWT_SECRET=${{ secrets.JWT_SECRET }}"
               echo "SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}"
               echo "SPRING_CLOUD_AWS_CREDENTIALS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}"
+              echo "MAIL_HOST=${{ secrets.MAIL_HOST }}"
+              echo "MAIL_PORT=${{ secrets.MAIL_PORT }}"
               echo "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}"
               echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}"
               echo "KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}"

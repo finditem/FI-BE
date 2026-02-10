@@ -1,6 +1,6 @@
 package com.fmi.domain.post.service;
 
-import com.fmi.domain.post.converter.PostImageConverter;
+import com.fmi.domain.post.converter.util.PostImageConverter;
 import com.fmi.domain.post.data.ImageType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
