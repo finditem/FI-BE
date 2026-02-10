@@ -5,7 +5,6 @@ import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecomment.service.NoticeCommentService;
 import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
 import com.fmi.global.apiPayload.ApiResponse;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
