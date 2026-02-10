@@ -60,7 +60,7 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // 댓글 관련 응답
     _COMMENT_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404_PARENT-NOT_FOUND", "존재하지 않는 부모 댓글입니다."),
-    _COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404-NOT_FOUND", "존재하지 댓글입니다."),
+    _COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404-NOT_FOUND", "존재하지 않는 댓글입니다."),
     _COMMENT_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "COMMENT400_DEPTH-EXCEEDED", "대댓글은 3단계까지만 작성할 수 있습니다."),
     _COMMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "COMMENT403-ACCESS_DENIED", "댓글에 접근 권한이 없습니다"),
     _COMMENT_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "COMMENT400-ALREADY_DELETED", "이미 삭제된 댓글입니다."),
