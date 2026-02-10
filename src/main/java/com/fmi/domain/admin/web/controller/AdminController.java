@@ -161,7 +161,7 @@ public class AdminController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "공지 생성 성공")
     })
-    public ApiResponse<Long> createNotice(@RequestBody NoticeCreateRequestDTO request) {
+    public ApiResponse<Long> createNotice(@Valid @RequestBody NoticeCreateRequestDTO request) {
         Long id = noticeService.createNotice(request);
         return ApiResponse.onSuccess(id);
     }
