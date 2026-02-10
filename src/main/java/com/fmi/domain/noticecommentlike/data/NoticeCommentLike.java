@@ -8,7 +8,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "notice_comment_like")
+@Table(name = "notice_comment_like", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "comment_id"})
+})
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

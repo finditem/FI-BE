@@ -153,14 +153,14 @@ public class NoticeCommentService {
 
         if (existingLike.isPresent()) {
             noticeCommentLikeRepository.delete(existingLike.get());
-            comment.decreaseLikeCount();
+            noticeCommentRepository.decrementLikeCount(commentId);
             return false;
         } else {
             noticeCommentLikeRepository.save(NoticeCommentLike.builder()
                     .user(user)
                     .comment(comment)
                     .build());
-            comment.increaseLikeCount();
+            noticeCommentRepository.incrementLikeCount(commentId);
             return true;
         }
     }
