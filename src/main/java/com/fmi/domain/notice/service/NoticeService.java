@@ -15,6 +15,7 @@ import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
 import com.fmi.domain.notice.web.dto.NoticeUpdateRequestDTO;
 import com.fmi.domain.noticecomment.repository.NoticeCommentRepository;
+import com.fmi.domain.noticecommentlike.repository.NoticeCommentLikeRepository;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.ImageType;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -44,6 +45,7 @@ public class NoticeService {
     private final NoticeConverter noticeConverter;
     private final NotificationService notificationService;
     private final NoticeCommentRepository noticeCommentRepository;
+    private final NoticeCommentLikeRepository noticeCommentLikeRepository;
     private final StringRedisTemplate stringRedisTemplate;
     
     /**
@@ -52,7 +54,8 @@ public class NoticeService {
     public Page<NoticeListDTO> getNoticeList(NoticeCategory category, String keyword, Pageable pageable) {
         Page<Notice> notices;
         if (keyword != null && !keyword.isBlank()) {
-            notices = noticeRepository.searchNotices(category, keyword.trim(), pageable);
+            String categoryStr = category != null ? category.name() : null;
+            notices = noticeRepository.searchNotices(categoryStr, keyword.trim(), pageable);
         } else if (category != null) {
             notices = noticeRepository.findByDraftFalseAndCategory(category, pageable);
         } else {
@@ -165,9 +168,20 @@ public class NoticeService {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
 
+        boolean wasDraft = Boolean.TRUE.equals(notice.getDraft());
+
         NoticeCategory category = request.getCategory() == null ? notice.getCategory() : request.getCategory();
         Boolean pinned = request.getPinned() == null ? notice.getPinned() : request.getPinned();
-        notice.update(request.getTitle(), request.getContent(), category, pinned);
+        notice.update(request.getTitle(), request.getContent(), category, pinned, request.getDraft());
+
+        // draft → 발행 전환 시 알림 발송
+        if (wasDraft && Boolean.FALSE.equals(request.getDraft())) {
+            notificationService.broadcastNotice(
+                    request.getTitle(),
+                    request.getContent(),
+                    notice.getNoticeId()
+            );
+        }
 
         // 이미지 업데이트 (전달된 경우에만)
         if (request.getImageUrls() != null) {
@@ -190,6 +204,7 @@ public class NoticeService {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
 
+        noticeCommentLikeRepository.deleteAllByNoticeId(noticeId);
         noticeLikeRepository.deleteByNoticeNoticeId(noticeId);
         noticeImageRepository.deleteAllByNotice(notice);
         noticeCommentRepository.deleteByNoticeNoticeId(noticeId);
@@ -211,14 +226,14 @@ public class NoticeService {
 
         if (existingLike.isPresent()) {
             noticeLikeRepository.delete(existingLike.get());
-            notice.decreaseLikeCount();
+            noticeRepository.decrementLikeCount(noticeId);
             return false; // unliked
         } else {
             noticeLikeRepository.save(NoticeLike.builder()
                     .user(user)
                     .notice(notice)
                     .build());
-            notice.increaseLikeCount();
+            noticeRepository.incrementLikeCount(noticeId);
             return true; // liked
         }
     }

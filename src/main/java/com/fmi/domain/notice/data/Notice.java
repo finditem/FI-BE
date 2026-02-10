@@ -81,11 +81,14 @@ public class Notice {
         this.viewCount = viewCount;
     }
 
-    public void update(String title, String content, NoticeCategory category, Boolean pinned) {
+    public void update(String title, String content, NoticeCategory category, Boolean pinned, Boolean draft) {
         this.title = title;
         this.content = content;
         this.category = category;
         this.pinned = pinned;
+        if (draft != null) {
+            this.draft = draft;
+        }
         this.updatedAt = LocalDateTime.now();
     }
 }

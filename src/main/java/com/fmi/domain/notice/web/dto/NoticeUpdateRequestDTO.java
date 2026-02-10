@@ -23,4 +23,7 @@ public class NoticeUpdateRequestDTO {
     @Schema(description = "이미지 URL 목록 (최대 5개)")
     @Size(max = 5)
     private List<String> imageUrls;
+
+    @Schema(description = "임시저장 여부 (true→임시저장, false→발행)", example = "false")
+    private Boolean draft;
 }
