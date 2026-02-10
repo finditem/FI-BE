@@ -319,7 +319,7 @@ public class AdminController {
     })
     public ApiResponse<String> updateReportStatus(@PathVariable Long reportId,
                                                   @Valid @RequestBody ReportStatusUpdateRequestDTO request) {
-        reportService.updateStatus(reportId, request.getStatus(), request.getAdminNote());
+        reportService.updateStatus(reportId, request.getStatus(), request.getAdminNote(), request.getAnswered());
         return ApiResponse.onSuccess("OK");
     }
 

@@ -177,7 +177,7 @@ public class ReportService {
      * 신고 상태 업데이트(관리자)
      */
     @Transactional
-    public void updateStatus(Long reportId, ReportStatus status, String adminNote) {
+    public void updateStatus(Long reportId, ReportStatus status, String adminNote, Boolean answered) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
 
@@ -192,6 +192,9 @@ public class ReportService {
             default:
                 throw new GeneralException(ErrorStatus._BAD_REQUEST);
         }
+
+        // 답변 상태 업데이트
+        report.updateAnswered(answered);
 
         // 신고자에게 결과 알림 및 이메일 발송
         User reporter = report.getReporter();
