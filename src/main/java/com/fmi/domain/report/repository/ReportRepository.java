@@ -49,6 +49,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
               AND (:targetType IS NULL OR r.target_type = :targetType)
               AND (:answered IS NULL OR r.answered = :answered)
               AND MATCH(r.reason) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY r.created_at DESC
             """,
             countQuery = """
             SELECT COUNT(*) FROM report r

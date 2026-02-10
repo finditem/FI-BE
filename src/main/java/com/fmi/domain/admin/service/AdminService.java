@@ -31,6 +31,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -62,7 +63,8 @@ public class AdminService {
         if (keyword != null && !keyword.isBlank()) {
             String typeStr = type != null ? type.name() : null;
             String statusStr = status != null ? status.name() : null;
-            inquiries = inquiryRepository.findAllForAdminWithKeyword(typeStr, statusStr, keyword.trim(), pageable);
+            Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            inquiries = inquiryRepository.findAllForAdminWithKeyword(typeStr, statusStr, keyword.trim(), unsorted);
         } else {
             inquiries = inquiryRepository.findAllForAdmin(type, status, pageable);
         }
@@ -90,7 +92,8 @@ public class AdminService {
         if (keyword != null && !keyword.isBlank()) {
             String statusStr = status != null ? status.name() : null;
             String targetTypeStr = targetType != null ? targetType.name() : null;
-            reports = reportRepository.findAllForAdminWithKeyword(statusStr, targetTypeStr, answered, keyword.trim(), pageable);
+            Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            reports = reportRepository.findAllForAdminWithKeyword(statusStr, targetTypeStr, answered, keyword.trim(), unsorted);
         } else {
             reports = reportRepository.findAllForAdmin(status, targetType, answered, pageable);
         }

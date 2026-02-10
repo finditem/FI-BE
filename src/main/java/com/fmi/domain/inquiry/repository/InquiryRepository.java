@@ -42,6 +42,7 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
             WHERE (:type IS NULL OR i.inquiry_type = :type)
               AND (:status IS NULL OR i.answer_status = :status)
               AND MATCH(i.title, i.content) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY i.created_at DESC
             """,
             countQuery = """
             SELECT COUNT(*) FROM customer_inquiry i

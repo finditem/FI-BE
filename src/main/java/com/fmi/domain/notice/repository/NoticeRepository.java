@@ -25,6 +25,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             WHERE n.draft = false
               AND (:category IS NULL OR n.category = :category)
               AND MATCH(n.title, n.content) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY n.pinned DESC, n.created_at DESC
             """,
             countQuery = """
             SELECT COUNT(*) FROM notice n
@@ -46,11 +47,11 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
     // 임시저장 목록 (관리자용)
     Page<Notice> findByDraftTrue(Pageable pageable);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Notice n SET n.likeCount = n.likeCount + 1 WHERE n.noticeId = :noticeId")
     void incrementLikeCount(@Param("noticeId") Long noticeId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Notice n SET n.likeCount = n.likeCount - 1 WHERE n.noticeId = :noticeId AND n.likeCount > 0")
     void decrementLikeCount(@Param("noticeId") Long noticeId);
 }

@@ -22,6 +22,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -55,7 +56,8 @@ public class NoticeService {
         Page<Notice> notices;
         if (keyword != null && !keyword.isBlank()) {
             String categoryStr = category != null ? category.name() : null;
-            notices = noticeRepository.searchNotices(categoryStr, keyword.trim(), pageable);
+            Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            notices = noticeRepository.searchNotices(categoryStr, keyword.trim(), unsorted);
         } else if (category != null) {
             notices = noticeRepository.findByDraftFalseAndCategory(category, pageable);
         } else {
