@@ -58,7 +58,14 @@ public class AdminService {
                                                      InquiryStatus status,
                                                      String keyword,
                                                      Pageable pageable) {
-        Page<Inquiry> inquiries = inquiryRepository.findAllForAdmin(type, status, keyword, pageable);
+        Page<Inquiry> inquiries;
+        if (keyword != null && !keyword.isBlank()) {
+            String typeStr = type != null ? type.name() : null;
+            String statusStr = status != null ? status.name() : null;
+            inquiries = inquiryRepository.findAllForAdminWithKeyword(typeStr, statusStr, keyword.trim(), pageable);
+        } else {
+            inquiries = inquiryRepository.findAllForAdmin(type, status, pageable);
+        }
         return inquiries.map(inquiry -> AdminInquiryResponse.builder()
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
@@ -79,7 +86,14 @@ public class AdminService {
                                                    Boolean answered,
                                                    String keyword,
                                                    Pageable pageable) {
-        Page<Report> reports = reportRepository.findAllForAdmin(status, targetType, answered, keyword, pageable);
+        Page<Report> reports;
+        if (keyword != null && !keyword.isBlank()) {
+            String statusStr = status != null ? status.name() : null;
+            String targetTypeStr = targetType != null ? targetType.name() : null;
+            reports = reportRepository.findAllForAdminWithKeyword(statusStr, targetTypeStr, answered, keyword.trim(), pageable);
+        } else {
+            reports = reportRepository.findAllForAdmin(status, targetType, answered, pageable);
+        }
         return reports.map(report -> AdminReportResponse.builder()
                 .reportId(report.getReportId())
                 .targetType(report.getTargetType())
@@ -94,7 +108,7 @@ public class AdminService {
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
                 .reporterNickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
                 .reporterEmail(report.getReporter() != null ? report.getReporter().getEmail() : null)
-                .answered(report.getAdminNote() != null && !report.getAdminNote().isBlank())
+                .answered(report.getAnswered())
                 .build());
     }
 

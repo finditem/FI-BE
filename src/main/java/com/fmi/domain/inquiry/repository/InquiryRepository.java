@@ -26,17 +26,33 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     // 사용자별 + 상태별 문의 목록
     Page<Inquiry> findByUserAndAnswerStatus(User user, InquiryStatus status, Pageable pageable);
 
-    // 관리자 전용 조회: 조건이 없으면 전체
+    // 관리자 전용 조회 - keyword 없을 때 (JPQL)
     @Query("""
             SELECT i FROM Inquiry i
             WHERE (:type IS NULL OR i.inquiryType = :type)
               AND (:status IS NULL OR i.answerStatus = :status)
-              AND (:keyword IS NULL OR i.title LIKE CONCAT('%', :keyword, '%')
-                   OR i.content LIKE CONCAT('%', :keyword, '%'))
             """)
     Page<Inquiry> findAllForAdmin(@Param("type") InquiryType type,
                                   @Param("status") InquiryStatus status,
-                                  @Param("keyword") String keyword,
                                   Pageable pageable);
+
+    // 관리자 전용 조회 - keyword 있을 때 (FULLTEXT + ngram)
+    @Query(value = """
+            SELECT * FROM customer_inquiry i
+            WHERE (:type IS NULL OR i.inquiry_type = :type)
+              AND (:status IS NULL OR i.answer_status = :status)
+              AND MATCH(i.title, i.content) AGAINST(:keyword IN BOOLEAN MODE)
+            """,
+            countQuery = """
+            SELECT COUNT(*) FROM customer_inquiry i
+            WHERE (:type IS NULL OR i.inquiry_type = :type)
+              AND (:status IS NULL OR i.answer_status = :status)
+              AND MATCH(i.title, i.content) AGAINST(:keyword IN BOOLEAN MODE)
+            """,
+            nativeQuery = true)
+    Page<Inquiry> findAllForAdminWithKeyword(@Param("type") String type,
+                                             @Param("status") String status,
+                                             @Param("keyword") String keyword,
+                                             Pageable pageable);
 }
 
