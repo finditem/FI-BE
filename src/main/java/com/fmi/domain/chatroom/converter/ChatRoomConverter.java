@@ -8,6 +8,7 @@ import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.post.data.Post;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.*;
@@ -26,6 +27,7 @@ public class ChatRoomConverter {
         var postInfo = PostInfoDTO.builder()
                 .postId(post.getId())
                 .postType(post.getPostType())
+                .category(post.getCategory())
                 .title(post.getTitle())
                 .address(post.getAddress())
                 .thumbnailUrl(thumbnailUrl)
@@ -39,18 +41,18 @@ public class ChatRoomConverter {
                 .build();
     }
 
-    public static List<ChatRoomSummaryDTO> toChatRoomSummaryListDTO(List<ChatRoomParticipant> participants, User currentUser) {
+    public static List<ChatRoomSummaryDTO> toChatRoomSummaryListDTO(List<ChatRoomParticipant> participants, User currentUser, Map<Long, String> thumbnailMap) {
         return participants.stream()
                 .map(pt -> {
                     User contactUser = pt.getChatRoom().getOtherParticipant(currentUser.getId());
 
-                    return toChatRoomSummaryDTO(pt, contactUser);
+                    return toChatRoomSummaryDTO(pt, contactUser, thumbnailMap);
                 })
                 .collect(Collectors.toList());
     }
 
 
-    public static ChatRoomSummaryDTO toChatRoomSummaryDTO(ChatRoomParticipant participant, User contactUser) {
+    public static ChatRoomSummaryDTO toChatRoomSummaryDTO(ChatRoomParticipant participant, User contactUser, Map<Long, String> thumbnailMap) {
 
         ContactUserDTO contactUserDTO = ContactUserDTO.builder()
                 .userId(contactUser.getId())
@@ -59,11 +61,13 @@ public class ChatRoomConverter {
                 .build();
 
         Post post = participant.getChatRoom().getPost();
-//        String thumbnailUrl = post.getImages().isEmpty() ? null : post.getImages().get(0).getImgUrl();
-        String thumbnailUrl = null;
+
+        String thumbnailUrl = thumbnailMap.get(post.getId());
+
         PostInfoDTO postInfoDTO = PostInfoDTO.builder()
                 .postId(post.getId())
                 .postType(post.getPostType())
+                .category(post.getCategory())
                 .title(post.getTitle())
                 .address(post.getAddress())
                 .thumbnailUrl(thumbnailUrl)
