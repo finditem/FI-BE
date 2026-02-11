@@ -137,14 +137,16 @@ public class InquiryService {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         
-        // 권한 확인: 1:1 개인 문의는 본인만 조회 가능
-        // 회원 문의인 경우
-        if (inquiry.getUser() != null) {
-            if (!inquiry.getUser().getId().equals(user.getId())) {
+        // 권한 확인: 관리자는 모든 문의 조회 가능, 일반 사용자는 본인 문의만
+        if (!isAdmin(userDetails)) {
+            if (inquiry.getUser() != null) {
+                if (!inquiry.getUser().getId().equals(user.getId())) {
+                    throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
+                }
+            } else {
+                // 비회원 문의는 관리자만 조회 가능
                 throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
             }
-        } else if (!isAdmin(userDetails)) {
-            throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
         }
         
         java.util.List<InquiryCommentResponse> comments =
