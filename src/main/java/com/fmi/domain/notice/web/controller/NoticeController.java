@@ -5,6 +5,8 @@ import com.fmi.domain.notice.service.NoticeService;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -106,6 +108,9 @@ public class NoticeController {
     public ApiResponse<Boolean> toggleLike(
             @PathVariable Long noticeId,
             @org.springframework.security.core.annotation.AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
         boolean liked = noticeService.toggleLike(noticeId, userDetails.getUsername());
         return ApiResponse.onSuccess(liked);
     }

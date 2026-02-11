@@ -5,6 +5,8 @@ import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecomment.service.NoticeCommentService;
 import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -143,6 +145,9 @@ public class NoticeCommentController {
     public ResponseEntity<ApiResponse<Boolean>> toggleCommentLike(
             @PathVariable Long commentId,
             @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
         boolean liked = noticeCommentService.toggleCommentLike(commentId, userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.onSuccess(liked));
     }
