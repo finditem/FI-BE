@@ -34,6 +34,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 활성 사용자만 조회 (deletedAt이 null인 사용자)
     @Query("SELECT u FROM User u WHERE u.deletedAt IS NULL")
     List<User> findAllActiveUsers();
+
+    // 활성 사용자 페이징 조회
+    @Query("SELECT u FROM User u WHERE u.deletedAt IS NULL")
+    Page<User> findAllActiveUsers(Pageable pageable);
     
     // 활성 사용자 ID로 조회 (deletedAt이 null인 사용자만)
     @Query("SELECT u FROM User u WHERE u.id = :id AND u.deletedAt IS NULL")
