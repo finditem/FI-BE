@@ -96,7 +96,8 @@ public class CommentImageService {
         }
         List<String> urls = images.stream().map(CommentImage::getImgUrl).toList();
 
-        commentImageRepository.deleteAllByComment(comment);
         s3Service.delete(urls);
+
+        commentImageRepository.deleteAllByComment(comment);
     }
 }

@@ -37,7 +37,7 @@ public class CommentLikeController {
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 댓글입니다.", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 않는 댓글입니다.", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMENT400-ALREADY_DELETED: 이미 삭제된 댓글입니다.", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러", content = @Content)
     })
@@ -62,7 +62,7 @@ public class CommentLikeController {
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증이 필요합니다", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 댓글입니다.", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 않는 댓글입니다.", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "COMMENT400-ALREADY_DELETED: 이미 삭제된 댓글입니다.", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-LIKE_NOT_FOUND: 존재하지 않는 댓글 좋아요입니다.", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러", content = @Content)
