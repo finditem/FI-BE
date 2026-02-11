@@ -21,6 +21,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -106,7 +108,7 @@ public class InquiryService {
                 );
             }
         } catch (Exception e) {
-            // 이메일 발송 실패해도 문의는 성공 처리
+            log.error("문의 접수 이메일 발송 실패: inquiryId={}", saved.getId(), e);
         }
         
         return saved.getId();
@@ -206,7 +208,7 @@ public class InquiryService {
                     )
                 );
             } catch (Exception e) {
-                // 이메일 발송 실패해도 알림은 성공 처리
+                log.error("문의 상태 변경 이메일 발송 실패: inquiryId={}", inquiry.getId(), e);
             }
         } else if (inquiry.getEmail() != null) {
             // 비회원 문의인 경우 이메일로만 발송
@@ -225,7 +227,7 @@ public class InquiryService {
                     )
                 );
             } catch (Exception e) {
-                // 이메일 발송 실패는 무시
+                log.error("비회원 문의 상태 변경 이메일 발송 실패: inquiryId={}, email={}", inquiry.getId(), inquiry.getEmail(), e);
             }
         }
     }
