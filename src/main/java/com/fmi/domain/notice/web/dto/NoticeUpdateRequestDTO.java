@@ -10,11 +10,9 @@ import java.util.List;
 
 @Data
 public class NoticeUpdateRequestDTO {
-    @Schema(description = "제목", example = "공지 수정 제목")
-    @NotBlank
+    @Schema(description = "제목 (미전송 시 기존 유지)", example = "공지 수정 제목")
     private String title;
-    @Schema(description = "내용", example = "공지 수정 내용입니다.")
-    @NotBlank
+    @Schema(description = "내용 (미전송 시 기존 유지)", example = "공지 수정 내용입니다.")
     private String content;
     @Schema(description = "카테고리", example = "GENERAL")
     private NoticeCategory category;
@@ -22,7 +20,7 @@ public class NoticeUpdateRequestDTO {
     private Boolean pinned;
     @Schema(description = "이미지 URL 목록 (최대 5개)")
     @Size(max = 5)
-    private List<String> imageUrls;
+    private List<@NotBlank String> imageUrls;
 
     @Schema(description = "임시저장 여부 (true→임시저장, false→발행)", example = "false")
     private Boolean draft;

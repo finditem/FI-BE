@@ -22,7 +22,7 @@ public class NoticeCreateRequestDTO {
     private Boolean pinned;
     @Schema(description = "이미지 URL 목록 (최대 5개)")
     @Size(max = 5)
-    private List<String> imageUrls;
+    private List<@NotBlank String> imageUrls;
     @Schema(description = "임시저장 여부", example = "false")
     private Boolean draft;
 }
