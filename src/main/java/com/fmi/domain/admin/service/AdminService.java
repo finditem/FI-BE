@@ -64,7 +64,7 @@ public class AdminService {
             String typeStr = type != null ? type.name() : null;
             String statusStr = status != null ? status.name() : null;
             Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-            inquiries = inquiryRepository.findAllForAdminWithKeyword(typeStr, statusStr, keyword.trim(), unsorted);
+            inquiries = inquiryRepository.findAllForAdminWithKeyword(typeStr, statusStr, sanitizeFulltextKeyword(keyword), unsorted);
         } else {
             inquiries = inquiryRepository.findAllForAdmin(type, status, pageable);
         }
@@ -93,7 +93,7 @@ public class AdminService {
             String statusStr = status != null ? status.name() : null;
             String targetTypeStr = targetType != null ? targetType.name() : null;
             Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-            reports = reportRepository.findAllForAdminWithKeyword(statusStr, targetTypeStr, answered, keyword.trim(), unsorted);
+            reports = reportRepository.findAllForAdminWithKeyword(statusStr, targetTypeStr, answered, sanitizeFulltextKeyword(keyword), unsorted);
         } else {
             reports = reportRepository.findAllForAdmin(status, targetType, answered, pageable);
         }
@@ -173,6 +173,13 @@ public class AdminService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
         
         return reportConverter.toResponseDTO(report);
+    }
+
+    /**
+     * FULLTEXT BOOLEAN MODE 특수문자 제거
+     */
+    private String sanitizeFulltextKeyword(String keyword) {
+        return keyword.trim().replaceAll("[+\\-*~\"()<>@]", " ").trim();
     }
 
     /**
