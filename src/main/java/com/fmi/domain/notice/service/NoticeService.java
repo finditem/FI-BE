@@ -57,7 +57,7 @@ public class NoticeService {
         if (keyword != null && !keyword.isBlank()) {
             String categoryStr = category != null ? category.name() : null;
             Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-            notices = noticeRepository.searchNotices(categoryStr, keyword.trim(), unsorted);
+            notices = noticeRepository.searchNotices(categoryStr, sanitizeFulltextKeyword(keyword), unsorted);
         } else if (category != null) {
             notices = noticeRepository.findByDraftFalseAndCategory(category, pageable);
         } else {
@@ -97,22 +97,18 @@ public class NoticeService {
         String viewSetKey = "notice:view:set:" + noticeId;      // 어떤 유저가 조회했는지
         String viewCountKey = "notice:view:count:" + noticeId;  // 공지사항 조회수 누적
         
-        // Redis에 조회수가 없으면 DB 값으로 초기화
-        String existingCount = stringRedisTemplate.opsForValue().get(viewCountKey);
-        if (existingCount == null) {
-            stringRedisTemplate.opsForValue().set(viewCountKey, String.valueOf(notice.getViewCount()));
-            stringRedisTemplate.expire(viewCountKey, Duration.ofMinutes(5));
-        }
-        
+        // Redis에 조회수가 없으면 DB 값으로 원자적 초기화 (동시 접속 시 덮어쓰기 방지)
+        stringRedisTemplate.opsForValue()
+                .setIfAbsent(viewCountKey, String.valueOf(notice.getViewCount()), Duration.ofMinutes(5));
+
         // 새로운 조회자인 경우에만 조회수 증가
         Long added = stringRedisTemplate.opsForSet().add(viewSetKey, userIdentifier);
         boolean newViewer = added != null && added > 0;
         if (newViewer) {
             stringRedisTemplate.opsForValue().increment(viewCountKey);
         }
-        // 5분(300초) 후 만료
+        // 조회자 Set TTL 갱신
         stringRedisTemplate.expire(viewSetKey, Duration.ofMinutes(5));
-        stringRedisTemplate.expire(viewCountKey, Duration.ofMinutes(5));
         
         // Redis에서 현재 조회수 가져오기
         Long currentViewCount = Optional.ofNullable(stringRedisTemplate.opsForValue().get(viewCountKey))
@@ -131,13 +127,17 @@ public class NoticeService {
      * 공지 생성 (관리자)
      */
     @Transactional
-    public Long createNotice(NoticeCreateRequestDTO request) {
+    public Long createNotice(NoticeCreateRequestDTO request, String authorEmail) {
+        User author = userRepository.findByEmail(authorEmail)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
         Notice notice = Notice.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
                 .category(request.getCategory() == null ? NoticeCategory.GENERAL : request.getCategory())
                 .pinned(Boolean.TRUE.equals(request.getPinned()))
                 .draft(Boolean.TRUE.equals(request.getDraft()))
+                .author(author)
                 .build();
 
         Notice saved = noticeRepository.save(notice);
@@ -172,15 +172,17 @@ public class NoticeService {
 
         boolean wasDraft = Boolean.TRUE.equals(notice.getDraft());
 
+        String title = (request.getTitle() != null && !request.getTitle().isBlank()) ? request.getTitle() : notice.getTitle();
+        String content = (request.getContent() != null && !request.getContent().isBlank()) ? request.getContent() : notice.getContent();
         NoticeCategory category = request.getCategory() == null ? notice.getCategory() : request.getCategory();
         Boolean pinned = request.getPinned() == null ? notice.getPinned() : request.getPinned();
-        notice.update(request.getTitle(), request.getContent(), category, pinned, request.getDraft());
+        notice.update(title, content, category, pinned, request.getDraft());
 
         // draft → 발행 전환 시 알림 발송
         if (wasDraft && Boolean.FALSE.equals(request.getDraft())) {
             notificationService.broadcastNotice(
-                    request.getTitle(),
-                    request.getContent(),
+                    notice.getTitle(),
+                    notice.getContent(),
                     notice.getNoticeId()
             );
         }
@@ -218,7 +220,8 @@ public class NoticeService {
      */
     @Transactional
     public boolean toggleLike(Long noticeId, String email) {
-        Notice notice = noticeRepository.findById(noticeId)
+        // 비관적 락으로 동시 요청 직렬화 (더블클릭 등 레이스 컨디션 방지)
+        Notice notice = noticeRepository.findByIdWithLock(noticeId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
 
         User user = userRepository.findByEmail(email)
@@ -228,14 +231,14 @@ public class NoticeService {
 
         if (existingLike.isPresent()) {
             noticeLikeRepository.delete(existingLike.get());
-            noticeRepository.decrementLikeCount(noticeId);
+            notice.decreaseLikeCount();
             return false; // unliked
         } else {
             noticeLikeRepository.save(NoticeLike.builder()
                     .user(user)
                     .notice(notice)
                     .build());
-            noticeRepository.incrementLikeCount(noticeId);
+            notice.increaseLikeCount();
             return true; // liked
         }
     }
@@ -246,6 +249,13 @@ public class NoticeService {
     public Page<NoticeListDTO> getDraftNotices(Pageable pageable) {
         Page<Notice> drafts = noticeRepository.findByDraftTrue(pageable);
         return drafts.map(noticeConverter::toListDTO);
+    }
+
+    /**
+     * FULLTEXT BOOLEAN MODE 특수문자 제거
+     */
+    private String sanitizeFulltextKeyword(String keyword) {
+        return keyword.trim().replaceAll("[+\\-*~\"()<>@]", " ").trim();
     }
 }
 
