@@ -1,5 +1,6 @@
 package com.fmi.domain.notice.data;
 
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notice.data.enums.NoticeCategory;
 import jakarta.persistence.*;
 import lombok.*;
@@ -45,6 +46,10 @@ public class Notice {
     @Column(name = "draft")
     @Builder.Default
     private Boolean draft = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    private User author;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

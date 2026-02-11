@@ -45,7 +45,7 @@ public class NoticeConverter {
                 .pinned(notice.getPinned())
                 .viewCount(notice.getViewCount())
                 .likeCount(notice.getLikeCount())
-                .authorName("관리자")
+                .authorName(notice.getAuthor() != null ? notice.getAuthor().getNickname() : "관리자")
                 .images(imageUrls)
                 .createdAt(notice.getCreatedAt())
                 .updatedAt(notice.getUpdatedAt())
