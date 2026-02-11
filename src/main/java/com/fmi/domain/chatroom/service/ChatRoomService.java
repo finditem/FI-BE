@@ -26,7 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.*;
 
@@ -118,7 +120,14 @@ public class ChatRoomService {
     private MyChatListDTO buildChatListResponse(Slice<ChatRoomParticipant> participantSlice, User user) {
         List<ChatRoomParticipant> participants = participantSlice.getContent();
 
-        List<ChatRoomSummaryDTO> summaryDTOs = ChatRoomConverter.toChatRoomSummaryListDTO(participants, user);
+        List<Long> postIds = participants.stream()
+                .map(p -> p.getChatRoom().getPost().getId())
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, String> thumbnailMap = postImageService.findThumbnailUrlMap(postIds);
+
+        List<ChatRoomSummaryDTO> summaryDTOs = ChatRoomConverter.toChatRoomSummaryListDTO(participants, user, thumbnailMap);
 
         Long nextCursor = null;
         if (!participants.isEmpty() && participantSlice.hasNext()) {
