@@ -120,8 +120,9 @@ public class NoticeCommentService {
             throw new GeneralException(ErrorStatus._FORBIDDEN);
         }
 
+        NoticeCommentResponse response = toResponse(comment, userDetails);
         noticeCommentRepository.delete(comment);
-        return toResponse(comment, userDetails);
+        return response;
     }
 
     private NoticeCommentResponse toResponse(NoticeComment comment, UserDetails userDetails) {
@@ -142,7 +143,8 @@ public class NoticeCommentService {
      */
     @Transactional
     public boolean toggleCommentLike(Long commentId, String email) {
-        NoticeComment comment = noticeCommentRepository.findById(commentId)
+        // 비관적 락으로 동시 요청 직렬화 (더블클릭 등 레이스 컨디션 방지)
+        NoticeComment comment = noticeCommentRepository.findByIdWithLock(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         User user = userRepository.findByEmail(email)
@@ -153,14 +155,14 @@ public class NoticeCommentService {
 
         if (existingLike.isPresent()) {
             noticeCommentLikeRepository.delete(existingLike.get());
-            noticeCommentRepository.decrementLikeCount(commentId);
+            comment.decreaseLikeCount();
             return false;
         } else {
             noticeCommentLikeRepository.save(NoticeCommentLike.builder()
                     .user(user)
                     .comment(comment)
                     .build());
-            noticeCommentRepository.incrementLikeCount(commentId);
+            comment.increaseLikeCount();
             return true;
         }
     }
