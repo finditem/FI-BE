@@ -11,8 +11,8 @@ import org.springframework.http.HttpStatus;
 public enum ErrorStatus implements BaseErrorCode {
     // 가장 일반적인 응답
     _INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON500", "서버 에러, 관리자에게 문의 바랍니다."),
-    _BAD_REQUEST(HttpStatus.BAD_REQUEST, "COMMON400","잘못된 요청입니다."),
-    _UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON401","인증이 필요합니다."),
+    _BAD_REQUEST(HttpStatus.BAD_REQUEST, "COMMON400", "잘못된 요청입니다."),
+    _UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON401", "인증이 필요합니다."),
     _FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "금지된 요청입니다."),
 
     // 인증/회원 관련
@@ -35,7 +35,7 @@ public enum ErrorStatus implements BaseErrorCode {
     _SOCIAL_ACCOUNT(HttpStatus.BAD_REQUEST, "AUTH400-SOCIAL_ACCOUNT", "소셜 로그인 계정입니다."),
 
     // s3 관련 응답
-    _NOT_EXIST_FILE (HttpStatus.NOT_FOUND, "FILE404-NOT_FOUND", "존재하지 않는 파일입니다."),
+    _NOT_EXIST_FILE(HttpStatus.NOT_FOUND, "FILE404-NOT_FOUND", "존재하지 않는 파일입니다."),
     _NOT_EXIST_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "FILE400-EXT_MISSING", "확장자가 존재하지 않습니다."),
     _INVALID_FILE_EXTENSION(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "FILE415-EXT_UNSUPPORTED", "허용되지 않는 확장자입니다."),
     _INVALID_URL_FORMAT(HttpStatus.BAD_REQUEST, "FILE400-URL_INVALID", "잘못된 URL 형식입니다."),
@@ -57,6 +57,14 @@ public enum ErrorStatus implements BaseErrorCode {
     _POST_ACCESS_DENIED(HttpStatus.FORBIDDEN, "POST403-ACCESS_DENIED", "해당 글에 접근 권한이 없습니다"),
     _POST_FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "POST-FAVORITE-NOT_FOUND", "해당 게시글에 대한 즐겨찾기를 하지 않았습니다."),
     _POST_RADIUS_NOT_MATCH(HttpStatus.BAD_REQUEST, "POST-RADIUS-NOT_MATCH", "유효하지 않는 Radius 값입니다."),
+
+    // 댓글 관련 응답
+    _COMMENT_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404_PARENT-NOT_FOUND", "존재하지 않는 부모 댓글입니다."),
+    _COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404-NOT_FOUND", "존재하지 않는 댓글입니다."),
+    _COMMENT_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "COMMENT400_DEPTH-EXCEEDED", "대댓글은 3단계까지만 작성할 수 있습니다."),
+    _COMMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "COMMENT403-ACCESS_DENIED", "댓글에 접근 권한이 없습니다"),
+    _COMMENT_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "COMMENT400-ALREADY_DELETED", "이미 삭제된 댓글입니다."),
+    _COMMENT_LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404-LIKE_NOT_FOUND", "존재하지 않는 댓글 좋아요입니다."),
 
     // 목록 관련 응답
     _INVALID_CURSOR(HttpStatus.BAD_REQUEST, "LIST400-INVALID_CURSOR", "유효하지 않은 커서입니다. cursor 값을 확인해주세요."),
@@ -87,9 +95,6 @@ public enum ErrorStatus implements BaseErrorCode {
     // 신고 관련 응답
     _REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "REPORT409-ALREADY_EXISTS", "이미 신고한 대상입니다."),
     _REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404-NOT_FOUND", "존재하지 않는 신고입니다."),
-
-    // 댓글 관련 응답
-    _COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404-NOT_FOUND", "존재하지 않는 댓글입니다."),
 
     // 알림 관련 응답
     _NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION404-NOT_FOUND", "존재하지 않는 알림입니다."),

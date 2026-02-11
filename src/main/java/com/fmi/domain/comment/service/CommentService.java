@@ -5,27 +5,32 @@ import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.comment.converter.CommentConverter;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
-import com.fmi.domain.comment.response.CommentResponse;
 import com.fmi.domain.comment.response.CommentSliceResponse;
 import com.fmi.domain.comment.web.dto.CreateCommentDto;
+import com.fmi.domain.comment.web.dto.request.CommentCreateRequest;
+import com.fmi.domain.comment.web.dto.request.CommentUpdateRequest;
+import com.fmi.domain.comment.web.dto.response.CommentCreateResponse;
+import com.fmi.domain.comment.web.dto.response.CommentDeleteResponse;
+import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
+import com.fmi.domain.commentlike.service.CommentLikeService;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.Post;
-import com.fmi.domain.post.data.PostImage;
-import com.fmi.domain.post.repository.PostRepository;
+import com.fmi.domain.post.service.PostQueryService;
+import com.fmi.domain.user.converter.UserConverter;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
+import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,61 +41,52 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class CommentService {
 
-    private final PostRepository postRepository;
+    private final PostQueryService postQueryService;
+    private final UserQueryService userQueryService;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
-    private final CommentConverter commentConverter;
     private final NotificationService notificationService;
-    private final S3Service s3Service;
+    private final CommentImageService commentImageService;
+    private final CommentLikeService commentLikeService;
 
     @Transactional
-    public CommentResponse createComment(CreateCommentDto dto, UserDetails userDetails, Long postId,List<MultipartFile> images) {
+    public CommentCreateResponse createCommentByPost(CommentCreateRequest request, UserDetails userDetails, Long postId, List<MultipartFile> images) {
+        User user = userQueryService.findUser(userDetails.getUsername());
+        Post post = postQueryService.findById(postId);
 
+        Comment comment;
+        if (Objects.nonNull(request.parentId())) {
+            Comment parentComment = commentRepository.findById(request.parentId())
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_PARENT_NOT_FOUND));
 
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다"));
+            if (!Objects.equals(parentComment.getPost().getId(), post.getId())) {
+                throw new IllegalArgumentException();
+            }
+            comment = Comment.createComment(user, post, request.content(), parentComment);
 
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다"));
-
-        List<String> s3Urls = (images == null || images.isEmpty())
-                ? new ArrayList<>()
-                : s3Service.upload(images);
-
-
-        Comment parentComment = null;
-
-        if (dto.getParentId() != null) {
-            parentComment = commentRepository.findById(dto.getParentId())
-                    .orElseThrow(() -> new IllegalArgumentException("부모 댓글이 존재하지 않습니다"));
+        } else {
+            comment = Comment.createComment(user, post, request.content());
         }
 
-        Comment comment = commentConverter.toCommentEntity(dto, user, post, parentComment);
-        Comment savedComment = commentRepository.save(comment);
+        Comment saveComment = commentRepository.save(comment);
 
-//        List<PostImage> postImages = CommentConverter.toPostImageEntities(post, s3Urls);
-//
-//        if (!postImages.isEmpty()) {
-//            commentImage.saveAll(postImages);
-//            post.setImages(postImages);
-//        }
+        List<CommentImageResponse> commentImageList = commentImageService.createCommentImageAtS3AndDB(images, saveComment);
 
-//        post.increaseCommentCount();
-        boolean isReply = parentComment != null;
-
-        Set<Long> mentionedUserIds = handleMentions(savedComment, dto);
+        boolean isReply = (saveComment.getParent() != null);
+        Set<Long> mentionedUserIds = handleMentions(saveComment, request);
 
         if (isReply) {
-            notifyReply(parentComment, user, dto, post, mentionedUserIds);
+            notifyReply(saveComment.getParent(), user, request, post, mentionedUserIds);
         } else {
-            notifyPostOwner(post, user, dto, mentionedUserIds);
+            notifyPostOwner(post, user, request, mentionedUserIds);
         }
 
-        return toResponse(savedComment, userDetails);
+
+        return CommentConverter.toCommentCreateResponse(comment, 0, true, UserConverter.toUserCommentResponse(user), commentImageList);
     }
 
-    private Set<Long> handleMentions(Comment comment, CreateCommentDto dto) {
-        List<String> mentionedNicknames = extractMentions(dto.getContent());
+    private Set<Long> handleMentions(Comment comment, CommentCreateRequest dto) {
+        List<String> mentionedNicknames = extractMentions(dto.content());
         Set<Long> mentionedUserIds = new HashSet<>();
 
         for (String nickname : mentionedNicknames) {
@@ -102,7 +98,7 @@ public class CommentService {
                             mentionedUser,
                             NotificationType.MENTION,
                             comment.getUser().getNickname() + "님이 멘션했습니다",
-                            dto.getContent(),
+                            dto.content(),
                             ReferenceType.COMMENT,
                             comment.getId()
                     );
@@ -138,7 +134,7 @@ public class CommentService {
     }
 
 
-    private void notifyPostOwner(Post post, User commenter, CreateCommentDto dto, Set<Long> mentionedUserIds) {
+    private void notifyPostOwner(Post post, User commenter, CommentCreateRequest dto, Set<Long> mentionedUserIds) {
 
         Long postOwnerId = post.getUser().getId();
 
@@ -151,13 +147,13 @@ public class CommentService {
                 post.getUser(),
                 NotificationType.COMMENT,
                 "새 댓글이 달렸습니다",
-                dto.getContent(),
+                dto.content(),
                 ReferenceType.POST,
                 post.getId()
         );
     }
 
-    private void notifyReply(Comment parentComment, User replier, CreateCommentDto dto, Post post, Set<Long> mentionedUserIds) {
+    private void notifyReply(Comment parentComment, User replier, CommentCreateRequest dto, Post post, Set<Long> mentionedUserIds) {
 
         Long parentOwnerId = parentComment.getUser().getId();
 
@@ -170,81 +166,66 @@ public class CommentService {
                 parentComment.getUser(),
                 NotificationType.REPLY,
                 "댓글에 답글이 달렸습니다",
-                dto.getContent(),
+                dto.content(),
                 ReferenceType.POST,
                 post.getId()
         );
     }
 
     @Transactional
-    public CommentResponse updateComment(CreateCommentDto dto, UserDetails userDetails, Long commentId) {
-
+    public CommentCreateResponse updateComment(CommentUpdateRequest request, UserDetails userDetails, Long commentId, List<MultipartFile> addImageList) {
+        User user = userQueryService.findUser(userDetails.getUsername());
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다"));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
-        if (!comment.getUser().getEmail().equals(userDetails.getUsername())) {
-            throw new RuntimeException("작성자만 수정할 수 있습니다.");
+        if (comment.isDeleted()) {
+            throw new GeneralException(ErrorStatus._COMMENT_ALREADY_DELETED);
         }
 
-        comment.setContent(dto.getContent());
-        comment.setUpdatedAt(LocalDateTime.now());
+        if (!Objects.equals(user.getId(), comment.getUser().getId())) {
+            throw new GeneralException(ErrorStatus._COMMENT_ACCESS_DENIED);
+        }
 
-        return toResponse(comment, userDetails);
+        comment.updateContent(request.content());
+        commentImageService.createCommentImageAtS3AndDB(addImageList, comment);
+        commentImageService.deleteCommentImageAtS3AndDBByImageIdList(request.deleteImageIds(), comment.getId());
+
+        List<CommentImageResponse> imageList = commentImageService.findCommentImageListByComment(comment);
+
+        int likeCount = commentLikeService.getLikeCount(comment.getId());
+
+
+        return CommentConverter.toCommentCreateResponse(
+                comment,
+                likeCount,
+                true,
+                UserConverter.toUserCommentResponse(user),
+                imageList);
     }
 
     @Transactional
-    public CommentResponse deleteComment(UserDetails userDetails, Long commentId) {
-
+    public CommentDeleteResponse deleteComment(Long commentId, UserDetails userDetails) {
+        User user = userQueryService.findUser(userDetails.getUsername());
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다"));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
-        // 작성자이거나 관리자인 경우 삭제 가능
-        boolean isOwner = comment.getUser().getEmail().equals(userDetails.getUsername());
-        boolean isAdmin = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
-
-        if (!isOwner && !isAdmin) {
-            throw new RuntimeException("작성자 또는 관리자만 삭제할 수 있습니다.");
+        if (comment.isDeleted()) {
+            throw new GeneralException(ErrorStatus._COMMENT_ALREADY_DELETED);
         }
 
-//        comment.getPost().decreaseCommentCount(); // 댓글 수 감소
-
-        commentRepository.delete(comment);
-
-        return toResponse(comment, userDetails);
-    }
-
-
-    @Transactional(readOnly = true)
-    public CommentSliceResponse getComments(Long postId, Long cursor, int size, UserDetails userDetails) {
-
-        Slice<Comment> comments;
-
-        if (cursor == null) {
-            comments = commentRepository.findTopByPostIdOrderByIdDesc(postId, Pageable.ofSize(size));
-        } else {
-            comments = commentRepository.findByPostIdAndIdLessThanOrderByIdDesc(postId, cursor, Pageable.ofSize(size));
+        if (!Objects.equals(user.getId(), comment.getUser().getId()) &&
+                userDetails.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .noneMatch(authority -> authority.equals("ROLE_ADMIN"))) {
+            throw new GeneralException(ErrorStatus._COMMENT_ACCESS_DENIED);
         }
 
-        Long nextCursor  = comments.hasNext()
-                ? comments.getContent().get(comments.getContent().size() - 1).getId()
-                : null;
+        comment.delete();
 
+        commentImageService.deleteAllCommentImage(comment);
+        commentLikeService.deleteByComment(comment);
 
-        List<CommentResponse> result = comments.stream()
-                .limit(size)
-                .map(comment -> toResponse(comment, userDetails))
-                .toList();
-
-        return new CommentSliceResponse(result, comments.hasNext(), nextCursor);
-    }
-
-    private CommentResponse toResponse(Comment comment, UserDetails userDetails) {
-        boolean isOwner = isOwner(comment, userDetails);
-        boolean isAdmin = isAdmin(userDetails);
-
-        return commentConverter.toCommentResponse(comment, isOwner, isOwner || isAdmin);
+        return CommentConverter.toDeleteResponse(comment);
     }
 
     private boolean isOwner(Comment comment, UserDetails userDetails) {

@@ -10,12 +10,12 @@ import java.time.LocalDateTime;
 @Component
 public class CommentLikeConverter {
 
-    public CommentLike toTrueEntity(User user, Comment comment) {
-        return CommentLike.builder()
-                .user(user)
-                .comment(comment)
-                .isLiked(true)
-                .createdAt(LocalDateTime.now())
-                .build();
-    }
+//    public CommentLike toTrueEntity(User user, Comment comment) {
+//        return CommentLike.builder()
+//                .user(user)
+//                .comment(comment)
+//                .isLiked(true)
+//                .createdAt(LocalDateTime.now())
+//                .build();
+//    }
 }
