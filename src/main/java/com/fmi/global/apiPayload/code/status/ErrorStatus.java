@@ -69,6 +69,7 @@ public enum ErrorStatus implements BaseErrorCode {
     // 채팅 관련 응답
     _IMAGE_NOT_PROVIDED(HttpStatus.BAD_REQUEST, "IMAGE400-NOT_PROVIDED", "전송할 이미지가 없습니다."),
     _MESSAGE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "MESSAGE403-NOT_ALLOWED", "채팅 내역을 조회할 권한이 없습니다."),
+    _MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "MESSAGE404-NOT_FOUND", "존재하지 않는 채팅 메시지입니다."),
 
     // 공지사항 관련 응답
     _NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE404-NOT_FOUND", "존재하지 않는 공지사항입니다."),

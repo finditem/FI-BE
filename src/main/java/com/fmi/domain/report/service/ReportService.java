@@ -138,7 +138,7 @@ public class ReportService {
                 break;
             case CHAT:
                 chatMessageRepository.findById(targetId)
-                        .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND)); // ChatMessage 용 에러 추가 필요
+                        .orElseThrow(() -> new GeneralException(ErrorStatus._MESSAGE_NOT_FOUND));
                 break;
         }
     }
