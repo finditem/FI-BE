@@ -68,13 +68,14 @@ public class Post {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private Post(String title, String address, double latitude, double longitude, PostType postType, Category category, boolean temporarySave, LocalDateTime date, Radius radius, User user) {
+    private Post(String title, String address, double latitude, double longitude, PostType postType, Category category, String content, boolean temporarySave, LocalDateTime date, Radius radius, User user) {
         this.title = title;
         this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;
         this.postType = postType;
         this.category = category;
+        this.content = content;
         this.temporarySave = temporarySave;
         this.date = date;
         this.radius = radius;
@@ -84,8 +85,8 @@ public class Post {
         this.viewCount = 0;
     }
 
-    public static Post create(String title, String address, double latitude, double longitude, PostType postType, Category category, boolean temporarySave, LocalDateTime date, Radius radius, User user) {
-        return new Post(title, address, latitude, longitude, postType, category, temporarySave, date, radius, user);
+    public static Post create(String title, String address, double latitude, double longitude, PostType postType, Category category, String content, boolean temporarySave, LocalDateTime date, Radius radius, User user) {
+        return new Post(title, address, latitude, longitude, postType, category, content, temporarySave, date, radius, user);
     }
 
     public boolean isNew() {
