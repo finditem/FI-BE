@@ -37,7 +37,7 @@ public class Report {
     @Column(name = "report_type", nullable = false, length = 50)
     private ReportType reportType;
 
-    @Column(name = "reason", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;
 
     @Enumerated(EnumType.STRING)
