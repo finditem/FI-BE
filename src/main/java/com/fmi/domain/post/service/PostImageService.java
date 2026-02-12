@@ -100,4 +100,19 @@ public class PostImageService {
 
         return postImageRepository.countImagesGroupByPostId(postIds);
     }
+
+    @Transactional(readOnly = true)
+    public Map<Long, String> findThumbnailUrlMap(List<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) return Map.of();
+
+        List<PostImage> thumbnails =
+                postImageRepository.findByPostIdInAndImageType(postIds, ImageType.THUMBNAIL);
+
+        return thumbnails.stream()
+                .collect(Collectors.toMap(
+                        pi -> pi.getPost().getId(),
+                        PostImage::getImgUrl
+                ));
+    }
+
 }
