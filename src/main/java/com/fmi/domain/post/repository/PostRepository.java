@@ -47,6 +47,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     Slice<Post> findByUserAndTemporarySaveFalseOrderByIdDesc(User user, Pageable pageable);
 
     Slice<Post> findByUserAndTemporarySaveFalseAndIdLessThanOrderByIdDesc(User user, Long cursor, Pageable pageable);
+
     long countByUser(User user);
 
 
@@ -65,5 +66,37 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 //    List<Post> findHotPost(Pageable pageable);
 
     Long countByUserAndTemporarySaveFalse(User user);
+
+    @Query(value = """
+            SELECT p.*
+            FROM post p
+            WHERE MATCH(p.title, p.content)
+            AGAINST (:keyword IN BOOLEAN MODE)
+              AND p.id < :cursor
+            ORDER BY p.id DESC
+            LIMIT :size
+            """, nativeQuery = true)
+    List<Post> searchByKeywordWithCursor(@Param("keyword") String keyword,
+                                         @Param("cursor") Long cursor,
+                                         @Param("size") int size);
+
+    @Query(value = """
+            SELECT p.*
+            FROM post p
+            WHERE MATCH(p.title, p.content)
+            AGAINST (:keyword IN BOOLEAN MODE)
+            ORDER BY p.id DESC
+            LIMIT :size
+            """, nativeQuery = true)
+    List<Post> searchByKeyword(@Param("keyword") String keyword,
+                               @Param("size") int size);
+
+    @Query("""
+                select count(p)
+                from Post p
+                where (p.title like concat('%', :keyword, '%')
+                    or p.content like concat('%', :keyword, '%'))
+            """)
+    long countByKeyword(@Param("keyword") String keyword);
 
 }

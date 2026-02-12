@@ -29,32 +29,47 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
-        BooleanExpression whereQuery = Expressions.allOf(
+        BooleanExpression baseWhere = Expressions.allOf(
                 addressStartsWith(post, address),
                 equalsPostType(post, postType),
                 equalsPostStatus(post, postStatus),
-                equalsCategory(post, category),
+                equalsCategory(post, category)
+        );
+
+        BooleanExpression pageWhere = Expressions.allOf(
+                baseWhere,
                 cursorCondition(post, sortType, cursor)
         );
+
+        Long postCount = queryFactory
+                .select(post.id.countDistinct())
+                .from(post)
+                .leftJoin(postFavorite).on(
+                        postFavorite.post.eq(post),
+                        postFavorite.isFavorite.isTrue()
+                )
+                .where(baseWhere)
+                .fetchOne();
+
+        if (Objects.isNull(postCount)) postCount = 0L;
 
         List<Post> posts;
         if (Objects.equals(sortType, SortType.MOST_FAVORITED)) {
             posts = queryFactory.select(post)
-                    .from(post).leftJoin(postFavorite).on(
+                    .from(post)
+                    .leftJoin(postFavorite).on(
                             postFavorite.post.eq(post),
                             postFavorite.isFavorite.isTrue()
-                    ).where(whereQuery)
-                    .groupBy(post.id)
-                    .orderBy(
-                            postFavorite.favorite_id.count().desc(),
-                            post.id.desc()
                     )
+                    .where(pageWhere)
+                    .groupBy(post.id)
+                    .orderBy(postFavorite.favorite_id.count().desc(), post.id.desc())
                     .limit(size + 1)
                     .fetch();
         } else {
             posts = queryFactory
                     .selectFrom(post)
-                    .where(whereQuery)
+                    .where(pageWhere)
                     .orderBy(orderBySortType(post, sortType))
                     .limit(size + 1)
                     .fetch();
@@ -68,7 +83,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         Long nextCursor = (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
 
         if (posts.isEmpty()) {
-            return new PostPageResponse(List.of(), null, false);
+            return new PostPageResponse(List.of(), 0L, null, false);
         }
 
         List<Long> postIdList = posts.stream().map(Post::getId).toList();
@@ -159,7 +174,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 })
                 .toList();
 
-        return new PostPageResponse(postList, nextCursor, hasNext);
+        return new PostPageResponse(postList, postCount, nextCursor, hasNext);
     }
 
     private BooleanExpression addressStartsWith(QPost post, String address) {

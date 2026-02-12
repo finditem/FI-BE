@@ -14,9 +14,11 @@ import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.utils.IpUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -26,7 +28,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
@@ -48,7 +49,7 @@ public class PostController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "415", description = "FILE415-EXT_UNSUPPORTED: 허용되지 않는 확장자입니다"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "FILE500-UPLOAD_IO: 업로드 중 오류가 발생했습니다")
     })
-    public ResponseEntity<ApiResponse<PostCreateResponse>> createPost(@RequestPart("request") PostCreateRequest request,
+    public ResponseEntity<ApiResponse<PostCreateResponse>> createPost(@RequestPart("request") @Valid PostCreateRequest request,
                                                                       @RequestPart(value = "image", required = false) List<MultipartFile> images,
                                                                       @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -87,6 +88,74 @@ public class PostController {
         PostPageResponse response = postQueryService.getPostListByFilterOrSort(postType, postStatus, category, address, sortType, cursor, size, userDetails);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @GetMapping("/search/keyword")
+    @Operation(
+            summary = "게시글 키워드 검색 (무한스크롤)",
+            description = """
+                키워드로 게시글을 검색합니다. (title/content 기준)
+
+                - 무한스크롤: 첫 요청은 cursor 없이 호출하고, 이후 응답의 nextCursor를 cursor로 넣어 다음 페이지를 요청합니다.
+                - size: 한 번에 가져올 개수 (기본 20)
+
+                예)
+                - 첫 요청: /posts/search/keyword?keyword=지갑&size=20
+                - 다음 요청: /posts/search/keyword?keyword=지갑&cursor=98&size=20
+                """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "성공",
+                                          "result": {
+                                            "postList": [
+                                              {
+                                                "id": 101,
+                                                "title": "지갑 분실했어요",
+                                                "summary": "어제 강남역 근처에서...",
+                                                "thumbnailUrl": "https://example.com/thumb.png",
+                                                "address": "서울 강남구",
+                                                "postStatus": "SEARCHING",
+                                                "postType": "LOST",
+                                                "category": "WALLET",
+                                                "favoriteCount": 3,
+                                                "isFavorite": false,
+                                                "viewCount": 12,
+                                                "isNew": true,
+                                                "isHot": false,
+                                                "createdAt": "2024-01-01T00:00:00",
+                                                "imageCount": 1
+                                              }
+                                            ],
+                                            "postCount": 42,
+                                            "nextCursor": 101,
+                                            "hasNext": true
+                                          }
+                                        }
+                                        """
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
+    })
+    public ResponseEntity<ApiResponse<PostPageResponse>> searchByKeywordK(@RequestParam String keyword,
+                                                                          @AuthenticationPrincipal UserDetails userDetails,
+                                                                          @RequestParam(required = false) Long cursor,
+                                                                          @RequestParam(required = false, defaultValue = "20") int size) {
+
+        PostPageResponse postPageResponse = postQueryService.searchByKeyword(keyword, cursor, size, userDetails);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(postPageResponse));
     }
 
     @GetMapping("/{postId}")
