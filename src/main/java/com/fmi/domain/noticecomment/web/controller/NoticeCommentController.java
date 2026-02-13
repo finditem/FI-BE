@@ -138,18 +138,33 @@ public class NoticeCommentController {
     }
 
     @PostMapping("/comments/{commentId}/like")
-    @Operation(summary = "공지사항 댓글 추천 토글", description = "이미 추천한 경우 취소, 아닌 경우 추천합니다.")
+    @Operation(summary = "공지사항 댓글 추천 추가", description = "댓글을 추천합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 추천 토글 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 추천 성공")
     })
-    public ResponseEntity<ApiResponse<Boolean>> toggleCommentLike(
+    public ResponseEntity<ApiResponse<Void>> addCommentLike(
             @PathVariable Long commentId,
             @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
-        boolean liked = noticeCommentService.toggleCommentLike(commentId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.onSuccess(liked));
+        noticeCommentService.addCommentLike(commentId, userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+    }
+
+    @DeleteMapping("/comments/{commentId}/like")
+    @Operation(summary = "공지사항 댓글 추천 취소", description = "댓글 추천을 취소합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 추천 취소 성공")
+    })
+    public ResponseEntity<ApiResponse<Void>> removeCommentLike(
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
+        noticeCommentService.removeCommentLike(commentId, userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     @DeleteMapping("/comments/{commentId}")

@@ -139,32 +139,42 @@ public class NoticeCommentService {
     }
 
     /**
-     * 댓글 추천 토글
+     * 댓글 추천 추가
      */
     @Transactional
-    public boolean toggleCommentLike(Long commentId, String email) {
-        // 비관적 락으로 동시 요청 직렬화 (더블클릭 등 레이스 컨디션 방지)
-        NoticeComment comment = noticeCommentRepository.findByIdWithLock(commentId)
+    public void addCommentLike(Long commentId, String email) {
+        NoticeComment comment = noticeCommentRepository.findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        java.util.Optional<NoticeCommentLike> existingLike =
-                noticeCommentLikeRepository.findByUserAndComment(user, comment);
-
-        if (existingLike.isPresent()) {
-            noticeCommentLikeRepository.delete(existingLike.get());
-            comment.decreaseLikeCount();
-            return false;
-        } else {
-            noticeCommentLikeRepository.save(NoticeCommentLike.builder()
-                    .user(user)
-                    .comment(comment)
-                    .build());
-            comment.increaseLikeCount();
-            return true;
+        if (noticeCommentLikeRepository.findByUserAndComment(user, comment).isPresent()) {
+            return;
         }
+
+        noticeCommentLikeRepository.save(NoticeCommentLike.builder()
+                .user(user)
+                .comment(comment)
+                .build());
+        noticeCommentRepository.incrementLikeCount(commentId);
+    }
+
+    /**
+     * 댓글 추천 삭제
+     */
+    @Transactional
+    public void removeCommentLike(Long commentId, String email) {
+        NoticeComment comment = noticeCommentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        noticeCommentLikeRepository.findByUserAndComment(user, comment).ifPresent(like -> {
+            noticeCommentLikeRepository.delete(like);
+            noticeCommentRepository.decrementLikeCount(commentId);
+        });
     }
 
     private boolean isAdmin(UserDetails userDetails) {

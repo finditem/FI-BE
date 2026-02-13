@@ -97,22 +97,41 @@ public class NoticeController {
     }
     
     /**
-     * 공지사항 추천(좋아요) 토글
+     * 공지사항 추천(좋아요) 추가
      * POST /notices/{noticeId}/like
      */
     @PostMapping("/{noticeId}/like")
-    @Operation(summary = "공지사항 추천 토글", description = "이미 추천한 경우 취소, 아닌 경우 추천합니다.")
+    @Operation(summary = "공지사항 추천 추가", description = "공지사항을 추천합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 토글 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 성공")
     })
-    public ApiResponse<Boolean> toggleLike(
+    public ApiResponse<Void> addLike(
             @PathVariable Long noticeId,
             @org.springframework.security.core.annotation.AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
-        boolean liked = noticeService.toggleLike(noticeId, userDetails.getUsername());
-        return ApiResponse.onSuccess(liked);
+        noticeService.addLike(noticeId, userDetails.getUsername());
+        return ApiResponse.onSuccess(null);
+    }
+
+    /**
+     * 공지사항 추천(좋아요) 취소
+     * DELETE /notices/{noticeId}/like
+     */
+    @DeleteMapping("/{noticeId}/like")
+    @Operation(summary = "공지사항 추천 취소", description = "공지사항 추천을 취소합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 취소 성공")
+    })
+    public ApiResponse<Void> removeLike(
+            @PathVariable Long noticeId,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
+        noticeService.removeLike(noticeId, userDetails.getUsername());
+        return ApiResponse.onSuccess(null);
     }
 
     /**
