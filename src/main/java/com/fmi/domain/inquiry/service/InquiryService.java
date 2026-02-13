@@ -79,7 +79,7 @@ public class InquiryService {
                 Inquiry.builder()
                         .title(request.getTitle())
                         .content(request.getContent())
-                        .inquiryType(request.getInquiryType() != null ? request.getInquiryType() : InquiryType.GENERAL)
+                        .inquiryType(request.getInquiryType() != null ? request.getInquiryType() : InquiryType.ETC)
                         .user(user) // 회원이면 user 세팅
                         .email(user == null ? resolvedEmail : null) // 비회원이면 email 컬럼 세팅
                         .ip(normalizedIp)
