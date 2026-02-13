@@ -216,39 +216,55 @@ public class NoticeService {
     }
 
     /**
-     * 공지사항 추천 토글
+     * 공지사항 추천 추가
      */
     @Transactional
-    public boolean toggleLike(Long noticeId, String email) {
-        // 비관적 락으로 동시 요청 직렬화 (더블클릭 등 레이스 컨디션 방지)
-        Notice notice = noticeRepository.findByIdWithLock(noticeId)
+    public void addLike(Long noticeId, String email) {
+        Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        Optional<NoticeLike> existingLike = noticeLikeRepository.findByUserAndNotice(user, notice);
-
-        if (existingLike.isPresent()) {
-            noticeLikeRepository.delete(existingLike.get());
-            notice.decreaseLikeCount();
-            return false; // unliked
-        } else {
-            noticeLikeRepository.save(NoticeLike.builder()
-                    .user(user)
-                    .notice(notice)
-                    .build());
-            notice.increaseLikeCount();
-            return true; // liked
+        if (noticeLikeRepository.findByUserAndNotice(user, notice).isPresent()) {
+            return;
         }
+
+        noticeLikeRepository.save(NoticeLike.builder()
+                .user(user)
+                .notice(notice)
+                .build());
+        noticeRepository.incrementLikeCount(noticeId);
     }
 
     /**
-     * 임시저장 공지사항 목록 (관리자용)
+     * 공지사항 추천 삭제
      */
-    public Page<NoticeListDTO> getDraftNotices(Pageable pageable) {
-        Page<Notice> drafts = noticeRepository.findByDraftTrue(pageable);
-        return drafts.map(noticeConverter::toListDTO);
+    @Transactional
+    public void removeLike(Long noticeId, String email) {
+        Notice notice = noticeRepository.findById(noticeId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        noticeLikeRepository.findByUserAndNotice(user, notice).ifPresent(like -> {
+            noticeLikeRepository.delete(like);
+            noticeRepository.decrementLikeCount(noticeId);
+        });
+    }
+
+    /**
+     * 임시저장 공지사항 단건 조회 (관리자용 - 유저당 1건)
+     */
+    public NoticeResponseDTO getDraftNotice(String authorEmail) {
+        Notice draft = noticeRepository.findFirstByDraftTrueAndAuthorEmailOrderByUpdatedAtDesc(authorEmail)
+                .orElse(null);
+        if (draft == null) {
+            return null;
+        }
+        List<NoticeImage> images = noticeImageRepository.findByNotice(draft);
+        return noticeConverter.toResponseDTO(draft, images);
     }
 
     /**

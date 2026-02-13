@@ -167,17 +167,15 @@ public class AdminController {
         return ApiResponse.onSuccess(id);
     }
 
-    @GetMapping("/notices/drafts")
-    @Operation(summary = "임시저장 공지사항 목록 조회(관리자)")
+    @GetMapping("/notices/draft")
+    @Operation(summary = "임시저장 공지사항 조회(관리자)", description = "현재 로그인한 관리자의 임시저장 공지사항을 조회합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "임시저장 목록 조회 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "임시저장 조회 성공")
     })
-    public ApiResponse<Page<com.fmi.domain.notice.web.dto.NoticeListDTO>> getDraftNotices(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+    public ApiResponse<NoticeResponseDTO> getDraftNotice(
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<com.fmi.domain.notice.web.dto.NoticeListDTO> response = noticeService.getDraftNotices(pageable);
+        NoticeResponseDTO response = noticeService.getDraftNotice(userDetails.getUsername());
         return ApiResponse.onSuccess(response);
     }
 
