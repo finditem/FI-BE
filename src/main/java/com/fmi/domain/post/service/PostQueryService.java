@@ -28,12 +28,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -58,7 +60,7 @@ public class PostQueryService {
 
         boolean isFavorite = false;
         boolean canIncreaseViewCount;
-
+        boolean isMine = false;
         if (Objects.nonNull(userDetails)) {
             User user = userQueryService.findUser(userDetails.getUsername());
 
@@ -68,6 +70,11 @@ public class PostQueryService {
             isFavorite = Objects.nonNull(favorite) && favorite.isFavorite();
 
             canIncreaseViewCount = canIncreaseViewCount(postId, user.getId());
+
+            if (Objects.equals(user.getId(), post.getUser().getId())) {
+                isMine = true;
+            }
+
         } else {
             canIncreaseViewCount = canIncreaseViewCount(postId, clientIp);
         }
@@ -93,6 +100,7 @@ public class PostQueryService {
                 post.isNew(),
                 false,
                 favoriteCount,
+                isMine,
                 imageList,
                 UserConverter.toUserPostResponse(user, userPostCount, chatRoomCount)
         );
@@ -148,6 +156,71 @@ public class PostQueryService {
                 cursor,
                 size,
                 userId);
+    }
+
+    @Transactional(readOnly = true)
+    public PostPageResponse searchByKeyword(String keyword, Long cursor, int size, UserDetails userDetails) {
+        User user = userQueryService.findUserIfNullReturnNull(userDetails);
+        int limit = size + 1;
+
+        keyword = sanitizeForBooleanFulltext(keyword);
+
+        if (keyword.isBlank()) return new PostPageResponse(List.of(), 0L, null, false);
+
+        long postCount = postRepository.countByKeywordFulltext(keyword);
+
+        List<Post> fetched = (cursor == null)
+                ? postRepository.searchByKeyword(keyword, limit)
+                : postRepository.searchByKeywordWithCursor(keyword, cursor, limit);
+
+        boolean hasNext = fetched.size() > size;
+
+        if (hasNext) {
+            fetched = fetched.subList(0, size);
+        }
+
+        Long nextCursor = fetched.isEmpty() ? null : fetched.get(fetched.size() - 1).getId();
+
+        Map<Long, Long> favoriteCountMap = postFavoriteService.getFavoriteCountMap(fetched);
+        Map<Long, Boolean> myFavoriteMap = postFavoriteService.getIsFavoriteMap(user, fetched);
+        Map<Long, String> thumbnailMap = postImageService.findThumbnailUrlByPostList(fetched);
+        Map<Long, Integer> postImageCountMap = postImageService.countImageByPostList(fetched);
+
+        List<PostBriefResponse> responseList = fetched.stream()
+                .map(post -> PostConverter.toPostBriefResponse(
+                        post,
+                        myFavoriteMap.getOrDefault(post.getId(), false),
+                        thumbnailMap.getOrDefault(post.getId(), null),
+                        favoriteCountMap.getOrDefault(post.getId(), 0L),
+                        postImageCountMap.getOrDefault(post.getId(), 0)
+                ))
+                .toList();
+
+        return new PostPageResponse(responseList, postCount, nextCursor, hasNext);
+    }
+
+    private String sanitizeForBooleanFulltext(String input) {
+        if (Objects.isNull(input)) return "";
+
+        String s = Normalizer.normalize(input, Normalizer.Form.NFKC).trim();
+        if (s.isEmpty()) return "";
+
+        s = s.replaceAll("[^0-9A-Za-z가-힣\\s]", " ");
+
+        s = s.replaceAll("\\s+", " ").trim();
+        if (s.isEmpty()) return "";
+
+        if (s.length() > 100) {
+            s = s.substring(0, 100);
+        }
+
+        String[] tokens = s.split("\\s+");
+
+        return Arrays.stream(tokens)
+                .filter(token -> !token.isEmpty())
+                .limit(10)
+                .map(token -> token + "*")
+                .collect(Collectors.joining(" "));
     }
 
     @Transactional(readOnly = true)

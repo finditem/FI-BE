@@ -18,6 +18,7 @@ public final class PostConverter {
                 request.longitude(),
                 request.postType(),
                 request.category(),
+                request.content(),
                 request.temporarySave(),
                 request.date(),
                 request.radius(),
@@ -32,7 +33,7 @@ public final class PostConverter {
         return new PostUpdateResponse(post.getId());
     }
 
-    public static PostGetResponse toGetResponse(Post post, boolean isFavorite, long viewCount, boolean isNew, boolean isHot, long favoriteCount, List<PostImageResponse> imageList, UserPostResponse userPostResponse) {
+    public static PostGetResponse toGetResponse(Post post, boolean isFavorite, long viewCount, boolean isNew, boolean isHot, long favoriteCount, boolean isMine, List<PostImageResponse> imageList, UserPostResponse userPostResponse) {
         return new PostGetResponse(
                 post.getId(),
                 post.getTitle(),
@@ -50,6 +51,7 @@ public final class PostConverter {
                 isNew,
                 isHot,
                 post.getCreatedAt(),
+                isMine,
                 imageList,
                 userPostResponse
         );
