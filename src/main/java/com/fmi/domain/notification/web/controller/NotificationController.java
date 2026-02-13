@@ -3,6 +3,7 @@ package com.fmi.domain.notification.web.controller;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.domain.notification.service.SseEmitterService;
 import com.fmi.domain.notification.web.dto.response.NotificationListDTO;
 import com.fmi.domain.notification.web.dto.response.NotificationSettingsDTO;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -22,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/notifications")
@@ -29,11 +31,29 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("isAuthenticated()")
 @Tag(name = "Notification", description = "알림 API")
 public class NotificationController {
-    
+
     private final NotificationService notificationService;
+    private final SseEmitterService sseEmitterService;
     private final UserRepository userRepository;
     private static final int MAX_BATCH_SIZE = 1000;
     
+    /**
+     * SSE 실시간 알림 구독
+     * GET /api/notifications/subscribe
+     */
+    @GetMapping(value = "/subscribe", produces = "text/event-stream")
+    @Operation(summary = "실시간 알림 구독 (SSE)",
+               description = "Server-Sent Events를 통해 실시간으로 알림을 수신합니다. " +
+                           "연결이 끊기면 클라이언트에서 자동으로 재연결해야 합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SSE 연결 성공")
+    })
+    public SseEmitter subscribe(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        return sseEmitterService.subscribe(user.getId());
+    }
+
     /**
      * 내 알림 목록 조회
      * GET /api/notifications?unreadOnly=false&page=0&size=20

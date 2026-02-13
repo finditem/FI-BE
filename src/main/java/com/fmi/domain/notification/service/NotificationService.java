@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -31,11 +30,11 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class NotificationService {
-    
+
     private final NotificationRepository notificationRepository;
     private final NotificationSettingsRepository notificationSettingsRepository;
     private final NotificationConverter notificationConverter;
-    private final SimpMessagingTemplate simpMessagingTemplate;
+    private final SseEmitterService sseEmitterService;
     private final UserRepository userRepository;
     private final UserCategoryRepository userCategoryRepository;
     
@@ -248,19 +247,22 @@ public class NotificationService {
 
             log.info(" 알림 저장 완료: {}", notification.getNotificationId());
 
-            // 트랜잭션 커밋 이후 웹소켓 전송 (실패 시에도 DB 저장은 보장)
+            // 트랜잭션 커밋 이후 SSE 전송 (실패 시에도 DB 저장은 보장)
             if (TransactionSynchronizationManager.isSynchronizationActive()) {
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
                         try {
-                            // 사용자별 큐로 푸시
-                            simpMessagingTemplate.convertAndSendToUser(
-                                    user.getId().toString(),
-                                    "/queue/notification",
+                            // SSE로 실시간 푸시
+                            sseEmitterService.sendToUser(
+                                    user.getId(),
                                     notificationConverter.toListDTO(notification)
                             );
-                        } catch (Exception ignored) {}
+                            log.info("SSE 알림 전송 시도: userId={}, notificationId={}",
+                                    user.getId(), notification.getNotificationId());
+                        } catch (Exception e) {
+                            log.warn("SSE 알림 전송 실패 (SSE 미연결 가능성): userId={}", user.getId(), e);
+                        }
                     }
                 });
             }
@@ -385,12 +387,16 @@ public class NotificationService {
                 @Override
                 public void afterCommit() {
                     try {
-                        simpMessagingTemplate.convertAndSendToUser(
-                                notification.getUser().getId().toString(),
-                                "/queue/notification",
+                        // SSE로 실시간 푸시
+                        sseEmitterService.sendToUser(
+                                notification.getUser().getId(),
                                 notificationConverter.toListDTO(notification)
                         );
-                    } catch (Exception ignored) {}
+                        log.info("SSE 알림 갱신 전송: userId={}, notificationId={}",
+                                notification.getUser().getId(), notification.getNotificationId());
+                    } catch (Exception e) {
+                        log.warn("SSE 알림 갱신 전송 실패: userId={}", notification.getUser().getId(), e);
+                    }
                 }
             });
         }
