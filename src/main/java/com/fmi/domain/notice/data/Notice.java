@@ -72,16 +72,6 @@ public class Notice {
         this.viewCount++;
     }
 
-    public void increaseLikeCount() {
-        this.likeCount++;
-    }
-
-    public void decreaseLikeCount() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
-        }
-    }
-    
     public void setViewCount(Integer viewCount) {
         this.viewCount = viewCount;
     }
