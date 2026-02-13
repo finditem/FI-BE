@@ -91,12 +91,12 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     List<Post> searchByKeyword(@Param("keyword") String keyword,
                                @Param("size") int size);
 
-    @Query("""
-                select count(p)
-                from Post p
-                where (p.title like concat('%', :keyword, '%')
-                    or p.content like concat('%', :keyword, '%'))
-            """)
-    long countByKeyword(@Param("keyword") String keyword);
+    @Query(value = """
+                SELECT COUNT(*)
+                FROM post p
+                WHERE MATCH(p.title, p.content)
+                AGAINST (:keyword IN BOOLEAN MODE)
+            """, nativeQuery = true)
+    long countByKeywordFulltext(@Param("keyword") String keyword);
 
 }

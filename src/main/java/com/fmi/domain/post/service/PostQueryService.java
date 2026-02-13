@@ -28,12 +28,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -161,7 +163,11 @@ public class PostQueryService {
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
         int limit = size + 1;
 
-        long postCount = postRepository.countByKeyword(keyword);
+        keyword = sanitizeForBooleanFulltext(keyword);
+
+        if (keyword.isBlank()) return new PostPageResponse(List.of(), 0L, null, false);
+
+        long postCount = postRepository.countByKeywordFulltext(keyword);
 
         List<Post> fetched = (cursor == null)
                 ? postRepository.searchByKeyword(keyword, limit)
@@ -191,6 +197,30 @@ public class PostQueryService {
                 .toList();
 
         return new PostPageResponse(responseList, postCount, nextCursor, hasNext);
+    }
+
+    private String sanitizeForBooleanFulltext(String input) {
+        if (Objects.isNull(input)) return "";
+
+        String s = Normalizer.normalize(input, Normalizer.Form.NFKC).trim();
+        if (s.isEmpty()) return "";
+
+        s = s.replaceAll("[^0-9A-Za-z가-힣\\s]", " ");
+
+        s = s.replaceAll("\\s+", " ").trim();
+        if (s.isEmpty()) return "";
+
+        if (s.length() > 100) {
+            s = s.substring(0, 100);
+        }
+
+        String[] tokens = s.split("\\s+");
+
+        return Arrays.stream(tokens)
+                .filter(token -> !token.isEmpty())
+                .limit(10)
+                .map(token -> token + "*")
+                .collect(Collectors.joining(" "));
     }
 
     @Transactional(readOnly = true)

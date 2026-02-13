@@ -148,7 +148,7 @@ public class PostController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     })
-    public ResponseEntity<ApiResponse<PostPageResponse>> searchByKeywordK(@RequestParam String keyword,
+    public ResponseEntity<ApiResponse<PostPageResponse>> searchByKeyword(@RequestParam String keyword,
                                                                           @AuthenticationPrincipal UserDetails userDetails,
                                                                           @RequestParam(required = false) Long cursor,
                                                                           @RequestParam(required = false, defaultValue = "20") int size) {
