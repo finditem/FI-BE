@@ -4,6 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.userblock.data.BlockedUser;
 import com.fmi.domain.userblock.service.BlockService;
+import com.fmi.domain.userblock.web.dto.response.BlockedUserResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -58,16 +59,15 @@ public class BlockController {
     }
 
     @GetMapping("/block")
-    @Operation(summary = "내가 차단한 유저 목록")
+    @Operation(summary = "내가 차단한 유저 목록", description = "차단한 유저의 ID, 닉네임, 프로필 사진을 반환합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "차단 유저 목록 조회 성공")
     })
-    public ApiResponse<List<Long>> list(@AuthenticationPrincipal UserDetails userDetails) {
+    public ApiResponse<List<BlockedUserResponse>> list(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        List<BlockedUser> blocks = blockService.list(user.getId());
-        List<Long> ids = blocks.stream().map(b -> b.getBlocked().getId()).toList();
-        return ApiResponse.onSuccess(ids);
+        List<BlockedUserResponse> blockedUsers = blockService.listWithUserInfo(user.getId());
+        return ApiResponse.onSuccess(blockedUsers);
     }
 }
 

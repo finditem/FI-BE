@@ -17,6 +17,7 @@ import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
 import com.fmi.domain.user.converter.UserConverter;
+import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
@@ -47,6 +48,7 @@ public class PostQueryService {
     private final PostImageService postImageService;
     private final StringRedisTemplate stringRedisTemplate;
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
+    private final BlockService blockService;
 
 
     // 게시글 단일 조회
@@ -61,6 +63,11 @@ public class PostQueryService {
 
         if (Objects.nonNull(userDetails)) {
             User user = userQueryService.findUser(userDetails.getUsername());
+
+            // 차단 체크 (양방향)
+            if (blockService.isBlocked(user.getId(), post.getUser().getId())) {
+                throw new GeneralException(ErrorStatus._POST_ACCESS_DENIED);
+            }
 
             PostFavorite favorite = postFavoriteRepository.findByUserAndPost(user, post)
                     .orElse(null);
