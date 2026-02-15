@@ -64,36 +64,4 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 
     Long countByUserAndTemporarySaveFalse(User user);
 
-    @Query(value = """
-            SELECT *
-            FROM post
-            WHERE MATCH(title, content)
-            AGAINST (:keyword IN BOOLEAN MODE)
-              AND id < :cursor
-            ORDER BY id DESC
-            LIMIT :size
-            """, nativeQuery = true)
-    List<Post> searchByKeywordWithCursor(@Param("keyword") String keyword,
-                                         @Param("cursor") Long cursor,
-                                         @Param("size") int size);
-
-    @Query(value = """
-            SELECT *
-            FROM post
-            WHERE MATCH(title, content)
-            AGAINST (:keyword IN BOOLEAN MODE)
-            ORDER BY id DESC
-            LIMIT :size
-            """, nativeQuery = true)
-    List<Post> searchByKeyword(@Param("keyword") String keyword,
-                               @Param("size") int size);
-
-    @Query(value = """
-            SELECT COUNT(*)
-            FROM post
-            WHERE MATCH(title, content)
-            AGAINST (:keyword IN BOOLEAN MODE)
-            """, nativeQuery = true)
-    long countByKeywordFulltext(@Param("keyword") String keyword);
-
 }

@@ -6,9 +6,11 @@ import com.fmi.domain.post.data.*;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -175,6 +177,65 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .toList();
 
         return new PostPageResponse(postList, postCount, nextCursor, hasNext);
+    }
+
+    @Override
+    public List<Post> searchByKeywordWithCursor(String keyword, Long cursor, int size) {
+        QPost post = QPost.post;
+
+        BooleanBuilder where = new BooleanBuilder();
+
+        if (hasText(keyword)) {
+            where.and(
+                    post.title.containsIgnoreCase(keyword)
+                            .or(post.content.containsIgnoreCase(keyword))
+            );
+        }
+
+        if (Objects.nonNull(cursor)) {
+            where.and(post.id.lt(cursor));
+        }
+
+        return queryFactory
+                .selectFrom(post)
+                .where(where)
+                .orderBy(post.id.desc())
+                .limit(size)
+                .fetch();
+    }
+
+    @Override
+    public long countByKeyword(String keyword) {
+        QPost post = QPost.post;
+
+        BooleanBuilder where = new BooleanBuilder();
+
+        if (hasText(keyword)) {
+            where.and(
+                    post.title.containsIgnoreCase(keyword)
+                            .or(post.content.containsIgnoreCase(keyword))
+            );
+        } else {
+            return 0L;
+        }
+
+        Long count = queryFactory
+                .select(post.id.count())
+                .from(post)
+                .where(where)
+                .fetchOne();
+
+        return count == null ? 0L : count;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
+
+    private BooleanExpression containsIgnoreCase(StringPath path, String keyword) {
+        if (keyword == null || keyword.isBlank()) return null;
+        return path.containsIgnoreCase(keyword);
     }
 
     private BooleanExpression addressStartsWith(QPost post, String address) {

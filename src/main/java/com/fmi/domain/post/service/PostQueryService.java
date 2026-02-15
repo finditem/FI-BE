@@ -167,11 +167,9 @@ public class PostQueryService {
 
         if (keyword.isBlank()) return new PostPageResponse(List.of(), 0L, null, false);
 
-        long postCount = postRepository.countByKeywordFulltext(keyword);
+        long postCount = postRepository.countByKeyword(keyword);
 
-        List<Post> fetched = (cursor == null)
-                ? postRepository.searchByKeyword(keyword, limit)
-                : postRepository.searchByKeywordWithCursor(keyword, cursor, limit);
+        List<Post> fetched = postRepository.searchByKeywordWithCursor(keyword, cursor, limit);
 
         boolean hasNext = fetched.size() > size;
 
