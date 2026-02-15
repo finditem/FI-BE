@@ -274,4 +274,37 @@ public class PostQueryService {
 
         return getPostBriefResponseList(posts, user);
     }
+
+    @Transactional(readOnly = true)
+    public List<PostSimilarResponse> getSimilarPostList(Long postId, UserDetails userDetails) {
+        Post post = findById(postId);
+
+        List<Post> postList = postRepository.findSimilarPosts(postId, 5);
+
+        Map<Long, String> thumbnailUrlByPostList = postImageService.findThumbnailUrlByPostList(postList);
+        Map<Long, Long> favoriteCountMap = postFavoriteService.getFavoriteCountMap(postList);
+
+        Map<Long, Boolean> isFavoriteByPostId;
+        if (userDetails != null) {
+            User user = userQueryService.findUser(userDetails.getUsername());
+            isFavoriteByPostId = postFavoriteService.getIsFavoriteMap(user, postList);
+        } else {
+            isFavoriteByPostId = postList.stream()
+                    .collect(java.util.stream.Collectors.toMap(Post::getId, p -> false));
+        }
+
+        return postList.stream()
+                .map(p -> new PostSimilarResponse(
+                                p.getId(),
+                                p.getTitle(),
+                                thumbnailUrlByPostList.getOrDefault(p.getId(), null),
+                                p.getAddress(),
+                                favoriteCountMap.getOrDefault(p.getId(), 0L),
+                                isFavoriteByPostId.getOrDefault(p.getId(), false),
+                                p.getViewCount(),
+                                p.getCreatedAt()
+                        )
+                )
+                .toList();
+    }
 }

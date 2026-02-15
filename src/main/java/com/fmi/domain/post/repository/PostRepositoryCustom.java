@@ -24,4 +24,6 @@ public interface PostRepositoryCustom {
     List<Post> searchByKeywordWithCursor(String keyword, Long cursor, int size);
 
     long countByKeyword(String keyword);
+
+    List<Post> findSimilarPosts(Long postId, int limit);
 }

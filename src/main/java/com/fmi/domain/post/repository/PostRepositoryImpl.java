@@ -15,6 +15,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -228,14 +229,42 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         return count == null ? 0L : count;
     }
 
-    private boolean hasText(String value) {
-        return value != null && !value.isBlank();
+    @Override
+    public List<Post> findSimilarPosts(Long postId, int limit) {
+        QPost post = QPost.post;
+
+        Post base = queryFactory.selectFrom(post)
+                .where(post.id.eq(postId))
+                .fetchOne();
+
+        if (Objects.isNull(base)) {
+            return List.of();
+        }
+
+        LocalDateTime baseDate = Objects.nonNull(base.getDate()) ? base.getDate() : base.getCreatedAt();
+
+        LocalDateTime from = baseDate.minusDays(7);
+        LocalDateTime to = baseDate.plusDays(7);
+
+
+        return queryFactory
+                .selectFrom(post)
+                .where(
+                        post.id.ne(postId),
+                        post.temporarySave.isFalse(),
+                        post.category.eq(base.getCategory()),
+                        post.postType.eq(base.getPostType()),
+                        post.postStatus.eq(PostStatus.SEARCHING),
+                        post.address.eq(base.getAddress()),
+                        post.date.between(from, to)
+                )
+                .orderBy(post.createdAt.desc(), post.id.desc())
+                .limit(limit)
+                .fetch();
     }
 
-
-    private BooleanExpression containsIgnoreCase(StringPath path, String keyword) {
-        if (keyword == null || keyword.isBlank()) return null;
-        return path.containsIgnoreCase(keyword);
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private BooleanExpression addressStartsWith(QPost post, String address) {
