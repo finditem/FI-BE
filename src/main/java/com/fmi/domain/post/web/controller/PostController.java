@@ -369,4 +369,12 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess(shareResponse));
     }
 
+    @PutMapping("/{postId}/found")
+    public ResponseEntity<ApiResponse<Void>> updateFound(@PathVariable Long postId,
+                                                         @AuthenticationPrincipal UserDetails userDetails) {
+        postService.markToFound(postId, userDetails);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+    }
+
 }

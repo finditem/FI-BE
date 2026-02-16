@@ -158,6 +158,22 @@ public class PostService {
         }
     }
 
+    @Transactional
+    public void markToFound(Long postId, UserDetails userDetails) {
+        User user = userQueryService.findUser(userDetails.getUsername());
+        Post post = postQueryService.findById(postId);
+
+        if (!Objects.equals(user.getId(), post.getUser().getId())) {
+            throw new GeneralException(ErrorStatus._POST_ACCESS_DENIED);
+        }
+
+        if (post.getPostStatus() == PostStatus.FOUND) {
+            return;
+        }
+
+        post.updatePostStatus(PostStatus.FOUND);
+    }
+
 //    @Transactional
 //    public void saveTemporaryPost(TemporaryPostDto request, UserDetails userDetails, List<MultipartFile> images) {
 //
