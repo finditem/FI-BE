@@ -49,7 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/notices/**").permitAll()
                         .requestMatchers("/inquiries").permitAll()
                         .requestMatchers("/users/{userId}/page").permitAll()
-                        .requestMatchers("/posts/search/**", "/posts/{postId}", "/posts/{postId}/similar", "/posts/{postId}/radius").permitAll()
+                        .requestMatchers("/posts/search/**", "/posts/{postId}", "/posts/{postId}/similar", "/posts/{postId}/share").permitAll()
                         // 관리자 전용 API 보호
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
