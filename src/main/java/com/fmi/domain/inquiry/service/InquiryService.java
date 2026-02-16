@@ -21,6 +21,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -77,8 +79,7 @@ public class InquiryService {
                 Inquiry.builder()
                         .title(request.getTitle())
                         .content(request.getContent())
-                        .category(request.getCategory())
-                        .inquiryType(InquiryType.PRIVATE)
+                        .inquiryType(request.getInquiryType() != null ? request.getInquiryType() : InquiryType.ETC)
                         .user(user) // 회원이면 user 세팅
                         .email(user == null ? resolvedEmail : null) // 비회원이면 email 컬럼 세팅
                         .ip(normalizedIp)
@@ -107,7 +108,7 @@ public class InquiryService {
                 );
             }
         } catch (Exception e) {
-            // 이메일 발송 실패해도 문의는 성공 처리
+            log.error("문의 접수 이메일 발송 실패: inquiryId={}", saved.getId(), e);
         }
         
         return saved.getId();
@@ -138,14 +139,16 @@ public class InquiryService {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         
-        // 권한 확인: 1:1 개인 문의는 본인만 조회 가능
-        // 회원 문의인 경우
-        if (inquiry.getUser() != null) {
-            if (!inquiry.getUser().getId().equals(user.getId())) {
+        // 권한 확인: 관리자는 모든 문의 조회 가능, 일반 사용자는 본인 문의만
+        if (!isAdmin(userDetails)) {
+            if (inquiry.getUser() != null) {
+                if (!inquiry.getUser().getId().equals(user.getId())) {
+                    throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
+                }
+            } else {
+                // 비회원 문의는 관리자만 조회 가능
                 throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
             }
-        } else if (!isAdmin(userDetails)) {
-            throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
         }
         
         java.util.List<InquiryCommentResponse> comments =
@@ -205,7 +208,7 @@ public class InquiryService {
                     )
                 );
             } catch (Exception e) {
-                // 이메일 발송 실패해도 알림은 성공 처리
+                log.error("문의 상태 변경 이메일 발송 실패: inquiryId={}", inquiry.getId(), e);
             }
         } else if (inquiry.getEmail() != null) {
             // 비회원 문의인 경우 이메일로만 발송
@@ -224,7 +227,7 @@ public class InquiryService {
                     )
                 );
             } catch (Exception e) {
-                // 이메일 발송 실패는 무시
+                log.error("비회원 문의 상태 변경 이메일 발송 실패: inquiryId={}, email={}", inquiry.getId(), inquiry.getEmail(), e);
             }
         }
     }

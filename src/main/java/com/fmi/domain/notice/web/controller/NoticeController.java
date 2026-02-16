@@ -5,6 +5,8 @@ import com.fmi.domain.notice.service.NoticeService;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -40,20 +42,16 @@ public class NoticeController {
     })
     public ApiResponse<Page<NoticeListDTO>> getNoticeList(
             @RequestParam(required = false) NoticeCategory category,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
-        Pageable pageable = PageRequest.of(page, size, 
+
+        Pageable pageable = PageRequest.of(page, size,
                 Sort.by(Sort.Direction.DESC, "pinned")
                     .and(Sort.by(Sort.Direction.DESC, "createdAt")));
-        
-        Page<NoticeListDTO> notices;
-        if (category != null) {
-            notices = noticeService.getNoticeListByCategory(category, pageable);
-        } else {
-            notices = noticeService.getNoticeList(pageable);
-        }
-        
+
+        Page<NoticeListDTO> notices = noticeService.getNoticeList(category, keyword, pageable);
+
         return ApiResponse.onSuccess(notices);
     }
     
@@ -98,6 +96,44 @@ public class NoticeController {
         return ApiResponse.onSuccess(notice);
     }
     
+    /**
+     * 공지사항 추천(좋아요) 추가
+     * POST /notices/{noticeId}/like
+     */
+    @PostMapping("/{noticeId}/like")
+    @Operation(summary = "공지사항 추천 추가", description = "공지사항을 추천합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 성공")
+    })
+    public ApiResponse<Void> addLike(
+            @PathVariable Long noticeId,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
+        noticeService.addLike(noticeId, userDetails.getUsername());
+        return ApiResponse.onSuccess(null);
+    }
+
+    /**
+     * 공지사항 추천(좋아요) 취소
+     * DELETE /notices/{noticeId}/like
+     */
+    @DeleteMapping("/{noticeId}/like")
+    @Operation(summary = "공지사항 추천 취소", description = "공지사항 추천을 취소합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 취소 성공")
+    })
+    public ApiResponse<Void> removeLike(
+            @PathVariable Long noticeId,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
+        noticeService.removeLike(noticeId, userDetails.getUsername());
+        return ApiResponse.onSuccess(null);
+    }
+
     /**
      * 클라이언트 IP 주소 추출 (비로그인 사용자 개별 식별용)
      */

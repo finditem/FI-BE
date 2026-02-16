@@ -37,6 +37,7 @@ public class NoticeCommentConverter {
                 .content(comment.getContent())
                 .authorId(authorId)
                 .authorName(authorName)
+                .likeCount(comment.getLikeCount())
                 .createdAt(comment.getCreatedAt())
                 .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
                 .canEdit(canEdit)

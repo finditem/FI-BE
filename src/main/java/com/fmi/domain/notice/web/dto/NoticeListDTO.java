@@ -25,6 +25,10 @@ public class NoticeListDTO {
     private Boolean pinned;
     @Schema(description = "조회수", example = "100")
     private Integer viewCount;
+    @Schema(description = "추천수", example = "12")
+    private Integer likeCount;
+    @Schema(description = "썸네일 이미지 URL")
+    private String thumbnailUrl;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
 }

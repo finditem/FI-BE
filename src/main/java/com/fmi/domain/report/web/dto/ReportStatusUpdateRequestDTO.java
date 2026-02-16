@@ -14,6 +14,8 @@ public class ReportStatusUpdateRequestDTO {
     )
     private ReportStatus status;
     private String adminNote;
+    @Schema(description = "답변 완료 여부 (관리자가 직접 체크)", example = "true")
+    private Boolean answered;
 }
 
 

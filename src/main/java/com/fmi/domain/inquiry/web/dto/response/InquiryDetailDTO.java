@@ -1,7 +1,7 @@
 package com.fmi.domain.inquiry.web.dto.response;
 
-import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
+import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -24,8 +24,8 @@ public class InquiryDetailDTO {
     private String title;
     @Schema(description = "내용", example = "비밀번호를 변경하고 싶습니다.")
     private String content;
-    @Schema(description = "카테고리", example = "ACCOUNT")
-    private InquiryCategory category;
+    @Schema(description = "문의 타입", example = "ACCOUNT")
+    private InquiryType inquiryType;
     @Schema(description = "처리 상태", example = "ANSWERED")
     private InquiryStatus status;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")

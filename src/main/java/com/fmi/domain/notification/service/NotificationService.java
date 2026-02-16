@@ -19,6 +19,7 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -272,14 +273,17 @@ public class NotificationService {
      */
     @Transactional
     public void broadcastNotice(String title, String message, Long noticeId) {
-        // 활성 사용자만 조회 (삭제된 사용자 제외)
-        java.util.List<com.fmi.domain.auth.data.User> users = userRepository.findAllActiveUsers();
-        for (com.fmi.domain.auth.data.User user : users) {
-            NotificationSettings settings = notificationSettingsRepository.findByUser(user).orElse(null);
-            if (settings == null || Boolean.TRUE.equals(settings.getNoticeEnabled())) {
-                createNotification(user, NotificationType.NOTICE, title, message, ReferenceType.NOTICE, noticeId);
+        int page = 0;
+        Page<User> users;
+        do {
+            users = userRepository.findAllActiveUsers(PageRequest.of(page++, 500));
+            for (User user : users) {
+                NotificationSettings settings = notificationSettingsRepository.findByUser(user).orElse(null);
+                if (settings == null || Boolean.TRUE.equals(settings.getNoticeEnabled())) {
+                    createNotification(user, NotificationType.NOTICE, title, message, ReferenceType.NOTICE, noticeId);
+                }
             }
-        }
+        } while (users.hasNext());
     }
 
     /**

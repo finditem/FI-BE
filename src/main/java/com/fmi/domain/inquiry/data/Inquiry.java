@@ -1,7 +1,6 @@
 package com.fmi.domain.inquiry.data;
 
 import com.fmi.domain.auth.data.User;
-import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import jakarta.persistence.*;
@@ -34,10 +33,6 @@ public class Inquiry {
     @Enumerated(EnumType.STRING)
     @Column(name = "inquiry_type", nullable = false, length = 30)
     private InquiryType inquiryType;
-
-    @Enumerated(EnumType.STRING)
-    @Column(length = 50)
-    private InquiryCategory category;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "answer_status", nullable = false, length = 30)

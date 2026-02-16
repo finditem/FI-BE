@@ -7,12 +7,14 @@ import java.time.LocalDateTime;
 public record InquiryEvent(
         String title,
         String content,
-        String categoryDescription,
+        String inquiryTypeDescription,
         String email,
         LocalDateTime createdAt
 ) {
     public static InquiryEvent from(Inquiry inquiry) {
-        String categoryLabel = inquiry.getCategory().getDescription();
+        String categoryLabel = inquiry.getInquiryType() != null
+                ? inquiry.getInquiryType().getDescription()
+                : "일반 문의";
 
         String resolvedEmail = (inquiry.getUser() != null)
                 ? inquiry.getUser().getEmail()

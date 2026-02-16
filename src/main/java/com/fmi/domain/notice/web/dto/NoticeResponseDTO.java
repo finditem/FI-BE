@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -25,6 +26,12 @@ public class NoticeResponseDTO {
     private Boolean pinned;
     @Schema(description = "조회수", example = "100")
     private Integer viewCount;
+    @Schema(description = "추천수", example = "12")
+    private Integer likeCount;
+    @Schema(description = "작성자", example = "관리자")
+    private String authorName;
+    @Schema(description = "이미지 URL 목록")
+    private List<String> images;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
     @Schema(description = "수정 시간", example = "2024-01-01T00:00:00")

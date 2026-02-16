@@ -10,6 +10,8 @@ import com.fmi.domain.noticecomment.repository.NoticeCommentRepository;
 import com.fmi.domain.noticecomment.response.NoticeCommentResponse;
 import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
+import com.fmi.domain.noticecommentlike.data.NoticeCommentLike;
+import com.fmi.domain.noticecommentlike.repository.NoticeCommentLikeRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class NoticeCommentService {
     private final UserRepository userRepository;
     private final NoticeCommentRepository noticeCommentRepository;
     private final NoticeCommentConverter noticeCommentConverter;
+    private final NoticeCommentLikeRepository noticeCommentLikeRepository;
 
     @Transactional
     public NoticeCommentResponse createComment(Long noticeId, CreateNoticeCommentDto dto, UserDetails userDetails) {
@@ -117,8 +120,9 @@ public class NoticeCommentService {
             throw new GeneralException(ErrorStatus._FORBIDDEN);
         }
 
+        NoticeCommentResponse response = toResponse(comment, userDetails);
         noticeCommentRepository.delete(comment);
-        return toResponse(comment, userDetails);
+        return response;
     }
 
     private NoticeCommentResponse toResponse(NoticeComment comment, UserDetails userDetails) {
@@ -132,6 +136,45 @@ public class NoticeCommentService {
         return userDetails != null
                 && comment.getUser() != null
                 && comment.getUser().getEmail().equals(userDetails.getUsername());
+    }
+
+    /**
+     * 댓글 추천 추가
+     */
+    @Transactional
+    public void addCommentLike(Long commentId, String email) {
+        NoticeComment comment = noticeCommentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        if (noticeCommentLikeRepository.findByUserAndComment(user, comment).isPresent()) {
+            return;
+        }
+
+        noticeCommentLikeRepository.save(NoticeCommentLike.builder()
+                .user(user)
+                .comment(comment)
+                .build());
+        noticeCommentRepository.incrementLikeCount(commentId);
+    }
+
+    /**
+     * 댓글 추천 삭제
+     */
+    @Transactional
+    public void removeCommentLike(Long commentId, String email) {
+        NoticeComment comment = noticeCommentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        noticeCommentLikeRepository.findByUserAndComment(user, comment).ifPresent(like -> {
+            noticeCommentLikeRepository.delete(like);
+            noticeCommentRepository.decrementLikeCount(commentId);
+        });
     }
 
     private boolean isAdmin(UserDetails userDetails) {
