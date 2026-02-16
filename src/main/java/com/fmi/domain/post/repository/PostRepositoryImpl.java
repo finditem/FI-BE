@@ -242,9 +242,13 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         }
 
         LocalDateTime baseDate = Objects.nonNull(base.getDate()) ? base.getDate() : base.getCreatedAt();
-
         LocalDateTime from = baseDate.minusDays(7);
         LocalDateTime to = baseDate.plusDays(7);
+
+        PostType oppositeType = Objects.equals(base.getPostType(), PostType.LOST)
+                ? PostType.FOUND
+                : PostType.LOST;
+
 
 
         return queryFactory
@@ -253,10 +257,11 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         post.id.ne(postId),
                         post.temporarySave.isFalse(),
                         post.category.eq(base.getCategory()),
-                        post.postType.eq(base.getPostType()),
+                        post.postType.eq(oppositeType),
                         post.postStatus.eq(PostStatus.SEARCHING),
                         post.address.eq(base.getAddress()),
-                        post.date.between(from, to)
+                        post.date.isNotNull().and(post.date.between(from, to))
+                                .or(post.date.isNull().and(post.createdAt.between(from, to)))
                 )
                 .orderBy(post.createdAt.desc(), post.id.desc())
                 .limit(limit)
