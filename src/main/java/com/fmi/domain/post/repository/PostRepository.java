@@ -1,6 +1,5 @@
 package com.fmi.domain.post.repository;
 
-import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import org.springframework.data.domain.Pageable;
@@ -12,8 +11,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryCustom {
@@ -66,37 +63,5 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 //    List<Post> findHotPost(Pageable pageable);
 
     Long countByUserAndTemporarySaveFalse(User user);
-
-    @Query(value = """
-            SELECT p.*
-            FROM post p
-            WHERE MATCH(p.title, p.content)
-            AGAINST (:keyword IN BOOLEAN MODE)
-              AND p.id < :cursor
-            ORDER BY p.id DESC
-            LIMIT :size
-            """, nativeQuery = true)
-    List<Post> searchByKeywordWithCursor(@Param("keyword") String keyword,
-                                         @Param("cursor") Long cursor,
-                                         @Param("size") int size);
-
-    @Query(value = """
-            SELECT p.*
-            FROM post p
-            WHERE MATCH(p.title, p.content)
-            AGAINST (:keyword IN BOOLEAN MODE)
-            ORDER BY p.id DESC
-            LIMIT :size
-            """, nativeQuery = true)
-    List<Post> searchByKeyword(@Param("keyword") String keyword,
-                               @Param("size") int size);
-
-    @Query(value = """
-                SELECT COUNT(*)
-                FROM post p
-                WHERE MATCH(p.title, p.content)
-                AGAINST (:keyword IN BOOLEAN MODE)
-            """, nativeQuery = true)
-    long countByKeywordFulltext(@Param("keyword") String keyword);
 
 }

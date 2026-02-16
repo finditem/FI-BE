@@ -6,13 +6,16 @@ import com.fmi.domain.post.data.*;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -175,6 +178,98 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .toList();
 
         return new PostPageResponse(postList, postCount, nextCursor, hasNext);
+    }
+
+    @Override
+    public List<Post> searchByKeywordWithCursor(String keyword, Long cursor, int size) {
+        QPost post = QPost.post;
+
+        BooleanBuilder where = new BooleanBuilder();
+
+        if (hasText(keyword)) {
+            where.and(
+                    post.title.containsIgnoreCase(keyword)
+                            .or(post.content.containsIgnoreCase(keyword))
+            );
+        }
+
+        if (Objects.nonNull(cursor)) {
+            where.and(post.id.lt(cursor));
+        }
+
+        return queryFactory
+                .selectFrom(post)
+                .where(where)
+                .orderBy(post.id.desc())
+                .limit(size)
+                .fetch();
+    }
+
+    @Override
+    public long countByKeyword(String keyword) {
+        QPost post = QPost.post;
+
+        BooleanBuilder where = new BooleanBuilder();
+
+        if (hasText(keyword)) {
+            where.and(
+                    post.title.containsIgnoreCase(keyword)
+                            .or(post.content.containsIgnoreCase(keyword))
+            );
+        } else {
+            return 0L;
+        }
+
+        Long count = queryFactory
+                .select(post.id.count())
+                .from(post)
+                .where(where)
+                .fetchOne();
+
+        return count == null ? 0L : count;
+    }
+
+    @Override
+    public List<Post> findSimilarPosts(Long postId, int limit) {
+        QPost post = QPost.post;
+
+        Post base = queryFactory.selectFrom(post)
+                .where(post.id.eq(postId))
+                .fetchOne();
+
+        if (Objects.isNull(base)) {
+            return List.of();
+        }
+
+        LocalDateTime baseDate = Objects.nonNull(base.getDate()) ? base.getDate() : base.getCreatedAt();
+        LocalDateTime from = baseDate.minusDays(7);
+        LocalDateTime to = baseDate.plusDays(7);
+
+        PostType oppositeType = Objects.equals(base.getPostType(), PostType.LOST)
+                ? PostType.FOUND
+                : PostType.LOST;
+
+
+
+        return queryFactory
+                .selectFrom(post)
+                .where(
+                        post.id.ne(postId),
+                        post.temporarySave.isFalse(),
+                        post.category.eq(base.getCategory()),
+                        post.postType.eq(oppositeType),
+                        post.postStatus.eq(PostStatus.SEARCHING),
+                        post.address.eq(base.getAddress()),
+                        post.date.isNotNull().and(post.date.between(from, to))
+                                .or(post.date.isNull().and(post.createdAt.between(from, to)))
+                )
+                .orderBy(post.createdAt.desc(), post.id.desc())
+                .limit(limit)
+                .fetch();
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private BooleanExpression addressStartsWith(QPost post, String address) {

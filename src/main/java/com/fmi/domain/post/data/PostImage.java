@@ -22,7 +22,7 @@ public class PostImage {
     private ImageType imageType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post", nullable = false)
+    @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
     private PostImage(String imgUrl, ImageType imageType, Post post) {
