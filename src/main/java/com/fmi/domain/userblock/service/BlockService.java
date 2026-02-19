@@ -7,11 +7,14 @@ import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -30,21 +33,8 @@ public class BlockService {
         User target = userRepository.findActiveById(targetUserId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        // 단방향이든 이미 있으면 넘어가되, 항상 양방향 상태가 되도록 맞춘다
-        if (!blockedUserRepository.existsByBlockerAndBlocked(blocker, target)) {
-            BlockedUser bu = BlockedUser.builder()
-                    .blocker(blocker)
-                    .blocked(target)
-                    .build();
-            blockedUserRepository.save(bu);
-        }
-        if (!blockedUserRepository.existsByBlockerAndBlocked(target, blocker)) {
-            BlockedUser bu2 = BlockedUser.builder()
-                    .blocker(target)
-                    .blocked(blocker)
-                    .build();
-            blockedUserRepository.save(bu2);
-        }
+        saveBlockIfNotExists(blocker, target);
+        saveBlockIfNotExists(target, blocker);
     }
 
     @Transactional
@@ -65,6 +55,20 @@ public class BlockService {
         User blocker = userRepository.findActiveById(blockerUserId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         return blockedUserRepository.findAllByBlocker(blocker);
+    }
+
+    private void saveBlockIfNotExists(User blocker, User blocked) {
+        if (blockedUserRepository.existsByBlockerAndBlocked(blocker, blocked)) {
+            return;
+        }
+        try {
+            blockedUserRepository.save(BlockedUser.builder()
+                    .blocker(blocker)
+                    .blocked(blocked)
+                    .build());
+        } catch (DataIntegrityViolationException e) {
+            log.debug("차단 레코드 이미 존재: blocker={}, blocked={}", blocker.getId(), blocked.getId());
+        }
     }
 
     public boolean isBlocked(Long blockerUserId, Long otherUserId) {
