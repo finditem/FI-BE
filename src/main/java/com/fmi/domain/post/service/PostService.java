@@ -169,6 +169,8 @@ public class PostService {
             return;
         }
 
+        notifyFavoriteUsers(post, PostStatus.FOUND);
+
         post.updatePostStatus(PostStatus.FOUND);
     }
 
