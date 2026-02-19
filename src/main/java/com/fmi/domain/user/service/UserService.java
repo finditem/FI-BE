@@ -12,6 +12,7 @@ import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.user.converter.UserConverter;
+import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
@@ -39,7 +40,9 @@ import org.springframework.data.domain.Slice;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Slf4j
@@ -57,6 +60,7 @@ public class UserService {
     private final PostFavoriteRepository postFavoriteRepository;
     private final PostQueryService postQueryService;
     private final UserQueryService userQueryService;
+    private final BlockedUserRepository blockedUserRepository;
 
     /**
      * 내 정보 조회
@@ -115,6 +119,14 @@ public class UserService {
                         : commentRepository.findByUserAndIdLessThanOrderByIdDesc(targetUser, cursor, pageRequest);
 
                 List<Comment> commentList = commentSlice.getContent();
+
+                Set<Long> excludedUserIds = getExcludedUserIds(me);
+                if (!excludedUserIds.isEmpty()) {
+                    commentList = commentList.stream()
+                            .filter(c -> !excludedUserIds.contains(c.getUser().getId()))
+                            .toList();
+                }
+
                 comments = commentList.stream()
                         .map(UserConverter::toUserCommentSummaryResponse)
                         .toList();
@@ -144,6 +156,14 @@ public class UserService {
         }
 
         return UserConverter.toUserOtherPageResponse(targetUser, posts, comments, favorites, nextCursor, hasNext);
+    }
+
+    private Set<Long> getExcludedUserIds(User user) {
+        if (user == null) return Set.of();
+        Set<Long> excluded = new HashSet<>();
+        excluded.addAll(blockedUserRepository.findBlockedUserIdsByBlockerId(user.getId()));
+        excluded.addAll(blockedUserRepository.findBlockerIdsByBlockedId(user.getId()));
+        return excluded;
     }
 
     /**
