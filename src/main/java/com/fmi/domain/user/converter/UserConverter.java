@@ -27,6 +27,7 @@ public class UserConverter {
                 .nickname(user.getNickname())
                 .email(user.getEmail())
                 .profileImg(user.getProfile_img())
+                .role(user.getRole())
                 .build();
     }
 
