@@ -1,7 +1,6 @@
 package com.fmi.domain.chatroom.repository;
 
 import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.QUser;
 import com.fmi.domain.chatmessage.data.QChatMessage;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
@@ -44,8 +43,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
                 .selectFrom(pt)
                 .join(pt.chatRoom, cr).fetchJoin()
                 .join(cr.post, p).fetchJoin()
-                //todo: 추후에 이걸로 다시 변경 .join(pt.lastMessage, lm).fetchJoin()
-                .leftJoin(pt.lastMessage, lm).fetchJoin()
+                .join(pt.lastMessage, lm).fetchJoin()
                 .join(cr.participants, otherPt)
                 .join(otherPt.user, otherUser).fetchJoin()
                 .where(
@@ -53,7 +51,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
                         pt.user.id.eq(userId),
                         otherPt.user.id.ne(userId),
                         pt.participantState.eq(ParticipantState.ACTIVE),
-                        //todo: 추후에 주석 해제 pt.lastMessage.isNotNull(),
+                        pt.lastMessage.isNotNull(),
 
                         typeEq(type),
                         addressEq(address)
