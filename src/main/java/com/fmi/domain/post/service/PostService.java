@@ -163,9 +163,7 @@ public class PostService {
         User user = userQueryService.findUser(userDetails.getUsername());
         Post post = postQueryService.findById(postId);
 
-        if (!Objects.equals(user.getId(), post.getUser().getId())) {
-            throw new GeneralException(ErrorStatus._POST_ACCESS_DENIED);
-        }
+        checkPostAccessDenied(post, user.getEmail());
 
         if (post.getPostStatus() == PostStatus.FOUND) {
             return;
