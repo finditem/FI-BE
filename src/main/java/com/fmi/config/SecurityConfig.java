@@ -43,13 +43,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/actuator/health", "/actuator/info", "/ws/**", "/error", "/health", "/api/health").permitAll()
                         .requestMatchers("/auth/**", "/s3/**", "/chat-test.html", "/chat-test2.html", "/posts/filter").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/posts/{postId}", "/posts").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         // 공지사항 - 조회만 공개, 좋아요/댓글 작성은 인증 필요
                         .requestMatchers(HttpMethod.GET, "/notices/**").permitAll()
                         .requestMatchers("/inquiries").permitAll()
                         .requestMatchers("/users/{userId}/page").permitAll()
-                        .requestMatchers("/posts/search/**", "/posts/{postId}", "/posts/{postId}/similar", "/posts/{postId}/radius").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts/search/**", "/posts/*", "/posts/*/similar", "/posts/*/share").permitAll()
                         // 관리자 전용 API 보호
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

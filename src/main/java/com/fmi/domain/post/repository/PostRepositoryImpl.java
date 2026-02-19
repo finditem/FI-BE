@@ -187,15 +187,16 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         BooleanBuilder where = new BooleanBuilder();
 
         if (hasText(keyword)) {
-            where.and(
-                    post.title.containsIgnoreCase(keyword)
-                            .or(post.content.containsIgnoreCase(keyword))
-            );
+            where.and(buildKeywordCondition(post, keyword));
+        }else{
+            return List.of();
         }
 
         if (Objects.nonNull(cursor)) {
             where.and(post.id.lt(cursor));
         }
+
+        where.and(post.temporarySave.isFalse());
 
         return queryFactory
                 .selectFrom(post)
@@ -209,16 +210,12 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     public long countByKeyword(String keyword) {
         QPost post = QPost.post;
 
-        BooleanBuilder where = new BooleanBuilder();
+        if (!hasText(keyword)) return 0L;
 
-        if (hasText(keyword)) {
-            where.and(
-                    post.title.containsIgnoreCase(keyword)
-                            .or(post.content.containsIgnoreCase(keyword))
-            );
-        } else {
-            return 0L;
-        }
+        BooleanBuilder where = new BooleanBuilder()
+                .and(buildKeywordCondition(post, keyword));
+
+        where.and(post.temporarySave.isFalse());
 
         Long count = queryFactory
                 .select(post.id.count())
@@ -228,6 +225,22 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
         return count == null ? 0L : count;
     }
+
+    private BooleanBuilder buildKeywordCondition(QPost post, String keyword) {
+        String[] tokens = keyword.split("\\s+");
+
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
+        for (String token : tokens) {
+            if (!hasText(token)) continue;
+
+            booleanBuilder.or(
+                    post.title.containsIgnoreCase(token)
+                            .or(post.content.containsIgnoreCase(token))
+            );
+        }
+        return booleanBuilder;
+    }
+
 
     @Override
     public List<Post> findSimilarPosts(Long postId, int limit) {

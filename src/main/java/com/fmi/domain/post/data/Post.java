@@ -98,6 +98,11 @@ public class Post {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void updatePostStatus(PostStatus postStatus){
+        applyIfNotNull(postStatus, this::setPostStatus);
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void update(PostType postType,
                        String title,
                        PostStatus postStatus,
