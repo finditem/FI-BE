@@ -5,6 +5,8 @@ import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecomment.service.NoticeCommentService;
 import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -133,6 +135,36 @@ public class NoticeCommentController {
 
         NoticeCommentResponse response = noticeCommentService.updateComment(commentId, request, userDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @PostMapping("/comments/{commentId}/like")
+    @Operation(summary = "공지사항 댓글 추천 추가", description = "댓글을 추천합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 추천 성공")
+    })
+    public ResponseEntity<ApiResponse<Void>> addCommentLike(
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
+        noticeCommentService.addCommentLike(commentId, userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+    }
+
+    @DeleteMapping("/comments/{commentId}/like")
+    @Operation(summary = "공지사항 댓글 추천 취소", description = "댓글 추천을 취소합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 추천 취소 성공")
+    })
+    public ResponseEntity<ApiResponse<Void>> removeCommentLike(
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
+        noticeCommentService.removeCommentLike(commentId, userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     @DeleteMapping("/comments/{commentId}")

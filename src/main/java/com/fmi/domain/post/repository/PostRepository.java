@@ -1,6 +1,5 @@
 package com.fmi.domain.post.repository;
 
-import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import org.springframework.data.domain.Pageable;
@@ -12,8 +11,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryCustom {
@@ -47,6 +44,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     Slice<Post> findByUserAndTemporarySaveFalseOrderByIdDesc(User user, Pageable pageable);
 
     Slice<Post> findByUserAndTemporarySaveFalseAndIdLessThanOrderByIdDesc(User user, Long cursor, Pageable pageable);
+
     long countByUser(User user);
 
 

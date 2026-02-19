@@ -38,7 +38,7 @@ public class SlackService {
                                     .color("#36a64f")
                                     .fields(List.of(
                                             new Field("문의 제목", event.title(), false),
-                                            new Field("카테고리", "📍 " + event.categoryDescription(), false),
+                                            new Field("문의 타입", event.inquiryTypeDescription(), false),
                                             new Field("작성자(이메일)", event.email(), false),
                                             new Field("작성일시", format(event.createdAt()), false),
                                             new Field("문의 내용", event.content(), false)

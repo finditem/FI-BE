@@ -14,18 +14,18 @@ public class InquiryConverter {
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
                 .content(inquiry.getContent())
-                .category(inquiry.getCategory())
+                .inquiryType(inquiry.getInquiryType())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
                 .build();
     }
-    
+
     public InquiryDetailDTO toDetailDTO(Inquiry inquiry) {
         return InquiryDetailDTO.builder()
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
                 .content(inquiry.getContent())
-                .category(inquiry.getCategory())
+                .inquiryType(inquiry.getInquiryType())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
                 .build();
@@ -36,7 +36,7 @@ public class InquiryConverter {
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
                 .content(inquiry.getContent())
-                .category(inquiry.getCategory())
+                .inquiryType(inquiry.getInquiryType())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
                 .comments(comments)

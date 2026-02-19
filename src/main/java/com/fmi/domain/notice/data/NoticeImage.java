@@ -1,14 +1,15 @@
-package com.fmi.domain.post.data;
+package com.fmi.domain.notice.data;
 
+import com.fmi.domain.post.data.ImageType;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+@Table(name = "notice_image")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PostImage {
+public class NoticeImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,16 +23,16 @@ public class PostImage {
     private ImageType imageType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
-    private Post post;
+    @JoinColumn(name = "notice_id", nullable = false)
+    private Notice notice;
 
-    private PostImage(String imgUrl, ImageType imageType, Post post) {
+    private NoticeImage(String imgUrl, ImageType imageType, Notice notice) {
         this.imgUrl = imgUrl;
         this.imageType = imageType;
-        this.post = post;
+        this.notice = notice;
     }
 
-    public static PostImage create(String imgUrl, ImageType imageType, Post post) {
-        return new PostImage(imgUrl, imageType, post);
+    public static NoticeImage create(String imgUrl, ImageType imageType, Notice notice) {
+        return new NoticeImage(imgUrl, imageType, notice);
     }
 }

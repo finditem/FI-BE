@@ -42,6 +42,10 @@ public class NoticeComment {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "like_count")
+    @Builder.Default
+    private int likeCount = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -63,4 +67,5 @@ public class NoticeComment {
         this.content = content;
         this.updatedAt = LocalDateTime.now();
     }
+
 }

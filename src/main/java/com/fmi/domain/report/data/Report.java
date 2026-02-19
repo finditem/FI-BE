@@ -37,7 +37,7 @@ public class Report {
     @Column(name = "report_type", nullable = false, length = 50)
     private ReportType reportType;
 
-    @Column(name = "reason", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;
 
     @Enumerated(EnumType.STRING)
@@ -47,6 +47,10 @@ public class Report {
 
     @Column(name = "admin_note", columnDefinition = "TEXT")
     private String adminNote;
+
+    @Column(name = "answered", nullable = false)
+    @Builder.Default
+    private Boolean answered = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -77,6 +81,16 @@ public class Report {
         this.status = ReportStatus.RESOLVED;
         this.adminNote = adminNote;
         this.resolvedAt = LocalDateTime.now();
+    }
+
+    public void markAsAnswered() {
+        this.answered = true;
+    }
+
+    public void updateAnswered(Boolean answered) {
+        if (answered != null) {
+            this.answered = answered;
+        }
     }
 }
 

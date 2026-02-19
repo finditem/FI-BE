@@ -7,13 +7,16 @@ import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,33 +34,48 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
-        BooleanExpression whereQuery = Expressions.allOf(
+        BooleanExpression baseWhere = Expressions.allOf(
                 addressStartsWith(post, address),
                 equalsPostType(post, postType),
                 equalsPostStatus(post, postStatus),
                 equalsCategory(post, category),
-                cursorCondition(post, sortType, cursor),
                 excludeBlockedUsers(post, userId)
         );
+
+        BooleanExpression pageWhere = Expressions.allOf(
+                baseWhere,
+                cursorCondition(post, sortType, cursor)
+        );
+
+        Long postCount = queryFactory
+                .select(post.id.countDistinct())
+                .from(post)
+                .leftJoin(postFavorite).on(
+                        postFavorite.post.eq(post),
+                        postFavorite.isFavorite.isTrue()
+                )
+                .where(baseWhere)
+                .fetchOne();
+
+        if (Objects.isNull(postCount)) postCount = 0L;
 
         List<Post> posts;
         if (Objects.equals(sortType, SortType.MOST_FAVORITED)) {
             posts = queryFactory.select(post)
-                    .from(post).leftJoin(postFavorite).on(
+                    .from(post)
+                    .leftJoin(postFavorite).on(
                             postFavorite.post.eq(post),
                             postFavorite.isFavorite.isTrue()
-                    ).where(whereQuery)
-                    .groupBy(post.id)
-                    .orderBy(
-                            postFavorite.favorite_id.count().desc(),
-                            post.id.desc()
                     )
+                    .where(pageWhere)
+                    .groupBy(post.id)
+                    .orderBy(postFavorite.favorite_id.count().desc(), post.id.desc())
                     .limit(size + 1)
                     .fetch();
         } else {
             posts = queryFactory
                     .selectFrom(post)
-                    .where(whereQuery)
+                    .where(pageWhere)
                     .orderBy(orderBySortType(post, sortType))
                     .limit(size + 1)
                     .fetch();
@@ -71,7 +89,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         Long nextCursor = (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
 
         if (posts.isEmpty()) {
-            return new PostPageResponse(List.of(), null, false);
+            return new PostPageResponse(List.of(), 0L, null, false);
         }
 
         List<Long> postIdList = posts.stream().map(Post::getId).toList();
@@ -162,7 +180,99 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 })
                 .toList();
 
-        return new PostPageResponse(postList, nextCursor, hasNext);
+        return new PostPageResponse(postList, postCount, nextCursor, hasNext);
+    }
+
+    @Override
+    public List<Post> searchByKeywordWithCursor(String keyword, Long cursor, int size) {
+        QPost post = QPost.post;
+
+        BooleanBuilder where = new BooleanBuilder();
+
+        if (hasText(keyword)) {
+            where.and(
+                    post.title.containsIgnoreCase(keyword)
+                            .or(post.content.containsIgnoreCase(keyword))
+            );
+        }
+
+        if (Objects.nonNull(cursor)) {
+            where.and(post.id.lt(cursor));
+        }
+
+        return queryFactory
+                .selectFrom(post)
+                .where(where)
+                .orderBy(post.id.desc())
+                .limit(size)
+                .fetch();
+    }
+
+    @Override
+    public long countByKeyword(String keyword) {
+        QPost post = QPost.post;
+
+        BooleanBuilder where = new BooleanBuilder();
+
+        if (hasText(keyword)) {
+            where.and(
+                    post.title.containsIgnoreCase(keyword)
+                            .or(post.content.containsIgnoreCase(keyword))
+            );
+        } else {
+            return 0L;
+        }
+
+        Long count = queryFactory
+                .select(post.id.count())
+                .from(post)
+                .where(where)
+                .fetchOne();
+
+        return count == null ? 0L : count;
+    }
+
+    @Override
+    public List<Post> findSimilarPosts(Long postId, int limit) {
+        QPost post = QPost.post;
+
+        Post base = queryFactory.selectFrom(post)
+                .where(post.id.eq(postId))
+                .fetchOne();
+
+        if (Objects.isNull(base)) {
+            return List.of();
+        }
+
+        LocalDateTime baseDate = Objects.nonNull(base.getDate()) ? base.getDate() : base.getCreatedAt();
+        LocalDateTime from = baseDate.minusDays(7);
+        LocalDateTime to = baseDate.plusDays(7);
+
+        PostType oppositeType = Objects.equals(base.getPostType(), PostType.LOST)
+                ? PostType.FOUND
+                : PostType.LOST;
+
+
+
+        return queryFactory
+                .selectFrom(post)
+                .where(
+                        post.id.ne(postId),
+                        post.temporarySave.isFalse(),
+                        post.category.eq(base.getCategory()),
+                        post.postType.eq(oppositeType),
+                        post.postStatus.eq(PostStatus.SEARCHING),
+                        post.address.eq(base.getAddress()),
+                        post.date.isNotNull().and(post.date.between(from, to))
+                                .or(post.date.isNull().and(post.createdAt.between(from, to)))
+                )
+                .orderBy(post.createdAt.desc(), post.id.desc())
+                .limit(limit)
+                .fetch();
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private BooleanExpression addressStartsWith(QPost post, String address) {

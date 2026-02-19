@@ -11,7 +11,6 @@ import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.response.SignupResponse;
 import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.Enum.WithdrawalReason;
-import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.service.InquiryService;
@@ -62,19 +61,19 @@ public class AdminController {
     private final AuthService authService;
 
     @GetMapping("/inquiries")
-    @Operation(summary = "관리자 문의 목록 조회", description = "문의 유형/상태/카테고리 조건으로 전체 문의 내역을 조회합니다.")
+    @Operation(summary = "관리자 문의 목록 조회", description = "문의 타입/상태 조건으로 전체 문의 내역을 조회합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 목록 조회 성공")
     })
     public ApiResponse<Page<AdminInquiryResponse>> getInquiries(
             @RequestParam(required = false) InquiryType type,
             @RequestParam(required = false) InquiryStatus status,
-            @RequestParam(required = false) InquiryCategory category,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<AdminInquiryResponse> response = adminService.getInquiryPage(type, status, category, pageable);
+        Page<AdminInquiryResponse> response = adminService.getInquiryPage(type, status, keyword, pageable);
         return ApiResponse.onSuccess(response);
     }
 
@@ -107,11 +106,13 @@ public class AdminController {
     public ApiResponse<Page<AdminReportResponse>> getReports(
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(required = false) ReportTargetType targetType,
+            @RequestParam(required = false) Boolean answered,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<AdminReportResponse> response = adminService.getReportPage(status, targetType, pageable);
+        Page<AdminReportResponse> response = adminService.getReportPage(status, targetType, answered, keyword, pageable);
         return ApiResponse.onSuccess(response);
     }
 
@@ -160,9 +161,22 @@ public class AdminController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "공지 생성 성공")
     })
-    public ApiResponse<Long> createNotice(@RequestBody NoticeCreateRequestDTO request) {
-        Long id = noticeService.createNotice(request);
+    public ApiResponse<Long> createNotice(@Valid @RequestBody NoticeCreateRequestDTO request,
+                                             @AuthenticationPrincipal UserDetails userDetails) {
+        Long id = noticeService.createNotice(request, userDetails.getUsername());
         return ApiResponse.onSuccess(id);
+    }
+
+    @GetMapping("/notices/draft")
+    @Operation(summary = "임시저장 공지사항 조회(관리자)", description = "현재 로그인한 관리자의 임시저장 공지사항을 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "임시저장 조회 성공")
+    })
+    public ApiResponse<NoticeResponseDTO> getDraftNotice(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        NoticeResponseDTO response = noticeService.getDraftNotice(userDetails.getUsername());
+        return ApiResponse.onSuccess(response);
     }
 
     @PutMapping("/notices/{noticeId}")
@@ -304,7 +318,7 @@ public class AdminController {
     })
     public ApiResponse<String> updateReportStatus(@PathVariable Long reportId,
                                                   @Valid @RequestBody ReportStatusUpdateRequestDTO request) {
-        reportService.updateStatus(reportId, request.getStatus(), request.getAdminNote());
+        reportService.updateStatus(reportId, request.getStatus(), request.getAdminNote(), request.getAnswered());
         return ApiResponse.onSuccess("OK");
     }
 

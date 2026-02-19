@@ -10,7 +10,6 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.inquiry.data.Inquiry;
-import com.fmi.domain.inquiry.data.enums.InquiryCategory;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
@@ -32,6 +31,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -57,28 +57,46 @@ public class AdminService {
 
     public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
                                                      InquiryStatus status,
-                                                     InquiryCategory category,
+                                                     String keyword,
                                                      Pageable pageable) {
-        Page<Inquiry> inquiries = inquiryRepository.findAllForAdmin(type, status, category, pageable);
+        Page<Inquiry> inquiries;
+        if (keyword != null && !keyword.isBlank()) {
+            String typeStr = type != null ? type.name() : null;
+            String statusStr = status != null ? status.name() : null;
+            Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            inquiries = inquiryRepository.findAllForAdminWithKeyword(typeStr, statusStr, sanitizeFulltextKeyword(keyword), unsorted);
+        } else {
+            inquiries = inquiryRepository.findAllForAdmin(type, status, pageable);
+        }
         return inquiries.map(inquiry -> AdminInquiryResponse.builder()
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
                 .inquiryType(inquiry.getInquiryType())
-                .category(inquiry.getCategory())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
                 .userId(inquiry.getUser() != null ? inquiry.getUser().getId() : null)
                 .userNickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
                 .userEmail(inquiry.getEmail() != null ? inquiry.getEmail() :
                         inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
+                .content(inquiry.getContent())
                 .ip(inquiry.getIp())
                 .build());
     }
 
     public Page<AdminReportResponse> getReportPage(ReportStatus status,
                                                    ReportTargetType targetType,
+                                                   Boolean answered,
+                                                   String keyword,
                                                    Pageable pageable) {
-        Page<Report> reports = reportRepository.findAllForAdmin(status, targetType, pageable);
+        Page<Report> reports;
+        if (keyword != null && !keyword.isBlank()) {
+            String statusStr = status != null ? status.name() : null;
+            String targetTypeStr = targetType != null ? targetType.name() : null;
+            Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            reports = reportRepository.findAllForAdminWithKeyword(statusStr, targetTypeStr, answered, sanitizeFulltextKeyword(keyword), unsorted);
+        } else {
+            reports = reportRepository.findAllForAdmin(status, targetType, answered, pageable);
+        }
         return reports.map(report -> AdminReportResponse.builder()
                 .reportId(report.getReportId())
                 .targetType(report.getTargetType())
@@ -93,6 +111,7 @@ public class AdminService {
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
                 .reporterNickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
                 .reporterEmail(report.getReporter() != null ? report.getReporter().getEmail() : null)
+                .answered(report.getAnswered())
                 .build());
     }
 
@@ -154,6 +173,13 @@ public class AdminService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
         
         return reportConverter.toResponseDTO(report);
+    }
+
+    /**
+     * FULLTEXT BOOLEAN MODE 특수문자 제거
+     */
+    private String sanitizeFulltextKeyword(String keyword) {
+        return keyword.trim().replaceAll("[+\\-*~\"()<>@]", " ").trim();
     }
 
     /**

@@ -30,15 +30,40 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     Page<Report> findByTargetTypeAndTargetId(
             ReportTargetType targetType, Long targetId, Pageable pageable);
 
-    // 관리자 전용 신고 목록 조회
+    // 관리자 전용 신고 목록 조회 - keyword 없을 때
     @Query("""
             SELECT r FROM Report r
             WHERE (:status IS NULL OR r.status = :status)
               AND (:targetType IS NULL OR r.targetType = :targetType)
+              AND (:answered IS NULL OR r.answered = :answered)
             """)
     Page<Report> findAllForAdmin(@Param("status") ReportStatus status,
                                  @Param("targetType") ReportTargetType targetType,
+                                 @Param("answered") Boolean answered,
                                  Pageable pageable);
+
+    // 관리자 전용 신고 목록 조회 - keyword 있을 때 (FULLTEXT + ngram)
+    @Query(value = """
+            SELECT * FROM report r
+            WHERE (:status IS NULL OR r.status = :status)
+              AND (:targetType IS NULL OR r.target_type = :targetType)
+              AND (:answered IS NULL OR r.answered = :answered)
+              AND MATCH(r.reason) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY r.created_at DESC
+            """,
+            countQuery = """
+            SELECT COUNT(*) FROM report r
+            WHERE (:status IS NULL OR r.status = :status)
+              AND (:targetType IS NULL OR r.target_type = :targetType)
+              AND (:answered IS NULL OR r.answered = :answered)
+              AND MATCH(r.reason) AGAINST(:keyword IN BOOLEAN MODE)
+            """,
+            nativeQuery = true)
+    Page<Report> findAllForAdminWithKeyword(@Param("status") String status,
+                                            @Param("targetType") String targetType,
+                                            @Param("answered") Boolean answered,
+                                            @Param("keyword") String keyword,
+                                            Pageable pageable);
 
     long countByReporter(User reporter);
 }

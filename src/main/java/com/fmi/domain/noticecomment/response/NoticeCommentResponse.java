@@ -14,6 +14,7 @@ public class NoticeCommentResponse {
     private String content;
     private Long authorId;
     private String authorName;
+    private int likeCount;
     private LocalDateTime createdAt;
     private Long parentId;
     private boolean canEdit;

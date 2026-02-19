@@ -21,6 +21,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -95,7 +97,7 @@ public class ReportService {
                 )
             );
         } catch (Exception e) {
-            // 이메일 발송 실패해도 신고는 성공 처리
+            log.error("신고 접수 이메일 발송 실패: reportId={}", saved.getReportId(), e);
         }
         
         return saved.getReportId();
@@ -138,7 +140,7 @@ public class ReportService {
                 break;
             case CHAT:
                 chatMessageRepository.findById(targetId)
-                        .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND)); // ChatMessage 용 에러 추가 필요
+                        .orElseThrow(() -> new GeneralException(ErrorStatus._MESSAGE_NOT_FOUND));
                 break;
         }
     }
@@ -177,7 +179,7 @@ public class ReportService {
      * 신고 상태 업데이트(관리자)
      */
     @Transactional
-    public void updateStatus(Long reportId, ReportStatus status, String adminNote) {
+    public void updateStatus(Long reportId, ReportStatus status, String adminNote, Boolean answered) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
 
@@ -192,6 +194,9 @@ public class ReportService {
             default:
                 throw new GeneralException(ErrorStatus._BAD_REQUEST);
         }
+
+        // 답변 상태 업데이트
+        report.updateAnswered(answered);
 
         // 신고자에게 결과 알림 및 이메일 발송
         User reporter = report.getReporter();
@@ -234,7 +239,7 @@ public class ReportService {
                     )
                 );
             } catch (Exception e) {
-                // 이메일 발송 실패해도 알림은 성공 처리
+                log.error("신고 처리 결과 이메일 발송 실패: reportId={}", report.getReportId(), e);
             }
         }
     }

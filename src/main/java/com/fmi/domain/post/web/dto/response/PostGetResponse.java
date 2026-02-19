@@ -26,6 +26,7 @@ public record PostGetResponse(
         boolean isNew,
         boolean isHot,
         LocalDateTime createdAt,
+        boolean isMine,
         List<PostImageResponse> imageResponseList,
         UserPostResponse postUserInformation) {
 }
