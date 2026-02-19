@@ -163,7 +163,7 @@ public class PostQueryService {
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
         int limit = size + 1;
 
-        keyword = sanitizeForBooleanFulltext(keyword);
+        keyword = sanitizeForLike(keyword);
 
         if (keyword.isBlank()) return new PostPageResponse(List.of(), 0L, null, false);
 
@@ -197,28 +197,16 @@ public class PostQueryService {
         return new PostPageResponse(responseList, postCount, nextCursor, hasNext);
     }
 
-    private String sanitizeForBooleanFulltext(String input) {
-        if (Objects.isNull(input)) return "";
-
+    private String sanitizeForLike(String input) {
+        if (input == null) return "";
         String s = Normalizer.normalize(input, Normalizer.Form.NFKC).trim();
         if (s.isEmpty()) return "";
 
+        // 문자/숫자/한글/공백만 남김
         s = s.replaceAll("[^0-9A-Za-z가-힣\\s]", " ");
-
         s = s.replaceAll("\\s+", " ").trim();
-        if (s.isEmpty()) return "";
 
-        if (s.length() > 100) {
-            s = s.substring(0, 100);
-        }
-
-        String[] tokens = s.split("\\s+");
-
-        return Arrays.stream(tokens)
-                .filter(token -> !token.isEmpty())
-                .limit(10)
-                .map(token -> token + "*")
-                .collect(Collectors.joining(" "));
+        return s.length() > 100 ? s.substring(0, 100) : s;
     }
 
     @Transactional(readOnly = true)
