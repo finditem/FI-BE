@@ -24,6 +24,7 @@ import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
+import com.fmi.security.RefreshTokenStore;
 import com.fmi.service.EmailService;
 import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +58,7 @@ public class UserService {
     private final PostFavoriteRepository postFavoriteRepository;
     private final PostQueryService postQueryService;
     private final UserQueryService userQueryService;
+    private final RefreshTokenStore refreshTokenStore;
 
     /**
      * 내 정보 조회
@@ -276,6 +278,8 @@ public class UserService {
         user.setTemporaryPasswordExpiresAt(null);  // 만료 시간 제거
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
+
+        refreshTokenStore.revokeAllForUser(email);
     }
 
     /**
@@ -307,6 +311,8 @@ public class UserService {
         // Soft Delete (deletedAt 설정)
         user.setDeletedAt(LocalDateTime.now());
         userRepository.save(user);
+
+        refreshTokenStore.revokeAllForUser(email);
 
         // 계정 삭제 이메일 발송
         try {
