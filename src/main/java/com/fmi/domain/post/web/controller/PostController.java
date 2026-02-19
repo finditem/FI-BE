@@ -370,6 +370,40 @@ public class PostController {
     }
 
     @PutMapping("/{postId}/found")
+    @Operation(
+            summary = "게시글 상태를 '찾았음(FOUND)'으로 변경",
+            description = """
+                게시글을 '찾았음(FOUND)' 상태로 변경합니다.
+                
+                - 본인 게시글만 변경 가능
+                - 인증 필요 (JWT)
+                
+                예)
+                - PUT /posts/{postId}/found
+                """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "상태 변경 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "성공",
+                                          "result": null
+                                        }
+                                        """
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (본인 게시글 아님)", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음", content = @Content)
+    })
     public ResponseEntity<ApiResponse<Void>> updateFound(@PathVariable Long postId,
                                                          @AuthenticationPrincipal UserDetails userDetails) {
         postService.markToFound(postId, userDetails);
