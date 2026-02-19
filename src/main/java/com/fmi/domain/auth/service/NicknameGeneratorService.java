@@ -16,17 +16,11 @@ public class NicknameGeneratorService {
     private final SecureRandom random = new SecureRandom();
 
     private static final List<String> ADJECTIVES = Arrays.asList(
-            "귀여운", "멋진", "빠른", "느긋한", "용감한",
-            "똑똑한", "친절한", "활발한", "조용한", "밝은",
-            "차분한", "씩씩한", "당당한", "신나는", "상냥한",
-            "재빠른", "튼튼한", "영리한", "즐거운", "행복한"
+            "길찾는", "지도보는", "탐색하는", "이동중인", "확인중인", "대기중인"
     );
 
     private static final List<String> ANIMALS = Arrays.asList(
-            "고양이", "강아지", "토끼", "여우", "사슴",
-            "판다", "코알라", "햄스터", "다람쥐", "펭귄",
-            "돌고래", "고래", "거북이", "수달", "미어캣",
-            "알파카", "라쿤", "늑대", "호랑이", "사자"
+            "토끼", "판다", "오리", "펭귄", "사슴", "라쿤", "곰"
     );
 
     public String generateRandomNickname() {
