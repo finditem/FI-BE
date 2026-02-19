@@ -48,7 +48,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/notices/**").permitAll()
                         .requestMatchers("/inquiries").permitAll()
                         .requestMatchers("/users/{userId}/page").permitAll()
-                        .requestMatchers("/posts/search/**", "/posts/*", "/posts/*/similar", "/posts/*/share").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts/search/**", "/posts/*", "/posts/*/similar", "/posts/*/share").permitAll()
                         // 관리자 전용 API 보호
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
