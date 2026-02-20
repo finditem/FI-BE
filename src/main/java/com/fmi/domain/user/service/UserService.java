@@ -164,10 +164,15 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        // 닉네임 중복 체크 (본인의 닉네임이 아닌 경우만)
-        if (request.getNickname() != null && !request.getNickname().equals(user.getNickname())) {
-            if (userRepository.existsByNickname(request.getNickname())) {
-                throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
+        // 닉네임 유효성 검사 및 중복 체크 (본인의 닉네임이 아닌 경우만)
+        if (request.getNickname() != null) {
+            if (request.getNickname().isBlank()) {
+                throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
+            }
+            if (!request.getNickname().equals(user.getNickname())) {
+                if (userRepository.existsByNickname(request.getNickname())) {
+                    throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
+                }
             }
         }
 
