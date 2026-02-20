@@ -6,6 +6,7 @@ import com.fmi.domain.post.data.*;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
+import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -26,6 +27,7 @@ import static com.fmi.domain.post.data.QPostImage.postImage;
 public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+    private final BlockedUserRepository blockedUserRepository;
 
     @Override
     public PostPageResponse searchPostsByFiltersAndSort(PostType postType, PostStatus postStatus, Category category, String address, SortType sortType, Long cursor, int size, Long userId) {
@@ -36,7 +38,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 addressStartsWith(post, address),
                 equalsPostType(post, postType),
                 equalsPostStatus(post, postStatus),
-                equalsCategory(post, category)
+                equalsCategory(post, category),
+                excludeBlockedUsers(post, userId)
         );
 
         BooleanExpression pageWhere = Expressions.allOf(
@@ -339,6 +342,29 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
             case OLDEST -> post.id.gt(cursor);
             case MOST_FAVORITED -> null;
         };
+    }
+
+    private BooleanExpression excludeBlockedUsers(QPost post, Long userId) {
+        if (Objects.isNull(userId)) {
+            return null;
+        }
+
+        // 1. 내가 차단한 사람들
+        List<Long> blockedUserIds = blockedUserRepository.findBlockedUserIdsByBlockerId(userId);
+
+        // 2. 나를 차단한 사람들
+        List<Long> blockerIds = blockedUserRepository.findBlockerIdsByBlockedId(userId);
+
+        // 3. 두 목록 합치기 (양방향 차단)
+        Set<Long> excludedUserIds = new HashSet<>();
+        excludedUserIds.addAll(blockedUserIds);
+        excludedUserIds.addAll(blockerIds);
+
+        if (excludedUserIds.isEmpty()) {
+            return null;
+        }
+
+        return post.user.id.notIn(excludedUserIds);
     }
 
 }

@@ -4,6 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.userblock.data.BlockedUser;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
+import com.fmi.domain.userblock.web.dto.response.BlockedUserResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -65,6 +66,18 @@ public class BlockService {
         User blocker = userRepository.findActiveById(blockerUserId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         return blockedUserRepository.findAllByBlocker(blocker);
+    }
+
+    public List<BlockedUserResponse> listWithUserInfo(Long blockerUserId) {
+        User blocker = userRepository.findActiveById(blockerUserId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        return blockedUserRepository.findAllByBlocker(blocker).stream()
+                .map(bu -> new BlockedUserResponse(
+                        bu.getBlocked().getId(),
+                        bu.getBlocked().getNickname(),
+                        bu.getBlocked().getProfile_img()
+                ))
+                .toList();
     }
 
     public boolean isBlocked(Long blockerUserId, Long otherUserId) {

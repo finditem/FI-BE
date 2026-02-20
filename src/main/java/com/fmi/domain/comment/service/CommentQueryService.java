@@ -11,6 +11,7 @@ import com.fmi.domain.comment.web.dto.response.CommentResponse;
 import com.fmi.domain.commentlike.service.CommentLikeService;
 import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.domain.user.web.dto.response.UserCommentResponse;
+import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
@@ -21,6 +22,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,6 +36,7 @@ public class CommentQueryService {
     private final CommentImageService commentImageService;
     private final UserQueryService userQueryService;
     private final CommentLikeService commentLikeService;
+    private final BlockedUserRepository blockedUserRepository;
 
     @Transactional(readOnly = true)
     public CommentPageResponse getParentComments(Long postId, Long cursor, int size, UserDetails userDetails) {
@@ -43,6 +46,13 @@ public class CommentQueryService {
         List<Comment> fetched = (Objects.isNull(cursor))
                 ? commentRepository.findParentComments(postId, pageable)
                 : commentRepository.findParentCommentsWithCursor(postId, cursor, pageable);
+
+        Set<Long> excludedUserIds = getExcludedUserIds(user);
+        if (!excludedUserIds.isEmpty()) {
+            fetched = fetched.stream()
+                    .filter(c -> !excludedUserIds.contains(c.getUser().getId()))
+                    .collect(Collectors.toList());
+        }
 
         boolean hasNext = fetched.size() > size;
         if (hasNext) fetched = fetched.subList(0, size);
@@ -91,6 +101,13 @@ public class CommentQueryService {
                 ? commentRepository.findReplies(parentComment.getId(), pageable)
                 : commentRepository.findRepliesWithCursor(parentComment.getId(), cursor, pageable);
 
+        Set<Long> excludedUserIds = getExcludedUserIds(user);
+        if (!excludedUserIds.isEmpty()) {
+            fetched = fetched.stream()
+                    .filter(c -> !excludedUserIds.contains(c.getUser().getId()))
+                    .collect(Collectors.toList());
+        }
+
         boolean hasNext = fetched.size() > size;
         if (hasNext) fetched = fetched.subList(0, size);
 
@@ -126,6 +143,14 @@ public class CommentQueryService {
         return new CommentPageResponse(responses, hasNext, nextCursor);
     }
 
+
+    private Set<Long> getExcludedUserIds(User user) {
+        if (user == null) return Set.of();
+        Set<Long> excluded = new HashSet<>();
+        excluded.addAll(blockedUserRepository.findBlockedUserIdsByBlockerId(user.getId()));
+        excluded.addAll(blockedUserRepository.findBlockerIdsByBlockedId(user.getId()));
+        return excluded;
+    }
 
     private Map<Long, Long> buildReplyCountMap(List<Long> parentIds) {
         if (parentIds.isEmpty()) return Map.of();
