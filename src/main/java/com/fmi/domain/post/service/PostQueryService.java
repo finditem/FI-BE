@@ -13,6 +13,7 @@ import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostImageRepository;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.web.dto.response.*;
+import com.fmi.domain.post.web.dto.response.image.PostImageResponse;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
@@ -35,7 +36,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -290,7 +290,8 @@ public class PostQueryService {
                                 favoriteCountMap.getOrDefault(p.getId(), 0L),
                                 isFavoriteByPostId.getOrDefault(p.getId(), false),
                                 p.getViewCount(),
-                                p.getCreatedAt()
+                                p.getCreatedAt(),
+                                p.getCategory()
                         )
                 )
                 .toList();
