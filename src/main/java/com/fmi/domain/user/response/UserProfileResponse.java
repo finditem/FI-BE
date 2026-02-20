@@ -1,5 +1,6 @@
 package com.fmi.domain.user.response;
 
+import com.fmi.domain.Enum.Role;
 import lombok.*;
 
 @Getter
@@ -12,5 +13,6 @@ public class UserProfileResponse {
     private String nickname;          // 닉네임 (수정 가능)
     private String email;             // 이메일 (조회만)
     private String profileImg;        // 프로필 이미지 URL (수정 가능)
+    private Role role;                // 유저 권한 (USER, ADMIN)
 }
 
