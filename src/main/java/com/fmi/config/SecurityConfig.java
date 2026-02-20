@@ -94,7 +94,12 @@ public class SecurityConfig {
 
         config.setAllowCredentials(true);
         // localhost의 모든 포트 허용 (개발 환경)
-        config.setAllowedOriginPatterns(Arrays.asList("http://localhost:*", "http://127.0.0.1:*"));
+        config.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "https://finditem.kr",
+                "https://www.finditem.kr"
+                ));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         config.setMaxAge(3600L);
