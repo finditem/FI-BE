@@ -159,16 +159,6 @@ public class UserController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 정보 수정 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "NICKNAME_*: 부적절한 닉네임 또는 중복된 닉네임",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH409-NICKNAME_DUPLICATED\", \"message\": \"이미 사용 중인 닉네임입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
                     content = @Content(
@@ -179,12 +169,12 @@ public class UserController {
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "FILE500-DELETE_IO: 파일을 삭제할 수 없습니다",
+                    responseCode = "409",
+                    description = "AUTH409-NICKNAME_DUPLICATED: 이미 사용 중인 닉네임입니다",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"FILE500-DELETE_IO\", \"message\": \"파일을 삭제할 수 없습니다.\"}"
+                                    value = "{\"isSuccess\": false, \"code\": \"AUTH409-NICKNAME_DUPLICATED\", \"message\": \"이미 사용 중인 닉네임입니다.\"}"
                             )
                     )
             )
