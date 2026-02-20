@@ -3,7 +3,7 @@ package com.fmi.domain.post.converter.util;
 import com.fmi.domain.post.data.ImageType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
-import com.fmi.domain.post.web.dto.response.PostImageResponse;
+import com.fmi.domain.post.web.dto.response.image.PostImageResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
 public final class PostImageConverter {
     public static List<PostImage> createPostImageList(List<String> images, Post post) {
         if (Objects.isNull(images) || images.isEmpty()) {
-            return new ArrayList<>();
+            return List.of();
         }
 
         return IntStream.range(0, images.size())
@@ -35,6 +35,16 @@ public final class PostImageConverter {
 
     public static PostImageResponse toResponse(PostImage postImage) {
         return new PostImageResponse(postImage.getId(), postImage.getImgUrl(), postImage.getImageType());
+    }
+
+    public static List<PostImage> createAllNormal(List<String> images, Post post) {
+        if (Objects.isNull(images) || images.isEmpty()) {
+            return List.of();
+        }
+
+        return images.stream()
+                .map(url -> PostImage.create(url, ImageType.NORMAL, post))
+                .toList();
     }
 
     private PostImageConverter() {

@@ -10,6 +10,7 @@ import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.web.dto.request.PostCreateRequest;
 import com.fmi.domain.post.web.dto.request.PostRadiusUpdateRequest;
+import com.fmi.domain.post.web.dto.request.PostStatusUpdateRequest;
 import com.fmi.domain.post.web.dto.request.PostUpdateRequest;
 import com.fmi.domain.post.web.dto.response.PostCreateResponse;
 import com.fmi.domain.post.web.dto.response.PostUpdateResponse;
@@ -43,15 +44,44 @@ public class PostService {
     public PostCreateResponse createPost(PostCreateRequest request, UserDetails userDetails, List<MultipartFile> images) {
         User user = userQueryService.findUser(userDetails.getUsername());
 
-        Post post = PostConverter.toEntity(request, user);
+        boolean fromTemp = Objects.nonNull(request.tempPostId());
+
+        Post post;
+        if (fromTemp) {
+            post = postRepository.findById(request.tempPostId())
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._TEMP_POST_NOT_FOUND));
+
+            checkPostAccessDenied(post, userDetails.getUsername());
+
+            if (!post.isTemporarySave()) {
+                throw new GeneralException(ErrorStatus._TEMP_POST_NOT_FOUND);
+            }
+
+            post.update(
+                    request.postType(),
+                    request.title(),
+                    PostStatus.SEARCHING,
+                    request.date(),
+                    request.address(),
+                    request.latitude(),
+                    request.longitude(),
+                    request.content(),
+                    false,
+                    request.radius(),
+                    request.category()
+            );
+
+            postImageService.deleteImagesNotIn(post.getId(), request.keepImageIdList());
+        } else {
+            post = PostConverter.toEntity(request, user);
+        }
+
         post = postRepository.save(post);
 
-        postImageService.createPostImageAtS3AndDB(images, post);
+        postImageService.applyThumbNail(images, post, request.thumbnailImageId(), request.keepImageIdList());
 
-        // 임시 저장이 아닌 경우에만 카테고리 알림 트리거
-        if (!post.isTemporarySave()) {
-            notificationService.notifyCategoriesForPost(post);
-        }
+        notificationService.notifyCategoriesForPost(post);
+
         return PostConverter.toCreateResponse(post);
     }
 
@@ -159,19 +189,17 @@ public class PostService {
     }
 
     @Transactional
-    public void markToFound(Long postId, UserDetails userDetails) {
+    public void updatePostStatus(Long postId, PostStatusUpdateRequest request, UserDetails userDetails) {
         User user = userQueryService.findUser(userDetails.getUsername());
         Post post = postQueryService.findById(postId);
 
         checkPostAccessDenied(post, user.getEmail());
 
-        if (post.getPostStatus() == PostStatus.FOUND) {
-            return;
+        if (Objects.equals(request.postStatus(), PostStatus.FOUND)) {
+            notifyFavoriteUsers(post, PostStatus.FOUND);
         }
 
-        notifyFavoriteUsers(post, PostStatus.FOUND);
-
-        post.updatePostStatus(PostStatus.FOUND);
+        post.updatePostStatus(request.postStatus());
     }
 
 //    @Transactional

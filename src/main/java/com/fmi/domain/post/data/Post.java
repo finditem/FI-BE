@@ -27,10 +27,10 @@ public class Post {
     private String address;
 
     @Column(name = "latitude")
-    private double latitude;
+    private Double latitude;
 
     @Column(name = "longitude")
-    private double longitude;
+    private Double longitude;
 
     @Column(name = "view_cnt")
     private long viewCount;
@@ -89,6 +89,46 @@ public class Post {
         return new Post(title, address, latitude, longitude, postType, category, content, temporarySave, date, radius, user);
     }
 
+    public static Post createTemporary(User user) {
+        Post post = new Post();
+        post.user = user;
+        post.temporarySave = true;
+        post.title = "";
+        post.address = "";
+        post.content = "";
+        post.postStatus = PostStatus.SEARCHING;
+        post.createdAt = LocalDateTime.now();
+        post.viewCount = 0;
+
+        return post;
+    }
+
+    public void updateTemporary(PostType postType,
+                                Category category,
+                                Radius radius,
+                                LocalDateTime date,
+                                String title,
+                                String address,
+                                String content,
+                                Double latitude,
+                                Double longitude) {
+
+        applyIfNotNull(postType, this::setPostType);
+        applyIfNotNull(category, this::setCategory);
+        applyIfNotNull(radius, this::setRadius);
+        applyIfNotNull(date, this::setDate);
+
+        applyIfNotBlank(title, this::setTitle);
+        applyIfNotBlank(address, this::setAddress);
+        applyIfNotBlank(content, this::setContent);
+
+        applyIfNotNull(latitude, this::setLatitude);
+        applyIfNotNull(longitude, this::setLongitude);
+
+        this.temporarySave = true;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public boolean isNew() {
         return this.createdAt.isAfter(LocalDateTime.now().minusHours(24));
     }
@@ -98,7 +138,7 @@ public class Post {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updatePostStatus(PostStatus postStatus){
+    public void updatePostStatus(PostStatus postStatus) {
         applyIfNotNull(postStatus, this::setPostStatus);
         this.updatedAt = LocalDateTime.now();
     }
@@ -139,5 +179,9 @@ public class Post {
 
     private <T> void applyIfNotNull(T value, Consumer<T> setter) {
         if (Objects.nonNull(value)) setter.accept(value);
+    }
+
+    private void applyIfNotBlank(String value, Consumer<String> setter) {
+        if (Objects.nonNull(value) && !value.isBlank()) setter.accept(value);
     }
 }

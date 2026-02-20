@@ -58,6 +58,8 @@ public enum ErrorStatus implements BaseErrorCode {
     _POST_FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "POST-FAVORITE-NOT_FOUND", "해당 게시글에 대한 즐겨찾기를 하지 않았습니다."),
     _POST_RADIUS_NOT_MATCH(HttpStatus.BAD_REQUEST, "POST-RADIUS-NOT_MATCH", "유효하지 않는 Radius 값입니다."),
 
+    _TEMP_POST_NOT_FOUND(HttpStatus.NOT_FOUND, "TEMP-POST404-NOT_FOUND", "임시저장글이 존재하지 않습니다."),
+
     // 댓글 관련 응답
     _COMMENT_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404_PARENT-NOT_FOUND", "존재하지 않는 부모 댓글입니다."),
     _COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404-NOT_FOUND", "존재하지 않는 댓글입니다."),

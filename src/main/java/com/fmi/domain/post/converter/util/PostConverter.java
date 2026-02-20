@@ -4,6 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.web.dto.request.PostCreateRequest;
 import com.fmi.domain.post.web.dto.response.*;
+import com.fmi.domain.post.web.dto.response.image.PostImageResponse;
 import com.fmi.domain.user.web.dto.response.UserPostResponse;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public final class PostConverter {
                 request.postType(),
                 request.category(),
                 request.content(),
-                request.temporarySave(),
+                false,
                 request.date(),
                 request.radius(),
                 user);
