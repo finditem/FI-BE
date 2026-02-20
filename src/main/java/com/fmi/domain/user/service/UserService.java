@@ -20,7 +20,6 @@ import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.web.dto.AccountDeleteRequest;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
-import com.fmi.domain.user.web.dto.ProfileImageUpdateRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -179,36 +178,26 @@ public class UserService {
     }
 
     /**
-     * 내 정보 수정 (닉네임만 수정 가능)
+     * 내 정보 수정 (닉네임 + 프로필 이미지 통합)
      */
     public UserProfileResponse updateMyProfile(String email, UserUpdateRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        // 닉네임 중복 체크 (본인의 닉네임이 아닌 경우만)
-        if (request.getNickname() != null && !request.getNickname().equals(user.getNickname())) {
-            if (userRepository.existsByNickname(request.getNickname())) {
-                throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
+        // 닉네임 유효성 검사 및 중복 체크 (본인의 닉네임이 아닌 경우만)
+        if (request.getNickname() != null) {
+            if (request.getNickname().isBlank()) {
+                throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
+            }
+            if (!request.getNickname().equals(user.getNickname())) {
+                if (userRepository.existsByNickname(request.getNickname())) {
+                    throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
+                }
             }
         }
 
-        // User 닉네임 업데이트
-        UserConverter.updateUserFromRequest(user, request);
-        user.setUpdatedAt(LocalDateTime.now());
-
-        User updatedUser = userRepository.save(user);
-        return UserConverter.toUserProfileResponse(updatedUser);
-    }
-
-    /**
-     * 프로필 이미지 업데이트 및 삭제
-     */
-    public UserProfileResponse updateProfileImage(String email, ProfileImageUpdateRequest request) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
-        // 기존 이미지 삭제 (S3에서)
-        if (user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
+        // 프로필 이미지 변경 요청이 있는 경우 기존 이미지 S3 삭제
+        if (request.isProfileImageProvided() && user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
             try {
                 s3Service.delete(List.of(user.getProfile_img()));
             } catch (Exception e) {
@@ -216,8 +205,8 @@ public class UserService {
             }
         }
 
-        // 새 이미지 설정 (null이면 삭제, 값이 있으면 업데이트)
-        user.setProfile_img(request.getProfileImageUrl());
+        // User 닉네임 + 프로필 이미지 업데이트
+        UserConverter.updateUserFromRequest(user, request);
         user.setUpdatedAt(LocalDateTime.now());
 
         User updatedUser = userRepository.save(user);
