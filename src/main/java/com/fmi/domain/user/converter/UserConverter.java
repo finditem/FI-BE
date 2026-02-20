@@ -33,11 +33,14 @@ public class UserConverter {
 
     /**
      * UserUpdateRequest로부터 User Entity 업데이트
-     * 닉네임만 수정 가능
+     * 닉네임, 프로필 이미지 수정 가능
      */
     public static void updateUserFromRequest(User user, UserUpdateRequest request) {
         if (request.getNickname() != null) {
             user.setNickname(request.getNickname());
+        }
+        if (request.isProfileImageProvided()) {
+            user.setProfile_img(request.getProfileImageUrl());
         }
     }
 

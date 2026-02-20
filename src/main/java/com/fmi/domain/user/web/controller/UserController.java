@@ -8,7 +8,6 @@ import com.fmi.domain.user.service.UserService;
 import com.fmi.domain.user.web.dto.AccountDeleteRequest;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
-import com.fmi.domain.user.web.dto.ProfileImageUpdateRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -148,7 +147,15 @@ public class UserController {
     }
 
     @PatchMapping("/me")
-    @Operation(summary = "내 정보 수정", description = "현재 로그인한 사용자의 닉네임을 수정합니다.")
+    @Operation(summary = "내 정보 수정", description = """
+            현재 로그인한 사용자의 프로필 정보를 수정합니다. (닉네임, 프로필 이미지 통합)
+
+            **닉네임**: nickname 필드로 변경 (2~15자)
+            **프로필 이미지**: profileImageUrl 필드로 변경
+            - 필드 자체를 보내지 않으면 → 이미지 변경 없음
+            - null로 보내면 → 기존 이미지 삭제
+            - URL 값을 보내면 → 새 이미지로 업데이트
+            """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 정보 수정 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -158,41 +165,6 @@ public class UserController {
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = "{\"isSuccess\": false, \"code\": \"AUTH409-NICKNAME_DUPLICATED\", \"message\": \"이미 사용 중인 닉네임입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"USER404-NOT_FOUND\", \"message\": \"존재하지 않는 회원입니다.\"}"
-                            )
-                    )
-            )
-    })
-    public ApiResponse<UserProfileResponse> updateMyProfile(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody UserUpdateRequest request
-    ) {
-        String email = userDetails.getUsername();
-        UserProfileResponse response = userService.updateMyProfile(email, request);
-        return ApiResponse.onSuccess(response);
-    }
-
-    @PatchMapping("/me/profile-image")
-    @Operation(summary = "프로필 이미지 업데이트 및 삭제",
-            description = "프로필 이미지를 업데이트하거나 삭제합니다. profileImageUrl이 null이면 삭제, 값이 있으면 업데이트됩니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 이미지 업데이트/삭제 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "FILE400-URL_INVALID: 잘못된 URL 형식입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"FILE400-URL_INVALID\", \"message\": \"잘못된 URL 형식입니다.\"}"
                             )
                     )
             ),
@@ -217,12 +189,12 @@ public class UserController {
                     )
             )
     })
-    public ApiResponse<UserProfileResponse> updateProfileImage(
+    public ApiResponse<UserProfileResponse> updateMyProfile(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody ProfileImageUpdateRequest request
+            @Valid @RequestBody UserUpdateRequest request
     ) {
         String email = userDetails.getUsername();
-        UserProfileResponse response = userService.updateProfileImage(email, request);
+        UserProfileResponse response = userService.updateMyProfile(email, request);
         return ApiResponse.onSuccess(response);
     }
 
