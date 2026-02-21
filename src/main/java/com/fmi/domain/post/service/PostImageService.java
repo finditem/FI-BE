@@ -15,12 +15,60 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class PostImageService {
     private final S3Service s3Service;
     private final PostImageRepository postImageRepository;
 
-    @Transactional
+    public void applyThumbNail(List<MultipartFile> imageList, Post post, Long thumbnailId, List<Long> keepImageIdList) {
+        postImageRepository.resetThumbnailToNormal(post.getId());
+
+        PostImage thumb = null;
+
+        if (Objects.nonNull(thumbnailId)) {
+            thumb = postImageRepository.findByIdAndPost_Id(thumbnailId, post.getId()).orElse(null);
+
+            if (Objects.nonNull(thumb) && Objects.nonNull(keepImageIdList) && !keepImageIdList.isEmpty() && !keepImageIdList.contains(thumbnailId)) {
+                thumb = null;
+            }
+
+        }
+
+        List<PostImage> newlySaved = createPostImageNormalAtS3AndDB(imageList, post);
+
+        if (Objects.nonNull(thumb)) {
+            thumb.setImageType(ImageType.THUMBNAIL);
+            return;
+        }
+
+        if (!newlySaved.isEmpty()) {
+            newlySaved.get(0).setImageType(ImageType.THUMBNAIL);
+            return;
+        }
+
+        postImageRepository.flush();
+
+        List<PostImage> remain = postImageRepository.findByPost(post);
+
+        if (Objects.nonNull(keepImageIdList) && !keepImageIdList.isEmpty()) {
+            Map<Long, PostImage> remainMap = remain.stream()
+                    .collect(Collectors.toMap(PostImage::getId, i -> i, (a, b) -> a));
+
+            for (Long keepId : keepImageIdList) {
+                PostImage kept = remainMap.get(keepId);
+                if (kept != null) {
+                    kept.setImageType(ImageType.THUMBNAIL);
+                    return;
+                }
+            }
+        }
+
+        if (!remain.isEmpty()) {
+            remain.get(0).setImageType(ImageType.THUMBNAIL);
+        }
+    }
+
     public void createPostImageAtS3AndDB(List<MultipartFile> imageList, Post post) {
         List<PostImage> postImageList = new ArrayList<>();
         if (Objects.nonNull(imageList)) {
@@ -30,7 +78,15 @@ public class PostImageService {
         postImageRepository.saveAll(postImageList);
     }
 
-    @Transactional
+    public List<PostImage> createPostImageNormalAtS3AndDB(List<MultipartFile> imageList, Post post) {
+        List<PostImage> postImageList = new ArrayList<>();
+        if (Objects.nonNull(imageList)) {
+            postImageList = PostImageConverter.createAllNormal(s3Service.upload(imageList), post);
+        }
+
+        return postImageRepository.saveAll(postImageList);
+    }
+
     public void deleteAllImageByPost(Post post) {
         List<PostImage> postImageList = postImageRepository.findByPost(post);
 
@@ -41,13 +97,11 @@ public class PostImageService {
         postImageRepository.deleteAllByPost(post);
     }
 
-    @Transactional
     public void deleteImageAtS3(List<PostImage> imageList) {
         List<String> imageUrlList = imageList.stream().map(PostImage::getImgUrl).toList();
         s3Service.delete(imageUrlList);
     }
 
-    @Transactional
     public void deleteImageAtDB(List<PostImage> imageList) {
         imageList.forEach(postImageRepository::delete);
     }
@@ -114,5 +168,46 @@ public class PostImageService {
                         PostImage::getImgUrl
                 ));
     }
+
+    public void deleteImagesNotIn(Long postId, List<Long> keepImageIdList) {
+
+        if (Objects.isNull(keepImageIdList) || keepImageIdList.isEmpty()) {
+            deleteAllImages(postId);
+            return;
+        }
+
+        List<PostImage> imagesToDelete =
+                postImageRepository.findImagesToDelete(postId, keepImageIdList);
+
+        if (imagesToDelete.isEmpty()) {
+            return;
+        }
+
+        deleteFromS3(imagesToDelete);
+        deleteFromDatabase(imagesToDelete);
+    }
+
+    public void deleteAllImages(Long postId) {
+        List<PostImage> images =
+                postImageRepository.findByPost_Id(postId);
+
+        if (images.isEmpty()) return;
+
+        deleteFromS3(images);
+        postImageRepository.deleteAllByPost_Id(postId);
+    }
+
+    private void deleteFromS3(List<PostImage> images) {
+        List<String> urls = images.stream()
+                .map(PostImage::getImgUrl)
+                .toList();
+
+        s3Service.delete(urls);
+    }
+
+    private void deleteFromDatabase(List<PostImage> images) {
+        postImageRepository.deleteAll(images);
+    }
+
 
 }
