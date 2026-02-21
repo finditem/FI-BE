@@ -26,6 +26,7 @@ public class SocialLoginService {
     private final SocialAccountsRepository socialAccountsRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NicknameGeneratorService nicknameGeneratorService;
 
     public User upsertUserFromKakao(Long kakaoId, String email, String nickname, String profileImageUrl) {
         String providerId = String.valueOf(kakaoId);
@@ -48,10 +49,18 @@ public class SocialLoginService {
         User user = userRepository.findByEmail(effectiveEmail)
                 .orElseGet(() -> {
                     log.info("새 사용자 생성: email={}", effectiveEmail);
+
+                    // 닉네임이 없으면 랜덤 닉네임 생성
+                    String effectiveNickname = (nickname != null && !nickname.isBlank())
+                            ? nickname
+                            : nicknameGeneratorService.generateRandomNickname();
+
+                    log.info("소셜 로그인 닉네임: 원본={}, 사용={}", nickname, effectiveNickname);
+
                     User u = AuthConverter.toSocialUserEntity(
                             kakaoId,
                             email,
-                            nickname,
+                            effectiveNickname,
                             profileImageUrl,
                             passwordEncoder.encode("{noop}-" + providerId)
                     );
