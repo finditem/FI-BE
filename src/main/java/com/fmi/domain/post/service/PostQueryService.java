@@ -4,6 +4,7 @@ import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
+import com.fmi.domain.comment.service.CommentQueryService;
 import com.fmi.domain.post.converter.util.PostConverter;
 import com.fmi.domain.post.converter.util.PostImageConverter;
 import com.fmi.domain.post.data.Post;
@@ -50,6 +51,7 @@ public class PostQueryService {
     private final PostImageService postImageService;
     private final StringRedisTemplate stringRedisTemplate;
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
+    private final CommentQueryService commentQueryService;
     private final BlockService blockService;
 
 
@@ -253,7 +255,11 @@ public class PostQueryService {
                 ).map(PostImage::getImgUrl)
                 .orElse(null);
 
-        return PostConverter.toShareResponse(post, thumbnailImageUrl);
+        Long likeCount = postFavoriteService.countByPostAndIsFavoriteTrue(post);
+        Long commentCount = commentQueryService.countByPost(post);
+
+
+        return PostConverter.toShareResponse(post, thumbnailImageUrl, likeCount, commentCount);
     }
 
 
@@ -274,7 +280,7 @@ public class PostQueryService {
     public List<PostSimilarResponse> getSimilarPostList(Long postId, UserDetails userDetails) {
         Post post = findById(postId);
 
-        List<Post> postList = postRepository.findSimilarPosts(postId, 5);
+        List<Post> postList = postRepository.findSimilarPosts(post.getId(), 5);
 
         Map<Long, String> thumbnailUrlByPostList = postImageService.findThumbnailUrlByPostList(postList);
         Map<Long, Long> favoriteCountMap = postFavoriteService.getFavoriteCountMap(postList);
