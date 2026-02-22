@@ -2,6 +2,7 @@ package com.fmi.domain.post.repository;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
+import com.fmi.domain.comment.data.QComment;
 import com.fmi.domain.post.data.*;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
@@ -11,7 +12,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -92,6 +93,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
             return new PostPageResponse(List.of(), 0L, null, false);
         }
 
+        Set<Long> hotPostIds = findHotPostsIds(baseWhere, 5);
+
         List<Long> postIdList = posts.stream().map(Post::getId).toList();
 
         Map<Long, String> thumbnailMap = queryFactory
@@ -156,9 +159,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                     long favCnt = favoriteCountMap.getOrDefault(pid, 0L);
 
                     boolean isNew = p.isNew();
+                    boolean isHot = hotPostIds.contains(pid);
 
-                    // TODO isHot 기준
-                    boolean isHot = favCnt >= 10 || p.getViewCount() >= 100;
 
                     return new PostBriefResponse(
                             pid,
@@ -191,7 +193,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
         if (hasText(keyword)) {
             where.and(buildKeywordCondition(post, keyword));
-        }else{
+        } else {
             return List.of();
         }
 
@@ -264,7 +266,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         PostType oppositeType = Objects.equals(base.getPostType(), PostType.LOST)
                 ? PostType.FOUND
                 : PostType.LOST;
-
 
 
         return queryFactory
@@ -365,6 +366,40 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         }
 
         return post.user.id.notIn(excludedUserIds);
+    }
+
+    private Set<Long> findHotPostsIds(BooleanExpression baseWhere, int limit) {
+        QPost post = QPost.post;
+        QPostFavorite postFavorite = QPostFavorite.postFavorite;
+        QComment comment = QComment.comment;
+
+        NumberExpression<Long> commentCount = comment.id.count();
+        NumberExpression<Long> postFavoriteCount = postFavorite.favorite_id.count();
+
+
+        List<Long> hotIdList = queryFactory
+                .select(post.id)
+                .from(post)
+                .leftJoin(comment).on(
+                        comment.post.eq(post),
+                        comment.deleted.isFalse()
+                )
+                .leftJoin(postFavorite).on(
+                        postFavorite.post.eq(post),
+                        postFavorite.isFavorite.isTrue()
+                )
+                .where(baseWhere)
+                .groupBy(post.id)
+                .orderBy(
+                        commentCount.desc(),
+                        post.viewCount.desc(),
+                        postFavoriteCount.desc(),
+                        post.createdAt.desc()
+                )
+                .limit(limit)
+                .fetch();
+
+        return new HashSet<>(hotIdList);
     }
 
 }
