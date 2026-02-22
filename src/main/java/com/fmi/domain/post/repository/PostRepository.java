@@ -56,13 +56,6 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 //            """)
 //    void batchIncrementViewCounts(@Param("counts") Map<Long, Long> counts);
 
-//    @Query("""
-//                SELECT p FROM Post p
-//                WHERE p.temporarySave = false
-//                ORDER BY p.commentCount DESC, p.viewCnt DESC, p.favoriteCount DESC
-//            """)
-//    List<Post> findHotPost(Pageable pageable);
-
     Long countByUserAndTemporarySaveFalse(User user);
 
     Optional<Post> findByUserAndTemporarySaveTrue(User user);
