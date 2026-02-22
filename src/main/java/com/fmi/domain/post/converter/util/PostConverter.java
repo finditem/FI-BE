@@ -131,11 +131,11 @@ public final class PostConverter {
 //    }
 
 
-    public static PostShareResponse toShareResponse(Post post, String thumbNailUrl, Long likeCount, Long commentCount) {
+    public static PostShareResponse toShareResponse(Post post, String thumbnailUrl, Long likeCount, Long commentCount) {
         return new PostShareResponse(
                 post.getTitle(),
                 post.makeSummary(),
-                thumbNailUrl,
+                thumbnailUrl,
                 post.getAddress(),
                 likeCount,
                 commentCount,
