@@ -14,6 +14,7 @@ import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.domain.user.response.ImageUploadResponse;
+import com.fmi.domain.user.response.MyCommentPageResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
@@ -177,6 +178,35 @@ public class UserService {
                 .toList();
 
         return postQueryService.getPostBriefResponseList(postList, me);
+    }
+
+    /**
+     * 내가 쓴 댓글 목록 조회 (커서 기반)
+     */
+    @Transactional(readOnly = true)
+    public MyCommentPageResponse getMyComments(String email, Long cursor, int size) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        PageRequest pageRequest = PageRequest.of(0, size);
+        Slice<Comment> commentSlice = (cursor == null)
+                ? commentRepository.findByUserOrderByIdDesc(user, pageRequest)
+                : commentRepository.findByUserAndIdLessThanOrderByIdDesc(user, cursor, pageRequest);
+
+        List<Comment> commentList = commentSlice.getContent().stream()
+                .filter(c -> !c.isDeleted())
+                .toList();
+
+        List<UserCommentSummaryResponse> comments = commentList.stream()
+                .map(UserConverter::toUserCommentSummaryResponse)
+                .toList();
+
+        boolean hasNext = commentSlice.hasNext();
+        Long nextCursor = (hasNext && !commentSlice.getContent().isEmpty())
+                ? commentSlice.getContent().get(commentSlice.getContent().size() - 1).getId()
+                : null;
+
+        return new MyCommentPageResponse(comments, nextCursor, hasNext);
     }
 
     /**
