@@ -51,42 +51,40 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원가입 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
-                    description = "AUTH400-EMAIL_NOT_VERIFIED: 이메일 인증이 완료되지 않았습니다",
+                    description = "잘못된 요청",
                     content = @Content(
                             mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH400-EMAIL_NOT_VERIFIED\", \"message\": \"이메일 인증이 완료되지 않았습니다. 이메일 인증을 먼저 완료해주세요.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "AUTH400-WEAK_PASSWORD: 비밀번호 규칙을 만족하지 않습니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH400-WEAK_PASSWORD\", \"message\": \"비밀번호 규칙을 만족하지 않습니다. 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "409",
-                    description = "AUTH409-EMAIL_DUPLICATED: 이미 사용 중인 이메일입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH409-EMAIL_DUPLICATED\", \"message\": \"이미 사용 중인 이메일입니다.\"}"
-                            )
+                            examples = {
+                                    @ExampleObject(
+                                            name = "이메일 미인증",
+                                            description = "AUTH400-EMAIL_NOT_VERIFIED",
+                                            value = "{\"isSuccess\": false, \"code\": \"AUTH400-EMAIL_NOT_VERIFIED\", \"message\": \"이메일 인증이 완료되지 않았습니다. 이메일 인증을 먼저 완료해주세요.\"}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "비밀번호 규칙 위반",
+                                            description = "AUTH400-WEAK_PASSWORD",
+                                            value = "{\"isSuccess\": false, \"code\": \"AUTH400-WEAK_PASSWORD\", \"message\": \"비밀번호 규칙을 만족하지 않습니다. 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.\"}"
+                                    )
+                            }
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409",
-                    description = "AUTH409-EMAIL_RECENTLY_DELETED: 최근 탈퇴한 이메일입니다 (7일 이내 재가입 불가)",
+                    description = "리소스 충돌",
                     content = @Content(
                             mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"AUTH409-EMAIL_RECENTLY_DELETED\", \"message\": \"최근 탈퇴한 이메일입니다. 탈퇴 후 7일 이내 재가입할 수 없습니다.\"}"
-                            )
+                            examples = {
+                                    @ExampleObject(
+                                            name = "이메일 중복",
+                                            description = "AUTH409-EMAIL_DUPLICATED",
+                                            value = "{\"isSuccess\": false, \"code\": \"AUTH409-EMAIL_DUPLICATED\", \"message\": \"이미 사용 중인 이메일입니다.\"}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "최근 탈퇴 이메일",
+                                            description = "AUTH409-EMAIL_RECENTLY_DELETED",
+                                            value = "{\"isSuccess\": false, \"code\": \"AUTH409-EMAIL_RECENTLY_DELETED\", \"message\": \"최근 탈퇴한 이메일입니다. 탈퇴 후 7일 이내 재가입할 수 없습니다.\"}"
+                                    )
+                            }
                     )
             )
     })

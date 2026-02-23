@@ -82,4 +82,22 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
                 group by c.parent.id
             """)
     List<Object[]> countRepliesByParentIds(@Param("parentIds") List<Long> parentIds);
+
+    @Query("""
+        select c.post.id, count(c)
+        from Comment c
+        where c.post.id in :postIds
+          and c.deleted = false
+        group by c.post.id
+    """)
+    List<Object[]> countCommentsGroupByPostId(@Param("postIds") List<Long> postIds);
+
+
+    @Query("""
+            select count(c)
+                    from Comment c
+                    where c.post.id = :postId
+                      and c.deleted = false
+            """)
+    Long countByPostId(@Param("postId") Long postId);
 }

@@ -3,44 +3,21 @@ package com.fmi.domain.post.web.dto.request;
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.data.Radius;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record PostCreateRequest(
-        @NotNull
+public record TemporaryPostCreateRequest(
         PostType postType,
-
-        @NotBlank
         String title,
-
-        @NotNull
         LocalDateTime date,
-
-        @NotBlank
         String address,
-
-        @NotNull
         Double latitude,
-
-        @NotNull
         Double longitude,
-
-        @NotBlank
         String content,
-
-        @NotNull
         Radius radius,
-
-        @NotNull
         Category category,
 
-        Long tempPostId,
-
-        List<Long> keepImageIdList,
-
-        Long thumbnailImageId
+        List<Long> keepImageIdList
 ) {
 }

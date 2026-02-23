@@ -4,6 +4,7 @@ import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
+import com.fmi.domain.comment.service.CommentQueryService;
 import com.fmi.domain.post.converter.util.PostConverter;
 import com.fmi.domain.post.converter.util.PostImageConverter;
 import com.fmi.domain.post.data.Post;
@@ -13,10 +14,12 @@ import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostImageRepository;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.web.dto.response.*;
+import com.fmi.domain.post.web.dto.response.image.PostImageResponse;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
 import com.fmi.domain.user.converter.UserConverter;
+import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
@@ -35,7 +38,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -49,6 +51,8 @@ public class PostQueryService {
     private final PostImageService postImageService;
     private final StringRedisTemplate stringRedisTemplate;
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
+    private final CommentQueryService commentQueryService;
+    private final BlockService blockService;
 
 
     // 게시글 단일 조회
@@ -63,6 +67,11 @@ public class PostQueryService {
         boolean isMine = false;
         if (Objects.nonNull(userDetails)) {
             User user = userQueryService.findUser(userDetails.getUsername());
+
+            // 차단 체크 (양방향)
+            if (blockService.isBlocked(user.getId(), post.getUser().getId())) {
+                throw new GeneralException(ErrorStatus._POST_ACCESS_DENIED);
+            }
 
             PostFavorite favorite = postFavoriteRepository.findByUserAndPost(user, post)
                     .orElse(null);
@@ -246,7 +255,11 @@ public class PostQueryService {
                 ).map(PostImage::getImgUrl)
                 .orElse(null);
 
-        return PostConverter.toShareResponse(post, thumbnailImageUrl);
+        Long likeCount = postFavoriteService.countByPostAndIsFavoriteTrue(post);
+        Long commentCount = commentQueryService.countByPost(post);
+
+
+        return PostConverter.toShareResponse(post, thumbnailImageUrl, likeCount, commentCount);
     }
 
 
@@ -267,7 +280,7 @@ public class PostQueryService {
     public List<PostSimilarResponse> getSimilarPostList(Long postId, UserDetails userDetails) {
         Post post = findById(postId);
 
-        List<Post> postList = postRepository.findSimilarPosts(postId, 5);
+        List<Post> postList = postRepository.findSimilarPosts(post.getId(), 5);
 
         Map<Long, String> thumbnailUrlByPostList = postImageService.findThumbnailUrlByPostList(postList);
         Map<Long, Long> favoriteCountMap = postFavoriteService.getFavoriteCountMap(postList);
@@ -290,7 +303,8 @@ public class PostQueryService {
                                 favoriteCountMap.getOrDefault(p.getId(), 0L),
                                 isFavoriteByPostId.getOrDefault(p.getId(), false),
                                 p.getViewCount(),
-                                p.getCreatedAt()
+                                p.getCreatedAt(),
+                                p.getCategory()
                         )
                 )
                 .toList();
