@@ -27,6 +27,12 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query("SELECT c FROM Comment c JOIN FETCH c.post WHERE c.user = :user AND c.id < :cursor ORDER BY c.id DESC")
     Slice<Comment> findByUserAndIdLessThanOrderByIdDesc(@Param("user") User user, @Param("cursor") Long cursor, Pageable pageable);
 
+    @Query("SELECT c FROM Comment c JOIN FETCH c.post WHERE c.user = :user AND c.deleted = false ORDER BY c.createdAt DESC")
+    Slice<Comment> findByUserAndDeletedFalseOrderByCreatedAtDesc(@Param("user") User user, Pageable pageable);
+
+    @Query("SELECT c FROM Comment c JOIN FETCH c.post WHERE c.user = :user AND c.deleted = false AND c.createdAt < :cursor ORDER BY c.createdAt DESC")
+    Slice<Comment> findByUserAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
+
     long countByUser(User user);
 
     @Query("select c from Comment c where c.post.id = :postId order by c.id desc")

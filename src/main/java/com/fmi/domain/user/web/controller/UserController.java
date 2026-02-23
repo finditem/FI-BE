@@ -4,6 +4,7 @@ import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
 import com.fmi.domain.user.response.MyPostPageResponse;
+import com.fmi.domain.user.response.MyActivityPageResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.service.UserService;
@@ -128,6 +129,33 @@ public class UserController {
     ) {
         String email = userDetails.getUsername();
         MyPostPageResponse response = userService.getMyPosts(email, cursor, size);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/me/activities")
+    @Operation(summary = "내 활동 내역 통합 조회", description = """
+            현재 로그인한 사용자의 모든 활동 내역을 통합하여 최신순으로 조회합니다.
+
+            **활동 유형:**
+            - POST: 작성한 게시글
+            - COMMENT: 작성한 댓글
+            - FAVORITE: 즐겨찾기한 게시글
+            - INQUIRY: 문의 내역
+            - REPORT: 신고 내역
+
+            **커서**: ISO datetime 형식 (예: 2024-01-01T00:00:00)
+            """)
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "활동 내역 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다")
+    })
+    public ApiResponse<MyActivityPageResponse> getMyActivities(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        String email = userDetails.getUsername();
+        MyActivityPageResponse response = userService.getMyActivities(email, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 

@@ -13,9 +13,15 @@ import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
+import com.fmi.domain.inquiry.data.Inquiry;
+import com.fmi.domain.inquiry.repository.InquiryRepository;
+import com.fmi.domain.report.data.Report;
+import com.fmi.domain.report.repository.ReportRepository;
+import com.fmi.domain.user.response.ActivityResponse;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
 import com.fmi.domain.user.response.MyPostPageResponse;
+import com.fmi.domain.user.response.MyActivityPageResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
@@ -41,10 +47,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Stream;
 
 
 @Slf4j
@@ -64,6 +69,8 @@ public class UserService {
     private final UserQueryService userQueryService;
     private final BlockedUserRepository blockedUserRepository;
     private final RefreshTokenStore refreshTokenStore;
+    private final InquiryRepository inquiryRepository;
+    private final ReportRepository reportRepository;
 
     /**
      * 내 정보 조회
@@ -232,6 +239,78 @@ public class UserService {
                 : null;
 
         return new MyPostPageResponse(posts, nextCursor, hasNext);
+    }
+
+    /**
+     * 내 활동 내역 통합 조회 (커서 기반, createdAt 내림차순)
+     */
+    @Transactional(readOnly = true)
+    public MyActivityPageResponse getMyActivities(String email, String cursor, int size) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        LocalDateTime cursorTime = (cursor != null)
+                ? LocalDateTime.parse(cursor, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                : null;
+
+        PageRequest pageRequest = PageRequest.of(0, size);
+
+        // 각 도메인에서 size개씩 조회
+        List<ActivityResponse> allActivities = new ArrayList<>();
+
+        // 1. 게시글
+        Slice<Post> postSlice = (cursorTime == null)
+                ? postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseOrderByCreatedAtDesc(user, pageRequest)
+                : postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+        postSlice.getContent().forEach(p -> allActivities.add(new ActivityResponse(
+                "POST", p.getId(), p.getTitle(), truncate(p.getContent(), 100), p.getCreatedAt())));
+
+        // 2. 댓글
+        Slice<Comment> commentSlice = (cursorTime == null)
+                ? commentRepository.findByUserAndDeletedFalseOrderByCreatedAtDesc(user, pageRequest)
+                : commentRepository.findByUserAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+        commentSlice.getContent().forEach(c -> allActivities.add(new ActivityResponse(
+                "COMMENT", c.getId(), c.getPost().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
+
+        // 3. 즐겨찾기
+        Slice<PostFavorite> favoriteSlice = (cursorTime == null)
+                ? postFavoriteRepository.findByUserAndIsFavoriteTrueOrderByCreatedAtDesc(user, pageRequest)
+                : postFavoriteRepository.findByUserAndIsFavoriteTrueAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+        favoriteSlice.getContent().forEach(f -> allActivities.add(new ActivityResponse(
+                "FAVORITE", f.getFavorite_id(), f.getPost().getTitle(), null, f.getCreatedAt())));
+
+        // 4. 문의
+        Slice<Inquiry> inquirySlice = (cursorTime == null)
+                ? inquiryRepository.findByUserOrderByCreatedAtDesc(user, pageRequest)
+                : inquiryRepository.findByUserAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+        inquirySlice.getContent().forEach(i -> allActivities.add(new ActivityResponse(
+                "INQUIRY", i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt())));
+
+        // 5. 신고
+        Slice<Report> reportSlice = (cursorTime == null)
+                ? reportRepository.findByReporterOrderByCreatedAtDesc(user, pageRequest)
+                : reportRepository.findByReporterAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+        reportSlice.getContent().forEach(r -> allActivities.add(new ActivityResponse(
+                "REPORT", r.getReportId(), r.getTargetType().getDescription() + " 신고", truncate(r.getReason(), 100), r.getCreatedAt())));
+
+        // createdAt 내림차순 정렬 후 size개만 추출
+        allActivities.sort(Comparator.comparing(ActivityResponse::createdAt).reversed());
+
+        boolean hasNext = allActivities.size() > size;
+        List<ActivityResponse> result = allActivities.size() > size
+                ? allActivities.subList(0, size)
+                : allActivities;
+
+        String nextCursorValue = (hasNext && !result.isEmpty())
+                ? result.get(result.size() - 1).createdAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                : null;
+
+        return new MyActivityPageResponse(result, nextCursorValue, hasNext);
+    }
+
+    private String truncate(String text, int maxLength) {
+        if (text == null) return null;
+        return text.length() > maxLength ? text.substring(0, maxLength) + "..." : text;
     }
 
     /**

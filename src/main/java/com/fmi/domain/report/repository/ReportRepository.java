@@ -6,6 +6,7 @@ import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -70,6 +71,13 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                                             @Param("answered") Boolean answered,
                                             @Param("keyword") String keyword,
                                             Pageable pageable);
+
+    // 사용자별 신고 목록 (createdAt 커서 기반)
+    @Query("SELECT r FROM Report r WHERE r.reporter = :reporter ORDER BY r.createdAt DESC")
+    Slice<Report> findByReporterOrderByCreatedAtDesc(@Param("reporter") User reporter, Pageable pageable);
+
+    @Query("SELECT r FROM Report r WHERE r.reporter = :reporter AND r.createdAt < :cursor ORDER BY r.createdAt DESC")
+    Slice<Report> findByReporterAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("reporter") User reporter, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
 
     long countByReporter(User reporter);
 }

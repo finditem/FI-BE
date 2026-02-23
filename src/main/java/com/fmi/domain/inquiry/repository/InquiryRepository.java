@@ -6,6 +6,7 @@ import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,6 +29,13 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
     // 사용자별 + 특정 상태 제외 문의 목록
     Page<Inquiry> findByUserAndAnswerStatusNot(User user, InquiryStatus status, Pageable pageable);
+
+    // 사용자별 문의 목록 (createdAt 커서 기반)
+    @Query("SELECT i FROM Inquiry i WHERE i.user = :user ORDER BY i.createdAt DESC")
+    Slice<Inquiry> findByUserOrderByCreatedAtDesc(@Param("user") User user, Pageable pageable);
+
+    @Query("SELECT i FROM Inquiry i WHERE i.user = :user AND i.createdAt < :cursor ORDER BY i.createdAt DESC")
+    Slice<Inquiry> findByUserAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
 
     // 관리자 전용 조회 - keyword 없을 때 (JPQL)
     @Query("""

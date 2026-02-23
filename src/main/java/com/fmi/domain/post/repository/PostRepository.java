@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,6 +58,12 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 //                WHERE p.id IN :#{#counts.keySet()}
 //            """)
 //    void batchIncrementViewCounts(@Param("counts") Map<Long, Long> counts);
+
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.temporarySave = false AND p.deleted = false AND p.createdAt < :cursor ORDER BY p.createdAt DESC")
+    Slice<Post> findByUserAndTemporarySaveFalseAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") User user, @Param("cursor") LocalDateTime cursor, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.temporarySave = false AND p.deleted = false ORDER BY p.createdAt DESC")
+    Slice<Post> findByUserAndTemporarySaveFalseAndDeletedFalseOrderByCreatedAtDesc(@Param("user") User user, Pageable pageable);
 
     Long countByUserAndTemporarySaveFalseAndDeletedFalse(User user);
 
