@@ -117,9 +117,21 @@ public class InquiryService {
     /**
      * 내 문의 내역 조회
      */
-    public Page<InquiryListDTO> getMyInquiries(User user, Pageable pageable) {
-        Page<Inquiry> inquiries = inquiryRepository.findByUser(user, pageable);
-        
+    public Page<InquiryListDTO> getMyInquiries(User user, InquiryStatus status, Boolean answered, Pageable pageable) {
+        Page<Inquiry> inquiries;
+
+        if (status != null) {
+            inquiries = inquiryRepository.findByUserAndAnswerStatus(user, status, pageable);
+        } else if (answered != null) {
+            if (answered) {
+                inquiries = inquiryRepository.findByUserAndAnswerStatus(user, InquiryStatus.ANSWERED, pageable);
+            } else {
+                inquiries = inquiryRepository.findByUserAndAnswerStatusNot(user, InquiryStatus.ANSWERED, pageable);
+            }
+        } else {
+            inquiries = inquiryRepository.findByUser(user, pageable);
+        }
+
         return inquiries.map(inquiry -> inquiryConverter.toListDTO(inquiry));
     }
 
@@ -236,11 +248,7 @@ public class InquiryService {
      * 상태에 따른 메시지 반환
      */
     private String getStatusMessage(InquiryStatus status) {
-        return switch (status) {
-            case RECEIVED -> "접수";
-            case PENDING -> "보류";
-            case ANSWERED -> "답변완료";
-        };
+        return status.getDescription();
     }
 
     private String normalizeIp(String ip) {
