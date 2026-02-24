@@ -52,12 +52,18 @@ public class NoticeService {
     /**
      * 공지사항 목록 조회 (카테고리/키워드 필터)
      */
-    public Page<NoticeListDTO> getNoticeList(NoticeCategory category, String keyword, Pageable pageable) {
+    public Page<NoticeListDTO> getNoticeList(NoticeCategory category, String keyword, String sortType, Pageable pageable) {
         Page<Notice> notices;
         if (keyword != null && !keyword.isBlank()) {
             String categoryStr = category != null ? category.name() : null;
             Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-            notices = noticeRepository.searchNotices(categoryStr, sanitizeFulltextKeyword(keyword), unsorted);
+            String sanitized = sanitizeFulltextKeyword(keyword);
+            String sort = sortType != null ? sortType.toUpperCase() : "LATEST";
+            notices = switch (sort) {
+                case "OLDEST" -> noticeRepository.searchNoticesOldest(categoryStr, sanitized, unsorted);
+                case "MOST_VIEWED" -> noticeRepository.searchNoticesMostViewed(categoryStr, sanitized, unsorted);
+                default -> noticeRepository.searchNotices(categoryStr, sanitized, unsorted);
+            };
         } else if (category != null) {
             notices = noticeRepository.findByDraftFalseAndCategory(category, pageable);
         } else {

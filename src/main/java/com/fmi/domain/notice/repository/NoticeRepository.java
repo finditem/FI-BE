@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
 
-    // 키워드 검색 (제목, 내용) - FULLTEXT INDEX + ngram
+    // 키워드 검색 - 최신순 (기본)
     @Query(value = """
             SELECT * FROM notice n
             WHERE n.draft = false
@@ -33,6 +33,44 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
     Page<Notice> searchNotices(@Param("category") String category,
                                @Param("keyword") String keyword,
                                Pageable pageable);
+
+    // 키워드 검색 - 오래된순
+    @Query(value = """
+            SELECT * FROM notice n
+            WHERE n.draft = false
+              AND (:category IS NULL OR n.category = :category)
+              AND MATCH(n.title, n.content) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY n.pinned DESC, n.created_at ASC
+            """,
+            countQuery = """
+            SELECT COUNT(*) FROM notice n
+            WHERE n.draft = false
+              AND (:category IS NULL OR n.category = :category)
+              AND MATCH(n.title, n.content) AGAINST(:keyword IN BOOLEAN MODE)
+            """,
+            nativeQuery = true)
+    Page<Notice> searchNoticesOldest(@Param("category") String category,
+                                     @Param("keyword") String keyword,
+                                     Pageable pageable);
+
+    // 키워드 검색 - 조회많은순
+    @Query(value = """
+            SELECT * FROM notice n
+            WHERE n.draft = false
+              AND (:category IS NULL OR n.category = :category)
+              AND MATCH(n.title, n.content) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY n.pinned DESC, n.view_cnt DESC
+            """,
+            countQuery = """
+            SELECT COUNT(*) FROM notice n
+            WHERE n.draft = false
+              AND (:category IS NULL OR n.category = :category)
+              AND MATCH(n.title, n.content) AGAINST(:keyword IN BOOLEAN MODE)
+            """,
+            nativeQuery = true)
+    Page<Notice> searchNoticesMostViewed(@Param("category") String category,
+                                         @Param("keyword") String keyword,
+                                         Pageable pageable);
 
     // draft=false인 공지만 조회
     Page<Notice> findByDraftFalse(Pageable pageable);

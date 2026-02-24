@@ -8,6 +8,7 @@ import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -43,14 +44,22 @@ public class NoticeController {
     public ApiResponse<Page<NoticeListDTO>> getNoticeList(
             @RequestParam(required = false) NoticeCategory category,
             @RequestParam(required = false) String keyword,
+            @Parameter(description = "정렬 기준 (LATEST=최신순, OLDEST=오래된순, MOST_VIEWED=조회많은순)")
+            @RequestParam(required = false, defaultValue = "LATEST") String sortType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Pageable pageable = PageRequest.of(page, size,
-                Sort.by(Sort.Direction.DESC, "pinned")
-                    .and(Sort.by(Sort.Direction.DESC, "createdAt")));
+        Sort sort = switch (sortType.toUpperCase()) {
+            case "OLDEST" -> Sort.by(Sort.Direction.DESC, "pinned")
+                    .and(Sort.by(Sort.Direction.ASC, "createdAt"));
+            case "MOST_VIEWED" -> Sort.by(Sort.Direction.DESC, "pinned")
+                    .and(Sort.by(Sort.Direction.DESC, "viewCount"));
+            default -> Sort.by(Sort.Direction.DESC, "pinned")
+                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
+        };
 
-        Page<NoticeListDTO> notices = noticeService.getNoticeList(category, keyword, pageable);
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<NoticeListDTO> notices = noticeService.getNoticeList(category, keyword, sortType, pageable);
 
         return ApiResponse.onSuccess(notices);
     }
