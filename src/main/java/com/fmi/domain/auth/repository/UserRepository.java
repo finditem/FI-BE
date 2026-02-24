@@ -49,8 +49,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 탈퇴한 사용자 조회 (관리자용)
     @Query("SELECT u FROM User u WHERE u.deletedAt IS NOT NULL " +
-           "AND (:reason IS NULL OR u.withdrawalReason = :reason)")
-    Page<User> findDeletedUsers(@Param("reason") com.fmi.domain.Enum.WithdrawalReason reason, Pageable pageable);
+           "AND (:reason IS NULL OR u.withdrawalReason LIKE %:reason%)")
+    Page<User> findDeletedUsers(@Param("reason") String reason, Pageable pageable);
 
     Optional<User> findByNickname(String nickname);
 }

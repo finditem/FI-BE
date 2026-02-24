@@ -186,7 +186,8 @@ public class AdminService {
      * 탈퇴 유저 목록 조회
      */
     public Page<AdminDeletedUserResponse> getDeletedUsers(WithdrawalReason reason, Pageable pageable) {
-        Page<User> deletedUsers = userRepository.findDeletedUsers(reason, pageable);
+        String reasonStr = reason != null ? reason.name() : null;
+        Page<User> deletedUsers = userRepository.findDeletedUsers(reasonStr, pageable);
         
         return deletedUsers.map(user -> AdminDeletedUserResponse.builder()
                 .userId(user.getId())
