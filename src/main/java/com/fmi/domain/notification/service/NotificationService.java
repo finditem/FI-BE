@@ -42,15 +42,19 @@ public class NotificationService {
     /**
      * 내 알림 목록 조회
      */
-    public Page<NotificationListDTO> getMyNotifications(User user, Boolean unreadOnly, Pageable pageable) {
+    public Page<NotificationListDTO> getMyNotifications(User user, Boolean unreadOnly, NotificationType notificationType, Pageable pageable) {
         Page<Notification> notifications;
-        
-        if (Boolean.TRUE.equals(unreadOnly)) {
+
+        if (notificationType != null && Boolean.TRUE.equals(unreadOnly)) {
+            notifications = notificationRepository.findByUserAndTypeAndIsReadFalse(user, notificationType, pageable);
+        } else if (notificationType != null) {
+            notifications = notificationRepository.findByUserAndType(user, notificationType, pageable);
+        } else if (Boolean.TRUE.equals(unreadOnly)) {
             notifications = notificationRepository.findByUserAndIsReadFalse(user, pageable);
         } else {
             notifications = notificationRepository.findByUser(user, pageable);
         }
-        
+
         return notifications.map(notificationConverter::toListDTO);
     }
     
