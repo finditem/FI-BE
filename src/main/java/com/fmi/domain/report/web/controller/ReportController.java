@@ -77,15 +77,17 @@ public class ReportController {
     })
     public ApiResponse<Page<ReportListDTO>> getMyReports(
             @AuthenticationPrincipal UserDetails userDetails,
-            @Parameter(description = "신고 상태 필터 (PENDING=접수, REVIEWED=처리중, RESOLVED=처리완료)", required = false)
+            @Parameter(description = "신고 상태 필터 (PENDING=접수, REVIEWED=처리중, RESOLVED=처리완료)")
             @RequestParam(required = false) ReportStatus status,
+            @Parameter(description = "답변 여부 필터 (true=답변완료, false=미답변)")
+            @RequestParam(required = false) Boolean answered,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<ReportListDTO> reports = reportService.getMyReports(user, status, pageable);
+        Page<ReportListDTO> reports = reportService.getMyReports(user, status, answered, pageable);
         return ApiResponse.onSuccess(reports);
     }
 }
