@@ -31,8 +31,6 @@ public class ReportDetailDTO {
     private String reason;
     @Schema(description = "처리 상태", example = "PENDING")
     private ReportStatus status;
-    @Schema(description = "관리자 메모", example = "검토 완료")
-    private String adminNote;
     @Schema(description = "답변 여부", example = "false")
     private Boolean answered;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
