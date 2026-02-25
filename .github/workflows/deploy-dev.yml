@@ -33,7 +33,7 @@ jobs:
         run: ./gradlew clean build -x test
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/develop'
     needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 30
