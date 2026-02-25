@@ -5,6 +5,7 @@ import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.service.ReportService;
 import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
+import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -66,6 +67,27 @@ public class ReportController {
         return ApiResponse.onSuccess(reportId);
     }
     
+    /**
+     * 내 신고 상세 조회
+     * GET /api/reports/{reportId}
+     */
+    @GetMapping("/{reportId}")
+    @Operation(summary = "내 신고 상세 조회", description = "내가 접수한 신고의 상세 정보를 조회합니다. 본인의 신고만 조회 가능합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 상세 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "REPORT403-ACCESS_DENIED: 해당 신고를 조회할 권한이 없습니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "REPORT404-NOT_FOUND: 존재하지 않는 신고입니다")
+    })
+    public ApiResponse<ReportDetailDTO> getMyReportDetail(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long reportId) {
+
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        ReportDetailDTO detail = reportService.getMyReportDetail(user, reportId);
+        return ApiResponse.onSuccess(detail);
+    }
+
     /**
      * 내 신고 내역 조회
      * GET /api/reports/me?status=PENDING&page=0&size=10
