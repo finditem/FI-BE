@@ -141,6 +141,7 @@ public class PostService {
         checkPostAccessDenied(post, userDetails.getUsername());
 
         postImageService.deleteAllImageByPost(post);
+        postFavoriteRepository.deleteAllByPost(post);
         postRepository.delete(post);
     }
 
