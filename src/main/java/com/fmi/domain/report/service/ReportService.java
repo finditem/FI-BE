@@ -107,15 +107,19 @@ public class ReportService {
     /**
      * 내 신고 내역 조회
      */
-    public Page<ReportListDTO> getMyReports(User user, ReportStatus status, Pageable pageable) {
+    public Page<ReportListDTO> getMyReports(User user, ReportStatus status, Boolean answered, Pageable pageable) {
         Page<Report> reports;
-        
-        if (status != null) {
+
+        if (status != null && answered != null) {
+            reports = reportRepository.findByReporterAndStatusAndAnswered(user, status, answered, pageable);
+        } else if (status != null) {
             reports = reportRepository.findByReporterAndStatus(user, status, pageable);
+        } else if (answered != null) {
+            reports = reportRepository.findByReporterAndAnswered(user, answered, pageable);
         } else {
             reports = reportRepository.findByReporter(user, pageable);
         }
-        
+
         return reports.map(report -> {
             String targetTitle = getTargetTitle(report.getTargetType(), report.getTargetId());
             return reportConverter.toListDTO(report, targetTitle);

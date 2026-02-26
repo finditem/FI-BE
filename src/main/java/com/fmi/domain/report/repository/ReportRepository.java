@@ -22,6 +22,12 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     // 사용자별 + 상태별 신고 목록
     Page<Report> findByReporterAndStatus(User reporter, ReportStatus status, Pageable pageable);
 
+    // 사용자별 + 답변여부별 신고 목록
+    Page<Report> findByReporterAndAnswered(User reporter, Boolean answered, Pageable pageable);
+
+    // 사용자별 + 상태별 + 답변여부별 신고 목록
+    Page<Report> findByReporterAndStatusAndAnswered(User reporter, ReportStatus status, Boolean answered, Pageable pageable);
+
     // 특정 대상에 대한 신고가 이미 있는지 확인 (중복 신고 방지)
     Optional<Report> findByReporterAndTargetTypeAndTargetId(
             User reporter, ReportTargetType targetType, Long targetId);
