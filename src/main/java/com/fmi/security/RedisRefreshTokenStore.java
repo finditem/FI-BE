@@ -7,12 +7,14 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @Primary
 public class RedisRefreshTokenStore implements RefreshTokenStore {
 
     private static final String KEY_PREFIX = "refresh:jti:";
+    private static final String USER_KEY_PREFIX = "refresh:user:";
 
     private final StringRedisTemplate redis;
 
@@ -24,6 +26,10 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
         return KEY_PREFIX + jti;
     }
 
+    private String userKey(String userEmail) {
+        return USER_KEY_PREFIX + userEmail;
+    }
+
     @Override
     public String issue(String jti, String userEmail, String hashedToken, Instant expiresAt) {
         String k = key(jti);
@@ -33,6 +39,11 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
         h.put(k, "exp", String.valueOf(expiresAt.getEpochSecond()));
         long ttlSeconds = Math.max(1, expiresAt.getEpochSecond() - Instant.now().getEpochSecond());
         redis.expire(k, Duration.ofSeconds(ttlSeconds));
+
+        String uk = userKey(userEmail);
+        redis.opsForSet().add(uk, jti);
+        redis.expire(uk, Duration.ofSeconds(ttlSeconds));
+
         return jti;
     }
 
@@ -49,13 +60,25 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
 
     @Override
     public void revoke(String jti) {
-        redis.delete(key(jti));
+        String k = key(jti);
+        HashOperations<String, Object, Object> h = redis.opsForHash();
+        Object email = h.get(k, "email");
+        redis.delete(k);
+        if (email != null) {
+            redis.opsForSet().remove(userKey(email.toString()), jti);
+        }
     }
 
     @Override
     public void revokeAllForUser(String userEmail) {
-        // 간단 구현: 스캔(운영에서는 SCAN 커서 사용 권장). 여기선 안전을 위해 noop로 두거나 별도 인덱스 키 사용 권장.
-        // 최소 구현은 생략하고, 필요 시 별도 email->jti 세트 관리 추가.
+        String uk = userKey(userEmail);
+        Set<String> jtiSet = redis.opsForSet().members(uk);
+        if (jtiSet != null && !jtiSet.isEmpty()) {
+            for (String jti : jtiSet) {
+                redis.delete(key(jti));
+            }
+        }
+        redis.delete(uk);
     }
 
     @Override

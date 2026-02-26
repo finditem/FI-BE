@@ -4,6 +4,7 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.post.data.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -68,4 +69,8 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long
             """)
     Slice<PostFavorite> findByUserAndIsFavoriteTrueAndIdLessThanOrderByIdDesc(@Param("user") User user, @Param("cursor") Long cursor, Pageable pageable
     );
+
+    @Modifying
+    @Query("DELETE FROM PostFavorite pf WHERE pf.post = :post")
+    void deleteAllByPost(@Param("post") Post post);
 }

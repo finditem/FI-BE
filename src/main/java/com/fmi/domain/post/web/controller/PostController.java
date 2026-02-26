@@ -492,20 +492,20 @@ public class PostController {
     @Operation(
             summary = "게시글 상태 변경",
             description = """
-                게시글의 상태를 변경합니다.
-                
-                - 본인 게시글만 변경 가능
-                - 인증 필요 (JWT)
-                - 요청 Body에 변경할 상태 값을 전달
-                
-                예)
-                PUT /posts/{postId}/status
-                
-                요청 예시:
-                {
-                  "status": "FOUND"
-                }
-                """
+                    게시글의 상태를 변경합니다.
+                    
+                    - 본인 게시글만 변경 가능
+                    - 인증 필요 (JWT)
+                    - 요청 Body에 변경할 상태 값을 전달
+                    
+                    예)
+                    PUT /posts/{postId}/status
+                    
+                    요청 예시:
+                    {
+                      "status": "FOUND"
+                    }
+                    """
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -515,13 +515,13 @@ public class PostController {
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = """
-                                        {
-                                          "isSuccess": true,
-                                          "code": "COMMON200",
-                                          "message": "성공",
-                                          "result": null
-                                        }
-                                        """
+                                            {
+                                              "isSuccess": true,
+                                              "code": "COMMON200",
+                                              "message": "성공",
+                                              "result": null
+                                            }
+                                            """
                             )
                     )
             ), @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 상태 값 전달", content = @Content),

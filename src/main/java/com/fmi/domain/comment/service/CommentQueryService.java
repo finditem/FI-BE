@@ -3,14 +3,13 @@ package com.fmi.domain.comment.service;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.comment.converter.CommentConverter;
 import com.fmi.domain.comment.data.Comment;
-import com.fmi.domain.comment.repository.CommentImageRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
 import com.fmi.domain.comment.web.dto.response.CommentPageResponse;
 import com.fmi.domain.comment.web.dto.response.CommentResponse;
 import com.fmi.domain.commentlike.service.CommentLikeService;
+import com.fmi.domain.post.data.Post;
 import com.fmi.domain.user.converter.UserConverter;
-import com.fmi.domain.user.web.dto.response.UserCommentResponse;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -156,6 +155,22 @@ public class CommentQueryService {
         if (parentIds.isEmpty()) return Map.of();
 
         return commentRepository.countRepliesByParentIds(parentIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
+    public Long countByPost(Post post) {
+        return commentRepository.countByPostId(post.getId());
+    }
+
+    public Map<Long, Long> buildCountByPost(List<Post> postList) {
+        if (Objects.isNull(postList) || postList.isEmpty()) return Map.of();
+
+        List<Long> postIdList = postList.stream().map(Post::getId).toList();
+
+        return commentRepository.countCommentsGroupByPostId(postIdList).stream()
                 .collect(Collectors.toMap(
                         row -> (Long) row[0],
                         row -> (Long) row[1]

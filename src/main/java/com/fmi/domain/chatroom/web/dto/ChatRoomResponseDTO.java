@@ -2,6 +2,7 @@ package com.fmi.domain.chatroom.web.dto;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
+import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,6 +47,7 @@ public class ChatRoomResponseDTO {
         private String title;
         private String address;
         private String thumbnailUrl;
+        private PostStatus postStatus;
     }
 
     @Builder

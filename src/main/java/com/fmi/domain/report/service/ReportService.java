@@ -16,6 +16,7 @@ import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.event.ReportEvent;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
+import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -121,6 +122,21 @@ public class ReportService {
         });
     }
     
+    /**
+     * 내 신고 상세 조회
+     */
+    public ReportDetailDTO getMyReportDetail(User user, Long reportId) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
+
+        if (!report.getReporter().getId().equals(user.getId())) {
+            throw new GeneralException(ErrorStatus._REPORT_ACCESS_DENIED);
+        }
+
+        String targetTitle = getTargetTitle(report.getTargetType(), report.getTargetId());
+        return reportConverter.toDetailDTO(report, targetTitle);
+    }
+
     /**
      * 신고 대상 존재 확인
      */

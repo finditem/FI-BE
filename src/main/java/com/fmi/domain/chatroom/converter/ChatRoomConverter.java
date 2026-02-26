@@ -31,6 +31,7 @@ public class ChatRoomConverter {
                 .title(post.getTitle())
                 .address(post.getAddress())
                 .thumbnailUrl(thumbnailUrl)
+                .postStatus(post.getPostStatus())
                 .build();
 
         return ChatRoomResultDTO.builder()
@@ -71,6 +72,7 @@ public class ChatRoomConverter {
                 .title(post.getTitle())
                 .address(post.getAddress())
                 .thumbnailUrl(thumbnailUrl)
+                .postStatus(post.getPostStatus())
                 .build();
 
         ChatMessage lastMessage = participant.getLastMessage();

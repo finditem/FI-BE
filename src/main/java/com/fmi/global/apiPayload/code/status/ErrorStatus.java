@@ -99,6 +99,7 @@ public enum ErrorStatus implements BaseErrorCode {
     // 신고 관련 응답
     _REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "REPORT409-ALREADY_EXISTS", "이미 신고한 대상입니다."),
     _REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404-NOT_FOUND", "존재하지 않는 신고입니다."),
+    _REPORT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "REPORT403-ACCESS_DENIED", "해당 신고를 조회할 권한이 없습니다."),
 
     // 알림 관련 응답
     _NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION404-NOT_FOUND", "존재하지 않는 알림입니다."),
