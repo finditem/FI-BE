@@ -99,6 +99,9 @@ public class UserService {
 
         User me = userQueryService.findUserIfNullReturnNull(userDetails);
 
+        // size 상한 제한 (최소 1, 최대 50)
+        size = Math.max(1, Math.min(size, 50));
+
         // type에 따라 필요한 데이터만 조회
         List<PostBriefResponse> posts = Collections.emptyList();
         List<UserCommentSummaryResponse> comments = Collections.emptyList();
@@ -249,10 +252,14 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
+        // size 상한 제한 (최소 1, 최대 50)
+        size = Math.max(1, Math.min(size, 50));
+
         LocalDateTime cursorTime = (cursor != null)
                 ? LocalDateTime.parse(cursor, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 : null;
 
+        // 각 도메인에서 size개씩 조회 후 합산 정렬하므로, 도메인당 size개면 충분
         PageRequest pageRequest = PageRequest.of(0, size);
 
         // 각 도메인에서 size개씩 조회
