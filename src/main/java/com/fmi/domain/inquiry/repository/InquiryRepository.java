@@ -26,6 +26,9 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     // 사용자별 + 상태별 문의 목록
     Page<Inquiry> findByUserAndAnswerStatus(User user, InquiryStatus status, Pageable pageable);
 
+    // 사용자별 + 특정 상태 제외 문의 목록
+    Page<Inquiry> findByUserAndAnswerStatusNot(User user, InquiryStatus status, Pageable pageable);
+
     // 관리자 전용 조회 - keyword 없을 때 (JPQL)
     @Query("""
             SELECT i FROM Inquiry i
