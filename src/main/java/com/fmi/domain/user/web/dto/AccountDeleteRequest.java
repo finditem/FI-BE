@@ -16,5 +16,6 @@ public class AccountDeleteRequest {
     private List<WithdrawalReason> reasons;
 
     @Schema(description = "기타 사유 (reasons에 OTHER가 포함된 경우 필수)", example = "직접 입력한 사유")
+    @Size(max = 500, message = "기타 사유는 최대 500자까지 입력 가능합니다")
     private String otherReason;
 }
