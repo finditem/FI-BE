@@ -31,7 +31,15 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     private final BlockedUserRepository blockedUserRepository;
 
     @Override
-    public PostPageResponse searchPostsByFiltersAndSort(PostType postType, PostStatus postStatus, Category category, String address, SortType sortType, Long cursor, int size, Long userId) {
+    public PostPageResponse searchPostsByFiltersAndSort(PostType postType,
+                                                        PostStatus postStatus,
+                                                        Category category,
+                                                        String address,
+                                                        SortType sortType,
+                                                        Long cursor,
+                                                        int size,
+                                                        Long userId,
+                                                        Set<Long> hotPostsIds) {
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
@@ -92,8 +100,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         if (posts.isEmpty()) {
             return new PostPageResponse(List.of(), 0L, null, false);
         }
-
-        Set<Long> hotPostIds = findHotPostsIds(baseWhere, 5);
 
         List<Long> postIdList = posts.stream().map(Post::getId).toList();
 
@@ -159,7 +165,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                     long favCnt = favoriteCountMap.getOrDefault(pid, 0L);
 
                     boolean isNew = p.isNew();
-                    boolean isHot = hotPostIds.contains(pid);
+                    boolean isHot = hotPostsIds != null && hotPostsIds.contains(pid);
 
 
                     return new PostBriefResponse(
@@ -366,40 +372,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         }
 
         return post.user.id.notIn(excludedUserIds);
-    }
-
-    private Set<Long> findHotPostsIds(BooleanExpression baseWhere, int limit) {
-        QPost post = QPost.post;
-        QPostFavorite postFavorite = QPostFavorite.postFavorite;
-        QComment comment = QComment.comment;
-
-        NumberExpression<Long> commentCount = comment.id.count();
-        NumberExpression<Long> postFavoriteCount = postFavorite.favorite_id.count();
-
-
-        List<Long> hotIdList = queryFactory
-                .select(post.id)
-                .from(post)
-                .leftJoin(comment).on(
-                        comment.post.eq(post),
-                        comment.deleted.isFalse()
-                )
-                .leftJoin(postFavorite).on(
-                        postFavorite.post.eq(post),
-                        postFavorite.isFavorite.isTrue()
-                )
-                .where(baseWhere)
-                .groupBy(post.id)
-                .orderBy(
-                        commentCount.desc(),
-                        post.viewCount.desc(),
-                        postFavoriteCount.desc(),
-                        post.createdAt.desc()
-                )
-                .limit(limit)
-                .fetch();
-
-        return new HashSet<>(hotIdList);
     }
 
 }
