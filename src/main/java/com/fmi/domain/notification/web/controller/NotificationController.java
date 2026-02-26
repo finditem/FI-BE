@@ -2,6 +2,7 @@ package com.fmi.domain.notification.web.controller;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.notification.service.SseEmitterService;
 import com.fmi.domain.notification.web.dto.response.NotificationListDTO;
@@ -10,6 +11,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -59,20 +61,22 @@ public class NotificationController {
      * GET /api/notifications?unreadOnly=false&page=0&size=20
      */
     @GetMapping
-    @Operation(summary = "내 알림 목록 조회", description = "읽음/읽지 않음 필터링 가능")
+    @Operation(summary = "내 알림 목록 조회", description = "읽음/읽지 않음 및 알림 타입별 필터링 가능")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 목록 조회 성공")
     })
     public ApiResponse<Page<NotificationListDTO>> getMyNotifications(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false, defaultValue = "false") Boolean unreadOnly,
+            @Parameter(description = "알림 타입 필터 (COMMENT, REPLY, MENTION, CHAT, CHAT_REMINDER, INQUIRY_REPLY, REPORT_RESULT, FAVORITE, CATEGORY, NOTICE, SYSTEM, LIKE)")
+            @RequestParam(required = false) NotificationType notificationType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        
+
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<NotificationListDTO> notifications = notificationService.getMyNotifications(user, unreadOnly, pageable);
+        Page<NotificationListDTO> notifications = notificationService.getMyNotifications(user, unreadOnly, notificationType, pageable);
         return ApiResponse.onSuccess(notifications);
     }
     
