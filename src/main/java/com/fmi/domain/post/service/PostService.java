@@ -149,7 +149,7 @@ public class PostService {
 
         postImageService.deleteAllImageByPost(post);
         postFavoriteRepository.deleteAllByPost(post);
-        postRepository.delete(post);
+        post.softDelete();
     }
 
     @Transactional

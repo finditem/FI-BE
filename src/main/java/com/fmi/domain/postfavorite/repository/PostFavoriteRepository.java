@@ -22,13 +22,26 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long
 
     List<PostFavorite> findByUserAndIsFavoriteTrue(User user);
 
-    @Query("SELECT pf.user FROM PostFavorite pf WHERE pf.post = :post AND pf.isFavorite = true")
+    @Query("""
+                SELECT pf.user
+                FROM PostFavorite pf
+                WHERE pf.post = :post
+                  AND pf.isFavorite = true
+                  AND pf.post.deleted = false
+            """)
     List<User> findUsersByPost(@Param("post") Post post);
 
     @Query("SELECT pf.post.id FROM PostFavorite pf WHERE pf.user = :user AND pf.post IN :posts AND pf.isFavorite = true")
     Set<Long> findPostIdsByUserAndPostIn(@Param("user") User user, @Param("posts") List<Post> posts);
 
-    long countByPostAndIsFavoriteTrue(Post post);
+    @Query("""
+                select count(pf)
+                from PostFavorite pf
+                where pf.post = :post
+                  and pf.isFavorite = true
+                  and pf.post.deleted = false
+            """)
+    long countByPostAndIsFavoriteTrue(@Param("post") Post post);
 
     @Query("""
                 SELECT pf.post.id, COUNT(pf)
@@ -44,6 +57,7 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long
                 where pf.user = :user
                   and pf.post.id in :postIds
                   and pf.isFavorite = true
+                  and pf.post.deleted = false
             """)
     List<Long> findFavoritePostIdsByUserAndPostIds(@Param("user") User user,
                                                    @Param("postIds") List<Long> postIds);
@@ -54,6 +68,7 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long
                 JOIN FETCH pf.post p
                 WHERE pf.user = :user
                   AND pf.isFavorite = true
+                  AND p.deleted = false
                 ORDER BY pf.id DESC
             """)
     Slice<PostFavorite> findByUserAndIsFavoriteTrueOrderByIdDesc(@Param("user") User user, Pageable pageable);
@@ -64,6 +79,7 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long
                 JOIN FETCH pf.post p
                 WHERE pf.user = :user
                   AND pf.isFavorite = true
+                  AND p.deleted = false
                   AND pf.id < :cursor
                 ORDER BY pf.id DESC
             """)

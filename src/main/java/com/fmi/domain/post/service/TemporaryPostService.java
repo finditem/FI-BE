@@ -30,7 +30,7 @@ public class TemporaryPostService {
     public void create(TemporaryPostCreateRequest request, UserDetails userDetails, List<MultipartFile> newImageList) {
         User user = userQueryService.findUser(userDetails.getUsername());
 
-        Post post = postRepository.findByUserAndTemporarySaveTrue(user)
+        Post post = postRepository.findByUserAndTemporarySaveTrueAndDeletedFalse(user)
                 .orElseGet(() -> Post.createTemporary(user));
 
         post.updateTemporary(request.postType(),
@@ -60,7 +60,7 @@ public class TemporaryPostService {
     @Transactional(readOnly = true)
     public TemporaryPostResponse getMyTemporaryPost(UserDetails userDetails) {
         User user = userQueryService.findUser(userDetails.getUsername());
-        Post post = postRepository.findByUserAndTemporarySaveTrue(user).orElse(null);
+        Post post = postRepository.findByUserAndTemporarySaveTrueAndDeletedFalse(user).orElse(null);
 
         if (Objects.isNull(post)) {
             return null;
@@ -96,7 +96,7 @@ public class TemporaryPostService {
     @Transactional
     public void deleteTemporaryPost(UserDetails userDetails) {
         User user = userQueryService.findUser(userDetails.getUsername());
-        Post post = postRepository.findByUserAndTemporarySaveTrue(user)
+        Post post = postRepository.findByUserAndTemporarySaveTrueAndDeletedFalse(user)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._TEMP_POST_NOT_FOUND));
 
         postImageService.deleteAllImageByPost(post);

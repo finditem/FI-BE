@@ -16,8 +16,10 @@ import java.util.Optional;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryCustom {
 
-    @Modifying
-    @Query("update Post p set p.viewCount = p.viewCount + 1 where p.id = :postId")
+    Optional<Post> findByIdAndDeletedFalse(Long id);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update Post p set p.viewCount = p.viewCount + 1 where p.id = :postId and p.deleted = false")
     void increaseViewCount(@Param("postId") Long postId);
 
 //    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.images WHERE p.user = :user AND p.temporarySave = true")
@@ -36,17 +38,17 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 //    Optional<Post> findByUserEmailAndTemporarySaveTrue(@Param("email") String email);
 
     // 특정 사용자의 게시글 조회 (익명화 처리용)
-    @Query("SELECT p FROM Post p WHERE p.user = :user")
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.deleted = false")
     List<Post> findByUser(@Param("user") User user);
 
-    @Query("SELECT DISTINCT p FROM Post p WHERE p.user = :user AND p.temporarySave = false")
+    @Query("SELECT DISTINCT p FROM Post p WHERE p.user = :user AND p.temporarySave = false AND p.deleted = false")
     List<Post> findAllPublishedWithImagesByUser(@Param("user") User user);
 
-    Slice<Post> findByUserAndTemporarySaveFalseOrderByIdDesc(User user, Pageable pageable);
+    Slice<Post> findByUserAndTemporarySaveFalseAndDeletedFalseOrderByIdDesc(User user, Pageable pageable);
 
-    Slice<Post> findByUserAndTemporarySaveFalseAndIdLessThanOrderByIdDesc(User user, Long cursor, Pageable pageable);
+    Slice<Post> findByUserAndTemporarySaveFalseAndDeletedFalseAndIdLessThanOrderByIdDesc(User user, Long cursor, Pageable pageable);
 
-    long countByUser(User user);
+    long countByUserAndDeletedFalse(User user);
 
 
 //    @Modifying
@@ -56,8 +58,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 //            """)
 //    void batchIncrementViewCounts(@Param("counts") Map<Long, Long> counts);
 
-    Long countByUserAndTemporarySaveFalse(User user);
+    Long countByUserAndTemporarySaveFalseAndDeletedFalse(User user);
 
-    Optional<Post> findByUserAndTemporarySaveTrue(User user);
+    Optional<Post> findByUserAndTemporarySaveTrueAndDeletedFalse(User user);
 
 }

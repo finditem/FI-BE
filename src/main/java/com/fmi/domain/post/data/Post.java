@@ -68,6 +68,9 @@ public class Post {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "deleted", nullable = false)
+    private boolean deleted = false;
+
     private Post(String title, String address, double latitude, double longitude, PostType postType, Category category, String content, boolean temporarySave, LocalDateTime date, Radius radius, User user) {
         this.title = title;
         this.address = address;
@@ -177,6 +180,11 @@ public class Post {
         return content.length() <= 50 ? content : content.substring(0, 50) + "...";
     }
 
+    public void softDelete() {
+        this.deleted = true;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     private <T> void applyIfNotNull(T value, Consumer<T> setter) {
         if (Objects.nonNull(value)) setter.accept(value);
     }
@@ -184,4 +192,6 @@ public class Post {
     private void applyIfNotBlank(String value, Consumer<String> setter) {
         if (Objects.nonNull(value) && !value.isBlank()) setter.accept(value);
     }
+
+
 }
