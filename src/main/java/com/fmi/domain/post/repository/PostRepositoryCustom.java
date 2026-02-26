@@ -9,6 +9,7 @@ import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 
 import java.util.List;
+import java.util.Set;
 
 public interface PostRepositoryCustom {
     PostPageResponse searchPostsByFiltersAndSort(PostType postType,
@@ -18,7 +19,8 @@ public interface PostRepositoryCustom {
                                                  SortType sortType,
                                                  Long cursor,
                                                  int size,
-                                                 Long userId);
+                                                 Long userId,
+                                                 Set<Long> hotPostsIds);
 
 
     List<Post> searchByKeywordWithCursor(String keyword, Long cursor, int size);

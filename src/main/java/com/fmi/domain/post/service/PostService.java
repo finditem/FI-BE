@@ -1,6 +1,7 @@
 package com.fmi.domain.post.service;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.comment.service.CommentService;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.post.converter.util.PostConverter;
@@ -38,6 +39,7 @@ public class PostService {
     private final UserQueryService userQueryService;
     private final PostImageService postImageService;
     private final PostQueryService postQueryService;
+    private final CommentService commentService;
 
     // 게시글 생성
     @Transactional
@@ -140,8 +142,9 @@ public class PostService {
         Post post = postQueryService.findById(postId);
         checkPostAccessDenied(post, userDetails.getUsername());
 
+        commentService.deleteAllCommentByPost(post);
         postImageService.deleteAllImageByPost(post);
-        postFavoriteRepository.deleteAllByPost(post);
+        postFavoriteRepository.deleteAllByPostId(post.getId());
         postRepository.delete(post);
     }
 

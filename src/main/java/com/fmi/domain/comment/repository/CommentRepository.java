@@ -5,6 +5,7 @@ import com.fmi.domain.comment.data.Comment;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -84,12 +85,12 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Object[]> countRepliesByParentIds(@Param("parentIds") List<Long> parentIds);
 
     @Query("""
-        select c.post.id, count(c)
-        from Comment c
-        where c.post.id in :postIds
-          and c.deleted = false
-        group by c.post.id
-    """)
+                select c.post.id, count(c)
+                from Comment c
+                where c.post.id in :postIds
+                  and c.deleted = false
+                group by c.post.id
+            """)
     List<Object[]> countCommentsGroupByPostId(@Param("postIds") List<Long> postIds);
 
 
@@ -100,4 +101,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
                       and c.deleted = false
             """)
     Long countByPostId(@Param("postId") Long postId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from Comment c where c.post.id = :postId")
+    void deleteAllByPostId(@Param("postId") Long postId);
 }
