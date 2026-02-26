@@ -1,6 +1,7 @@
 package com.fmi.domain.post.service;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.comment.service.CommentService;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.post.converter.util.PostConverter;
@@ -105,7 +106,7 @@ public class PostService {
         checkPostAccessDenied(post, userDetails.getUsername());
 
         postImageService.deleteAllImageByPost(post);
-        postFavoriteRepository.deleteAllByPost(post);
+        postFavoriteRepository.deleteAllByPostId(postId);
         post.softDelete();
     }
 

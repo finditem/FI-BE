@@ -2,6 +2,7 @@ package com.fmi.domain.post.repository;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
+import com.fmi.domain.comment.data.QComment;
 import com.fmi.domain.post.data.*;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
@@ -11,6 +12,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -29,7 +31,15 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     private final BlockedUserRepository blockedUserRepository;
 
     @Override
-    public PostPageResponse searchPostsByFiltersAndSort(PostType postType, PostStatus postStatus, Category category, String address, SortType sortType, Long cursor, int size, Long userId) {
+    public PostPageResponse searchPostsByFiltersAndSort(PostType postType,
+                                                        PostStatus postStatus,
+                                                        Category category,
+                                                        String address,
+                                                        SortType sortType,
+                                                        Long cursor,
+                                                        int size,
+                                                        Long userId,
+                                                        Set<Long> hotPostsIds) {
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
@@ -156,9 +166,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                     long favCnt = favoriteCountMap.getOrDefault(pid, 0L);
 
                     boolean isNew = p.isNew();
+                    boolean isHot = hotPostsIds != null && hotPostsIds.contains(pid);
 
-                    // TODO isHot 기준
-                    boolean isHot = favCnt >= 10 || p.getViewCount() >= 100;
 
                     return new PostBriefResponse(
                             pid,
@@ -270,7 +279,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         BooleanExpression dateCondition =
                 post.date.isNotNull().and(post.date.between(from, to))
                         .or(post.date.isNull().and(post.createdAt.between(from, to)));
-
 
         return queryFactory
                 .selectFrom(post)

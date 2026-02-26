@@ -53,6 +53,7 @@ public class PostQueryService {
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
     private final CommentQueryService commentQueryService;
     private final BlockService blockService;
+    private final HotPostService hotPostService;
 
 
     // 게시글 단일 조회
@@ -156,6 +157,11 @@ public class PostQueryService {
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
         Long userId = (Objects.isNull(user) ? null : user.getId());
 
+        Set<Long> hotIds = hotPostService.resolveHotPostIdsForUser(
+                postType, postStatus, category, address, userId, 5
+        );
+
+
         return postRepository.searchPostsByFiltersAndSort(
                 postType,
                 postStatus,
@@ -164,7 +170,8 @@ public class PostQueryService {
                 sortType,
                 cursor,
                 size,
-                userId);
+                userId,
+                hotIds);
     }
 
     @Transactional(readOnly = true)

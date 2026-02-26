@@ -228,6 +228,12 @@ public class CommentService {
         return CommentConverter.toDeleteResponse(comment);
     }
 
+    @Transactional
+    public void deleteAllCommentByPost(Post post) {
+        commentImageService.deleteAllCommentImagesByPostId(post.getId());
+        commentRepository.deleteAllByPostId(post.getId());
+    }
+
     private boolean isOwner(Comment comment, UserDetails userDetails) {
         return userDetails != null
                 && comment.getUser() != null

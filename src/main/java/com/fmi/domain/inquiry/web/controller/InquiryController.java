@@ -2,6 +2,7 @@ package com.fmi.domain.inquiry.web.controller;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.service.InquiryService;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
@@ -9,6 +10,7 @@ import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -84,13 +86,17 @@ public class InquiryController {
     })
     public ApiResponse<Page<InquiryListDTO>> getMyInquiries(
             @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "문의 상태 필터 (RECEIVED=접수 대기, PENDING=처리 중, ANSWERED=답변 완료)")
+            @RequestParam(required = false) InquiryStatus status,
+            @Parameter(description = "답변 여부 필터 (true=답변완료, false=미답변)")
+            @RequestParam(required = false) Boolean answered,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<InquiryListDTO> inquiries = inquiryService.getMyInquiries(user, pageable);
+        Page<InquiryListDTO> inquiries = inquiryService.getMyInquiries(user, status, answered, pageable);
         return ApiResponse.onSuccess(inquiries);
     }
 

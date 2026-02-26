@@ -36,6 +36,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     // 타입별 알림 조회
     Page<Notification> findByUserAndType(User user, NotificationType type, Pageable pageable);
 
+    // 타입별 읽지 않은 알림 조회
+    Page<Notification> findByUserAndTypeAndIsReadFalse(User user, NotificationType type, Pageable pageable);
+
     Optional<Notification> findByUserAndReferenceIdAndType(User receiver, Long roomId, NotificationType notificationType);
 }
 

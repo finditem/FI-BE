@@ -100,4 +100,15 @@ public class CommentImageService {
 
         commentImageRepository.deleteAllByComment(comment);
     }
+
+    @Transactional
+    public void deleteAllCommentImagesByPostId(Long postId) {
+        List<String> urlList = commentImageRepository.findUrlsByPostId(postId);
+
+        if (urlList != null && !urlList.isEmpty()) {
+            s3Service.delete(urlList);
+        }
+
+        commentImageRepository.deleteAllByPostId(postId);
+    }
 }

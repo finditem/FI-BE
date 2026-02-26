@@ -14,6 +14,7 @@ import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.domain.user.response.ImageUploadResponse;
+import com.fmi.domain.user.response.MyCommentPageResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
@@ -180,6 +181,35 @@ public class UserService {
     }
 
     /**
+     * 내가 쓴 댓글 목록 조회 (커서 기반)
+     */
+    @Transactional(readOnly = true)
+    public MyCommentPageResponse getMyComments(String email, Long cursor, int size) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        PageRequest pageRequest = PageRequest.of(0, size);
+        Slice<Comment> commentSlice = (cursor == null)
+                ? commentRepository.findByUserOrderByIdDesc(user, pageRequest)
+                : commentRepository.findByUserAndIdLessThanOrderByIdDesc(user, cursor, pageRequest);
+
+        List<Comment> commentList = commentSlice.getContent().stream()
+                .filter(c -> !c.isDeleted())
+                .toList();
+
+        List<UserCommentSummaryResponse> comments = commentList.stream()
+                .map(UserConverter::toUserCommentSummaryResponse)
+                .toList();
+
+        boolean hasNext = commentSlice.hasNext();
+        Long nextCursor = (hasNext && !commentSlice.getContent().isEmpty())
+                ? commentSlice.getContent().get(commentSlice.getContent().size() - 1).getId()
+                : null;
+
+        return new MyCommentPageResponse(comments, nextCursor, hasNext);
+    }
+
+    /**
      * 내 정보 수정 (닉네임 + 프로필 이미지 통합)
      */
     public UserProfileResponse updateMyProfile(String email, UserUpdateRequest request) {
@@ -311,9 +341,18 @@ public class UserService {
             }
         }
 
-        // 탈퇴 사유 설정
-        user.setWithdrawalReason(request.getReason());
-        if (request.getReason() == com.fmi.domain.Enum.WithdrawalReason.OTHER) {
+        // OTHER 선택 시 otherReason 필수 검증
+        if (request.getReasons().contains(com.fmi.domain.Enum.WithdrawalReason.OTHER)
+                && (request.getOtherReason() == null || request.getOtherReason().isBlank())) {
+            throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
+
+        // 탈퇴 사유 설정 (콤마 구분 저장)
+        String reasons = request.getReasons().stream()
+                .map(Enum::name)
+                .collect(java.util.stream.Collectors.joining(","));
+        user.setWithdrawalReason(reasons);
+        if (request.getReasons().contains(com.fmi.domain.Enum.WithdrawalReason.OTHER)) {
             user.setWithdrawalOtherReason(request.getOtherReason());
         }
 
@@ -345,7 +384,7 @@ public class UserService {
             log.warn("계정 삭제 이메일 발송 실패: {}", e.getMessage());
         }
 
-        log.info("사용자 탈퇴 완료: userId={}, email={}, reason={}", user.getId(), email, request.getReason());
+        log.info("사용자 탈퇴 완료: userId={}, email={}, reasons={}", user.getId(), email, request.getReasons());
     }
 
     /**

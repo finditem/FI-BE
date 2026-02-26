@@ -48,9 +48,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findUsersWithExpiredTemporaryPassword(@Param("now") LocalDateTime now);
 
     // 탈퇴한 사용자 조회 (관리자용)
-    @Query("SELECT u FROM User u WHERE u.deletedAt IS NOT NULL " +
-           "AND (:reason IS NULL OR u.withdrawalReason = :reason)")
-    Page<User> findDeletedUsers(@Param("reason") com.fmi.domain.Enum.WithdrawalReason reason, Pageable pageable);
+    @Query(value = "SELECT * FROM users u WHERE u.deleted_at IS NOT NULL " +
+           "AND (:reason IS NULL OR FIND_IN_SET(:reason, u.withdrawal_reason) > 0)",
+           countQuery = "SELECT COUNT(*) FROM users u WHERE u.deleted_at IS NOT NULL " +
+           "AND (:reason IS NULL OR FIND_IN_SET(:reason, u.withdrawal_reason) > 0)",
+           nativeQuery = true)
+    Page<User> findDeletedUsers(@Param("reason") String reason, Pageable pageable);
 
     Optional<User> findByNickname(String nickname);
 }

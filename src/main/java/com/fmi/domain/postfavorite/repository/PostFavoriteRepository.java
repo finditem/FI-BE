@@ -86,7 +86,7 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long
     Slice<PostFavorite> findByUserAndIsFavoriteTrueAndIdLessThanOrderByIdDesc(@Param("user") User user, @Param("cursor") Long cursor, Pageable pageable
     );
 
-    @Modifying
-    @Query("DELETE FROM PostFavorite pf WHERE pf.post = :post")
-    void deleteAllByPost(@Param("post") Post post);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from PostFavorite pf where pf.post.id = :postId")
+    void deleteAllByPostId(@Param("postId") Long postId);
 }

@@ -2,7 +2,6 @@ package com.fmi.domain.auth.data;
 
 
 import com.fmi.domain.Enum.Role;
-import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -67,12 +66,11 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "withdrawal_reason", length = 50)
-    private WithdrawalReason withdrawalReason;  // 탈퇴 사유
+    @Column(name = "withdrawal_reason", length = 200)
+    private String withdrawalReason;  // 탈퇴 사유 (콤마 구분, 최대 3개)
 
     @Column(name = "withdrawal_other_reason", columnDefinition = "TEXT")
-    private String withdrawalOtherReason;       // 탈퇴 사유 기타 (reason이 OTHER인 경우)
+    private String withdrawalOtherReason;       // 탈퇴 사유 기타 (reason에 OTHER가 포함된 경우)
 
     private boolean termsOfServiceAgreed;      // 서비스 이용약관 동의
     private boolean privacyPolicyAgreed;       // 개인정보 처리방침 동의
