@@ -7,12 +7,11 @@ import java.lang.annotation.*;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = ThumbnailDeleteValidator.class)
+@Constraint(validatedBy = ValidThumbnailKeepValidator.class)
 @Documented
-public @interface ValidThumbnailDeletion {
+public @interface ValidThumbnailKeep {
 
-    String message() default "썸네일 이미지는 삭제 목록에 포함될 수 없습니다.";
-
+    String message() default "thumbnailImageId는 keepImageIdList에 포함되어야 합니다.";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

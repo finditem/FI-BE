@@ -229,8 +229,8 @@ public class PostImageService {
             newlySaved.get(0).setImageType(ImageType.THUMBNAIL);
             return;
         }
-        boolean hasThumbnail = postImageRepository.existsThumbnailByPostId(post.getId());
-        if (hasThumbnail) {
+
+        if (postImageRepository.existsThumbnailByPostId(post.getId())) {
             return;
         }
 

@@ -4,14 +4,14 @@ import com.fmi.domain.Enum.Category;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.data.Radius;
-import com.fmi.domain.post.web.dto.validation.ValidThumbnailDeletion;
+import com.fmi.domain.post.web.dto.validation.ValidThumbnailKeep;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@ValidThumbnailDeletion
+@ValidThumbnailKeep
 public record PostUpdateRequest(
         PostType postType,
 
@@ -38,7 +38,7 @@ public record PostUpdateRequest(
 
         Category category,
 
-        List<@Positive(message = "이미지 ID는 양수여야 합니다.") Long> deleteImageIdList,
+        List<@Positive(message = "이미지 ID는 양수여야 합니다.") Long> keepImageIdList,
 
         Long thumbnailImageId) {
 }

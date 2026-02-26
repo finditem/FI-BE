@@ -44,41 +44,11 @@ public class PostService {
     public PostCreateResponse createPost(PostCreateRequest request, UserDetails userDetails, List<MultipartFile> images) {
         User user = userQueryService.findUser(userDetails.getUsername());
 
-        boolean fromTemp = Objects.nonNull(request.tempPostId());
+        Post post = PostConverter.toEntity(request, user);
 
-        Post post;
-        if (fromTemp) {
-            post = postRepository.findById(request.tempPostId())
-                    .orElseThrow(() -> new GeneralException(ErrorStatus._TEMP_POST_NOT_FOUND));
+        Post savePost = postRepository.save(post);
 
-            checkPostAccessDenied(post, userDetails.getUsername());
-
-            if (!post.isTemporarySave()) {
-                throw new GeneralException(ErrorStatus._TEMP_POST_NOT_FOUND);
-            }
-
-            post.update(
-                    request.postType(),
-                    request.title(),
-                    PostStatus.SEARCHING,
-                    request.date(),
-                    request.address(),
-                    request.latitude(),
-                    request.longitude(),
-                    request.content(),
-                    false,
-                    request.radius(),
-                    request.category()
-            );
-
-            postImageService.deleteImagesNotIn(post.getId(), request.keepImageIdList());
-        } else {
-            post = PostConverter.toEntity(request, user);
-        }
-
-        post = postRepository.save(post);
-
-        postImageService.applyThumbNail(images, post, request.thumbnailImageId(), request.keepImageIdList());
+        postImageService.createPostImageAtS3AndDB(images ,savePost);
 
         notificationService.notifyCategoriesForPost(post);
 
@@ -108,20 +78,7 @@ public class PostService {
                 request.category()
         );
 
-
-        if (Objects.nonNull(request.deleteImageIdList()) && !request.deleteImageIdList().isEmpty()) {
-
-            List<PostImage> oldImages = postImageService.findAllByPost(post);
-
-            List<PostImage> imagesToDelete = oldImages.stream()
-                    .filter(img -> request.deleteImageIdList().contains(img.getId()))
-                    .toList();
-
-            if (!imagesToDelete.isEmpty()) {
-                postImageService.deleteImageAtS3(imagesToDelete);
-                postImageService.deleteImageAtDB(imagesToDelete);
-            }
-        }
+        postImageService.deleteImagesNotIn(post.getId(), request.keepImageIdList());
 
         List<PostImage> newlySaved = List.of();
         if (images != null && !images.isEmpty()) {
