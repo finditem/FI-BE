@@ -341,9 +341,18 @@ public class UserService {
             }
         }
 
-        // 탈퇴 사유 설정
-        user.setWithdrawalReason(request.getReason());
-        if (request.getReason() == com.fmi.domain.Enum.WithdrawalReason.OTHER) {
+        // OTHER 선택 시 otherReason 필수 검증
+        if (request.getReasons().contains(com.fmi.domain.Enum.WithdrawalReason.OTHER)
+                && (request.getOtherReason() == null || request.getOtherReason().isBlank())) {
+            throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
+
+        // 탈퇴 사유 설정 (콤마 구분 저장)
+        String reasons = request.getReasons().stream()
+                .map(Enum::name)
+                .collect(java.util.stream.Collectors.joining(","));
+        user.setWithdrawalReason(reasons);
+        if (request.getReasons().contains(com.fmi.domain.Enum.WithdrawalReason.OTHER)) {
             user.setWithdrawalOtherReason(request.getOtherReason());
         }
 
@@ -375,7 +384,7 @@ public class UserService {
             log.warn("계정 삭제 이메일 발송 실패: {}", e.getMessage());
         }
 
-        log.info("사용자 탈퇴 완료: userId={}, email={}, reason={}", user.getId(), email, request.getReason());
+        log.info("사용자 탈퇴 완료: userId={}, email={}, reasons={}", user.getId(), email, request.getReasons());
     }
 
     /**
