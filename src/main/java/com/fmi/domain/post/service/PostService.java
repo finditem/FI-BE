@@ -123,9 +123,16 @@ public class PostService {
             }
         }
 
-        if (Objects.nonNull(images) && !images.isEmpty()) {
-            postImageService.createPostImageAtS3AndDB(images, post);
+        List<PostImage> newlySaved = List.of();
+        if (images != null && !images.isEmpty()) {
+            newlySaved = postImageService.createPostImageNormalAtS3AndDB(images, post);
         }
+
+        postImageService.applyThumbnailOnUpdate(
+                post,
+                request.thumbnailImageId(),
+                newlySaved
+        );
 
 
         if (!previousStatus.equals(post.getPostStatus())) {
