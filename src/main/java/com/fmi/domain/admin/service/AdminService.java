@@ -37,6 +37,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fmi.domain.admin.dto.AdminCsListResponse;
+import com.fmi.domain.admin.dto.AdminCsPageResponse;
+import com.fmi.domain.admin.dto.AdminCsType;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -64,9 +72,9 @@ public class AdminService {
             String typeStr = type != null ? type.name() : null;
             String statusStr = status != null ? status.name() : null;
             Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-            inquiries = inquiryRepository.findAllForAdminWithKeyword(typeStr, statusStr, sanitizeFulltextKeyword(keyword), unsorted);
+            inquiries = inquiryRepository.findMemberInquiriesForAdminWithKeyword(typeStr, statusStr, sanitizeFulltextKeyword(keyword), unsorted);
         } else {
-            inquiries = inquiryRepository.findAllForAdmin(type, status, pageable);
+            inquiries = inquiryRepository.findMemberInquiriesForAdmin(type, status, pageable);
         }
         return inquiries.map(inquiry -> AdminInquiryResponse.builder()
                 .inquiryId(inquiry.getId())
@@ -173,6 +181,98 @@ public class AdminService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
         
         return reportConverter.toResponseDTO(report);
+    }
+
+    /**
+     * 관리자 신고/문의 통합 목록 조회 (커서 기반, createdAt 내림차순)
+     */
+    public AdminCsPageResponse getCustomerServicePage(AdminCsType type, String cursor, int size) {
+        size = Math.max(1, Math.min(size, 50));
+
+        LocalDateTime cursorTime = (cursor != null)
+                ? LocalDateTime.parse(cursor, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                : null;
+
+        PageRequest pageRequest = PageRequest.of(0, size);
+        List<AdminCsListResponse> allItems = new ArrayList<>();
+
+        // 신고 조회
+        if (type == null || type == AdminCsType.REPORT) {
+            var reportSlice = (cursorTime == null)
+                    ? reportRepository.findAllOrderByCreatedAtDesc(pageRequest)
+                    : reportRepository.findAllBeforeCursorOrderByCreatedAtDesc(cursorTime, pageRequest);
+            reportSlice.getContent().forEach(r -> allItems.add(new AdminCsListResponse(
+                    AdminCsType.REPORT,
+                    r.getReportId(),
+                    r.getTargetType().getDescription() + " 신고",
+                    truncate(r.getReason(), 100),
+                    r.getStatus().name(),
+                    r.getReporter() != null ? r.getReporter().getNickname() : null,
+                    r.getReporter() != null ? r.getReporter().getEmail() : null,
+                    r.getCreatedAt()
+            )));
+        }
+
+        // 회원 문의 조회
+        if (type == null || type == AdminCsType.INQUIRY) {
+            var inquirySlice = (cursorTime == null)
+                    ? inquiryRepository.findMemberInquiriesOrderByCreatedAtDesc(pageRequest)
+                    : inquiryRepository.findMemberInquiriesBeforeCursorOrderByCreatedAtDesc(cursorTime, pageRequest);
+            inquirySlice.getContent().forEach(i -> allItems.add(new AdminCsListResponse(
+                    AdminCsType.INQUIRY,
+                    i.getId(),
+                    i.getTitle(),
+                    truncate(i.getContent(), 100),
+                    i.getAnswerStatus().name(),
+                    i.getUser() != null ? i.getUser().getNickname() : null,
+                    i.getUser() != null ? i.getUser().getEmail() : null,
+                    i.getCreatedAt()
+            )));
+        }
+
+        allItems.sort(Comparator.comparing(AdminCsListResponse::createdAt).reversed());
+
+        boolean hasNext = allItems.size() > size;
+        List<AdminCsListResponse> result = hasNext ? allItems.subList(0, size) : allItems;
+
+        String nextCursor = (hasNext && !result.isEmpty())
+                ? result.get(result.size() - 1).createdAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                : null;
+
+        return new AdminCsPageResponse(result, nextCursor, hasNext);
+    }
+
+    /**
+     * 관리자 비회원 문의 목록 조회 (페이지 기반)
+     */
+    public Page<AdminInquiryResponse> getGuestInquiryPage(InquiryStatus status,
+                                                           String keyword,
+                                                           Pageable pageable) {
+        Page<Inquiry> inquiries;
+        if (keyword != null && !keyword.isBlank()) {
+            String statusStr = status != null ? status.name() : null;
+            Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            inquiries = inquiryRepository.findGuestInquiriesForAdminWithKeyword(statusStr, sanitizeFulltextKeyword(keyword), unsorted);
+        } else {
+            inquiries = inquiryRepository.findGuestInquiriesForAdmin(status, pageable);
+        }
+        return inquiries.map(inquiry -> AdminInquiryResponse.builder()
+                .inquiryId(inquiry.getId())
+                .title(inquiry.getTitle())
+                .inquiryType(inquiry.getInquiryType())
+                .status(inquiry.getAnswerStatus())
+                .createdAt(inquiry.getCreatedAt())
+                .userId(null)
+                .userNickname(null)
+                .userEmail(inquiry.getEmail())
+                .content(inquiry.getContent())
+                .ip(inquiry.getIp())
+                .build());
+    }
+
+    private String truncate(String text, int maxLength) {
+        if (text == null) return null;
+        return text.length() > maxLength ? text.substring(0, maxLength) + "..." : text;
     }
 
     /**
