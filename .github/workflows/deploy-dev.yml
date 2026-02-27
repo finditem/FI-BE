@@ -103,8 +103,10 @@ jobs:
             echo "Building application..."
             if ! ./gradlew clean bootJar -x test; then
               echo "ERROR: Build failed. Aborting deployment to protect running service."
+              ./gradlew --stop || true
               exit 1
             fi
+            ./gradlew --stop || true
 
             # Verify jar exists
             JAR_FILE=$(ls build/libs/fmi-*.jar 2>/dev/null | head -1)
