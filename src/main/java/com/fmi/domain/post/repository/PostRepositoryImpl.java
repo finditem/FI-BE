@@ -286,7 +286,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         post.deleted.isFalse(),
                         post.temporarySave.isFalse(),
                         post.id.ne(postId),
-                        post.temporarySave.isFalse(),
                         post.category.eq(base.getCategory()),
                         post.postType.eq(oppositeType),
                         post.postStatus.eq(PostStatus.SEARCHING),
