@@ -3,6 +3,7 @@ package com.fmi.domain.user.web.controller;
 import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
+import com.fmi.domain.user.response.MyPostPageResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.service.UserService;
@@ -111,6 +112,22 @@ public class UserController {
     ) {
         String email = userDetails.getUsername();
         MyCommentPageResponse response = userService.getMyComments(email, cursor, size);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/me/posts")
+    @Operation(summary = "내가 쓴 게시글 목록", description = "현재 로그인한 사용자가 작성한 게시글 목록을 커서 기반으로 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 게시글 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다")
+    })
+    public ApiResponse<MyPostPageResponse> getMyPosts(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        String email = userDetails.getUsername();
+        MyPostPageResponse response = userService.getMyPosts(email, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 

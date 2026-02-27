@@ -15,6 +15,7 @@ import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
+import com.fmi.domain.user.response.MyPostPageResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
@@ -207,6 +208,30 @@ public class UserService {
                 : null;
 
         return new MyCommentPageResponse(comments, nextCursor, hasNext);
+    }
+
+    /**
+     * 내가 쓴 게시글 목록 조회 (커서 기반)
+     */
+    @Transactional(readOnly = true)
+    public MyPostPageResponse getMyPosts(String email, Long cursor, int size) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        PageRequest pageRequest = PageRequest.of(0, size);
+        Slice<Post> postSlice = (cursor == null)
+                ? postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseOrderByIdDesc(user, pageRequest)
+                : postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseAndIdLessThanOrderByIdDesc(user, cursor, pageRequest);
+
+        List<Post> postList = postSlice.getContent();
+        List<PostBriefResponse> posts = postQueryService.getPostBriefResponseList(postList, user);
+
+        boolean hasNext = postSlice.hasNext();
+        Long nextCursor = (hasNext && !postList.isEmpty())
+                ? postList.get(postList.size() - 1).getId()
+                : null;
+
+        return new MyPostPageResponse(posts, nextCursor, hasNext);
     }
 
     /**
