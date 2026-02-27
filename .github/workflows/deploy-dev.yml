@@ -99,11 +99,16 @@ jobs:
               echo "   수동으로 EnvironmentFile=/etc/fmi-backend.env을 추가해주세요."
             fi
 
+            # 빌드 전 서비스 중지 (clean이 JAR 삭제하므로 Restart=always에 의한 crash loop 방지)
+            echo "Stopping service before build..."
+            sudo systemctl stop fmi-backend || true
+
             # Build
             echo "Building application..."
             if ! ./gradlew clean bootJar -x test; then
-              echo "ERROR: Build failed. Aborting deployment to protect running service."
+              echo "ERROR: Build failed. Restarting previous service..."
               ./gradlew --stop || true
+              sudo systemctl start fmi-backend || true
               exit 1
             fi
             ./gradlew --stop || true
