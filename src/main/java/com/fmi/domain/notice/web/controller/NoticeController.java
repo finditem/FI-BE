@@ -6,6 +6,7 @@ import com.fmi.domain.notice.service.NoticeService;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,9 +17,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,24 +32,22 @@ public class NoticeController {
     
     /**
      * 공지사항 목록 조회
-     * GET /notices?category=GENERAL&page=0&size=10
+     * GET /notices?category=GENERAL&cursor=10&size=10
      */
     @GetMapping
-    @Operation(summary = "공지사항 목록 조회", description = "상단 고정 공지사항이 먼저 표시됩니다.")
+    @Operation(summary = "공지사항 목록 조회", description = "커서 기반 페이지네이션으로 공지사항을 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다. 상단 고정 공지사항이 먼저 표시됩니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "공지사항 목록 조회 성공")
     })
-    public ApiResponse<Page<NoticeListDTO>> getNoticeList(
+    public ApiResponse<CursorPageResponse<NoticeListDTO>> getNoticeList(
             @RequestParam(required = false) NoticeCategory category,
             @RequestParam(required = false) String keyword,
             @Parameter(description = "정렬 기준 (LATEST=최신순, OLDEST=오래된순, MOST_VIEWED=조회많은순)")
             @RequestParam(required = false, defaultValue = "LATEST") NoticeSortType sortType,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size) {
 
-        Pageable pageable = PageRequest.of(page, size, sortType.getSort());
-        Page<NoticeListDTO> notices = noticeService.getNoticeList(category, keyword, sortType, pageable);
-
+        CursorPageResponse<NoticeListDTO> notices = noticeService.getNoticeListCursor(category, keyword, sortType, cursor, size);
         return ApiResponse.onSuccess(notices);
     }
     

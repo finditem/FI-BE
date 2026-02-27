@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -80,6 +81,82 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
 
     // 임시저장 단건 조회 (관리자용 - 유저당 1건)
     Optional<Notice> findFirstByDraftTrueAndAuthorEmailOrderByUpdatedAtDesc(String email);
+
+    // 커서 기반 조회 - 최신순 (키워드 없음)
+    @Query(value = """
+            SELECT * FROM notice n
+            WHERE n.draft = false
+              AND (:category IS NULL OR n.category = :category)
+              AND (:cursor IS NULL OR n.id < :cursor)
+            ORDER BY n.pinned DESC, n.created_at DESC
+            LIMIT :limit
+            """,
+            nativeQuery = true)
+    List<Notice> findByDraftFalseCursor(@Param("category") String category,
+                                        @Param("cursor") Long cursor,
+                                        @Param("limit") int limit);
+
+    // 커서 기반 조회 - 오래된순 (키워드 없음)
+    @Query(value = """
+            SELECT * FROM notice n
+            WHERE n.draft = false
+              AND (:category IS NULL OR n.category = :category)
+              AND (:cursor IS NULL OR n.id > :cursor)
+            ORDER BY n.pinned DESC, n.created_at ASC
+            LIMIT :limit
+            """,
+            nativeQuery = true)
+    List<Notice> findByDraftFalseOldestCursor(@Param("category") String category,
+                                               @Param("cursor") Long cursor,
+                                               @Param("limit") int limit);
+
+    // 커서 기반 키워드 검색 - 최신순
+    @Query(value = """
+            SELECT * FROM notice n
+            WHERE n.draft = false
+              AND (:category IS NULL OR n.category = :category)
+              AND MATCH(n.title, n.content) AGAINST(:keyword IN BOOLEAN MODE)
+              AND (:cursor IS NULL OR n.id < :cursor)
+            ORDER BY n.pinned DESC, n.created_at DESC
+            LIMIT :limit
+            """,
+            nativeQuery = true)
+    List<Notice> searchNoticesCursor(@Param("category") String category,
+                                     @Param("keyword") String keyword,
+                                     @Param("cursor") Long cursor,
+                                     @Param("limit") int limit);
+
+    // 커서 기반 키워드 검색 - 오래된순
+    @Query(value = """
+            SELECT * FROM notice n
+            WHERE n.draft = false
+              AND (:category IS NULL OR n.category = :category)
+              AND MATCH(n.title, n.content) AGAINST(:keyword IN BOOLEAN MODE)
+              AND (:cursor IS NULL OR n.id > :cursor)
+            ORDER BY n.pinned DESC, n.created_at ASC
+            LIMIT :limit
+            """,
+            nativeQuery = true)
+    List<Notice> searchNoticesOldestCursor(@Param("category") String category,
+                                           @Param("keyword") String keyword,
+                                           @Param("cursor") Long cursor,
+                                           @Param("limit") int limit);
+
+    // 커서 기반 키워드 검색 - 조회많은순
+    @Query(value = """
+            SELECT * FROM notice n
+            WHERE n.draft = false
+              AND (:category IS NULL OR n.category = :category)
+              AND MATCH(n.title, n.content) AGAINST(:keyword IN BOOLEAN MODE)
+              AND (:cursor IS NULL OR n.id < :cursor)
+            ORDER BY n.pinned DESC, n.view_cnt DESC, n.id DESC
+            LIMIT :limit
+            """,
+            nativeQuery = true)
+    List<Notice> searchNoticesMostViewedCursor(@Param("category") String category,
+                                               @Param("keyword") String keyword,
+                                               @Param("cursor") Long cursor,
+                                               @Param("limit") int limit);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Notice n SET n.likeCount = n.likeCount + 1 WHERE n.noticeId = :noticeId")
