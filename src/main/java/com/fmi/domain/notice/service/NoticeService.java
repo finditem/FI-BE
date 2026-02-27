@@ -6,6 +6,7 @@ import com.fmi.domain.notice.converter.NoticeConverter;
 import com.fmi.domain.notice.data.Notice;
 import com.fmi.domain.notice.data.NoticeImage;
 import com.fmi.domain.notice.data.enums.NoticeCategory;
+import com.fmi.domain.notice.data.enums.NoticeSortType;
 import com.fmi.domain.notice.repository.NoticeImageRepository;
 import com.fmi.domain.notice.repository.NoticeRepository;
 import com.fmi.domain.noticelike.data.NoticeLike;
@@ -52,12 +53,17 @@ public class NoticeService {
     /**
      * 공지사항 목록 조회 (카테고리/키워드 필터)
      */
-    public Page<NoticeListDTO> getNoticeList(NoticeCategory category, String keyword, Pageable pageable) {
+    public Page<NoticeListDTO> getNoticeList(NoticeCategory category, String keyword, NoticeSortType sortType, Pageable pageable) {
         Page<Notice> notices;
         if (keyword != null && !keyword.isBlank()) {
             String categoryStr = category != null ? category.name() : null;
             Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-            notices = noticeRepository.searchNotices(categoryStr, sanitizeFulltextKeyword(keyword), unsorted);
+            String sanitized = sanitizeFulltextKeyword(keyword);
+            notices = switch (sortType) {
+                case OLDEST -> noticeRepository.searchNoticesOldest(categoryStr, sanitized, unsorted);
+                case MOST_VIEWED -> noticeRepository.searchNoticesMostViewed(categoryStr, sanitized, unsorted);
+                default -> noticeRepository.searchNotices(categoryStr, sanitized, unsorted);
+            };
         } else if (category != null) {
             notices = noticeRepository.findByDraftFalseAndCategory(category, pageable);
         } else {
