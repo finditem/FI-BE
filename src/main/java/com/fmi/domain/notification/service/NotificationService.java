@@ -153,6 +153,7 @@ public class NotificationService {
     /**
      * 알림 설정 조회
      */
+    @Transactional
     public NotificationSettingsDTO getSettings(User user) {
         NotificationSettings settings = notificationSettingsRepository.findByUser(user)
                 .orElseGet(() -> createDefaultSettings(user));
