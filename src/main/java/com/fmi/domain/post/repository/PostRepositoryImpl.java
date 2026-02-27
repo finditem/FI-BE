@@ -44,6 +44,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
         BooleanExpression baseWhere = Expressions.allOf(
+                post.deleted.isFalse(),
                 addressStartsWith(post, address),
                 equalsPostType(post, postType),
                 equalsPostStatus(post, postStatus),
@@ -207,6 +208,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
             where.and(post.id.lt(cursor));
         }
 
+        where.and(post.deleted.isFalse());
         where.and(post.temporarySave.isFalse());
 
         return queryFactory
@@ -226,6 +228,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         BooleanBuilder where = new BooleanBuilder()
                 .and(buildKeywordCondition(post, keyword));
 
+        where.and(post.deleted.isFalse());
         where.and(post.temporarySave.isFalse());
 
         Long count = queryFactory
@@ -273,18 +276,21 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 ? PostType.FOUND
                 : PostType.LOST;
 
+        BooleanExpression dateCondition =
+                post.date.isNotNull().and(post.date.between(from, to))
+                        .or(post.date.isNull().and(post.createdAt.between(from, to)));
 
         return queryFactory
                 .selectFrom(post)
                 .where(
-                        post.id.ne(postId),
+                        post.deleted.isFalse(),
                         post.temporarySave.isFalse(),
+                        post.id.ne(postId),
                         post.category.eq(base.getCategory()),
                         post.postType.eq(oppositeType),
                         post.postStatus.eq(PostStatus.SEARCHING),
                         post.address.eq(base.getAddress()),
-                        post.date.isNotNull().and(post.date.between(from, to))
-                                .or(post.date.isNull().and(post.createdAt.between(from, to)))
+                        dateCondition
                 )
                 .orderBy(post.createdAt.desc(), post.id.desc())
                 .limit(limit)

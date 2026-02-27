@@ -99,7 +99,7 @@ public class PostQueryService {
         long favoriteCount = postFavoriteService.countByPostAndIsFavoriteTrue(post);
 
         User user = post.getUser();
-        long userPostCount = postRepository.countByUserAndTemporarySaveFalse(user);
+        long userPostCount = postRepository.countByUserAndTemporarySaveFalseAndDeletedFalse(user);
         long chatRoomCount = chatRoomParticipantRepository.countActiveChatRoomsByUser(user);
 
 
@@ -227,7 +227,7 @@ public class PostQueryService {
 
     @Transactional(readOnly = true)
     public Post findById(Long postId) {
-        return postRepository.findById(postId)
+        return postRepository.findByIdAndDeletedFalse(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
     }
 

@@ -5,6 +5,8 @@ import com.fmi.domain.post.data.ImageType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.repository.PostImageRepository;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -210,4 +212,30 @@ public class PostImageService {
     }
 
 
+    @Transactional
+    public void applyThumbnailOnUpdate(Post post, Long thumbnailId, List<PostImage> newlySaved) {
+
+        if (thumbnailId != null) {
+            PostImage thumb = postImageRepository.findByIdAndPost_Id(thumbnailId, post.getId())
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._POST_IMAGE_NOT_FOUND));
+
+            postImageRepository.resetThumbnailToNormal(post.getId());
+            thumb.setImageType(ImageType.THUMBNAIL);
+            return;
+        }
+
+        if (newlySaved != null && !newlySaved.isEmpty()) {
+            postImageRepository.resetThumbnailToNormal(post.getId());
+            newlySaved.get(0).setImageType(ImageType.THUMBNAIL);
+            return;
+        }
+
+        if (postImageRepository.existsThumbnailByPostId(post.getId())) {
+            return;
+        }
+
+        postImageRepository.findFirstByPost_IdOrderByIdAsc(post.getId())
+                .ifPresent(fallback -> fallback.setImageType(ImageType.THUMBNAIL));
+
+    }
 }

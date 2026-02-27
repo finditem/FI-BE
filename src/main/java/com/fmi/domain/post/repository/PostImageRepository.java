@@ -52,4 +52,11 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long>, Pos
 
     Optional<PostImage> findByIdAndPost_Id(Long id, Long postId);
 
+    boolean existsByPost_IdAndImageType(Long postId, ImageType imageType);
+
+    Optional<PostImage> findFirstByPost_IdOrderByIdAsc(Long postId);
+
+    default boolean existsThumbnailByPostId(Long postId) {
+        return existsByPost_IdAndImageType(postId, ImageType.THUMBNAIL);
+    }
 }

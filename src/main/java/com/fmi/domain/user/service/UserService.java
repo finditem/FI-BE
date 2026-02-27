@@ -104,8 +104,8 @@ public class UserService {
         switch (resolvedType) {
             case POSTS -> {
                 Slice<Post> postSlice = (cursor == null)
-                        ? postRepository.findByUserAndTemporarySaveFalseOrderByIdDesc(targetUser, pageRequest)
-                        : postRepository.findByUserAndTemporarySaveFalseAndIdLessThanOrderByIdDesc(targetUser, cursor, pageRequest);
+                        ? postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseOrderByIdDesc(targetUser, pageRequest)
+                        : postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseAndIdLessThanOrderByIdDesc(targetUser, cursor, pageRequest);
 
                 List<Post> postList = postSlice.getContent();
                 posts = postQueryService.getPostBriefResponseList(postList, me);

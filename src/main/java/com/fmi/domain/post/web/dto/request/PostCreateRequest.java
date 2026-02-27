@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public record PostCreateRequest(
         @NotNull
@@ -35,12 +34,6 @@ public record PostCreateRequest(
         Radius radius,
 
         @NotNull
-        Category category,
-
-        Long tempPostId,
-
-        List<Long> keepImageIdList,
-
-        Long thumbnailImageId
+        Category category
 ) {
 }

@@ -119,7 +119,7 @@ public class AdminService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        long postCount = postRepository.countByUser(user);
+        long postCount = postRepository.countByUserAndDeletedFalse(user);
         long commentCount = commentRepository.countByUser(user);
         long reportCount = reportRepository.countByReporter(user);
         List<Category> categories = userCategoryRepository.findAllByUser(user).stream()
