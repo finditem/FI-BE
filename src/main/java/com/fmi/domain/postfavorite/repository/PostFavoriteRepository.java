@@ -89,4 +89,27 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from PostFavorite pf where pf.post.id = :postId")
     void deleteAllByPostId(@Param("postId") Long postId);
+
+    @Query("""
+                SELECT pf
+                FROM PostFavorite pf
+                JOIN FETCH pf.post p
+                WHERE pf.user = :user
+                  AND pf.isFavorite = true
+                  AND p.deleted = false
+                ORDER BY pf.createdAt DESC
+            """)
+    Slice<PostFavorite> findByUserAndIsFavoriteTrueOrderByCreatedAtDesc(@Param("user") User user, Pageable pageable);
+
+    @Query("""
+                SELECT pf
+                FROM PostFavorite pf
+                JOIN FETCH pf.post p
+                WHERE pf.user = :user
+                  AND pf.isFavorite = true
+                  AND p.deleted = false
+                  AND pf.createdAt < :cursor
+                ORDER BY pf.createdAt DESC
+            """)
+    Slice<PostFavorite> findByUserAndIsFavoriteTrueAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
 }
