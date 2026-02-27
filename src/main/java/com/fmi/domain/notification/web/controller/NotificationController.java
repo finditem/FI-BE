@@ -7,6 +7,7 @@ import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.notification.service.SseEmitterService;
 import com.fmi.domain.notification.web.dto.response.NotificationListDTO;
 import com.fmi.domain.notification.web.dto.response.NotificationSettingsDTO;
+import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -17,10 +18,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -58,25 +55,24 @@ public class NotificationController {
 
     /**
      * 내 알림 목록 조회
-     * GET /api/notifications?unreadOnly=false&page=0&size=20
+     * GET /api/notifications?unreadOnly=false&cursor=10&size=20
      */
     @GetMapping
-    @Operation(summary = "내 알림 목록 조회", description = "읽음/읽지 않음 및 알림 타입별 필터링 가능")
+    @Operation(summary = "내 알림 목록 조회", description = "커서 기반 페이지네이션으로 알림을 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다. 읽음/읽지 않음 및 알림 타입별 필터링 가능")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 목록 조회 성공")
     })
-    public ApiResponse<Page<NotificationListDTO>> getMyNotifications(
+    public ApiResponse<CursorPageResponse<NotificationListDTO>> getMyNotifications(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false, defaultValue = "false") Boolean unreadOnly,
             @Parameter(description = "알림 타입 필터 (COMMENT, REPLY, MENTION, CHAT, CHAT_REMINDER, INQUIRY_REPLY, REPORT_RESULT, FAVORITE, CATEGORY, NOTICE, SYSTEM, LIKE)")
             @RequestParam(required = false) NotificationType notificationType,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size) {
 
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<NotificationListDTO> notifications = notificationService.getMyNotifications(user, unreadOnly, notificationType, pageable);
+        CursorPageResponse<NotificationListDTO> notifications = notificationService.getMyNotificationsCursor(user, unreadOnly, notificationType, cursor, size);
         return ApiResponse.onSuccess(notifications);
     }
     
