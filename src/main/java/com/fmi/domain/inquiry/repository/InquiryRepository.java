@@ -11,6 +11,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
@@ -58,5 +60,35 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
                                              @Param("status") String status,
                                              @Param("keyword") String keyword,
                                              Pageable pageable);
+
+    // 관리자 커서 기반 조회 - keyword 없을 때 (JPQL)
+    @Query("""
+            SELECT i FROM Inquiry i
+            WHERE (:type IS NULL OR i.inquiryType = :type)
+              AND (:status IS NULL OR i.answerStatus = :status)
+              AND (:cursor IS NULL OR i.id < :cursor)
+            ORDER BY i.id DESC
+            """)
+    List<Inquiry> findAllForAdminCursor(@Param("type") InquiryType type,
+                                        @Param("status") InquiryStatus status,
+                                        @Param("cursor") Long cursor,
+                                        Pageable pageable);
+
+    // 관리자 커서 기반 조회 - keyword 있을 때 (FULLTEXT + ngram)
+    @Query(value = """
+            SELECT * FROM customer_inquiry i
+            WHERE (:type IS NULL OR i.inquiry_type = :type)
+              AND (:status IS NULL OR i.answer_status = :status)
+              AND (:cursor IS NULL OR i.id < :cursor)
+              AND MATCH(i.title, i.content) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY i.id DESC
+            LIMIT :limit
+            """,
+            nativeQuery = true)
+    List<Inquiry> findAllForAdminWithKeywordCursor(@Param("type") String type,
+                                                    @Param("status") String status,
+                                                    @Param("keyword") String keyword,
+                                                    @Param("cursor") Long cursor,
+                                                    @Param("limit") int limit);
 }
 
