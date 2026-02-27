@@ -8,6 +8,7 @@ import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,10 +17,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -90,26 +87,25 @@ public class ReportController {
 
     /**
      * 내 신고 내역 조회
-     * GET /api/reports/me?status=PENDING&page=0&size=10
+     * GET /api/reports/me?status=PENDING&cursor=10&size=10
      */
     @GetMapping("/me")
-    @Operation(summary = "내 신고 내역 조회", description = "내가 접수한 모든 신고 내역을 조회합니다.")
+    @Operation(summary = "내 신고 내역 조회", description = "커서 기반 페이지네이션으로 내가 접수한 신고 내역을 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 내역 조회 성공")
     })
-    public ApiResponse<Page<ReportListDTO>> getMyReports(
+    public ApiResponse<CursorPageResponse<ReportListDTO>> getMyReports(
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "신고 상태 필터 (PENDING=접수, REVIEWED=처리중, RESOLVED=처리완료)")
             @RequestParam(required = false) ReportStatus status,
             @Parameter(description = "답변 여부 필터 (true=답변완료, false=미답변)")
             @RequestParam(required = false) Boolean answered,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size) {
 
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<ReportListDTO> reports = reportService.getMyReports(user, status, answered, pageable);
+        CursorPageResponse<ReportListDTO> reports = reportService.getMyReportsCursor(user, status, answered, cursor, size);
         return ApiResponse.onSuccess(reports);
     }
 }

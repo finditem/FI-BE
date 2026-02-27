@@ -18,6 +18,7 @@ import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
+import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.EmailService;
@@ -25,8 +26,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -126,6 +130,38 @@ public class ReportService {
         });
     }
     
+    /**
+     * 내 신고 내역 조회 (커서 기반)
+     */
+    public CursorPageResponse<ReportListDTO> getMyReportsCursor(User user, ReportStatus status, Boolean answered, Long cursor, int size) {
+        int fetchSize = size + 1;
+        Pageable limit = PageRequest.of(0, fetchSize);
+        List<Report> reports;
+
+        if (status != null && answered != null) {
+            reports = reportRepository.findByReporterAndStatusAndAnsweredCursor(user, status, answered, cursor, limit);
+        } else if (status != null) {
+            reports = reportRepository.findByReporterAndStatusCursor(user, status, cursor, limit);
+        } else if (answered != null) {
+            reports = reportRepository.findByReporterAndAnsweredCursor(user, answered, cursor, limit);
+        } else {
+            reports = reportRepository.findByReporterCursor(user, cursor, limit);
+        }
+
+        boolean hasNext = reports.size() > size;
+        List<Report> content = hasNext ? reports.subList(0, size) : reports;
+        Long nextCursor = hasNext ? content.get(content.size() - 1).getReportId() : null;
+
+        List<ReportListDTO> responseList = content.stream()
+                .map(report -> {
+                    String targetTitle = getTargetTitle(report.getTargetType(), report.getTargetId());
+                    return reportConverter.toListDTO(report, targetTitle);
+                })
+                .toList();
+
+        return new CursorPageResponse<>(responseList, nextCursor, hasNext);
+    }
+
     /**
      * 내 신고 상세 조회
      */

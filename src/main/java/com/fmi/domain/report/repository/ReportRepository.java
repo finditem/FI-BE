@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -71,6 +72,54 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                                             @Param("answered") Boolean answered,
                                             @Param("keyword") String keyword,
                                             Pageable pageable);
+
+    // 사용자별 커서 기반 조회 - 전체
+    @Query("""
+            SELECT r FROM Report r
+            WHERE r.reporter = :reporter
+              AND (:cursor IS NULL OR r.reportId < :cursor)
+            ORDER BY r.reportId DESC
+            """)
+    List<Report> findByReporterCursor(@Param("reporter") User reporter,
+                                      @Param("cursor") Long cursor,
+                                      Pageable pageable);
+
+    // 사용자별 커서 기반 조회 - 상태 필터
+    @Query("""
+            SELECT r FROM Report r
+            WHERE r.reporter = :reporter AND r.status = :status
+              AND (:cursor IS NULL OR r.reportId < :cursor)
+            ORDER BY r.reportId DESC
+            """)
+    List<Report> findByReporterAndStatusCursor(@Param("reporter") User reporter,
+                                                @Param("status") ReportStatus status,
+                                                @Param("cursor") Long cursor,
+                                                Pageable pageable);
+
+    // 사용자별 커서 기반 조회 - 답변여부 필터
+    @Query("""
+            SELECT r FROM Report r
+            WHERE r.reporter = :reporter AND r.answered = :answered
+              AND (:cursor IS NULL OR r.reportId < :cursor)
+            ORDER BY r.reportId DESC
+            """)
+    List<Report> findByReporterAndAnsweredCursor(@Param("reporter") User reporter,
+                                                  @Param("answered") Boolean answered,
+                                                  @Param("cursor") Long cursor,
+                                                  Pageable pageable);
+
+    // 사용자별 커서 기반 조회 - 상태 + 답변여부 필터
+    @Query("""
+            SELECT r FROM Report r
+            WHERE r.reporter = :reporter AND r.status = :status AND r.answered = :answered
+              AND (:cursor IS NULL OR r.reportId < :cursor)
+            ORDER BY r.reportId DESC
+            """)
+    List<Report> findByReporterAndStatusAndAnsweredCursor(@Param("reporter") User reporter,
+                                                          @Param("status") ReportStatus status,
+                                                          @Param("answered") Boolean answered,
+                                                          @Param("cursor") Long cursor,
+                                                          Pageable pageable);
 
     // 사용자별 신고 목록 (createdAt 커서 기반)
     @Query("SELECT r FROM Report r WHERE r.reporter = :reporter ORDER BY r.createdAt DESC")
