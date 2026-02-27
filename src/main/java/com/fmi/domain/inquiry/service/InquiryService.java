@@ -17,6 +17,7 @@ import com.fmi.domain.ipblock.service.IpBlacklistService;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.EmailService;
@@ -24,8 +25,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
+
+import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -133,6 +137,37 @@ public class InquiryService {
         }
 
         return inquiries.map(inquiry -> inquiryConverter.toListDTO(inquiry));
+    }
+
+    /**
+     * 내 문의 내역 조회 (커서 기반)
+     */
+    public CursorPageResponse<InquiryListDTO> getMyInquiriesCursor(User user, InquiryStatus status, Boolean answered, Long cursor, int size) {
+        int fetchSize = size + 1;
+        Pageable limit = PageRequest.of(0, fetchSize);
+        List<Inquiry> inquiries;
+
+        if (status != null) {
+            inquiries = inquiryRepository.findByUserAndAnswerStatusCursor(user, status, cursor, limit);
+        } else if (answered != null) {
+            if (answered) {
+                inquiries = inquiryRepository.findByUserAndAnswerStatusCursor(user, InquiryStatus.ANSWERED, cursor, limit);
+            } else {
+                inquiries = inquiryRepository.findByUserAndAnswerStatusNotCursor(user, InquiryStatus.ANSWERED, cursor, limit);
+            }
+        } else {
+            inquiries = inquiryRepository.findByUserCursor(user, cursor, limit);
+        }
+
+        boolean hasNext = inquiries.size() > size;
+        List<Inquiry> content = hasNext ? inquiries.subList(0, size) : inquiries;
+        Long nextCursor = hasNext ? content.get(content.size() - 1).getId() : null;
+
+        List<InquiryListDTO> responseList = content.stream()
+                .map(inquiryConverter::toListDTO)
+                .toList();
+
+        return new CursorPageResponse<>(responseList, nextCursor, hasNext);
     }
 
     /**

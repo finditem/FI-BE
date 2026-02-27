@@ -12,6 +12,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
@@ -36,6 +38,41 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
     @Query("SELECT i FROM Inquiry i WHERE i.user = :user AND i.createdAt < :cursor ORDER BY i.createdAt DESC")
     Slice<Inquiry> findByUserAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
+
+    // 사용자별 커서 기반 조회 - 전체
+    @Query("""
+            SELECT i FROM Inquiry i
+            WHERE i.user = :user
+              AND (:cursor IS NULL OR i.id < :cursor)
+            ORDER BY i.id DESC
+            """)
+    List<Inquiry> findByUserCursor(@Param("user") User user,
+                                    @Param("cursor") Long cursor,
+                                    Pageable pageable);
+
+    // 사용자별 커서 기반 조회 - 상태 필터
+    @Query("""
+            SELECT i FROM Inquiry i
+            WHERE i.user = :user AND i.answerStatus = :status
+              AND (:cursor IS NULL OR i.id < :cursor)
+            ORDER BY i.id DESC
+            """)
+    List<Inquiry> findByUserAndAnswerStatusCursor(@Param("user") User user,
+                                                   @Param("status") InquiryStatus status,
+                                                   @Param("cursor") Long cursor,
+                                                   Pageable pageable);
+
+    // 사용자별 커서 기반 조회 - 상태 제외 필터
+    @Query("""
+            SELECT i FROM Inquiry i
+            WHERE i.user = :user AND i.answerStatus <> :status
+              AND (:cursor IS NULL OR i.id < :cursor)
+            ORDER BY i.id DESC
+            """)
+    List<Inquiry> findByUserAndAnswerStatusNotCursor(@Param("user") User user,
+                                                      @Param("status") InquiryStatus status,
+                                                      @Param("cursor") Long cursor,
+                                                      Pageable pageable);
 
     // 관리자 전용 조회 - keyword 없을 때 (JPQL)
     @Query("""
