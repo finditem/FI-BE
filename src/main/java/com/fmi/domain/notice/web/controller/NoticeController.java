@@ -1,6 +1,7 @@
 package com.fmi.domain.notice.web.controller;
 
 import com.fmi.domain.notice.data.enums.NoticeCategory;
+import com.fmi.domain.notice.data.enums.NoticeSortType;
 import com.fmi.domain.notice.service.NoticeService;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
@@ -18,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -45,20 +45,11 @@ public class NoticeController {
             @RequestParam(required = false) NoticeCategory category,
             @RequestParam(required = false) String keyword,
             @Parameter(description = "정렬 기준 (LATEST=최신순, OLDEST=오래된순, MOST_VIEWED=조회많은순)")
-            @RequestParam(required = false, defaultValue = "LATEST") String sortType,
+            @RequestParam(required = false, defaultValue = "LATEST") NoticeSortType sortType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Sort sort = switch (sortType.toUpperCase()) {
-            case "OLDEST" -> Sort.by(Sort.Direction.DESC, "pinned")
-                    .and(Sort.by(Sort.Direction.ASC, "createdAt"));
-            case "MOST_VIEWED" -> Sort.by(Sort.Direction.DESC, "pinned")
-                    .and(Sort.by(Sort.Direction.DESC, "viewCount"));
-            default -> Sort.by(Sort.Direction.DESC, "pinned")
-                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
-        };
-
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(page, size, sortType.getSort());
         Page<NoticeListDTO> notices = noticeService.getNoticeList(category, keyword, sortType, pageable);
 
         return ApiResponse.onSuccess(notices);
