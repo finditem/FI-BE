@@ -80,4 +80,11 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     Slice<Report> findByReporterAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("reporter") User reporter, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
 
     long countByReporter(User reporter);
+
+    // 통합 목록용 커서 기반 - 전체 신고
+    @Query("SELECT r FROM Report r ORDER BY r.createdAt DESC")
+    Slice<Report> findAllOrderByCreatedAtDesc(Pageable pageable);
+
+    @Query("SELECT r FROM Report r WHERE r.createdAt < :cursor ORDER BY r.createdAt DESC")
+    Slice<Report> findAllBeforeCursorOrderByCreatedAtDesc(@Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
 }
