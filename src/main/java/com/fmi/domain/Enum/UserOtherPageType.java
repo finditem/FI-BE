@@ -24,7 +24,8 @@ public enum UserOtherPageType {
         }
         String normalized = value.trim().toLowerCase();
         return Arrays.stream(values())
-                .filter(type -> type.paramValue.equals(normalized))
+                .filter(type -> type.paramValue.equals(normalized)
+                        || type.name().equalsIgnoreCase(normalized))
                 .findFirst()
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_PAGE_TYPE_INVALID));
     }
