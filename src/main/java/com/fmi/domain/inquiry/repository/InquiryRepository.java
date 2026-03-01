@@ -134,5 +134,40 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
     @Query("SELECT i FROM Inquiry i WHERE i.user IS NOT NULL AND i.createdAt < :cursor ORDER BY i.createdAt DESC")
     Slice<Inquiry> findMemberInquiriesBeforeCursorOrderByCreatedAtDesc(@Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
+
+    // 관리자 비회원 문의 커서 기반 (id 기반, 무한스크롤) - keyword 없을 때
+    @Query("""
+            SELECT i FROM Inquiry i
+            WHERE i.user IS NULL
+              AND (:status IS NULL OR i.answerStatus = :status)
+            ORDER BY i.id DESC
+            """)
+    Slice<Inquiry> findGuestInquiriesOrderByIdDesc(@Param("status") InquiryStatus status, Pageable pageable);
+
+    @Query("""
+            SELECT i FROM Inquiry i
+            WHERE i.user IS NULL
+              AND (:status IS NULL OR i.answerStatus = :status)
+              AND i.id < :cursor
+            ORDER BY i.id DESC
+            """)
+    Slice<Inquiry> findGuestInquiriesBeforeCursorOrderByIdDesc(@Param("status") InquiryStatus status,
+                                                               @Param("cursor") Long cursor,
+                                                               Pageable pageable);
+
+    // 관리자 비회원 문의 커서 기반 (id 기반) - keyword 있을 때 (FULLTEXT, Slice)
+    @Query(value = """
+            SELECT * FROM customer_inquiry i
+            WHERE i.user_id IS NULL
+              AND (:status IS NULL OR i.answer_status = :status)
+              AND MATCH(i.title, i.content) AGAINST(:keyword IN BOOLEAN MODE)
+              AND (:cursor IS NULL OR i.id < :cursor)
+            ORDER BY i.id DESC
+            """,
+            nativeQuery = true)
+    Slice<Inquiry> findGuestInquiriesForAdminWithKeywordSlice(@Param("status") String status,
+                                                              @Param("keyword") String keyword,
+                                                              @Param("cursor") Long cursor,
+                                                              Pageable pageable);
 }
 

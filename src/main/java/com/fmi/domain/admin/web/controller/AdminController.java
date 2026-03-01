@@ -3,6 +3,7 @@ package com.fmi.domain.admin.web.controller;
 import com.fmi.domain.admin.dto.AdminCsPageResponse;
 import com.fmi.domain.admin.dto.AdminCsType;
 import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
+import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
 import com.fmi.domain.admin.dto.AdminInquiryResponse;
 import com.fmi.domain.admin.dto.AdminReportResponse;
 import com.fmi.domain.admin.dto.AdminUserDetailResponse;
@@ -86,18 +87,23 @@ public class AdminController {
     }
 
     @GetMapping("/guest-inquiries")
-    @Operation(summary = "관리자 비회원 문의 목록 조회", description = "비회원이 작성한 문의 내역을 조회합니다.")
+    @Operation(summary = "관리자 비회원 문의 목록 조회", description = """
+            비회원이 작성한 문의 내역을 조회합니다. (커서 기반 무한스크롤)
+
+            - 첫 요청: cursor 없이 호출
+            - 다음 요청: 응답의 nextCursor를 cursor 파라미터로 전달
+            예) /admin/guest-inquiries?size=20 → /admin/guest-inquiries?cursor=98&size=20
+            """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비회원 문의 목록 조회 성공")
     })
-    public ApiResponse<Page<AdminInquiryResponse>> getGuestInquiries(
+    public ApiResponse<AdminGuestInquiryPageResponse> getGuestInquiries(
             @RequestParam(required = false) InquiryStatus status,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<AdminInquiryResponse> response = adminService.getGuestInquiryPage(status, keyword, pageable);
+        AdminGuestInquiryPageResponse response = adminService.getGuestInquirySlice(status, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 

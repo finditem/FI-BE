@@ -33,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fmi.domain.admin.dto.AdminCsListResponse;
 import com.fmi.domain.admin.dto.AdminCsPageResponse;
 import com.fmi.domain.admin.dto.AdminCsType;
+import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -243,31 +245,48 @@ public class AdminService {
     }
 
     /**
-     * 관리자 비회원 문의 목록 조회 (페이지 기반)
+     * 관리자 비회원 문의 목록 조회 (커서 기반 무한스크롤, id 기반)
      */
-    public Page<AdminInquiryResponse> getGuestInquiryPage(InquiryStatus status,
-                                                           String keyword,
-                                                           Pageable pageable) {
-        Page<Inquiry> inquiries;
+    public AdminGuestInquiryPageResponse getGuestInquirySlice(InquiryStatus status,
+                                                              String keyword,
+                                                              Long cursor,
+                                                              int size) {
+        size = Math.max(1, Math.min(size, 50));
+
+        PageRequest pageRequest = PageRequest.of(0, size);
+        Slice<Inquiry> inquirySlice;
+
         if (keyword != null && !keyword.isBlank()) {
             String statusStr = status != null ? status.name() : null;
-            Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-            inquiries = inquiryRepository.findGuestInquiriesForAdminWithKeyword(statusStr, sanitizeFulltextKeyword(keyword), unsorted);
+            inquirySlice = inquiryRepository.findGuestInquiriesForAdminWithKeywordSlice(
+                    statusStr, sanitizeFulltextKeyword(keyword), cursor, pageRequest);
         } else {
-            inquiries = inquiryRepository.findGuestInquiriesForAdmin(status, pageable);
+            inquirySlice = (cursor == null)
+                    ? inquiryRepository.findGuestInquiriesOrderByIdDesc(status, pageRequest)
+                    : inquiryRepository.findGuestInquiriesBeforeCursorOrderByIdDesc(status, cursor, pageRequest);
         }
-        return inquiries.map(inquiry -> AdminInquiryResponse.builder()
-                .inquiryId(inquiry.getId())
-                .title(inquiry.getTitle())
-                .inquiryType(inquiry.getInquiryType())
-                .status(inquiry.getAnswerStatus())
-                .createdAt(inquiry.getCreatedAt())
-                .userId(null)
-                .userNickname(null)
-                .userEmail(inquiry.getEmail())
-                .content(inquiry.getContent())
-                .ip(inquiry.getIp())
-                .build());
+
+        List<AdminInquiryResponse> items = inquirySlice.getContent().stream()
+                .map(inquiry -> AdminInquiryResponse.builder()
+                        .inquiryId(inquiry.getId())
+                        .title(inquiry.getTitle())
+                        .inquiryType(inquiry.getInquiryType())
+                        .status(inquiry.getAnswerStatus())
+                        .createdAt(inquiry.getCreatedAt())
+                        .userId(null)
+                        .userNickname(null)
+                        .userEmail(inquiry.getEmail())
+                        .content(inquiry.getContent())
+                        .ip(inquiry.getIp())
+                        .build())
+                .toList();
+
+        boolean hasNext = inquirySlice.hasNext();
+        Long nextCursor = (hasNext && !items.isEmpty())
+                ? items.get(items.size() - 1).getInquiryId()
+                : null;
+
+        return new AdminGuestInquiryPageResponse(items, nextCursor, hasNext);
     }
 
     private String truncate(String text, int maxLength) {
