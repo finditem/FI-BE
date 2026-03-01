@@ -7,7 +7,6 @@ import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
-import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.domain.user.web.dto.response.UserCommentResponse;
 import com.fmi.domain.user.web.dto.response.UserPostResponse;
 import org.springframework.stereotype.Component;
@@ -29,19 +28,6 @@ public class UserConverter {
                 .profileImg(user.getProfile_img())
                 .role(user.getRole())
                 .build();
-    }
-
-    /**
-     * UserUpdateRequest로부터 User Entity 업데이트
-     * 닉네임, 프로필 이미지 수정 가능
-     */
-    public static void updateUserFromRequest(User user, UserUpdateRequest request) {
-        if (request.getNickname() != null) {
-            user.setNickname(request.getNickname());
-        }
-        if (request.isProfileImageProvided()) {
-            user.setProfile_img(request.getProfileImageUrl());
-        }
     }
 
     /**
