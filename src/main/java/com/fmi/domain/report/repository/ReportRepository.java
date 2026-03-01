@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -87,4 +88,38 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 
     @Query("SELECT r FROM Report r WHERE r.createdAt < :cursor ORDER BY r.createdAt DESC")
     Slice<Report> findAllBeforeCursorOrderByCreatedAtDesc(@Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
+
+    // 관리자 커서 기반 조회 - keyword 없을 때 (JPQL)
+    @Query("""
+            SELECT r FROM Report r
+            WHERE (:status IS NULL OR r.status = :status)
+              AND (:targetType IS NULL OR r.targetType = :targetType)
+              AND (:answered IS NULL OR r.answered = :answered)
+              AND (:cursor IS NULL OR r.reportId < :cursor)
+            ORDER BY r.reportId DESC
+            """)
+    List<Report> findAllForAdminCursor(@Param("status") ReportStatus status,
+                                       @Param("targetType") ReportTargetType targetType,
+                                       @Param("answered") Boolean answered,
+                                       @Param("cursor") Long cursor,
+                                       Pageable pageable);
+
+    // 관리자 커서 기반 조회 - keyword 있을 때 (FULLTEXT + ngram)
+    @Query(value = """
+            SELECT * FROM report r
+            WHERE (:status IS NULL OR r.status = :status)
+              AND (:targetType IS NULL OR r.target_type = :targetType)
+              AND (:answered IS NULL OR r.answered = :answered)
+              AND (:cursor IS NULL OR r.report_id < :cursor)
+              AND MATCH(r.reason) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY r.report_id DESC
+            LIMIT :limit
+            """,
+            nativeQuery = true)
+    List<Report> findAllForAdminWithKeywordCursor(@Param("status") String status,
+                                                   @Param("targetType") String targetType,
+                                                   @Param("answered") Boolean answered,
+                                                   @Param("keyword") String keyword,
+                                                   @Param("cursor") Long cursor,
+                                                   @Param("limit") int limit);
 }

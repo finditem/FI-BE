@@ -49,12 +49,16 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           command_timeout: 25m
           script: |
+            set -e
             cd ~/FMI-BE
-            
+
             # Git pull
             echo "Pulling latest code..."
-            git pull origin ${{ github.ref_name }}
-            
+            if ! git pull origin ${{ github.ref_name }}; then
+              echo "ERROR: git pull failed. Aborting deployment to protect running service."
+              exit 1
+            fi
+
             # 환경 변수 파일 생성/업데이트
             echo "Setting up environment variables..."
             {
@@ -74,18 +78,16 @@ jobs:
               echo "SLACK_WEBHOOK_INQUIRY_URL=${{ secrets.SLACK_WEBHOOK_INQUIRY_URL }}"
               echo "SLACK_WEBHOOK_REPORT_URL=${{ secrets.SLACK_WEBHOOK_REPORT_URL }}"
             } | sudo tee /etc/fmi-backend.env > /dev/null
-            
+
             # 환경 변수 파일 권한 설정
             sudo chmod 600 /etc/fmi-backend.env
             sudo chown $USER:$USER /etc/fmi-backend.env
-            
+
             # systemd 서비스 파일에 환경 변수 파일 로드 추가
             echo "Updating systemd service file..."
             SERVICE_FILE="/etc/systemd/system/fmi-backend.service"
             if [ -f "$SERVICE_FILE" ]; then
-              # EnvironmentFile이 없으면 추가
               if ! sudo grep -q "EnvironmentFile=/etc/fmi-backend.env" "$SERVICE_FILE"; then
-                # [Service] 섹션에 EnvironmentFile 추가
                 sudo sed -i '/\[Service\]/a EnvironmentFile=/etc/fmi-backend.env' "$SERVICE_FILE"
                 echo "EnvironmentFile이 systemd 서비스 파일에 추가되었습니다."
                 sudo systemctl daemon-reload
@@ -96,20 +98,38 @@ jobs:
               echo "   systemd 서비스 파일을 찾을 수 없습니다: $SERVICE_FILE"
               echo "   수동으로 EnvironmentFile=/etc/fmi-backend.env을 추가해주세요."
             fi
-            
+
+            # 빌드 전 서비스 중지 (clean이 JAR 삭제하므로 Restart=always에 의한 crash loop 방지)
+            echo "Stopping service before build..."
+            sudo systemctl stop fmi-backend || true
+
             # Build
             echo "Building application..."
-            ./gradlew clean bootJar -x test
-            
+            if ! ./gradlew clean bootJar -x test; then
+              echo "ERROR: Build failed. Restarting previous service..."
+              ./gradlew --stop || true
+              sudo systemctl start fmi-backend || true
+              exit 1
+            fi
+            ./gradlew --stop || true
+
+            # Verify jar exists
+            JAR_FILE=$(ls build/libs/fmi-*.jar 2>/dev/null | head -1)
+            if [ -z "$JAR_FILE" ]; then
+              echo "ERROR: JAR file not found after build. Aborting deployment."
+              exit 1
+            fi
+            echo "JAR file verified: $JAR_FILE"
+
             # Restart service
             echo "Restarting application..."
             sudo systemctl restart fmi-backend
-            
+
             # Check status
             echo "Checking status..."
             sleep 5
             sudo systemctl status fmi-backend --no-pager
-            
+
             echo "Deployment completed!"
 
 

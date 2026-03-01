@@ -2,7 +2,6 @@ package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.response.LoginResponse;
-import com.fmi.domain.auth.response.SignupResponse;
 import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.auth.web.dto.LoginRequest;
 import com.fmi.domain.auth.web.dto.SignupRequest;
@@ -46,9 +45,9 @@ public class AuthController {
     private String cookieSameSite;
 
     @PostMapping("/signup")
-    @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임을 입력해 회원을 생성합니다. 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다.")
+    @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임을 입력해 회원을 생성합니다. 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다. 가입 성공 시 자동 로그인되어 토큰이 쿠키로 발급됩니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원가입 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원가입 성공 (자동 로그인 포함)"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
                     description = "잘못된 요청",
@@ -88,15 +87,15 @@ public class AuthController {
                     )
             )
     })
-    public ApiResponse<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
-        Long id = authService.signup(request);
-        return ApiResponse.onSuccess(AuthConverter.toSignupResponse(id));
+    public ResponseEntity<ApiResponse<LoginResponse>> signup(@Valid @RequestBody SignupRequest request) {
+        var user = authService.signup(request);
+        return buildTokenResponse(user, false);
     }
 
     @PostMapping("/login")
-    @Operation(summary = "로그인", 
+    @Operation(summary = "로그인",
                description = """
-                   이메일과 비밀번호로 로그인합니다. 
+                   이메일과 비밀번호로 로그인합니다.
                    - 일반 비밀번호 또는 임시 비밀번호로 로그인 가능합니다.
                    - 임시 비밀번호로 로그인한 경우 isTemporaryPassword가 true로 반환되며, 프론트에서 비밀번호 변경 페이지로 리다이렉트해야 합니다.
                    - 인증 실패 시 AUTH401-INVALID_CREDENTIALS가 반환됩니다.
@@ -116,52 +115,7 @@ public class AuthController {
     })
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         var authResult = authService.authenticate(request.getEmail(), request.getPassword());
-        var user = authResult.getUser();
-        boolean isTemporaryPassword = authResult.isTemporaryPassword();
-        
-        var claims = new java.util.HashMap<String, Object>();
-        claims.put("userId", user.getId());
-        claims.put("role", user.getRole().name());
-        claims.put("purpose", "access");
-        if (isTemporaryPassword) {
-            claims.put("isTemporaryPassword", true);  // JWT에 임시 비밀번호 플래그 포함
-        }
-        String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), claims);
-        String jti = java.util.UUID.randomUUID().toString();
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), jti);
-
-        // refresh token 저장 (해시) 및 쿠키 설정 (쿠키 값은 리프레시 JWT)
-        String refreshHash = sha256Hex(refreshToken);
-        java.util.Date refreshExp = jwtTokenProvider.getExpiration(refreshToken);
-        refreshTokenStore.issue(jti, user.getEmail(), refreshHash, refreshExp.toInstant());
-
-        // accessToken 쿠키 설정
-        java.util.Date accessExp = jwtTokenProvider.getExpiration(accessToken);
-        ResponseCookie accessCookie = ResponseCookie.from(accessCookieName, accessToken)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(java.time.Duration.between(java.time.Instant.now(), accessExp.toInstant()))
-                .build();
-
-        // refreshToken 쿠키 설정
-        ResponseCookie refreshCookie = ResponseCookie.from(refreshCookieName, refreshToken)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(java.time.Duration.between(java.time.Instant.now(), refreshExp.toInstant()))
-                .build();
-
-        // 응답 생성 및 반환
-        // accessToken과 refreshToken은 쿠키로 전송되므로 응답 body에는 포함하지 않습니다.
-        // 응답 body에는 userId와 isTemporaryPassword만 포함됩니다.
-        return ResponseEntity.ok()
-                .header("Set-Cookie", accessCookie.toString())  // accessToken을 쿠키로 전송
-                .header("Set-Cookie", refreshCookie.toString())  // refreshToken을 쿠키로 전송
-                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), isTemporaryPassword)));
-                // 변경: accessToken 파라미터(null) 제거, userId와 isTemporaryPassword만 전달
+        return buildTokenResponse(authResult.getUser(), authResult.isTemporaryPassword());
     }
 
     @GetMapping("/check-nickname")
@@ -249,7 +203,7 @@ public class AuthController {
         }
         var user = userOpt.get();
 
-        // RTR: 기존 리프레시 폐기, 새 리프레시/쿠키 발급
+        // RTR: 기존 리프레시 폐기, 새 토큰 발급
         refreshTokenStore.revoke(jti);
 
         var claims = new java.util.HashMap<String, Object>();
@@ -266,34 +220,49 @@ public class AuthController {
         java.util.Date refreshExp = jwtTokenProvider.getExpiration(newRefresh);
         refreshTokenStore.issue(newJti, email, newHash, refreshExp.toInstant());
 
-        // accessToken 쿠키 설정
-        java.util.Date accessExp = jwtTokenProvider.getExpiration(accessToken);
-        ResponseCookie accessCookie = ResponseCookie.from(accessCookieName, accessToken)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(java.time.Duration.between(java.time.Instant.now(), accessExp.toInstant()))
-                .build();
+        ResponseCookie accessCookie = buildCookie(accessCookieName, accessToken, jwtTokenProvider.getExpiration(accessToken));
+        ResponseCookie refreshCookie = buildCookie(refreshCookieName, newRefresh, refreshExp);
 
-        // refreshToken 쿠키 설정
-        ResponseCookie refreshCookie = ResponseCookie.from(refreshCookieName, newRefresh)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(java.time.Duration.between(java.time.Instant.now(), refreshExp.toInstant()))
-                .build();
-
-        // 응답 생성 및 반환
-        // refresh() 메서드는 토큰 갱신만 수행하므로 userId는 null로 설정합니다.
-        // accessToken과 refreshToken은 쿠키로 전송되므로 응답 body에는 포함하지 않습니다.
         return ResponseEntity.ok()
-                .header("Set-Cookie", accessCookie.toString())  // 새 accessToken을 쿠키로 전송
-                .header("Set-Cookie", refreshCookie.toString())  // 새 refreshToken을 쿠키로 전송
+                .header("Set-Cookie", accessCookie.toString())
+                .header("Set-Cookie", refreshCookie.toString())
                 .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(null)));
-                // userId를 null로 전달: refresh()는 토큰 갱신만 하므로 userId 반환 불필요
-                // LoginResponse 구조상 userId가 필수 필드라서 null 전달 (클라이언트는 사용하지 않음)
+    }
+
+    private ResponseEntity<ApiResponse<LoginResponse>> buildTokenResponse(
+            com.fmi.domain.auth.data.User user, boolean isTemporaryPassword) {
+        var claims = new java.util.HashMap<String, Object>();
+        claims.put("userId", user.getId());
+        claims.put("role", user.getRole().name());
+        claims.put("purpose", "access");
+        if (isTemporaryPassword) {
+            claims.put("isTemporaryPassword", true);
+        }
+        String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), claims);
+        String jti = java.util.UUID.randomUUID().toString();
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), jti);
+
+        String refreshHash = sha256Hex(refreshToken);
+        java.util.Date refreshExp = jwtTokenProvider.getExpiration(refreshToken);
+        refreshTokenStore.issue(jti, user.getEmail(), refreshHash, refreshExp.toInstant());
+
+        ResponseCookie accessCookie = buildCookie(accessCookieName, accessToken, jwtTokenProvider.getExpiration(accessToken));
+        ResponseCookie refreshCookie = buildCookie(refreshCookieName, refreshToken, refreshExp);
+
+        return ResponseEntity.ok()
+                .header("Set-Cookie", accessCookie.toString())
+                .header("Set-Cookie", refreshCookie.toString())
+                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), isTemporaryPassword)));
+    }
+
+    private ResponseCookie buildCookie(String name, String value, java.util.Date expiration) {
+        return ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(java.time.Duration.between(java.time.Instant.now(), expiration.toInstant()))
+                .build();
     }
 
     private static String sha256Hex(String value) {

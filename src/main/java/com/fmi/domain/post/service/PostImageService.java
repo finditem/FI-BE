@@ -216,17 +216,21 @@ public class PostImageService {
     public void applyThumbnailOnUpdate(Post post, Long thumbnailId, List<PostImage> newlySaved) {
 
         if (thumbnailId != null) {
+            postImageRepository.resetThumbnailToNormal(post.getId());
+
             PostImage thumb = postImageRepository.findByIdAndPost_Id(thumbnailId, post.getId())
                     .orElseThrow(() -> new GeneralException(ErrorStatus._POST_IMAGE_NOT_FOUND));
 
-            postImageRepository.resetThumbnailToNormal(post.getId());
             thumb.setImageType(ImageType.THUMBNAIL);
             return;
         }
 
         if (newlySaved != null && !newlySaved.isEmpty()) {
-            postImageRepository.resetThumbnailToNormal(post.getId());
-            newlySaved.get(0).setImageType(ImageType.THUMBNAIL);
+            Long firstId = newlySaved.get(0).getId();
+            PostImage first = postImageRepository.findByIdAndPost_Id(firstId, post.getId())
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._POST_IMAGE_NOT_FOUND));
+
+            first.setImageType(ImageType.THUMBNAIL);
             return;
         }
 

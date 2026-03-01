@@ -29,7 +29,7 @@ public class AuthService {
     private final EmailService emailService;
 
     @Transactional
-    public Long signup(SignupRequest request) {
+    public User signup(SignupRequest request) {
         // 활성 사용자 이메일 중복 체크
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new GeneralException(ErrorStatus._EMAIL_DUPLICATED);
@@ -93,7 +93,7 @@ public class AuthService {
             // 로그만 남기고 계속 진행
         }
         
-        return savedUser.getId();
+        return savedUser;
     }
 
     /**

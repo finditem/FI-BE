@@ -3,10 +3,10 @@ services:
     image: mysql:8.0
     container_name: fmi-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: fmi
-      MYSQL_USER: fmi
-      MYSQL_PASSWORD: fmi
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-fmi}
+      MYSQL_USER: ${MYSQL_USER:-fmi}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-fmi}
     ports:
       - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
     volumes:
