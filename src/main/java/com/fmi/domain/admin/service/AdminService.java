@@ -27,6 +27,7 @@ import com.fmi.domain.report.converter.ReportConverter;
 import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
 import com.fmi.domain.user.data.UserCategory;
 import com.fmi.domain.user.repository.UserCategoryRepository;
+import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -188,7 +189,7 @@ public class AdminService {
     public Page<AdminDeletedUserResponse> getDeletedUsers(WithdrawalReason reason, Pageable pageable) {
         String reasonStr = reason != null ? reason.name() : null;
         Page<User> deletedUsers = userRepository.findDeletedUsers(reasonStr, pageable);
-        
+
         return deletedUsers.map(user -> AdminDeletedUserResponse.builder()
                 .userId(user.getId())
                 .nickname(user.getNickname())
@@ -199,6 +200,110 @@ public class AdminService {
                 .withdrawalReason(user.getWithdrawalReason())
                 .withdrawalOtherReason(user.getWithdrawalOtherReason())
                 .build());
+    }
+
+    public CursorPageResponse<AdminInquiryResponse> getInquiryCursorPage(
+            InquiryType type, InquiryStatus status, String keyword, Long cursor, int size) {
+        int fetchSize = size + 1;
+        List<Inquiry> inquiries;
+        if (keyword != null && !keyword.isBlank()) {
+            String typeStr = type != null ? type.name() : null;
+            String statusStr = status != null ? status.name() : null;
+            inquiries = inquiryRepository.findAllForAdminWithKeywordCursor(
+                    typeStr, statusStr, sanitizeFulltextKeyword(keyword), cursor, fetchSize);
+        } else {
+            Pageable limit = PageRequest.of(0, fetchSize);
+            inquiries = inquiryRepository.findAllForAdminCursor(type, status, cursor, limit);
+        }
+
+        boolean hasNext = inquiries.size() > size;
+        List<Inquiry> content = hasNext ? inquiries.subList(0, size) : inquiries;
+        Long nextCursor = hasNext ? content.get(content.size() - 1).getId() : null;
+
+        List<AdminInquiryResponse> responseList = content.stream()
+                .map(inquiry -> AdminInquiryResponse.builder()
+                        .inquiryId(inquiry.getId())
+                        .title(inquiry.getTitle())
+                        .inquiryType(inquiry.getInquiryType())
+                        .status(inquiry.getAnswerStatus())
+                        .createdAt(inquiry.getCreatedAt())
+                        .userId(inquiry.getUser() != null ? inquiry.getUser().getId() : null)
+                        .userNickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
+                        .userEmail(inquiry.getEmail() != null ? inquiry.getEmail() :
+                                inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
+                        .content(inquiry.getContent())
+                        .ip(inquiry.getIp())
+                        .build())
+                .toList();
+
+        return new CursorPageResponse<>(responseList, nextCursor, hasNext);
+    }
+
+    public CursorPageResponse<AdminReportResponse> getReportCursorPage(
+            ReportStatus status, ReportTargetType targetType, Boolean answered,
+            String keyword, Long cursor, int size) {
+        int fetchSize = size + 1;
+        List<Report> reports;
+        if (keyword != null && !keyword.isBlank()) {
+            String statusStr = status != null ? status.name() : null;
+            String targetTypeStr = targetType != null ? targetType.name() : null;
+            reports = reportRepository.findAllForAdminWithKeywordCursor(
+                    statusStr, targetTypeStr, answered, sanitizeFulltextKeyword(keyword), cursor, fetchSize);
+        } else {
+            Pageable limit = PageRequest.of(0, fetchSize);
+            reports = reportRepository.findAllForAdminCursor(status, targetType, answered, cursor, limit);
+        }
+
+        boolean hasNext = reports.size() > size;
+        List<Report> content = hasNext ? reports.subList(0, size) : reports;
+        Long nextCursor = hasNext ? content.get(content.size() - 1).getReportId() : null;
+
+        List<AdminReportResponse> responseList = content.stream()
+                .map(report -> AdminReportResponse.builder()
+                        .reportId(report.getReportId())
+                        .targetType(report.getTargetType())
+                        .targetId(report.getTargetId())
+                        .reportType(report.getReportType())
+                        .status(report.getStatus())
+                        .reason(report.getReason())
+                        .adminNote(report.getAdminNote())
+                        .createdAt(report.getCreatedAt())
+                        .updatedAt(report.getUpdatedAt())
+                        .resolvedAt(report.getResolvedAt())
+                        .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
+                        .reporterNickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
+                        .reporterEmail(report.getReporter() != null ? report.getReporter().getEmail() : null)
+                        .answered(report.getAnswered())
+                        .build())
+                .toList();
+
+        return new CursorPageResponse<>(responseList, nextCursor, hasNext);
+    }
+
+    public CursorPageResponse<AdminDeletedUserResponse> getDeletedUsersCursorPage(
+            WithdrawalReason reason, Long cursor, int size) {
+        int fetchSize = size + 1;
+        String reasonStr = reason != null ? reason.name() : null;
+        List<User> users = userRepository.findDeletedUsersCursor(reasonStr, cursor, fetchSize);
+
+        boolean hasNext = users.size() > size;
+        List<User> content = hasNext ? users.subList(0, size) : users;
+        Long nextCursor = hasNext ? content.get(content.size() - 1).getId() : null;
+
+        List<AdminDeletedUserResponse> responseList = content.stream()
+                .map(user -> AdminDeletedUserResponse.builder()
+                        .userId(user.getId())
+                        .nickname(user.getNickname())
+                        .email(user.getEmail())
+                        .role(user.getRole())
+                        .createdAt(user.getCreatedAt())
+                        .deletedAt(user.getDeletedAt())
+                        .withdrawalReason(user.getWithdrawalReason())
+                        .withdrawalOtherReason(user.getWithdrawalOtherReason())
+                        .build())
+                .toList();
+
+        return new CursorPageResponse<>(responseList, nextCursor, hasNext);
     }
 }
 

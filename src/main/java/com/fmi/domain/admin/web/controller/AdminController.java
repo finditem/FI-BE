@@ -25,6 +25,7 @@ import com.fmi.domain.report.service.ReportService;
 import com.fmi.domain.report.web.dto.ReportStatusUpdateRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.CursorPageResponse;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,10 +33,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -61,19 +58,19 @@ public class AdminController {
     private final AuthService authService;
 
     @GetMapping("/inquiries")
-    @Operation(summary = "관리자 문의 목록 조회", description = "문의 타입/상태 조건으로 전체 문의 내역을 조회합니다.")
+    @Operation(summary = "관리자 문의 목록 조회", description = "커서 기반 페이지네이션으로 문의 내역을 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 목록 조회 성공")
     })
-    public ApiResponse<Page<AdminInquiryResponse>> getInquiries(
+    public ApiResponse<CursorPageResponse<AdminInquiryResponse>> getInquiries(
             @RequestParam(required = false) InquiryType type,
             @RequestParam(required = false) InquiryStatus status,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<AdminInquiryResponse> response = adminService.getInquiryPage(type, status, keyword, pageable);
+        CursorPageResponse<AdminInquiryResponse> response =
+                adminService.getInquiryCursorPage(type, status, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 
@@ -99,20 +96,20 @@ public class AdminController {
     }
 
     @GetMapping("/reports")
-    @Operation(summary = "관리자 신고 내역 조회", description = "신고 상태/대상 유형 기준으로 신고 내역을 조회합니다.")
+    @Operation(summary = "관리자 신고 내역 조회", description = "커서 기반 페이지네이션으로 신고 내역을 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 내역 조회 성공")
     })
-    public ApiResponse<Page<AdminReportResponse>> getReports(
+    public ApiResponse<CursorPageResponse<AdminReportResponse>> getReports(
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(required = false) ReportTargetType targetType,
             @RequestParam(required = false) Boolean answered,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<AdminReportResponse> response = adminService.getReportPage(status, targetType, answered, keyword, pageable);
+        CursorPageResponse<AdminReportResponse> response =
+                adminService.getReportCursorPage(status, targetType, answered, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 
@@ -353,17 +350,17 @@ public class AdminController {
     }
 
     @GetMapping("/users/deleted")
-    @Operation(summary = "탈퇴 유저 목록 조회", description = "탈퇴한 사용자 목록을 조회합니다. 탈퇴 사유로 필터링할 수 있습니다.")
+    @Operation(summary = "탈퇴 유저 목록 조회", description = "커서 기반 페이지네이션으로 탈퇴한 사용자 목록을 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "탈퇴 유저 목록 조회 성공")
     })
-    public ApiResponse<Page<AdminDeletedUserResponse>> getDeletedUsers(
+    public ApiResponse<CursorPageResponse<AdminDeletedUserResponse>> getDeletedUsers(
             @RequestParam(required = false) WithdrawalReason reason,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "deletedAt"));
-        Page<AdminDeletedUserResponse> response = adminService.getDeletedUsers(reason, pageable);
+        CursorPageResponse<AdminDeletedUserResponse> response =
+                adminService.getDeletedUsersCursorPage(reason, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 }

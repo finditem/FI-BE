@@ -56,6 +56,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findDeletedUsers(@Param("reason") String reason, Pageable pageable);
 
     Optional<User> findByNickname(String nickname);
+
+    // 탈퇴한 사용자 커서 기반 조회 (관리자용)
+    @Query(value = "SELECT * FROM users u WHERE u.deleted_at IS NOT NULL " +
+           "AND (:reason IS NULL OR FIND_IN_SET(:reason, u.withdrawal_reason) > 0) " +
+           "AND (:cursor IS NULL OR u.id < :cursor) " +
+           "ORDER BY u.id DESC LIMIT :limit",
+           nativeQuery = true)
+    List<User> findDeletedUsersCursor(@Param("reason") String reason,
+                                      @Param("cursor") Long cursor,
+                                      @Param("limit") int limit);
 }
 
 
