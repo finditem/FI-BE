@@ -30,8 +30,6 @@ public class AdminUserDetailResponse {
     private Role role;
     @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
     private String profileImg;
-    @Schema(description = "이용약관 동의 여부", example = "true")
-    private boolean termsOfServiceAgreed;
     @Schema(description = "개인정보 처리방침 동의 여부", example = "true")
     private boolean privacyPolicyAgreed;
     @Schema(description = "마케팅 수신 동의 여부", example = "false")

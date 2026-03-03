@@ -20,10 +20,6 @@ public class SignupRequest {
     private String nickname;
 
     // 동의 항목 (모두 필수 - 값은 반드시 전송해야 함)
-    @Schema(description = "이용약관 동의", example = "true")
-    @NotNull(message = "이용약관 동의 값을 입력해주세요.")
-    private Boolean termsOfServiceAgreed;
-    
     @Schema(description = "개인정보 처리방침 동의", example = "true")
     @NotNull(message = "개인정보 처리방침 동의 값을 입력해주세요.")
     private Boolean privacyPolicyAgreed;
