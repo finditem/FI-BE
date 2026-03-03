@@ -14,6 +14,7 @@ import com.fmi.domain.notification.web.dto.response.NotificationListDTO;
 import com.fmi.domain.notification.web.dto.response.NotificationSettingsDTO;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.user.repository.UserCategoryRepository;
+import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -58,6 +61,35 @@ public class NotificationService {
         return notifications.map(notificationConverter::toListDTO);
     }
     
+    /**
+     * 내 알림 목록 조회 (커서 기반)
+     */
+    public CursorPageResponse<NotificationListDTO> getMyNotificationsCursor(User user, Boolean unreadOnly, NotificationType notificationType, Long cursor, int size) {
+        int fetchSize = size + 1;
+        Pageable limit = PageRequest.of(0, fetchSize);
+        List<Notification> notifications;
+
+        if (notificationType != null && Boolean.TRUE.equals(unreadOnly)) {
+            notifications = notificationRepository.findByUserAndTypeAndIsReadFalseCursor(user, notificationType, cursor, limit);
+        } else if (notificationType != null) {
+            notifications = notificationRepository.findByUserAndTypeCursor(user, notificationType, cursor, limit);
+        } else if (Boolean.TRUE.equals(unreadOnly)) {
+            notifications = notificationRepository.findByUserAndIsReadFalseCursor(user, cursor, limit);
+        } else {
+            notifications = notificationRepository.findByUserCursor(user, cursor, limit);
+        }
+
+        boolean hasNext = notifications.size() > size;
+        List<Notification> content = hasNext ? notifications.subList(0, size) : notifications;
+        Long nextCursor = hasNext ? content.get(content.size() - 1).getNotificationId() : null;
+
+        List<NotificationListDTO> responseList = content.stream()
+                .map(notificationConverter::toListDTO)
+                .toList();
+
+        return new CursorPageResponse<>(responseList, nextCursor, hasNext);
+    }
+
     /**
      * 읽지 않은 알림 개수
      */

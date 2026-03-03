@@ -19,6 +19,7 @@ import com.fmi.domain.noticecomment.repository.NoticeCommentRepository;
 import com.fmi.domain.noticecommentlike.repository.NoticeCommentLikeRepository;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.ImageType;
+import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -90,6 +91,54 @@ public class NoticeService {
                 finalThumbnailMap.get(notice.getNoticeId())));
     }
     
+    /**
+     * 공지사항 목록 조회 (커서 기반)
+     */
+    public CursorPageResponse<NoticeListDTO> getNoticeListCursor(NoticeCategory category, String keyword, NoticeSortType sortType, Long cursor, int size) {
+        int fetchSize = size + 1;
+        String categoryStr = category != null ? category.name() : null;
+
+        List<Notice> notices;
+        if (keyword != null && !keyword.isBlank()) {
+            String sanitized = sanitizeFulltextKeyword(keyword);
+            notices = switch (sortType) {
+                case OLDEST -> noticeRepository.searchNoticesOldestCursor(categoryStr, sanitized, cursor, fetchSize);
+                case MOST_VIEWED -> noticeRepository.searchNoticesMostViewedCursor(categoryStr, sanitized, cursor, fetchSize);
+                default -> noticeRepository.searchNoticesCursor(categoryStr, sanitized, cursor, fetchSize);
+            };
+        } else {
+            notices = switch (sortType) {
+                case OLDEST -> noticeRepository.findByDraftFalseOldestCursor(categoryStr, cursor, fetchSize);
+                default -> noticeRepository.findByDraftFalseCursor(categoryStr, cursor, fetchSize);
+            };
+        }
+
+        boolean hasNext = notices.size() > size;
+        List<Notice> content = hasNext ? notices.subList(0, size) : notices;
+        Long nextCursor = hasNext ? content.get(content.size() - 1).getNoticeId() : null;
+
+        // 썸네일 일괄 조회 (N+1 방지)
+        List<Long> noticeIds = content.stream()
+                .map(Notice::getNoticeId)
+                .toList();
+
+        Map<Long, String> thumbnailMap = Map.of();
+        if (!noticeIds.isEmpty()) {
+            thumbnailMap = noticeImageRepository.findThumbnailsByNoticeIds(noticeIds).stream()
+                    .collect(Collectors.toMap(
+                            img -> img.getNotice().getNoticeId(),
+                            NoticeImage::getImgUrl,
+                            (a, b) -> a));
+        }
+
+        Map<Long, String> finalThumbnailMap = thumbnailMap;
+        List<NoticeListDTO> responseList = content.stream()
+                .map(notice -> noticeConverter.toListDTO(notice, finalThumbnailMap.get(notice.getNoticeId())))
+                .toList();
+
+        return new CursorPageResponse<>(responseList, nextCursor, hasNext);
+    }
+
     /**
      * 공지사항 상세 조회
      * @param noticeId 공지사항 ID

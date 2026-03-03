@@ -7,6 +7,7 @@ import com.fmi.domain.inquiry.service.InquiryService;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,10 +19,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -76,27 +73,26 @@ public class InquiryController {
     
     /**
      * 내 문의 내역 조회
-     * GET /api/inquiries/me?page=0&size=10
+     * GET /api/inquiries/me?cursor=10&size=10
      */
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "내 문의 내역 조회", description = "본인의 1:1 개인 문의를 조회합니다.")
+    @Operation(summary = "내 문의 내역 조회", description = "커서 기반 페이지네이션으로 본인의 1:1 개인 문의를 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 문의 내역 조회 성공")
     })
-    public ApiResponse<Page<InquiryListDTO>> getMyInquiries(
+    public ApiResponse<CursorPageResponse<InquiryListDTO>> getMyInquiries(
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "문의 상태 필터 (RECEIVED=접수 대기, PENDING=처리 중, ANSWERED=답변 완료)")
             @RequestParam(required = false) InquiryStatus status,
             @Parameter(description = "답변 여부 필터 (true=답변완료, false=미답변)")
             @RequestParam(required = false) Boolean answered,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size) {
 
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<InquiryListDTO> inquiries = inquiryService.getMyInquiries(user, status, answered, pageable);
+        CursorPageResponse<InquiryListDTO> inquiries = inquiryService.getMyInquiriesCursor(user, status, answered, cursor, size);
         return ApiResponse.onSuccess(inquiries);
     }
 
