@@ -1,6 +1,9 @@
 package com.fmi.domain.admin.web.controller;
 
+import com.fmi.domain.admin.dto.AdminCsPageResponse;
+import com.fmi.domain.admin.dto.AdminCsType;
 import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
+import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
 import com.fmi.domain.admin.dto.AdminInquiryResponse;
 import com.fmi.domain.admin.dto.AdminReportResponse;
 import com.fmi.domain.admin.dto.AdminUserDetailResponse;
@@ -57,8 +60,52 @@ public class AdminController {
     private final ReportService reportService;
     private final AuthService authService;
 
+    @GetMapping("/customer-service")
+    @Operation(summary = "관리자 신고/문의 통합 목록 조회", description = """
+            신고와 문의를 통합하여 최신순으로 조회합니다.
+
+            **type 파라미터:**
+            - 미지정: 신고 + 문의 전체
+            - REPORT: 신고만
+            - INQUIRY: 회원 문의만 (비회원 문의 제외)
+
+            **커서**: ISO datetime 형식 (예: 2024-01-01T00:00:00)
+            """)
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "통합 목록 조회 성공")
+    })
+    public ApiResponse<AdminCsPageResponse> getCustomerService(
+            @RequestParam(required = false) AdminCsType type,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        AdminCsPageResponse response = adminService.getCustomerServicePage(type, cursor, size);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/guest-inquiries")
+    @Operation(summary = "관리자 비회원 문의 목록 조회", description = """
+            비회원이 작성한 문의 내역을 조회합니다. (커서 기반 무한스크롤)
+
+            - 첫 요청: cursor 없이 호출
+            - 다음 요청: 응답의 nextCursor를 cursor 파라미터로 전달
+            예) /admin/guest-inquiries?size=20 → /admin/guest-inquiries?cursor=98&size=20
+            """)
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비회원 문의 목록 조회 성공")
+    })
+    public ApiResponse<AdminGuestInquiryPageResponse> getGuestInquiries(
+            @RequestParam(required = false) InquiryStatus status,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        AdminGuestInquiryPageResponse response = adminService.getGuestInquirySlice(status, keyword, cursor, size);
+        return ApiResponse.onSuccess(response);
+    }
+
     @GetMapping("/inquiries")
-    @Operation(summary = "관리자 문의 목록 조회", description = "커서 기반 페이지네이션으로 문의 내역을 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다.")
+    @Operation(summary = "관리자 회원 문의 목록 조회", description = "커서 기반 페이지네이션으로 회원이 작성한 문의 내역을 조회합니다. (비회원 문의 제외) cursor를 생략하면 최신 항목부터 반환합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 목록 조회 성공")
     })
