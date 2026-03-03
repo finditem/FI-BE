@@ -22,6 +22,21 @@ public interface PostRepositoryCustom {
                                                  Long userId,
                                                  Set<Long> hotPostsIds);
 
+    PostPageResponse searchMyPosts(Long userId,
+                                    PostType postType,
+                                    PostStatus postStatus,
+                                    Category category,
+                                    SortType sortType,
+                                    Long cursor,
+                                    int size);
+
+    PostPageResponse searchMyFavorites(Long userId,
+                                        PostType postType,
+                                        PostStatus postStatus,
+                                        Category category,
+                                        SortType sortType,
+                                        Long cursor,
+                                        int size);
 
     List<Post> searchByKeywordWithCursor(String keyword, Long cursor, int size);
 

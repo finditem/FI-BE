@@ -1,14 +1,19 @@
 package com.fmi.domain.user.service;
 
+import com.fmi.domain.Enum.Category;
+import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.data.PostStatus;
+import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
+import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.user.converter.UserConverter;
@@ -221,27 +226,15 @@ public class UserService {
     }
 
     /**
-     * 내가 쓴 게시글 목록 조회 (커서 기반)
+     * 내가 쓴 게시글 목록 조회 (커서 기반 + 필터)
      */
     @Transactional(readOnly = true)
-    public MyPostPageResponse getMyPosts(String email, Long cursor, int size) {
+    public PostPageResponse getMyPosts(String email, PostType postType, PostStatus postStatus,
+                                        Category category, SortType sortType, Long cursor, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        PageRequest pageRequest = PageRequest.of(0, size);
-        Slice<Post> postSlice = (cursor == null)
-                ? postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseOrderByIdDesc(user, pageRequest)
-                : postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseAndIdLessThanOrderByIdDesc(user, cursor, pageRequest);
-
-        List<Post> postList = postSlice.getContent();
-        List<PostBriefResponse> posts = postQueryService.getPostBriefResponseList(postList, user);
-
-        boolean hasNext = postSlice.hasNext();
-        Long nextCursor = (hasNext && !postList.isEmpty())
-                ? postList.get(postList.size() - 1).getId()
-                : null;
-
-        return new MyPostPageResponse(posts, nextCursor, hasNext);
+        return postRepository.searchMyPosts(user.getId(), postType, postStatus, category, sortType, cursor, size);
     }
 
     /**
