@@ -1,5 +1,6 @@
 package com.fmi.domain.user.web.controller;
 
+import com.fmi.domain.Enum.ActivityType;
 import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
@@ -14,18 +15,21 @@ import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -137,12 +141,16 @@ public class UserController {
     @Operation(summary = "내 활동 내역 통합 조회", description = """
             현재 로그인한 사용자의 모든 활동 내역을 통합하여 최신순으로 조회합니다.
 
-            **활동 유형:**
+            **활동 유형 (type):**
             - POST: 작성한 게시글
             - COMMENT: 작성한 댓글
             - FAVORITE: 즐겨찾기한 게시글
             - INQUIRY: 문의 내역
             - REPORT: 신고 내역
+            - 미지정 시 전체 활동 조회
+
+            **날짜 필터:**
+            - startDate, endDate: yyyy-MM-dd 형식 (예: 2024-01-01)
 
             **커서**: ISO datetime 형식 (예: 2024-01-01T00:00:00)
             """)
@@ -152,11 +160,14 @@ public class UserController {
     })
     public ApiResponse<MyActivityPageResponse> getMyActivities(
             @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) ActivityType type,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
         String email = userDetails.getUsername();
-        MyActivityPageResponse response = userService.getMyActivities(email, cursor, size);
+        MyActivityPageResponse response = userService.getMyActivities(email, type, startDate, endDate, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 
