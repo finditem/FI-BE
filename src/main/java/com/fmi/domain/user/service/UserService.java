@@ -321,14 +321,15 @@ public class UserService {
     }
 
     /**
-     * 내 정보 수정 (닉네임 + 프로필 이미지 통합)
+     * 내 정보 수정 (닉네임 + 프로필 이미지 통합, multipart/form-data)
      */
-    public UserProfileResponse updateMyProfile(String email, UserUpdateRequest request) {
+    public UserProfileResponse updateMyProfile(String email, UserUpdateRequest request,
+                                                MultipartFile profileImage, boolean deleteProfileImage) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        // 닉네임 유효성 검사 및 중복 체크 (본인의 닉네임이 아닌 경우만)
-        if (request.getNickname() != null) {
+        // 닉네임 유효성 검사 및 중복 체크 (request가 존재하고 nickname 필드가 명시적으로 전송된 경우만)
+        if (request != null && request.isNicknameProvided() && request.getNickname() != null) {
             if (request.getNickname().isBlank()) {
                 throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
             }
@@ -337,10 +338,12 @@ public class UserService {
                     throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
                 }
             }
+            user.setNickname(request.getNickname());
         }
 
-        // 프로필 이미지 변경 요청이 있는 경우 기존 이미지 S3 삭제
-        if (request.isProfileImageProvided() && user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
+        // 기존 프로필 이미지 S3 삭제 (새 이미지 업로드 또는 삭제 요청 시)
+        boolean shouldDeleteOldImage = (profileImage != null && !profileImage.isEmpty()) || deleteProfileImage;
+        if (shouldDeleteOldImage && user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
             try {
                 s3Service.delete(List.of(user.getProfile_img()));
             } catch (Exception e) {
@@ -348,10 +351,15 @@ public class UserService {
             }
         }
 
-        // User 닉네임 + 프로필 이미지 업데이트
-        UserConverter.updateUserFromRequest(user, request);
-        user.setUpdatedAt(LocalDateTime.now());
+        // 프로필 이미지 처리
+        if (profileImage != null && !profileImage.isEmpty()) {
+            List<String> uploadedUrls = s3Service.upload(List.of(profileImage));
+            user.setProfile_img(uploadedUrls.get(0));
+        } else if (deleteProfileImage) {
+            user.setProfile_img(null);
+        }
 
+        user.setUpdatedAt(LocalDateTime.now());
         User updatedUser = userRepository.save(user);
         return UserConverter.toUserProfileResponse(updatedUser);
     }

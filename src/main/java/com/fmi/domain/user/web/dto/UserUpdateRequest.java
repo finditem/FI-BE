@@ -5,24 +5,20 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Setter
 @NoArgsConstructor
 public class UserUpdateRequest {
 
     @Size(min = 2, max = 15, message = "닉네임은 2~15자 사이여야 합니다")
     private String nickname;
 
-    private String profileImageUrl;
-
     @JsonIgnore
-    private boolean profileImageProvided = false;
+    private boolean nicknameProvided = false;
 
-    @JsonSetter("profileImageUrl")
-    public void setProfileImageUrl(String profileImageUrl) {
-        this.profileImageProvided = true;
-        this.profileImageUrl = profileImageUrl;
+    @JsonSetter("nickname")
+    public void setNickname(String nickname) {
+        this.nicknameProvided = true;
+        this.nickname = nickname;
     }
 }

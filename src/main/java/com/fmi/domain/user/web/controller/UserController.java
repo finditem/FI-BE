@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -208,15 +209,20 @@ public class UserController {
         return ApiResponse.onSuccess(response);
     }
 
-    @PatchMapping("/me")
+    @PatchMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "내 정보 수정", description = """
             현재 로그인한 사용자의 프로필 정보를 수정합니다. (닉네임, 프로필 이미지 통합)
 
-            **닉네임**: nickname 필드로 변경 (2~15자)
-            **프로필 이미지**: profileImageUrl 필드로 변경
-            - 필드 자체를 보내지 않으면 → 이미지 변경 없음
-            - null로 보내면 → 기존 이미지 삭제
-            - URL 값을 보내면 → 새 이미지로 업데이트
+            **닉네임** (request JSON 내 nickname 필드):
+            - 필드 자체를 보내지 않으면 → 닉네임 변경 없음
+            - 값을 보내면 → 닉네임 변경 (2~15자)
+            
+            **프로필 이미지** (profileImage 파일 파트):
+            - 파일을 보내지 않으면 → 이미지 변경 없음
+            - 파일을 보내면 → 기존 이미지 삭제 후 새 이미지로 업데이트
+            
+            **이미지 삭제** (deleteProfileImage 파라미터):
+            - true로 보내면 → 기존 이미지 삭제 (프로필 이미지 없음 상태)
             """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 정보 수정 성공"),
@@ -243,10 +249,12 @@ public class UserController {
     })
     public ApiResponse<UserProfileResponse> updateMyProfile(
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody UserUpdateRequest request
+            @RequestPart(value = "request", required = false) @Valid UserUpdateRequest request,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
+            @RequestParam(value = "deleteProfileImage", required = false, defaultValue = "false") boolean deleteProfileImage
     ) {
         String email = userDetails.getUsername();
-        UserProfileResponse response = userService.updateMyProfile(email, request);
+        UserProfileResponse response = userService.updateMyProfile(email, request, profileImage, deleteProfileImage);
         return ApiResponse.onSuccess(response);
     }
 
