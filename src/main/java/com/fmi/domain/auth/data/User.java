@@ -72,7 +72,6 @@ public class User {
     @Column(name = "withdrawal_other_reason", columnDefinition = "TEXT")
     private String withdrawalOtherReason;       // 탈퇴 사유 기타 (reason에 OTHER가 포함된 경우)
 
-    private boolean termsOfServiceAgreed;      // 서비스 이용약관 동의
     private boolean privacyPolicyAgreed;       // 개인정보 처리방침 동의
     private boolean marketingConsent;           // 마케팅 수신 동의
 

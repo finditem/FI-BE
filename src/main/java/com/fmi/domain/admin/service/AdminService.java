@@ -144,7 +144,6 @@ public class AdminService {
                 .emailVerified(user.isEmail_verified())
                 .role(user.getRole())
                 .profileImg(user.getProfile_img())
-                .termsOfServiceAgreed(user.isTermsOfServiceAgreed())
                 .privacyPolicyAgreed(user.isPrivacyPolicyAgreed())
                 .marketingConsent(user.isMarketingConsent())
                 .createdAt(user.getCreatedAt())
