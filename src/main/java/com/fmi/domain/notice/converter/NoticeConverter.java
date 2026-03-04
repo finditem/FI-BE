@@ -33,6 +33,10 @@ public class NoticeConverter {
     }
 
     public NoticeResponseDTO toResponseDTO(Notice notice, List<NoticeImage> images) {
+        return toResponseDTO(notice, images, 0);
+    }
+
+    public NoticeResponseDTO toResponseDTO(Notice notice, List<NoticeImage> images, int commentCount) {
         List<String> imageUrls = images.stream()
                 .map(NoticeImage::getImgUrl)
                 .toList();
@@ -45,6 +49,7 @@ public class NoticeConverter {
                 .pinned(notice.getPinned())
                 .viewCount(notice.getViewCount())
                 .likeCount(notice.getLikeCount())
+                .commentCount(commentCount)
                 .authorName(notice.getAuthor() != null ? notice.getAuthor().getNickname() : "관리자")
                 .images(imageUrls)
                 .createdAt(notice.getCreatedAt())

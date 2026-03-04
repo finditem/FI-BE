@@ -171,7 +171,8 @@ public class NoticeService {
                 .orElse(notice.getViewCount().longValue());
         
         List<NoticeImage> images = noticeImageRepository.findByNotice(notice);
-        NoticeResponseDTO response = noticeConverter.toResponseDTO(notice, images);
+        int commentCount = (int) noticeCommentRepository.countByNoticeNoticeId(noticeId);
+        NoticeResponseDTO response = noticeConverter.toResponseDTO(notice, images, commentCount);
         // Redis 조회수로 덮어쓰기
         response.setViewCount(currentViewCount.intValue());
 
