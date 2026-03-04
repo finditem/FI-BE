@@ -209,6 +209,7 @@ public class AdminService {
                     r.getTargetType().getDescription() + " 신고",
                     truncate(r.getReason(), 100),
                     r.getStatus().name(),
+                    r.getAnswered(),
                     r.getReporter() != null ? r.getReporter().getNickname() : null,
                     r.getReporter() != null ? r.getReporter().getEmail() : null,
                     r.getCreatedAt()
@@ -226,6 +227,7 @@ public class AdminService {
                     i.getTitle(),
                     truncate(i.getContent(), 100),
                     i.getAnswerStatus().name(),
+                    i.getAnswerStatus() == InquiryStatus.ANSWERED,
                     i.getUser() != null ? i.getUser().getNickname() : null,
                     i.getUser() != null ? i.getUser().getEmail() : null,
                     i.getCreatedAt()
