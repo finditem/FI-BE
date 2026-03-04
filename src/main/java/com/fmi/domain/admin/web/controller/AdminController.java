@@ -5,6 +5,7 @@ import com.fmi.domain.admin.dto.AdminCsPageResponse;
 import com.fmi.domain.admin.dto.AdminCsType;
 import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
 import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
+import com.fmi.domain.admin.dto.AdminGuestInquiryReplyRequestDTO;
 import com.fmi.domain.admin.dto.AdminInquiryResponse;
 import com.fmi.domain.admin.dto.AdminReportResponse;
 import com.fmi.domain.admin.dto.AdminUserDetailResponse;
@@ -325,6 +326,37 @@ public class AdminController {
     public ApiResponse<String> deleteNotice(@PathVariable Long noticeId) {
         noticeService.deleteNotice(noticeId);
         return ApiResponse.onSuccess("공지사항 삭제 완료");
+    }
+
+    @PostMapping("/guest-inquiries/{inquiryId}/reply")
+    @Operation(summary = "비회원 문의 답변 (이메일 발송)", description = "비회원 문의에 대해 이메일로 답변을 발송합니다. 상태가 ANSWERED로 변경됩니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "답변 발송 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "회원 문의이거나 이메일이 없는 경우",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<String> replyToGuestInquiry(@PathVariable Long inquiryId,
+                                                    @Valid @RequestBody AdminGuestInquiryReplyRequestDTO request) {
+        inquiryService.replyToGuestInquiry(inquiryId, request.getContent());
+        return ApiResponse.onSuccess("OK");
     }
 
     @PutMapping("/inquiries/{inquiryId}/status")
