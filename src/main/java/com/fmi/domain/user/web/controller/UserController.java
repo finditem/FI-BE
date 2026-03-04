@@ -1,10 +1,14 @@
 package com.fmi.domain.user.web.controller;
 
 import com.fmi.domain.Enum.ActivityType;
+import com.fmi.domain.Enum.Category;
+import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.Enum.UserOtherPageType;
+import com.fmi.domain.post.data.PostStatus;
+import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
-import com.fmi.domain.user.response.MyPostPageResponse;
 import com.fmi.domain.user.response.MyActivityPageResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
@@ -122,18 +126,29 @@ public class UserController {
     }
 
     @GetMapping("/me/posts")
-    @Operation(summary = "내가 쓴 게시글 목록", description = "현재 로그인한 사용자가 작성한 게시글 목록을 커서 기반으로 조회합니다.")
+    @Operation(summary = "내가 쓴 게시글 목록", description = """
+            현재 로그인한 사용자가 작성한 게시글 목록을 커서 기반으로 조회합니다.
+
+            **필터 파라미터** (모두 선택):
+            - postType: LOST / FOUND
+            - postStatus: SEARCHING / FOUND
+            - category: ELECTRONICS / WALLET / ID_CARD / JEWELRY / BAG / CARD / ETC
+            """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 게시글 목록 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다")
     })
-    public ApiResponse<MyPostPageResponse> getMyPosts(
+    public ApiResponse<PostPageResponse> getMyPosts(
             @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) PostType postType,
+            @RequestParam(required = false) PostStatus postStatus,
+            @RequestParam(required = false) Category category,
+            @RequestParam(required = false, defaultValue = "LATEST") SortType sortType,
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "20") int size
     ) {
         String email = userDetails.getUsername();
-        MyPostPageResponse response = userService.getMyPosts(email, cursor, size);
+        PostPageResponse response = userService.getMyPosts(email, postType, postStatus, category, sortType, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 
