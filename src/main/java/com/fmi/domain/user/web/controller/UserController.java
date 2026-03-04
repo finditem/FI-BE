@@ -147,6 +147,7 @@ public class UserController {
             - FAVORITE: 즐겨찾기한 게시글
             - INQUIRY: 문의 내역
             - REPORT: 신고 내역
+            - VERIFICATION: 인증 내역
             - 미지정 시 전체 활동 조회
 
             **날짜 필터:**

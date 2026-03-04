@@ -5,5 +5,6 @@ public enum ActivityType {
     COMMENT,
     FAVORITE,
     INQUIRY,
-    REPORT
+    REPORT,
+    VERIFICATION
 }
