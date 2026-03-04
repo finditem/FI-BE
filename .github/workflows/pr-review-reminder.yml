@@ -146,22 +146,6 @@ jobs:
                   labels: [targetLabel]
                 });
 
-                // 리마인드 코멘트 (D-3 이하일 때만)
-                const messages = {
-                  'D-3': `⏰ **리뷰 리마인드** — PR 생성 후 ${diffDays}일 경과, 3일 이내 리뷰가 필요합니다.`,
-                  'D-1': `🔔 **리뷰 긴급** — PR 생성 후 ${diffDays}일 경과, 24시간 이내 리뷰가 필요합니다.`,
-                  'D-0': `🚨 **리뷰 마감** — PR 생성 후 ${diffDays}일 경과, 기한이 초과되었습니다. 리뷰가 즉시 필요합니다.`
-                };
-
-                if (messages[targetLabel]) {
-                  await github.rest.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: pr.number,
-                    body: messages[targetLabel]
-                  });
-                }
-
                 console.log(`PR #${pr.number}: ${currentDLabel || '없음'} → ${targetLabel} (${diffDays}일 경과)`);
               }
             }
