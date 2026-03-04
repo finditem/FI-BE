@@ -100,7 +100,6 @@ public class PostImageService {
         } catch (Exception e) {
             log.warn("S3 delete failed. postId={}, urls={}", post.getId(), urlList, e);
         }
-        s3Service.delete(urlList);
 
         postImageRepository.deleteAllByPostId(post.getId());
     }
