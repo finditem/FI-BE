@@ -32,6 +32,8 @@ public class NoticeResponseDTO {
     private Integer commentCount;
     @Schema(description = "작성자", example = "관리자")
     private String authorName;
+    @Schema(description = "썸네일 이미지 URL")
+    private String thumbnailUrl;
     @Schema(description = "이미지 URL 목록")
     private List<String> images;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")

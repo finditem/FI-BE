@@ -4,6 +4,7 @@ import com.fmi.domain.notice.data.Notice;
 import com.fmi.domain.notice.data.NoticeImage;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
+import com.fmi.domain.post.data.ImageType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -41,6 +42,12 @@ public class NoticeConverter {
                 .map(NoticeImage::getImgUrl)
                 .toList();
 
+        String thumbnailUrl = images.stream()
+                .filter(img -> img.getImageType() == ImageType.THUMBNAIL)
+                .map(NoticeImage::getImgUrl)
+                .findFirst()
+                .orElse(imageUrls.isEmpty() ? null : imageUrls.get(0));
+
         return NoticeResponseDTO.builder()
                 .noticeId(notice.getNoticeId())
                 .title(notice.getTitle())
@@ -51,6 +58,7 @@ public class NoticeConverter {
                 .likeCount(notice.getLikeCount())
                 .commentCount(commentCount)
                 .authorName(notice.getAuthor() != null ? notice.getAuthor().getNickname() : "관리자")
+                .thumbnailUrl(thumbnailUrl)
                 .images(imageUrls)
                 .createdAt(notice.getCreatedAt())
                 .updatedAt(notice.getUpdatedAt())
