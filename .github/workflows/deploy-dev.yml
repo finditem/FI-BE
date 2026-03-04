@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: deploy-ec2
+  cancel-in-progress: true
+
 jobs:
   ci:
     runs-on: ubuntu-latest
