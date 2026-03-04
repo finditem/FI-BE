@@ -39,6 +39,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fmi.domain.admin.dto.AdminCsDetailResponse;
 import com.fmi.domain.admin.dto.AdminCsListResponse;
 import com.fmi.domain.admin.dto.AdminCsPageResponse;
 import com.fmi.domain.admin.dto.AdminCsType;
@@ -166,6 +167,50 @@ public class AdminService {
         List<InquiryCommentResponse> comments =
                 inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
         return inquiryConverter.toDetailDTO(inquiry, comments);
+    }
+
+    public AdminCsDetailResponse getCustomerServiceDetail(AdminCsType type, Long id, UserDetails userDetails) {
+        if (type == AdminCsType.REPORT) {
+            Report report = reportRepository.findById(id)
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
+            return AdminCsDetailResponse.builder()
+                    .type(AdminCsType.REPORT)
+                    .id(report.getReportId())
+                    .createdAt(report.getCreatedAt())
+                    .targetType(report.getTargetType())
+                    .targetId(report.getTargetId())
+                    .reportType(report.getReportType())
+                    .reason(report.getReason())
+                    .reportStatus(report.getStatus())
+                    .adminNote(report.getAdminNote())
+                    .resolvedAt(report.getResolvedAt())
+                    .answered(report.getAnswered())
+                    .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
+                    .reporterNickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
+                    .reporterEmail(report.getReporter() != null ? report.getReporter().getEmail() : null)
+                    .build();
+        }
+
+        Inquiry inquiry = inquiryRepository.findById(id)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
+
+        List<InquiryCommentResponse> comments =
+                inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
+
+        return AdminCsDetailResponse.builder()
+                .type(AdminCsType.INQUIRY)
+                .id(inquiry.getId())
+                .createdAt(inquiry.getCreatedAt())
+                .title(inquiry.getTitle())
+                .content(inquiry.getContent())
+                .inquiryType(inquiry.getInquiryType())
+                .inquiryStatus(inquiry.getAnswerStatus())
+                .userId(inquiry.getUser() != null ? inquiry.getUser().getId() : null)
+                .userNickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
+                .userEmail(inquiry.getEmail() != null ? inquiry.getEmail()
+                        : inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
+                .comments(comments)
+                .build();
     }
 
     public InquiryDetailDTO getGuestInquiryDetail(Long inquiryId, UserDetails userDetails) {

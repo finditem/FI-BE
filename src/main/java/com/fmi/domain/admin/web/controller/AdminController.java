@@ -1,5 +1,6 @@
 package com.fmi.domain.admin.web.controller;
 
+import com.fmi.domain.admin.dto.AdminCsDetailResponse;
 import com.fmi.domain.admin.dto.AdminCsPageResponse;
 import com.fmi.domain.admin.dto.AdminCsType;
 import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
@@ -80,6 +81,29 @@ public class AdminController {
             @RequestParam(defaultValue = "20") int size
     ) {
         AdminCsPageResponse response = adminService.getCustomerServicePage(type, cursor, size);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/customer-service/{type}/{id}")
+    @Operation(summary = "관리자 신고/문의 통합 상세 조회", description = "통합 목록에서 선택한 항목의 상세 정보를 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "통합 상세 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "해당 항목을 찾을 수 없습니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"NOT_FOUND\", \"message\": \"해당 항목을 찾을 수 없습니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<AdminCsDetailResponse> getCustomerServiceDetail(
+            @PathVariable AdminCsType type,
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        AdminCsDetailResponse response = adminService.getCustomerServiceDetail(type, id, userDetails);
         return ApiResponse.onSuccess(response);
     }
 
