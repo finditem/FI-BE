@@ -83,6 +83,27 @@ public class AdminController {
         return ApiResponse.onSuccess(response);
     }
 
+    @GetMapping("/guest-inquiries/{inquiryId}")
+    @Operation(summary = "관리자 비회원 문의 상세 조회", description = "비회원이 작성한 문의의 상세 정보를 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비회원 문의 상세 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<InquiryDetailDTO> getGuestInquiryDetail(@PathVariable Long inquiryId,
+                                                                @AuthenticationPrincipal UserDetails userDetails) {
+        InquiryDetailDTO response = adminService.getGuestInquiryDetail(inquiryId, userDetails);
+        return ApiResponse.onSuccess(response);
+    }
+
     @GetMapping("/guest-inquiries")
     @Operation(summary = "관리자 비회원 문의 목록 조회", description = """
             비회원이 작성한 문의 내역을 조회합니다. (커서 기반 무한스크롤)

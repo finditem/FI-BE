@@ -168,6 +168,19 @@ public class AdminService {
         return inquiryConverter.toDetailDTO(inquiry, comments);
     }
 
+    public InquiryDetailDTO getGuestInquiryDetail(Long inquiryId, UserDetails userDetails) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
+
+        if (inquiry.getUser() != null) {
+            throw new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND);
+        }
+
+        List<InquiryCommentResponse> comments =
+                inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
+        return inquiryConverter.toDetailDTO(inquiry, comments);
+    }
+
     @Transactional
     public void blockInquiryIp(Long inquiryId, String reason) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
