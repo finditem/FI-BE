@@ -448,11 +448,12 @@ public class AdminController {
     })
     public ApiResponse<CursorPageResponse<AdminDeletedUserResponse>> getDeletedUsers(
             @RequestParam(required = false) WithdrawalReason reason,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
         CursorPageResponse<AdminDeletedUserResponse> response =
-                adminService.getDeletedUsersCursorPage(reason, cursor, size);
+                adminService.getDeletedUsersCursorPage(reason, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 }

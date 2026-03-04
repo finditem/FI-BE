@@ -459,10 +459,11 @@ public class AdminService {
     }
 
     public CursorPageResponse<AdminDeletedUserResponse> getDeletedUsersCursorPage(
-            WithdrawalReason reason, Long cursor, int size) {
+            WithdrawalReason reason, String keyword, Long cursor, int size) {
         int fetchSize = size + 1;
         String reasonStr = reason != null ? reason.name() : null;
-        List<User> users = userRepository.findDeletedUsersCursor(reasonStr, cursor, fetchSize);
+        String keywordParam = (keyword != null && !keyword.isBlank()) ? "%" + keyword.trim() + "%" : null;
+        List<User> users = userRepository.findDeletedUsersCursorWithKeyword(reasonStr, keywordParam, cursor, fetchSize);
 
         boolean hasNext = users.size() > size;
         List<User> content = hasNext ? users.subList(0, size) : users;
