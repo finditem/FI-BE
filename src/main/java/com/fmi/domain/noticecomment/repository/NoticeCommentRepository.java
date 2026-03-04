@@ -24,6 +24,8 @@ public interface NoticeCommentRepository extends JpaRepository<NoticeComment, Lo
                                                                   @Param("cursor") Long cursor,
                                                                   Pageable pageable);
 
+    long countByNoticeNoticeId(Long noticeId);
+
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM NoticeComment c WHERE c.notice.noticeId = :noticeId")
     void deleteByNoticeNoticeId(@Param("noticeId") Long noticeId);
