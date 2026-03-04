@@ -28,8 +28,8 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long>, Pos
     List<PostImage> findThumbnailImagesByPostIds(@Param("postIds") List<Long> postIds);
 
     @Modifying
-    @Query("delete from PostImage pi where pi.post = :post")
-    void deleteAllByPost(@Param("post") Post post);
+    @Query("delete from PostImage pi where pi.post.id = :postId")
+    void deleteAllByPostId(@Param("postId") Long postId);
 
     List<PostImage> findByPostIdInAndImageType(List<Long> postIds, ImageType imageType);
 
