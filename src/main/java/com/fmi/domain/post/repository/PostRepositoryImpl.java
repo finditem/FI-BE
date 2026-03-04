@@ -193,6 +193,234 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     }
 
     @Override
+    public PostPageResponse searchMyPosts(Long userId,
+                                           PostType postType,
+                                           PostStatus postStatus,
+                                           Category category,
+                                           SortType sortType,
+                                           Long cursor,
+                                           int size) {
+        QPost post = QPost.post;
+        QPostFavorite postFavorite = QPostFavorite.postFavorite;
+
+        BooleanExpression baseWhere = Expressions.allOf(
+                post.user.id.eq(userId),
+                post.deleted.isFalse(),
+                post.temporarySave.isFalse(),
+                equalsPostType(post, postType),
+                equalsPostStatus(post, postStatus),
+                equalsCategory(post, category)
+        );
+
+        BooleanExpression pageWhere = Expressions.allOf(
+                baseWhere,
+                cursorCondition(post, sortType, cursor)
+        );
+
+        Long postCount = queryFactory
+                .select(post.id.count())
+                .from(post)
+                .where(baseWhere)
+                .fetchOne();
+
+        if (Objects.isNull(postCount)) postCount = 0L;
+
+        List<Post> posts;
+        if (Objects.equals(sortType, SortType.MOST_FAVORITED)) {
+            posts = queryFactory.select(post)
+                    .from(post)
+                    .leftJoin(postFavorite).on(
+                            postFavorite.post.eq(post),
+                            postFavorite.isFavorite.isTrue()
+                    )
+                    .where(pageWhere)
+                    .groupBy(post.id)
+                    .orderBy(postFavorite.favorite_id.count().desc(), post.id.desc())
+                    .limit(size + 1)
+                    .fetch();
+        } else {
+            posts = queryFactory
+                    .selectFrom(post)
+                    .where(pageWhere)
+                    .orderBy(orderBySortType(post, sortType))
+                    .limit(size + 1)
+                    .fetch();
+        }
+
+        boolean hasNext = posts.size() > size;
+        if (hasNext) {
+            posts = posts.subList(0, size);
+        }
+
+        Long nextCursor = (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
+
+        if (posts.isEmpty()) {
+            return new PostPageResponse(List.of(), 0L, null, false);
+        }
+
+        return buildPostPageResponse(posts, postCount, nextCursor, hasNext, userId);
+    }
+
+    @Override
+    public PostPageResponse searchMyFavorites(Long userId,
+                                               PostType postType,
+                                               PostStatus postStatus,
+                                               Category category,
+                                               SortType sortType,
+                                               Long cursor,
+                                               int size) {
+        QPost post = QPost.post;
+        QPostFavorite postFavorite = QPostFavorite.postFavorite;
+
+        BooleanExpression baseWhere = Expressions.allOf(
+                postFavorite.user.id.eq(userId),
+                postFavorite.isFavorite.isTrue(),
+                post.deleted.isFalse(),
+                equalsPostType(post, postType),
+                equalsPostStatus(post, postStatus),
+                equalsCategory(post, category)
+        );
+
+        BooleanExpression pageWhere = Expressions.allOf(
+                baseWhere,
+                cursorCondition(post, sortType, cursor)
+        );
+
+        Long postCount = queryFactory
+                .select(post.id.countDistinct())
+                .from(postFavorite)
+                .join(postFavorite.post, post)
+                .where(baseWhere)
+                .fetchOne();
+
+        if (Objects.isNull(postCount)) postCount = 0L;
+
+        List<Post> posts;
+        if (Objects.equals(sortType, SortType.MOST_FAVORITED)) {
+            QPostFavorite favCount = new QPostFavorite("favCount");
+            posts = queryFactory.select(post)
+                    .from(postFavorite)
+                    .join(postFavorite.post, post)
+                    .leftJoin(favCount).on(
+                            favCount.post.eq(post),
+                            favCount.isFavorite.isTrue()
+                    )
+                    .where(pageWhere)
+                    .groupBy(post.id)
+                    .orderBy(favCount.favorite_id.count().desc(), post.id.desc())
+                    .limit(size + 1)
+                    .fetch();
+        } else {
+            posts = queryFactory.select(post)
+                    .from(postFavorite)
+                    .join(postFavorite.post, post)
+                    .where(pageWhere)
+                    .orderBy(orderBySortType(post, sortType))
+                    .limit(size + 1)
+                    .fetch();
+        }
+
+        boolean hasNext = posts.size() > size;
+        if (hasNext) {
+            posts = posts.subList(0, size);
+        }
+
+        Long nextCursor = (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
+
+        if (posts.isEmpty()) {
+            return new PostPageResponse(List.of(), 0L, null, false);
+        }
+
+        return buildPostPageResponse(posts, postCount, nextCursor, hasNext, userId);
+    }
+
+    private PostPageResponse buildPostPageResponse(List<Post> posts, Long postCount,
+                                                    Long nextCursor, boolean hasNext, Long userId) {
+        QPostFavorite postFavorite = QPostFavorite.postFavorite;
+        List<Long> postIdList = posts.stream().map(Post::getId).toList();
+
+        Map<Long, String> thumbnailMap = queryFactory
+                .select(postImage.post.id, postImage.id, postImage.imgUrl)
+                .from(postImage)
+                .where(
+                        postImage.post.id.in(postIdList),
+                        postImage.imageType.eq(ImageType.THUMBNAIL)
+                )
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        t -> Objects.requireNonNull(t.get(postImage.post.id)),
+                        t -> Objects.requireNonNull(t.get(postImage.imgUrl)),
+                        (a, b) -> a
+                ));
+
+        Map<Long, Long> favoriteCountMap = queryFactory
+                .select(postFavorite.post.id, postFavorite.favorite_id.count())
+                .from(postFavorite)
+                .where(
+                        postFavorite.post.id.in(postIdList),
+                        postFavorite.isFavorite.isTrue()
+                )
+                .groupBy(postFavorite.post.id)
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        t -> Objects.requireNonNull(t.get(postFavorite.post.id)),
+                        t -> Objects.requireNonNull(t.get(postFavorite.favorite_id.count()))
+                ));
+
+        Set<Long> myFavoritePostIds = Objects.isNull(userId) ? Set.of() :
+                new HashSet<>(
+                        queryFactory
+                                .select(postFavorite.post.id)
+                                .from(postFavorite)
+                                .where(
+                                        postFavorite.user.id.eq(userId),
+                                        postFavorite.post.id.in(postIdList),
+                                        postFavorite.isFavorite.isTrue()
+                                )
+                                .fetch()
+                );
+
+        Map<Long, Integer> imageCountMap = queryFactory
+                .select(postImage.post.id, postImage.id.count())
+                .from(postImage)
+                .where(postImage.post.id.in(postIdList))
+                .groupBy(postImage.post.id)
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        t -> Objects.requireNonNull(t.get(postImage.post.id)),
+                        t -> Objects.requireNonNull(t.get(postImage.id.count())).intValue()
+                ));
+
+        List<PostBriefResponse> postList = posts.stream()
+                .map(p -> {
+                    Long pid = p.getId();
+                    return new PostBriefResponse(
+                            pid,
+                            p.getTitle(),
+                            p.makeSummary(),
+                            thumbnailMap.get(pid),
+                            p.getAddress(),
+                            p.getPostStatus(),
+                            p.getPostType(),
+                            p.getCategory(),
+                            favoriteCountMap.getOrDefault(pid, 0L),
+                            myFavoritePostIds.contains(pid),
+                            p.getViewCount(),
+                            p.isNew(),
+                            false,
+                            p.getCreatedAt(),
+                            imageCountMap.getOrDefault(pid, 0)
+                    );
+                })
+                .toList();
+
+        return new PostPageResponse(postList, postCount, nextCursor, hasNext);
+    }
+
+    @Override
     public List<Post> searchByKeywordWithCursor(String keyword, Long cursor, int size) {
         QPost post = QPost.post;
 

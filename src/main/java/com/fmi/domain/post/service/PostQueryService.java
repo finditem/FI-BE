@@ -270,17 +270,13 @@ public class PostQueryService {
     }
 
 
-    //즐찾 조회
     @Transactional(readOnly = true)
-    public List<PostBriefResponse> getFavoritePost(UserDetails userDetails) {
+    public PostPageResponse getFavoritePost(UserDetails userDetails, PostType postType,
+                                             PostStatus postStatus, Category category,
+                                             SortType sortType, Long cursor, int size) {
         User user = userQueryService.findUser(userDetails.getUsername());
 
-        List<PostFavorite> favorites = postFavoriteRepository.findByUserAndIsFavoriteTrue(user);
-        List<Post> posts = favorites.stream()
-                .map(PostFavorite::getPost)
-                .toList();
-
-        return getPostBriefResponseList(posts, user);
+        return postRepository.searchMyFavorites(user.getId(), postType, postStatus, category, sortType, cursor, size);
     }
 
     @Transactional(readOnly = true)

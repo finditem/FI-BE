@@ -1,7 +1,11 @@
 package com.fmi.domain.postfavorite.web.controller;
 
+import com.fmi.domain.Enum.Category;
+import com.fmi.domain.Enum.SortType;
+import com.fmi.domain.post.data.PostStatus;
+import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.service.PostQueryService;
-import com.fmi.domain.post.web.dto.response.PostBriefResponse;
+import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.response.PostFavoriteResponse;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -14,8 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -53,14 +55,29 @@ public class PostFavoriteController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @Operation(summary = "즐겨찾기 목록 조회", tags = {"User"})
+    @Operation(summary = "즐겨찾기 목록 조회", description = """
+            현재 로그인한 사용자의 즐겨찾기 목록을 커서 기반으로 조회합니다.
+
+            **필터 파라미터** (모두 선택):
+            - postType: LOST / FOUND
+            - postStatus: SEARCHING / FOUND
+            - category: ELECTRONICS / WALLET / ID_CARD / JEWELRY / BAG / CARD / ETC
+            """, tags = {"User"})
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 목록 조회 성공")
     })
     @GetMapping("/users/me/favorites")
-    public ResponseEntity<ApiResponse<List<PostBriefResponse>>> getFavoritePost(@AuthenticationPrincipal UserDetails userDetails) {
-
-        List<PostBriefResponse> response = postQueryService.getFavoritePost(userDetails);
+    public ResponseEntity<ApiResponse<PostPageResponse>> getFavoritePost(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) PostType postType,
+            @RequestParam(required = false) PostStatus postStatus,
+            @RequestParam(required = false) Category category,
+            @RequestParam(required = false, defaultValue = "LATEST") SortType sortType,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(required = false, defaultValue = "20") int size
+    ) {
+        PostPageResponse response = postQueryService.getFavoritePost(
+                userDetails, postType, postStatus, category, sortType, cursor, size);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
