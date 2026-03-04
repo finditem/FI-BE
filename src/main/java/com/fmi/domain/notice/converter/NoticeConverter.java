@@ -48,10 +48,15 @@ public class NoticeConverter {
                 .findFirst()
                 .orElse(imageUrls.isEmpty() ? null : imageUrls.get(0));
 
+        String summary = notice.getContent() != null && notice.getContent().length() > 100
+                ? notice.getContent().substring(0, 100) + "..."
+                : notice.getContent();
+
         return NoticeResponseDTO.builder()
                 .noticeId(notice.getNoticeId())
                 .title(notice.getTitle())
                 .content(notice.getContent())
+                .summary(summary)
                 .category(notice.getCategory())
                 .pinned(notice.getPinned())
                 .viewCount(notice.getViewCount())
