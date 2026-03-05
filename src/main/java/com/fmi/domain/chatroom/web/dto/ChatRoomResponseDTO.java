@@ -48,6 +48,7 @@ public class ChatRoomResponseDTO {
         private String address;
         private String thumbnailUrl;
         private PostStatus postStatus;
+        private boolean deleted;
     }
 
     @Builder
