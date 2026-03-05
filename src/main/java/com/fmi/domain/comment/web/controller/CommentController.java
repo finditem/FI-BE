@@ -11,8 +11,10 @@ import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -49,6 +51,7 @@ public class CommentController {
                     description = "댓글 생성 성공",
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = CommentCreateResponse.class),
                             examples = @ExampleObject(
                                     value = """
                                             {
@@ -68,14 +71,8 @@ public class CommentController {
                                                   "profileImage": "https://example.com/profile.png"
                                                 },
                                                 "commentImageResponseList": [
-                                                  {
-                                                    "id": 1,
-                                                    "imageUrl": "https://example.com/comment-image.png"
-                                                  },
-                                                  {
-                                                    "id": 2,
-                                                    "imageUrl": "https://example.com/comment-image-2.png"
-                                                  }
+                                                  { "id": 1, "imageUrl": "https://example.com/comment-image.png" },
+                                                  { "id": 2, "imageUrl": "https://example.com/comment-image-2.png" }
                                                 ]
                                               }
                                             }
@@ -117,6 +114,7 @@ public class CommentController {
                     description = "댓글 조회 성공",
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = CommentPageResponse.class),
                             examples = @ExampleObject(
                                     value = """
                                             {
@@ -197,6 +195,7 @@ public class CommentController {
                     description = "대댓글 조회 성공",
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = CommentPageResponse.class),
                             examples = @ExampleObject(
                                     value = """
                                             {
@@ -243,7 +242,7 @@ public class CommentController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @PutMapping(value = "/{commentId}")
+    @PutMapping(value = "/{commentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "댓글 수정",
             description = """
@@ -261,6 +260,7 @@ public class CommentController {
                     description = "댓글 수정 성공",
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = CommentCreateResponse.class),
                             examples = @ExampleObject(
                                     value = """
                                             {
@@ -280,10 +280,7 @@ public class CommentController {
                                                   "profileImage": "https://example.com/profile.png"
                                                 },
                                                 "commentImageResponseList": [
-                                                  {
-                                                    "id": 1,
-                                                    "imageUrl": "https://example.com/comment/1.png"
-                                                  }
+                                                  { "id": 1, "imageUrl": "https://example.com/comment/1.png" }
                                                 ]
                                               }
                                             }
@@ -299,7 +296,7 @@ public class CommentController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404-NOT_FOUND: 존재하지 않는 댓글입니다", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "COMMON500: 서버 에러", content = @Content)
     })
-    public ResponseEntity<ApiResponse<CommentCreateResponse>> updateComment(@RequestBody CommentUpdateRequest request,
+    public ResponseEntity<ApiResponse<CommentCreateResponse>> updateComment(@RequestPart("request") @Valid CommentUpdateRequest request,
                                                                             @AuthenticationPrincipal UserDetails userDetails,
                                                                             @PathVariable Long commentId,
                                                                             @RequestPart(value = "image", required = false) List<MultipartFile> images) {
@@ -326,6 +323,7 @@ public class CommentController {
                     description = "댓글 삭제 성공",
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = CommentDeleteResponse.class),
                             examples = @ExampleObject(
                                     value = """
                                             {
