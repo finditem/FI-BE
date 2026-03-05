@@ -1,6 +1,7 @@
 name: PR Review Reminder
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened]
   pull_request_review:
@@ -68,7 +69,7 @@ jobs:
 
   # 매일 오전 9시: 열린 PR 경과일 체크 → 라벨 자동 변경 + 리마인드 코멘트
   check-review-deadline:
-    if: github.event_name == 'schedule'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: PR 리뷰 기한 체크 및 라벨 업데이트
