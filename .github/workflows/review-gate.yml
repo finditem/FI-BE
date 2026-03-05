@@ -18,9 +18,16 @@ jobs:
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
+            const action = context.payload.action;
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+
+            // labeled/unlabeled 이벤트일 때 D-0 라벨이 아니면 통과 (불필요한 실패 알림 방지)
+            if ((action === 'labeled' || action === 'unlabeled') && !labels.includes('D-0')) {
+              console.log(`PR #${prNumber}: D-0 외 라벨 변경 — 스킵`);
+              return;
+            }
 
             // D-0 라벨 확인
-            const labels = context.payload.pull_request.labels.map(l => l.name);
             if (labels.includes('D-0')) {
               console.log(`PR #${prNumber}: D-0 라벨 있음 — 머지 허용`);
               return;
