@@ -21,6 +21,12 @@ jobs:
             const action = context.payload.action;
             const labels = context.payload.pull_request.labels.map(l => l.name);
 
+            // PR 생성, 푸시 시에는 항상 통과 (승인/D-0 체크는 별도 이벤트에서 수행)
+            if (action === 'opened' || action === 'synchronize') {
+              console.log(`PR #${prNumber}: PR 생성/푸시 — 통과`);
+              return;
+            }
+
             // labeled/unlabeled 이벤트일 때 D-0 라벨이 아니면 통과 (불필요한 실패 알림 방지)
             if ((action === 'labeled' || action === 'unlabeled') && !labels.includes('D-0')) {
               console.log(`PR #${prNumber}: D-0 외 라벨 변경 — 스킵`);
