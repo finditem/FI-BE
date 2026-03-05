@@ -9,6 +9,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -93,10 +95,13 @@ public class PostImageService {
         List<PostImage> postImageList = postImageRepository.findByPost(post);
 
         List<String> urlList = postImageList.stream().map(PostImage::getImgUrl).toList();
+        try {
+            s3Service.delete(urlList);
+        } catch (Exception e) {
+            log.warn("S3 delete failed. postId={}, urls={}", post.getId(), urlList, e);
+        }
 
-        s3Service.delete(urlList);
-
-        postImageRepository.deleteAllByPost(post);
+        postImageRepository.deleteAllByPostId(post.getId());
     }
 
     public void deleteImageAtS3(List<PostImage> imageList) {
