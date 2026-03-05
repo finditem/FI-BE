@@ -148,17 +148,5 @@ jobs:
                 });
 
                 console.log(`PR #${pr.number}: ${currentDLabel || '없음'} → ${targetLabel} (${diffDays}일 경과)`);
-
-                // D-0 라벨이 붙으면 자동 승인
-                if (targetLabel === 'D-0') {
-                  await github.rest.pulls.createReview({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    pull_number: pr.number,
-                    event: 'APPROVE',
-                    body: '⏰ 리뷰 기한(5일)이 만료되어 자동 승인합니다.'
-                  });
-                  console.log(`PR #${pr.number}: D-0 자동 승인 완료`);
-                }
               }
             }
