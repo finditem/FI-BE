@@ -2,7 +2,7 @@ name: Review Gate
 
 on:
   pull_request:
-    types: [opened, synchronize, labeled, unlabeled]
+    types: [labeled]
   pull_request_review:
     types: [submitted]
 
@@ -18,20 +18,7 @@ jobs:
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
-            const action = context.payload.action;
             const labels = context.payload.pull_request.labels.map(l => l.name);
-
-            // PR 생성, 푸시 시에는 항상 통과 (승인/D-0 체크는 별도 이벤트에서 수행)
-            if (action === 'opened' || action === 'synchronize') {
-              console.log(`PR #${prNumber}: PR 생성/푸시 — 통과`);
-              return;
-            }
-
-            // labeled/unlabeled 이벤트일 때 D-0 라벨이 아니면 통과 (불필요한 실패 알림 방지)
-            if ((action === 'labeled' || action === 'unlabeled') && !labels.includes('D-0')) {
-              console.log(`PR #${prNumber}: D-0 외 라벨 변경 — 스킵`);
-              return;
-            }
 
             // D-0 라벨 확인
             if (labels.includes('D-0')) {
@@ -48,6 +35,12 @@ jobs:
             const hasApproval = reviews.some(r => r.state === 'APPROVED');
             if (hasApproval) {
               console.log(`PR #${prNumber}: 승인된 리뷰 있음 — 머지 허용`);
+              return;
+            }
+
+            // D-0 외 라벨 이벤트는 통과 (불필요한 실패 알림 방지)
+            if (context.payload.action === 'labeled') {
+              console.log(`PR #${prNumber}: D-0 외 라벨 변경 — 스킵`);
               return;
             }
 
