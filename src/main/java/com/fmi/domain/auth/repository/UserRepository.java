@@ -66,6 +66,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findDeletedUsersCursor(@Param("reason") String reason,
                                       @Param("cursor") Long cursor,
                                       @Param("limit") int limit);
+
+    @Query(value = "SELECT * FROM users u WHERE u.deleted_at IS NOT NULL " +
+           "AND (:reason IS NULL OR FIND_IN_SET(:reason, u.withdrawal_reason) > 0) " +
+           "AND (:keyword IS NULL OR u.email LIKE :keyword OR u.withdrawal_reason LIKE :keyword OR u.withdrawal_other_reason LIKE :keyword) " +
+           "AND (:cursor IS NULL OR u.id < :cursor) " +
+           "ORDER BY u.id DESC LIMIT :limit",
+           nativeQuery = true)
+    List<User> findDeletedUsersCursorWithKeyword(@Param("reason") String reason,
+                                                  @Param("keyword") String keyword,
+                                                  @Param("cursor") Long cursor,
+                                                  @Param("limit") int limit);
 }
 
 

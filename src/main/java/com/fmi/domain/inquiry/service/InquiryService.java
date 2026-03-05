@@ -204,6 +204,43 @@ public class InquiryService {
     }
     
     /**
+     * 비회원 문의 답변 (이메일 발송)
+     */
+    @Transactional
+    public void replyToGuestInquiry(Long inquiryId, String content) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
+
+        if (inquiry.getUser() != null) {
+            throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
+
+        if (inquiry.getEmail() == null || inquiry.getEmail().isBlank()) {
+            throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
+
+        inquiry.markAsAnswered();
+
+        try {
+            String replyDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                    .format(java.time.LocalDateTime.now());
+
+            emailService.sendHtmlEmail(
+                inquiry.getEmail(),
+                "문의에 대한 답변이 도착했습니다",
+                "support-reply-email.html",
+                java.util.Map.of(
+                    "TITLE", inquiry.getTitle(),
+                    "DATE", replyDate,
+                    "CONTENT", content
+                )
+            );
+        } catch (Exception e) {
+            log.error("비회원 문의 답변 이메일 발송 실패: inquiryId={}, email={}", inquiry.getId(), inquiry.getEmail(), e);
+        }
+    }
+
+    /**
      * 문의 상태 변경(관리자)
      */
     @Transactional
@@ -228,7 +265,7 @@ public class InquiryService {
         // 문의자에게 상태 변경 알림 및 이메일 발송
         String statusMessage = getStatusMessage(status);
         
-        // 회원 문의인 경우 알림 및 이메일 발송
+        // 회원 문의인 경우 앱 알림 발송
         if (inquiry.getUser() != null) {
             notificationService.createNotification(
                     inquiry.getUser(),
@@ -238,44 +275,6 @@ public class InquiryService {
                     ReferenceType.INQUIRY,
                     inquiry.getId()
             );
-            
-            // 문의 상태 변경 이메일 발송
-            try {
-                String statusDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-                        .format(java.time.LocalDateTime.now());
-                
-                emailService.sendHtmlEmail(
-                    inquiry.getUser().getEmail(),
-                    "문의 상태가 변경되었습니다",
-                    "inquiry-status-change-email.html",
-                    java.util.Map.of(
-                        "TITLE", inquiry.getTitle(),
-                        "STATUS", statusMessage,
-                        "DATE", statusDate
-                    )
-                );
-            } catch (Exception e) {
-                log.error("문의 상태 변경 이메일 발송 실패: inquiryId={}", inquiry.getId(), e);
-            }
-        } else if (inquiry.getEmail() != null) {
-            // 비회원 문의인 경우 이메일로만 발송
-            try {
-                String statusDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-                        .format(java.time.LocalDateTime.now());
-                
-                emailService.sendHtmlEmail(
-                    inquiry.getEmail(),
-                    "문의 상태가 변경되었습니다",
-                    "inquiry-status-change-email.html",
-                    java.util.Map.of(
-                        "TITLE", inquiry.getTitle(),
-                        "STATUS", statusMessage,
-                        "DATE", statusDate
-                    )
-                );
-            } catch (Exception e) {
-                log.error("비회원 문의 상태 변경 이메일 발송 실패: inquiryId={}, email={}", inquiry.getId(), inquiry.getEmail(), e);
-            }
         }
     }
     

@@ -1,9 +1,11 @@
 package com.fmi.domain.admin.web.controller;
 
+import com.fmi.domain.admin.dto.AdminCsDetailResponse;
 import com.fmi.domain.admin.dto.AdminCsPageResponse;
 import com.fmi.domain.admin.dto.AdminCsType;
 import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
 import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
+import com.fmi.domain.admin.dto.AdminGuestInquiryReplyRequestDTO;
 import com.fmi.domain.admin.dto.AdminInquiryResponse;
 import com.fmi.domain.admin.dto.AdminReportResponse;
 import com.fmi.domain.admin.dto.AdminUserDetailResponse;
@@ -80,6 +82,50 @@ public class AdminController {
             @RequestParam(defaultValue = "20") int size
     ) {
         AdminCsPageResponse response = adminService.getCustomerServicePage(type, cursor, size);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/customer-service/{type}/{id}")
+    @Operation(summary = "관리자 신고/문의 통합 상세 조회", description = "통합 목록에서 선택한 항목의 상세 정보를 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "통합 상세 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "해당 항목을 찾을 수 없습니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"NOT_FOUND\", \"message\": \"해당 항목을 찾을 수 없습니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<AdminCsDetailResponse> getCustomerServiceDetail(
+            @PathVariable AdminCsType type,
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        AdminCsDetailResponse response = adminService.getCustomerServiceDetail(type, id, userDetails);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/guest-inquiries/{inquiryId}")
+    @Operation(summary = "관리자 비회원 문의 상세 조회", description = "비회원이 작성한 문의의 상세 정보를 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비회원 문의 상세 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<InquiryDetailDTO> getGuestInquiryDetail(@PathVariable Long inquiryId,
+                                                                @AuthenticationPrincipal UserDetails userDetails) {
+        InquiryDetailDTO response = adminService.getGuestInquiryDetail(inquiryId, userDetails);
         return ApiResponse.onSuccess(response);
     }
 
@@ -282,6 +328,37 @@ public class AdminController {
         return ApiResponse.onSuccess("공지사항 삭제 완료");
     }
 
+    @PostMapping("/guest-inquiries/{inquiryId}/reply")
+    @Operation(summary = "비회원 문의 답변 (이메일 발송)", description = "비회원 문의에 대해 이메일로 답변을 발송합니다. 상태가 ANSWERED로 변경됩니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "답변 발송 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}"
+                            )
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "회원 문의이거나 이메일이 없는 경우",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<String> replyToGuestInquiry(@PathVariable Long inquiryId,
+                                                    @Valid @RequestBody AdminGuestInquiryReplyRequestDTO request) {
+        inquiryService.replyToGuestInquiry(inquiryId, request.getContent());
+        return ApiResponse.onSuccess("OK");
+    }
+
     @PutMapping("/inquiries/{inquiryId}/status")
     @Operation(summary = "문의 처리 상태 변경(관리자)")
     @ApiResponses({
@@ -403,11 +480,12 @@ public class AdminController {
     })
     public ApiResponse<CursorPageResponse<AdminDeletedUserResponse>> getDeletedUsers(
             @RequestParam(required = false) WithdrawalReason reason,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
         CursorPageResponse<AdminDeletedUserResponse> response =
-                adminService.getDeletedUsersCursorPage(reason, cursor, size);
+                adminService.getDeletedUsersCursorPage(reason, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 }

@@ -39,6 +39,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fmi.domain.admin.dto.AdminCsDetailResponse;
 import com.fmi.domain.admin.dto.AdminCsListResponse;
 import com.fmi.domain.admin.dto.AdminCsPageResponse;
 import com.fmi.domain.admin.dto.AdminCsType;
@@ -168,6 +169,63 @@ public class AdminService {
         return inquiryConverter.toDetailDTO(inquiry, comments);
     }
 
+    public AdminCsDetailResponse getCustomerServiceDetail(AdminCsType type, Long id, UserDetails userDetails) {
+        if (type == AdminCsType.REPORT) {
+            Report report = reportRepository.findById(id)
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
+            return AdminCsDetailResponse.builder()
+                    .type(AdminCsType.REPORT)
+                    .id(report.getReportId())
+                    .createdAt(report.getCreatedAt())
+                    .targetType(report.getTargetType())
+                    .targetId(report.getTargetId())
+                    .reportType(report.getReportType())
+                    .reason(report.getReason())
+                    .reportStatus(report.getStatus())
+                    .adminNote(report.getAdminNote())
+                    .resolvedAt(report.getResolvedAt())
+                    .answered(report.getAnswered())
+                    .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
+                    .reporterNickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
+                    .reporterEmail(report.getReporter() != null ? report.getReporter().getEmail() : null)
+                    .build();
+        }
+
+        Inquiry inquiry = inquiryRepository.findById(id)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
+
+        List<InquiryCommentResponse> comments =
+                inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
+
+        return AdminCsDetailResponse.builder()
+                .type(AdminCsType.INQUIRY)
+                .id(inquiry.getId())
+                .createdAt(inquiry.getCreatedAt())
+                .title(inquiry.getTitle())
+                .content(inquiry.getContent())
+                .inquiryType(inquiry.getInquiryType())
+                .inquiryStatus(inquiry.getAnswerStatus())
+                .userId(inquiry.getUser() != null ? inquiry.getUser().getId() : null)
+                .userNickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
+                .userEmail(inquiry.getEmail() != null ? inquiry.getEmail()
+                        : inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
+                .comments(comments)
+                .build();
+    }
+
+    public InquiryDetailDTO getGuestInquiryDetail(Long inquiryId, UserDetails userDetails) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
+
+        if (inquiry.getUser() != null) {
+            throw new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND);
+        }
+
+        List<InquiryCommentResponse> comments =
+                inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
+        return inquiryConverter.toDetailDTO(inquiry, comments);
+    }
+
     @Transactional
     public void blockInquiryIp(Long inquiryId, String reason) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
@@ -209,6 +267,7 @@ public class AdminService {
                     r.getTargetType().getDescription() + " 신고",
                     truncate(r.getReason(), 100),
                     r.getStatus().name(),
+                    r.getAnswered(),
                     r.getReporter() != null ? r.getReporter().getNickname() : null,
                     r.getReporter() != null ? r.getReporter().getEmail() : null,
                     r.getCreatedAt()
@@ -226,6 +285,7 @@ public class AdminService {
                     i.getTitle(),
                     truncate(i.getContent(), 100),
                     i.getAnswerStatus().name(),
+                    i.getAnswerStatus() == InquiryStatus.ANSWERED,
                     i.getUser() != null ? i.getUser().getNickname() : null,
                     i.getUser() != null ? i.getUser().getEmail() : null,
                     i.getCreatedAt()
@@ -399,10 +459,11 @@ public class AdminService {
     }
 
     public CursorPageResponse<AdminDeletedUserResponse> getDeletedUsersCursorPage(
-            WithdrawalReason reason, Long cursor, int size) {
+            WithdrawalReason reason, String keyword, Long cursor, int size) {
         int fetchSize = size + 1;
         String reasonStr = reason != null ? reason.name() : null;
-        List<User> users = userRepository.findDeletedUsersCursor(reasonStr, cursor, fetchSize);
+        String keywordParam = (keyword != null && !keyword.isBlank()) ? "%" + keyword.trim() + "%" : null;
+        List<User> users = userRepository.findDeletedUsersCursorWithKeyword(reasonStr, keywordParam, cursor, fetchSize);
 
         boolean hasNext = users.size() > size;
         List<User> content = hasNext ? users.subList(0, size) : users;

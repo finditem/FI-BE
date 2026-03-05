@@ -14,8 +14,10 @@ public record AdminCsListResponse(
         String title,
         @Schema(description = "내용 미리보기 (100자)")
         String content,
-        @Schema(description = "처리 상태", example = "PENDING")
+        @Schema(description = "처리 상태 (신고: PENDING/REVIEWED/RESOLVED, 문의: RECEIVED/PENDING/ANSWERED)", example = "PENDING")
         String status,
+        @Schema(description = "답변 여부", example = "false")
+        Boolean answered,
         @Schema(description = "작성자 닉네임")
         String writerNickname,
         @Schema(description = "작성자 이메일")
