@@ -1,5 +1,6 @@
 package com.fmi.domain.user.service;
 
+import com.fmi.domain.Enum.ActivityType;
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.Enum.UserOtherPageType;
@@ -51,6 +52,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -241,59 +243,75 @@ public class UserService {
      * 내 활동 내역 통합 조회 (커서 기반, createdAt 내림차순)
      */
     @Transactional(readOnly = true)
-    public MyActivityPageResponse getMyActivities(String email, String cursor, int size) {
+    public MyActivityPageResponse getMyActivities(String email, ActivityType type,
+                                                    LocalDate startDate, LocalDate endDate,
+                                                    String cursor, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        // size 상한 제한 (최소 1, 최대 50)
         size = Math.max(1, Math.min(size, 50));
 
         LocalDateTime cursorTime = (cursor != null)
                 ? LocalDateTime.parse(cursor, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 : null;
 
-        // 각 도메인에서 size개씩 조회 후 합산 정렬하므로, 도메인당 size개면 충분
+        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = (endDate != null) ? endDate.plusDays(1).atStartOfDay() : null;
+
         PageRequest pageRequest = PageRequest.of(0, size);
 
-        // 각 도메인에서 size개씩 조회
         List<ActivityResponse> allActivities = new ArrayList<>();
 
-        // 1. 게시글
-        Slice<Post> postSlice = (cursorTime == null)
-                ? postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseOrderByCreatedAtDesc(user, pageRequest)
-                : postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
-        postSlice.getContent().forEach(p -> allActivities.add(new ActivityResponse(
-                "POST", p.getId(), p.getTitle(), truncate(p.getContent(), 100), p.getCreatedAt())));
+        if (type == null || type == ActivityType.POST) {
+            Slice<Post> postSlice = (cursorTime == null)
+                    ? postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseOrderByCreatedAtDesc(user, pageRequest)
+                    : postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+            postSlice.getContent().stream()
+                    .filter(p -> isWithinDateRange(p.getCreatedAt(), startDateTime, endDateTime))
+                    .forEach(p -> allActivities.add(new ActivityResponse(
+                            "POST", p.getId(), p.getTitle(), truncate(p.getContent(), 100), p.getCreatedAt())));
+        }
 
-        // 2. 댓글
-        Slice<Comment> commentSlice = (cursorTime == null)
-                ? commentRepository.findByUserAndDeletedFalseOrderByCreatedAtDesc(user, pageRequest)
-                : commentRepository.findByUserAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
-        commentSlice.getContent().forEach(c -> allActivities.add(new ActivityResponse(
-                "COMMENT", c.getId(), c.getPost().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
+        if (type == null || type == ActivityType.COMMENT) {
+            Slice<Comment> commentSlice = (cursorTime == null)
+                    ? commentRepository.findByUserAndDeletedFalseOrderByCreatedAtDesc(user, pageRequest)
+                    : commentRepository.findByUserAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+            commentSlice.getContent().stream()
+                    .filter(c -> isWithinDateRange(c.getCreatedAt(), startDateTime, endDateTime))
+                    .forEach(c -> allActivities.add(new ActivityResponse(
+                            "COMMENT", c.getId(), c.getPost().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
+        }
 
-        // 3. 즐겨찾기
-        Slice<PostFavorite> favoriteSlice = (cursorTime == null)
-                ? postFavoriteRepository.findByUserAndIsFavoriteTrueOrderByCreatedAtDesc(user, pageRequest)
-                : postFavoriteRepository.findByUserAndIsFavoriteTrueAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
-        favoriteSlice.getContent().forEach(f -> allActivities.add(new ActivityResponse(
-                "FAVORITE", f.getFavorite_id(), f.getPost().getTitle(), null, f.getCreatedAt())));
+        if (type == null || type == ActivityType.FAVORITE) {
+            Slice<PostFavorite> favoriteSlice = (cursorTime == null)
+                    ? postFavoriteRepository.findByUserAndIsFavoriteTrueOrderByCreatedAtDesc(user, pageRequest)
+                    : postFavoriteRepository.findByUserAndIsFavoriteTrueAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+            favoriteSlice.getContent().stream()
+                    .filter(f -> isWithinDateRange(f.getCreatedAt(), startDateTime, endDateTime))
+                    .forEach(f -> allActivities.add(new ActivityResponse(
+                            "FAVORITE", f.getFavorite_id(), f.getPost().getTitle(), null, f.getCreatedAt())));
+        }
 
-        // 4. 문의
-        Slice<Inquiry> inquirySlice = (cursorTime == null)
-                ? inquiryRepository.findByUserOrderByCreatedAtDesc(user, pageRequest)
-                : inquiryRepository.findByUserAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
-        inquirySlice.getContent().forEach(i -> allActivities.add(new ActivityResponse(
-                "INQUIRY", i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt())));
+        if (type == null || type == ActivityType.INQUIRY) {
+            Slice<Inquiry> inquirySlice = (cursorTime == null)
+                    ? inquiryRepository.findByUserOrderByCreatedAtDesc(user, pageRequest)
+                    : inquiryRepository.findByUserAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+            inquirySlice.getContent().stream()
+                    .filter(i -> isWithinDateRange(i.getCreatedAt(), startDateTime, endDateTime))
+                    .forEach(i -> allActivities.add(new ActivityResponse(
+                            "INQUIRY", i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt())));
+        }
 
-        // 5. 신고
-        Slice<Report> reportSlice = (cursorTime == null)
-                ? reportRepository.findByReporterOrderByCreatedAtDesc(user, pageRequest)
-                : reportRepository.findByReporterAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
-        reportSlice.getContent().forEach(r -> allActivities.add(new ActivityResponse(
-                "REPORT", r.getReportId(), r.getTargetType().getDescription() + " 신고", truncate(r.getReason(), 100), r.getCreatedAt())));
+        if (type == null || type == ActivityType.REPORT) {
+            Slice<Report> reportSlice = (cursorTime == null)
+                    ? reportRepository.findByReporterOrderByCreatedAtDesc(user, pageRequest)
+                    : reportRepository.findByReporterAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+            reportSlice.getContent().stream()
+                    .filter(r -> isWithinDateRange(r.getCreatedAt(), startDateTime, endDateTime))
+                    .forEach(r -> allActivities.add(new ActivityResponse(
+                            "REPORT", r.getReportId(), r.getTargetType().getDescription() + " 신고", truncate(r.getReason(), 100), r.getCreatedAt())));
+        }
 
-        // createdAt 내림차순 정렬 후 size개만 추출
         allActivities.sort(Comparator.comparing(ActivityResponse::createdAt).reversed());
 
         boolean hasNext = allActivities.size() > size;
@@ -306,6 +324,12 @@ public class UserService {
                 : null;
 
         return new MyActivityPageResponse(result, nextCursorValue, hasNext);
+    }
+
+    private boolean isWithinDateRange(LocalDateTime createdAt, LocalDateTime start, LocalDateTime end) {
+        if (start != null && createdAt.isBefore(start)) return false;
+        if (end != null && !createdAt.isBefore(end)) return false;
+        return true;
     }
 
     private String truncate(String text, int maxLength) {
