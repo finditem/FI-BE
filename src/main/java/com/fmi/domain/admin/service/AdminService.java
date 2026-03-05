@@ -248,12 +248,13 @@ public class AdminService {
      */
     public AdminCsPageResponse getCustomerServicePage(AdminCsType type, String cursor, int size) {
         size = Math.max(1, Math.min(size, 50));
+        int fetchSize = size + 1;
 
         LocalDateTime cursorTime = (cursor != null)
                 ? LocalDateTime.parse(cursor, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 : null;
 
-        PageRequest pageRequest = PageRequest.of(0, size);
+        PageRequest pageRequest = PageRequest.of(0, fetchSize);
         List<AdminCsListResponse> allItems = new ArrayList<>();
 
         // 신고 조회
