@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
@@ -43,33 +44,68 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
 
     @Query("""
-                select c
-                from Comment c
-                where c.post.id = :postId
-                    and c.parent is null
-                order by c.id desc
+            select c
+            from Comment c
+            where c.post.id = :postId
+              and c.parent is null
+              and (
+                    :excludedEmpty = true
+                    or c.user.id not in :excludedUserIds
+                  )
+            order by c.id desc
             """)
-    List<Comment> findParentComments(@Param("postId") Long postId, Pageable pageable);
+    List<Comment> findParentComments(
+            @Param("postId") Long postId,
+            @Param("excludedUserIds") Set<Long> excludedUserIds,
+            @Param("excludedEmpty") boolean excludedEmpty,
+            Pageable pageable
+    );
 
     @Query("""
-                select c
-                from Comment c
-                where c.post.id = :postId
-                  and c.parent is null
-                  and c.id < :cursor
-                order by c.id desc
+            select count(c)
+            from Comment c
+            where c.post.id = :postId
+              and c.parent is null
+              and (
+                    :excludedEmpty = true
+                    or c.user.id not in :excludedUserIds
+                  )
             """)
-    List<Comment> findParentCommentsWithCursor(@Param("postId") Long postId,
-                                               @Param("cursor") Long cursor,
-                                               Pageable pageable);
+    long countParentComments(
+            @Param("postId") Long postId,
+            @Param("excludedUserIds") Set<Long> excludedUserIds,
+            @Param("excludedEmpty") boolean excludedEmpty
+    );
 
     @Query("""
-                select c
-                from Comment c
-                where c.parent.id = :parentId
-                order by c.id desc
+            select c
+            from Comment c
+            where c.parent.id = :parentId
+              and (
+                    :excludedEmpty = true
+                    or c.user.id not in :excludedUserIds
+                  )
+            order by c.id asc
             """)
-    List<Comment> findReplies(@Param("parentId") Long parentId, Pageable pageable);
+    List<Comment> findReplies(@Param("parentId") Long parentId,
+                              @Param("excludedUserIds") Set<Long> excludedUserIds,
+                              @Param("excludedEmpty") boolean excludedEmpty,
+                              Pageable pageable
+    );
+
+    @Query("""
+            select count(c)
+            from Comment c
+            where c.parent.id = :parentId
+              and (
+                    :excludedEmpty = true
+                    or c.user.id not in :excludedUserIds
+                  )
+            """)
+    long countReplies(@Param("parentId") Long parentId,
+                      @Param("excludedUserIds") Set<Long> excludedUserIds,
+                      @Param("excludedEmpty") boolean excludedEmpty
+    );
 
     @Query("""
                 select c

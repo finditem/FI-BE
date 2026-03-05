@@ -5,5 +5,6 @@ import java.util.List;
 public record CommentPageResponse(
         List<CommentResponse> comments,
         boolean hasNext,
-        Long cursor) {
+        Integer nextPage,
+        long remainingCount) {
 }
