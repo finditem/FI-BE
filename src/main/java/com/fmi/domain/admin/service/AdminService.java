@@ -92,6 +92,7 @@ public class AdminService {
                         inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
                 .content(inquiry.getContent())
                 .ip(inquiry.getIp())
+                .answered(inquiry.getAnswerStatus() == InquiryStatus.ANSWERED)
                 .build());
     }
 
@@ -359,6 +360,7 @@ public class AdminService {
                         .userEmail(inquiry.getEmail())
                         .content(inquiry.getContent())
                         .ip(inquiry.getIp())
+                        .answered(inquiry.getAnswerStatus() == InquiryStatus.ANSWERED)
                         .build())
                 .toList();
 
@@ -432,6 +434,7 @@ public class AdminService {
                                 inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
                         .content(inquiry.getContent())
                         .ip(inquiry.getIp())
+                        .answered(inquiry.getAnswerStatus() == InquiryStatus.ANSWERED)
                         .build())
                 .toList();
 

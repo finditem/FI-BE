@@ -34,6 +34,8 @@ public class InquiryDetailDTO {
     private String email;
     @Schema(description = "IP (비회원 문의)", example = "192.0.2.1")
     private String ip;
+    @Schema(description = "답변 여부", example = "false")
+    private boolean answered;
     @Schema(description = "댓글 목록")
     private List<InquiryCommentResponse> comments;
 }

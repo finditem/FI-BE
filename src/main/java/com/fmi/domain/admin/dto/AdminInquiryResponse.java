@@ -40,5 +40,8 @@ public class AdminInquiryResponse {
 
     @Schema(description = "문의 IP", example = "192.0.2.1")
     private String ip;
+
+    @Schema(description = "답변 여부", example = "false")
+    private boolean answered;
 }
 
