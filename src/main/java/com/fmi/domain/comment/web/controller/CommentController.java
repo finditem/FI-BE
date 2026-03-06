@@ -131,6 +131,7 @@ public class CommentController {
                                                 "comments": [
                                                   {
                                                     "id": 12,
+                                                    "content": "댓글 내용입니다.",
                                                     "deleted": false,
                                                     "depth": 0,
                                                     "createdAt": "2024-01-01T00:00:00",
@@ -140,13 +141,16 @@ public class CommentController {
                                                       "profileImageUrl": "https://example.com/profile.png"
                                                     },
                                                     "replyCount": 3,
-                                                    "nextReplyCursor": null,
                                                     "imageList": [
-                                                      { "id": 1, "imageUrl": "https://example.com/comment-image.png" }
+                                                      {
+                                                        "id": 1,
+                                                        "imageUrl": "https://example.com/comment-image.png"
+                                                      }
                                                     ],
-                                                    "childrenCommentList": [],
                                                     "likeCount": 5,
-                                                    "isLike": true
+                                                    "isLike": true,
+                                                    "canEdit": true,
+                                                    "canDelete": true
                                                   }
                                                 ],
                                                 "hasNext": true,
@@ -211,6 +215,7 @@ public class CommentController {
                                                 "comments": [
                                                   {
                                                     "id": 45,
+                                                    "content": "대댓글 내용입니다.",
                                                     "deleted": false,
                                                     "depth": 1,
                                                     "createdAt": "2024-01-01T00:00:00",
@@ -220,11 +225,11 @@ public class CommentController {
                                                       "profileImageUrl": "https://example.com/profile.png"
                                                     },
                                                     "replyCount": 0,
-                                                    "nextReplyCursor": null,
                                                     "imageList": [],
-                                                    "childrenCommentList": [],
                                                     "likeCount": 2,
-                                                    "isLike": true
+                                                    "isLike": true,
+                                                    "canEdit": true,
+                                                    "canDelete": true
                                                   }
                                                 ],
                                                 "hasNext": true,

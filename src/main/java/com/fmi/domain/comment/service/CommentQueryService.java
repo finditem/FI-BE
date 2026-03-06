@@ -42,7 +42,7 @@ public class CommentQueryService {
     @Transactional(readOnly = true)
     public CommentPageResponse getParentComments(Long postId, int page, UserDetails userDetails) {
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
-        Pageable pageable = PageRequest.of(page, PAGE_SIZE + 1);
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 
         Set<Long> excludedUserIds = getExcludedUserIds(user);
         boolean excludedEmpty = (excludedUserIds == null || excludedUserIds.isEmpty());
@@ -86,8 +86,6 @@ public class CommentQueryService {
                             UserConverter.toUserCommentResponse(comment.getUser()),
                             imageMap.getOrDefault(comment.getId(), List.of()),
                             replyCountMap.getOrDefault(comment.getId(), 0L),
-                            null,
-                            List.of(),
                             likeCountMap.getOrDefault(comment.getId(), 0L),
                             myLikePostSet.contains(comment.getId()),
                             isAuthor
@@ -108,7 +106,7 @@ public class CommentQueryService {
         Set<Long> excludedUserIds = getExcludedUserIds(user);
         boolean excludedEmpty = excludedUserIds == null || excludedUserIds.isEmpty();
 
-        Pageable pageable = PageRequest.of(page, PAGE_SIZE + 1);
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 
         List<Comment> fetched = commentRepository.findReplies(
                 parentComment.getId(),
@@ -149,8 +147,6 @@ public class CommentQueryService {
                             UserConverter.toUserCommentResponse(reply.getUser()),
                             imageMap.getOrDefault(reply.getId(), List.of()),
                             (reply.getDepth() < 2) ? replyCountMap.getOrDefault(reply.getId(), 0L) : 0L,
-                            null,
-                            List.of(),
                             likeCountMap.getOrDefault(reply.getId(), 0L),
                             myLikeSet.contains(reply.getId()),
                             isAuthor
