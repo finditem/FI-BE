@@ -11,6 +11,7 @@ on:
 permissions:
   pull-requests: write
   issues: write
+  actions: write
 
 jobs:
   # 리뷰 승인 시 D-라벨 자동 제거
@@ -129,4 +130,26 @@ jobs:
               });
 
               console.log(`PR #${pr.number}: ${currentDLabel} → ${transition.next} (${diffDays}일 경과)`);
+
+              // D-0 전환 시 review-gate 재실행 (GITHUB_TOKEN 라벨은 다른 워크플로우를 트리거하지 않으므로)
+              if (transition.next === 'D-0') {
+                try {
+                  const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    workflow_id: 'review-gate.yml',
+                    head_sha: pr.head.sha
+                  });
+                  if (runs.total_count > 0) {
+                    await github.rest.actions.reRunWorkflow({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: runs.workflow_runs[0].id
+                    });
+                    console.log(`PR #${pr.number}: review-gate 재실행 완료`);
+                  }
+                } catch (e) {
+                  console.log(`PR #${pr.number}: review-gate 재실행 실패 — ${e.message}`);
+                }
+              }
             }
