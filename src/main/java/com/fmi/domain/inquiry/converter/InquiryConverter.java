@@ -28,6 +28,8 @@ public class InquiryConverter {
                 .inquiryType(inquiry.getInquiryType())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
+                .email(inquiry.getEmail())
+                .ip(inquiry.getIp())
                 .build();
     }
 
@@ -39,6 +41,8 @@ public class InquiryConverter {
                 .inquiryType(inquiry.getInquiryType())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
+                .email(inquiry.getEmail())
+                .ip(inquiry.getIp())
                 .comments(comments)
                 .build();
     }
