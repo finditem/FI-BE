@@ -140,7 +140,7 @@ public class CommentController {
                                                       "nickname": "닉네임",
                                                       "profileImageUrl": "https://example.com/profile.png"
                                                     },
-                                                    "replyCount": 3,
+                                                    "childCommentCount": 3,
                                                     "imageList": [
                                                       {
                                                         "id": 1,
@@ -224,7 +224,7 @@ public class CommentController {
                                                       "nickname": "닉네임",
                                                       "profileImageUrl": "https://example.com/profile.png"
                                                     },
-                                                    "replyCount": 0,
+                                                    "childCommentCount": 0,
                                                     "imageList": [],
                                                     "likeCount": 2,
                                                     "isLike": true,
