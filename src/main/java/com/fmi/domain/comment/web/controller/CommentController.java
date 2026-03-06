@@ -99,13 +99,19 @@ public class CommentController {
 
     @GetMapping("/posts/{postId}")
     @Operation(
-            summary = "게시글 댓글 조회 (커서 기반 무한스크롤)",
+            summary = "게시글 댓글 조회 (페이지네이션 - 더보기)",
             description = """
-                    게시글에 달린 최상위 댓글(depth = 0)을 커서 기반 무한스크롤 방식으로 조회합니다.
+                    게시글에 달린 최상위 댓글(depth = 0)을 페이지네이션 방식으로 조회합니다.
                     
-                    - 첫 요청은 cursor 없이 호출
-                    - 이후 응답의 cursor 값을 다음 요청의 cursor로 전달
-                    - 대댓글은 별도 API로 조회
+                    - size는 서버에서 10개로 고정됩니다.
+                    - 첫 요청은 page=0
+                    - '댓글 더보기' 클릭 시 nextPage 값을 page로 넣어 다음 페이지를 요청합니다.
+                    - 차단한 유저/나를 차단한 유저의 댓글은 제외됩니다.
+                    - 대댓글은 별도 API로 조회합니다.
+                    
+                    예)
+                    - 첫 요청: /comments/posts/{postId}?page=0
+                    - 다음 요청: /comments/posts/{postId}?page=1
                     """
     )
     @ApiResponses({
@@ -125,6 +131,7 @@ public class CommentController {
                                                 "comments": [
                                                   {
                                                     "id": 12,
+                                                    "content": "댓글 내용입니다.",
                                                     "deleted": false,
                                                     "depth": 0,
                                                     "createdAt": "2024-01-01T00:00:00",
@@ -133,21 +140,22 @@ public class CommentController {
                                                       "nickname": "닉네임",
                                                       "profileImageUrl": "https://example.com/profile.png"
                                                     },
-                                                    "replyCount": 3,
-                                                    "nextReplyCursor": null,
+                                                    "childCommentCount": 3,
                                                     "imageList": [
                                                       {
                                                         "id": 1,
                                                         "imageUrl": "https://example.com/comment-image.png"
                                                       }
                                                     ],
-                                                    "childrenCommentList": [],
                                                     "likeCount": 5,
-                                                    "isLike": true
+                                                    "isLike": true,
+                                                    "canEdit": true,
+                                                    "canDelete": true
                                                   }
                                                 ],
                                                 "hasNext": true,
-                                                "cursor": 12
+                                                "nextPage": 1,
+                                                "remainingCount": 27
                                               }
                                             }
                                             """
@@ -166,27 +174,28 @@ public class CommentController {
             )
     })
     public ResponseEntity<ApiResponse<CommentPageResponse>> getComments(@PathVariable Long postId,
-                                                                        @RequestParam(required = false) Long cursor,
-                                                                        @RequestParam(defaultValue = "10") int size,
+                                                                        @RequestParam(defaultValue = "0") int page,
                                                                         @AuthenticationPrincipal UserDetails userDetails) {
 
-        CommentPageResponse response = commentQueryService.getParentComments(postId, cursor, size, userDetails);
+        CommentPageResponse response = commentQueryService.getParentComments(postId, page, userDetails);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
     @GetMapping("/{commentId}/replies")
     @Operation(
-            summary = "댓글 대댓글 조회 (커서 기반 무한스크롤)",
+            summary = "댓글 대댓글 조회 (페이지네이션 - 더보기)",
             description = """
-                    특정 댓글(commentId)의 대댓글 목록을 조회합니다.
+                    특정 댓글(commentId)의 대댓글 목록을 페이지네이션 방식으로 조회합니다.
                     
-                    - 커서 기반 무한스크롤: 첫 요청은 cursor 없이 호출하고, 이후 응답의 cursor(nextCursor)를 cursor로 넣어 다음 페이지를 요청합니다.
-                    - size: 한 번에 가져올 개수 (기본 20)
+                    - size는 서버에서 10개로 고정됩니다.
+                    - 첫 요청은 page=0
+                    - '대댓글 더보기' 클릭 시 nextPage 값을 page로 넣어 다음 페이지를 요청합니다.
+                    - 차단한 유저/나를 차단한 유저의 댓글은 제외됩니다.
                     
                     예)
-                    - 첫 요청: /comments/{commentId}/replies?size=20
-                    - 다음 요청: /comments/{commentId}/replies?cursor=98&size=20
+                    - 첫 요청: /comments/{commentId}/replies?page=0
+                    - 다음 요청: /comments/{commentId}/replies?page=1
                     """
     )
     @ApiResponses({
@@ -206,6 +215,7 @@ public class CommentController {
                                                 "comments": [
                                                   {
                                                     "id": 45,
+                                                    "content": "대댓글 내용입니다.",
                                                     "deleted": false,
                                                     "depth": 1,
                                                     "createdAt": "2024-01-01T00:00:00",
@@ -214,16 +224,17 @@ public class CommentController {
                                                       "nickname": "닉네임",
                                                       "profileImageUrl": "https://example.com/profile.png"
                                                     },
-                                                    "replyCount": 0,
-                                                    "nextReplyCursor": null,
+                                                    "childCommentCount": 0,
                                                     "imageList": [],
-                                                    "childrenCommentList": [],
                                                     "likeCount": 2,
-                                                    "isLike": true
+                                                    "isLike": true,
+                                                    "canEdit": true,
+                                                    "canDelete": true
                                                   }
                                                 ],
                                                 "hasNext": true,
-                                                "cursor": 45
+                                                "nextPage": 1,
+                                                "remainingCount": 8
                                               }
                                             }
                                             """
@@ -234,11 +245,10 @@ public class CommentController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "COMMENT404_PARENT-NOT_FOUND: 존재하지 않는 부모 댓글입니다."),
     })
     public ResponseEntity<ApiResponse<CommentPageResponse>> getReplies(@PathVariable Long commentId,
-                                                                       @RequestParam(required = false) Long cursor,
-                                                                       @RequestParam(defaultValue = "20") int size,
+                                                                       @RequestParam(defaultValue = "0") int page,
                                                                        @AuthenticationPrincipal UserDetails userDetails
     ) {
-        CommentPageResponse response = commentQueryService.getReplies(commentId, cursor, size, userDetails);
+        CommentPageResponse response = commentQueryService.getReplies(commentId, page, userDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 

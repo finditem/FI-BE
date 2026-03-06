@@ -37,26 +37,36 @@ public class CommentQueryService {
     private final CommentLikeService commentLikeService;
     private final BlockedUserRepository blockedUserRepository;
 
-    @Transactional(readOnly = true)
-    public CommentPageResponse getParentComments(Long postId, Long cursor, int size, UserDetails userDetails) {
-        User user = userQueryService.findUserIfNullReturnNull(userDetails);
-        Pageable pageable = PageRequest.of(0, size + 1);
+    private static final int PAGE_SIZE = 10;
 
-        List<Comment> fetched = (Objects.isNull(cursor))
-                ? commentRepository.findParentComments(postId, pageable)
-                : commentRepository.findParentCommentsWithCursor(postId, cursor, pageable);
+    @Transactional(readOnly = true)
+    public CommentPageResponse getParentComments(Long postId, int page, UserDetails userDetails) {
+        User user = userQueryService.findUserIfNullReturnNull(userDetails);
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 
         Set<Long> excludedUserIds = getExcludedUserIds(user);
-        if (!excludedUserIds.isEmpty()) {
-            fetched = fetched.stream()
-                    .filter(c -> !excludedUserIds.contains(c.getUser().getId()))
-                    .collect(Collectors.toList());
-        }
+        boolean excludedEmpty = (excludedUserIds == null || excludedUserIds.isEmpty());
 
-        boolean hasNext = fetched.size() > size;
-        if (hasNext) fetched = fetched.subList(0, size);
+        List<Comment> fetched = commentRepository.findParentComments(
+                postId,
+                excludedEmpty ? Set.of(0L) : excludedUserIds,
+                excludedEmpty,
+                pageable
+        );
 
-        Long nextCursor = fetched.isEmpty() ? null : fetched.get(fetched.size() - 1).getId();
+        boolean hasNext = fetched.size() > PAGE_SIZE;
+        if (hasNext) fetched = fetched.subList(0, PAGE_SIZE);
+
+        Integer nextPage = hasNext ? page + 1 : null;
+
+        long totalCount = commentRepository.countParentComments(
+                postId,
+                excludedEmpty ? Set.of(0L) : excludedUserIds,
+                excludedEmpty
+        );
+
+        long shown = ((long) page * PAGE_SIZE) + fetched.size();
+        long remainingCount = Math.max(0, totalCount - shown);
 
         List<Long> parentIds = fetched.stream()
                 .map(Comment::getId)
@@ -76,8 +86,6 @@ public class CommentQueryService {
                             UserConverter.toUserCommentResponse(comment.getUser()),
                             imageMap.getOrDefault(comment.getId(), List.of()),
                             replyCountMap.getOrDefault(comment.getId(), 0L),
-                            null,
-                            List.of(),
                             likeCountMap.getOrDefault(comment.getId(), 0L),
                             myLikePostSet.contains(comment.getId()),
                             isAuthor
@@ -85,32 +93,41 @@ public class CommentQueryService {
                 })
                 .toList();
 
-        return new CommentPageResponse(responses, hasNext, nextCursor);
+        return new CommentPageResponse(responses, hasNext, nextPage, remainingCount);
     }
 
     @Transactional(readOnly = true)
-    public CommentPageResponse getReplies(Long parentId, Long cursor, int size, UserDetails userDetails) {
+    public CommentPageResponse getReplies(Long parentId, int page, UserDetails userDetails) {
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
-        Pageable pageable = PageRequest.of(0, size + 1);
 
         Comment parentComment = commentRepository.findById(parentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_PARENT_NOT_FOUND));
 
-        List<Comment> fetched = (Objects.isNull(cursor))
-                ? commentRepository.findReplies(parentComment.getId(), pageable)
-                : commentRepository.findRepliesWithCursor(parentComment.getId(), cursor, pageable);
-
         Set<Long> excludedUserIds = getExcludedUserIds(user);
-        if (!excludedUserIds.isEmpty()) {
-            fetched = fetched.stream()
-                    .filter(c -> !excludedUserIds.contains(c.getUser().getId()))
-                    .collect(Collectors.toList());
-        }
+        boolean excludedEmpty = excludedUserIds == null || excludedUserIds.isEmpty();
 
-        boolean hasNext = fetched.size() > size;
-        if (hasNext) fetched = fetched.subList(0, size);
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
 
-        Long nextCursor = fetched.isEmpty() ? null : fetched.get(fetched.size() - 1).getId();
+        List<Comment> fetched = commentRepository.findReplies(
+                parentComment.getId(),
+                excludedEmpty ? Set.of(0L) : excludedUserIds,
+                excludedEmpty,
+                pageable
+        );
+
+        boolean hasNext = fetched.size() > PAGE_SIZE;
+        if (hasNext) fetched = fetched.subList(0, PAGE_SIZE);
+
+        Integer nextPage = hasNext ? page + 1 : null;
+
+        long totalCount = commentRepository.countReplies(
+                parentComment.getId(),
+                excludedEmpty ? Set.of(0L) : excludedUserIds,
+                excludedEmpty
+        );
+
+        long shown = (long) page * PAGE_SIZE + fetched.size();
+        long remainingCount = Math.max(0, totalCount - shown);
 
         List<Long> replyIds = fetched.stream()
                 .map(Comment::getId)
@@ -130,8 +147,6 @@ public class CommentQueryService {
                             UserConverter.toUserCommentResponse(reply.getUser()),
                             imageMap.getOrDefault(reply.getId(), List.of()),
                             (reply.getDepth() < 2) ? replyCountMap.getOrDefault(reply.getId(), 0L) : 0L,
-                            null,
-                            List.of(),
                             likeCountMap.getOrDefault(reply.getId(), 0L),
                             myLikeSet.contains(reply.getId()),
                             isAuthor
@@ -139,7 +154,7 @@ public class CommentQueryService {
                 })
                 .toList();
 
-        return new CommentPageResponse(responses, hasNext, nextCursor);
+        return new CommentPageResponse(responses, hasNext, nextPage, remainingCount);
     }
 
 
