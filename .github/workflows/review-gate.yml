@@ -2,7 +2,7 @@ name: Review Gate
 
 on:
   pull_request:
-    types: [labeled]
+    types: [opened, synchronize, labeled]
   pull_request_review:
     types: [submitted]
 
@@ -35,12 +35,6 @@ jobs:
             const hasApproval = reviews.some(r => r.state === 'APPROVED');
             if (hasApproval) {
               console.log(`PR #${prNumber}: 승인된 리뷰 있음 — 머지 허용`);
-              return;
-            }
-
-            // D-0 외 라벨 이벤트는 통과 (불필요한 실패 알림 방지)
-            if (context.payload.action === 'labeled') {
-              console.log(`PR #${prNumber}: D-0 외 라벨 변경 — 스킵`);
               return;
             }
 
