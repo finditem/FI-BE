@@ -8,6 +8,7 @@ on:
 
 permissions:
   pull-requests: read
+  actions: write
 
 jobs:
   review-gate:
@@ -35,6 +36,30 @@ jobs:
             const hasApproval = reviews.some(r => r.state === 'APPROVED');
             if (hasApproval) {
               console.log(`PR #${prNumber}: 승인된 리뷰 있음 — 머지 허용`);
+
+              // 이전 pull_request 이벤트의 실패 기록 재실행
+              if (context.eventName === 'pull_request_review') {
+                try {
+                  const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    workflow_id: 'review-gate.yml',
+                    head_sha: context.payload.pull_request.head.sha,
+                    event: 'pull_request',
+                    status: 'failure'
+                  });
+                  for (const run of runs.workflow_runs) {
+                    await github.rest.actions.reRunWorkflow({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: run.id
+                    });
+                    console.log(`PR #${prNumber}: 실패한 review-gate (run ${run.id}) 재실행`);
+                  }
+                } catch (e) {
+                  console.log(`PR #${prNumber}: 재실행 실패 — ${e.message}`);
+                }
+              }
               return;
             }
 
