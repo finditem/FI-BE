@@ -92,6 +92,7 @@ public class AdminService {
                         inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
                 .content(inquiry.getContent())
                 .ip(inquiry.getIp())
+                .answered(inquiry.getAnswerStatus() == InquiryStatus.ANSWERED)
                 .build());
     }
 
@@ -214,7 +215,7 @@ public class AdminService {
                 .build();
     }
 
-    public InquiryDetailDTO getGuestInquiryDetail(Long inquiryId, UserDetails userDetails) {
+    public InquiryDetailDTO getGuestInquiryDetail(Long inquiryId) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
 
@@ -222,9 +223,7 @@ public class AdminService {
             throw new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND);
         }
 
-        List<InquiryCommentResponse> comments =
-                inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
-        return inquiryConverter.toDetailDTO(inquiry, comments);
+        return inquiryConverter.toDetailDTO(inquiry);
     }
 
     @Transactional
@@ -359,6 +358,7 @@ public class AdminService {
                         .userEmail(inquiry.getEmail())
                         .content(inquiry.getContent())
                         .ip(inquiry.getIp())
+                        .answered(inquiry.getAnswerStatus() == InquiryStatus.ANSWERED)
                         .build())
                 .toList();
 
@@ -432,6 +432,7 @@ public class AdminService {
                                 inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
                         .content(inquiry.getContent())
                         .ip(inquiry.getIp())
+                        .answered(inquiry.getAnswerStatus() == InquiryStatus.ANSWERED)
                         .build())
                 .toList();
 

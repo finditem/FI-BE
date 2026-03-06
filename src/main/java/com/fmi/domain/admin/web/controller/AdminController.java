@@ -123,9 +123,8 @@ public class AdminController {
                     )
             )
     })
-    public ApiResponse<InquiryDetailDTO> getGuestInquiryDetail(@PathVariable Long inquiryId,
-                                                                @AuthenticationPrincipal UserDetails userDetails) {
-        InquiryDetailDTO response = adminService.getGuestInquiryDetail(inquiryId, userDetails);
+    public ApiResponse<InquiryDetailDTO> getGuestInquiryDetail(@PathVariable Long inquiryId) {
+        InquiryDetailDTO response = adminService.getGuestInquiryDetail(inquiryId);
         return ApiResponse.onSuccess(response);
     }
 
