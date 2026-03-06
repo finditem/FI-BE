@@ -176,6 +176,7 @@ public class AdminService {
             return AdminCsDetailResponse.builder()
                     .type(AdminCsType.REPORT)
                     .id(report.getReportId())
+                    .title(report.getTargetType().getDescription() + " 신고")
                     .createdAt(report.getCreatedAt())
                     .targetType(report.getTargetType())
                     .targetId(report.getTargetId())
