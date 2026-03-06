@@ -310,22 +310,41 @@ public class AdminService {
      * 관리자 비회원 문의 목록 조회 (커서 기반 무한스크롤, id 기반)
      */
     public AdminGuestInquiryPageResponse getGuestInquirySlice(InquiryStatus status,
+                                                              Boolean answered,
                                                               String keyword,
                                                               Long cursor,
                                                               int size) {
         size = Math.max(1, Math.min(size, 50));
 
+        // answered 파라미터를 status로 변환 (status가 없을 때만)
+        InquiryStatus effectiveStatus = status;
+        boolean notAnsweredFilter = false;
+        if (status == null && answered != null) {
+            if (answered) {
+                effectiveStatus = InquiryStatus.ANSWERED;
+            } else {
+                notAnsweredFilter = true;
+            }
+        }
+
         PageRequest pageRequest = PageRequest.of(0, size);
         Slice<Inquiry> inquirySlice;
 
         if (keyword != null && !keyword.isBlank()) {
-            String statusStr = status != null ? status.name() : null;
-            inquirySlice = inquiryRepository.findGuestInquiriesForAdminWithKeywordSlice(
-                    statusStr, sanitizeFulltextKeyword(keyword), cursor, pageRequest);
+            String statusStr = effectiveStatus != null ? effectiveStatus.name() : null;
+            inquirySlice = notAnsweredFilter
+                    ? inquiryRepository.findGuestInquiriesNotAnsweredWithKeywordSlice(
+                            sanitizeFulltextKeyword(keyword), cursor, pageRequest)
+                    : inquiryRepository.findGuestInquiriesForAdminWithKeywordSlice(
+                            statusStr, sanitizeFulltextKeyword(keyword), cursor, pageRequest);
+        } else if (notAnsweredFilter) {
+            inquirySlice = (cursor == null)
+                    ? inquiryRepository.findGuestInquiriesNotAnsweredOrderByIdDesc(pageRequest)
+                    : inquiryRepository.findGuestInquiriesNotAnsweredBeforeCursorOrderByIdDesc(cursor, pageRequest);
         } else {
             inquirySlice = (cursor == null)
-                    ? inquiryRepository.findGuestInquiriesOrderByIdDesc(status, pageRequest)
-                    : inquiryRepository.findGuestInquiriesBeforeCursorOrderByIdDesc(status, cursor, pageRequest);
+                    ? inquiryRepository.findGuestInquiriesOrderByIdDesc(effectiveStatus, pageRequest)
+                    : inquiryRepository.findGuestInquiriesBeforeCursorOrderByIdDesc(effectiveStatus, cursor, pageRequest);
         }
 
         List<AdminInquiryResponse> items = inquirySlice.getContent().stream()

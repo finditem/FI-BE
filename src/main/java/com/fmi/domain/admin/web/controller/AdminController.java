@@ -142,11 +142,12 @@ public class AdminController {
     })
     public ApiResponse<AdminGuestInquiryPageResponse> getGuestInquiries(
             @RequestParam(required = false) InquiryStatus status,
+            @RequestParam(required = false) Boolean answered,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        AdminGuestInquiryPageResponse response = adminService.getGuestInquirySlice(status, keyword, cursor, size);
+        AdminGuestInquiryPageResponse response = adminService.getGuestInquirySlice(status, answered, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 

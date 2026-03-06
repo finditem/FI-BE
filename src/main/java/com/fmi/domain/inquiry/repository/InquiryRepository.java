@@ -192,6 +192,39 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
                                                                @Param("cursor") Long cursor,
                                                                Pageable pageable);
 
+    // 관리자 비회원 문의 - answered=false (미답변)
+    @Query("""
+            SELECT i FROM Inquiry i
+            WHERE i.user IS NULL
+              AND i.answerStatus <> com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED
+            ORDER BY i.id DESC
+            """)
+    Slice<Inquiry> findGuestInquiriesNotAnsweredOrderByIdDesc(Pageable pageable);
+
+    @Query("""
+            SELECT i FROM Inquiry i
+            WHERE i.user IS NULL
+              AND i.answerStatus <> com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED
+              AND i.id < :cursor
+            ORDER BY i.id DESC
+            """)
+    Slice<Inquiry> findGuestInquiriesNotAnsweredBeforeCursorOrderByIdDesc(@Param("cursor") Long cursor,
+                                                                          Pageable pageable);
+
+    // 관리자 비회원 문의 - answered=false + keyword (FULLTEXT, Slice)
+    @Query(value = """
+            SELECT * FROM customer_inquiry i
+            WHERE i.user_id IS NULL
+              AND i.answer_status <> 'ANSWERED'
+              AND MATCH(i.title, i.content) AGAINST(:keyword IN BOOLEAN MODE)
+              AND (:cursor IS NULL OR i.id < :cursor)
+            ORDER BY i.id DESC
+            """,
+            nativeQuery = true)
+    Slice<Inquiry> findGuestInquiriesNotAnsweredWithKeywordSlice(@Param("keyword") String keyword,
+                                                                 @Param("cursor") Long cursor,
+                                                                 Pageable pageable);
+
     // 관리자 비회원 문의 커서 기반 (id 기반) - keyword 있을 때 (FULLTEXT, Slice)
     @Query(value = """
             SELECT * FROM customer_inquiry i
