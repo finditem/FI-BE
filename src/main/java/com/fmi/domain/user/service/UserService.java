@@ -232,11 +232,14 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public PostPageResponse getMyPosts(String email, PostType postType, PostStatus postStatus,
-                                        Category category, SortType sortType, Long cursor, int size) {
+                                        Category category, SortType sortType,
+                                        LocalDate startDate, LocalDate endDate, String keyword,
+                                        Long cursor, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        return postRepository.searchMyPosts(user.getId(), postType, postStatus, category, sortType, cursor, size);
+        return postRepository.searchMyPosts(user.getId(), postType, postStatus, category, sortType,
+                startDate, endDate, keyword, cursor, size);
     }
 
     /**

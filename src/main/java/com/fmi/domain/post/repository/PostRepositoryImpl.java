@@ -17,6 +17,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -198,24 +199,29 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                                            PostStatus postStatus,
                                            Category category,
                                            SortType sortType,
+                                           LocalDate startDate,
+                                           LocalDate endDate,
+                                           String keyword,
                                            Long cursor,
                                            int size) {
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
-        BooleanExpression baseWhere = Expressions.allOf(
-                post.user.id.eq(userId),
-                post.deleted.isFalse(),
-                post.temporarySave.isFalse(),
-                equalsPostType(post, postType),
-                equalsPostStatus(post, postStatus),
-                equalsCategory(post, category)
-        );
+        BooleanBuilder baseWhere = new BooleanBuilder();
+        baseWhere.and(post.user.id.eq(userId));
+        baseWhere.and(post.deleted.isFalse());
+        baseWhere.and(post.temporarySave.isFalse());
+        baseWhere.and(equalsPostType(post, postType));
+        baseWhere.and(equalsPostStatus(post, postStatus));
+        baseWhere.and(equalsCategory(post, category));
+        baseWhere.and(dateRange(post, startDate, endDate));
 
-        BooleanExpression pageWhere = Expressions.allOf(
-                baseWhere,
-                cursorCondition(post, sortType, cursor)
-        );
+        if (hasText(keyword)) {
+            baseWhere.and(buildKeywordCondition(post, keyword));
+        }
+
+        BooleanBuilder pageWhere = new BooleanBuilder(baseWhere);
+        pageWhere.and(cursorCondition(post, sortType, cursor));
 
         Long postCount = queryFactory
                 .select(post.id.count())
@@ -523,6 +529,17 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .orderBy(post.createdAt.desc(), post.id.desc())
                 .limit(limit)
                 .fetch();
+    }
+
+    private BooleanExpression dateRange(QPost post, LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null) {
+            return post.createdAt.between(startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
+        } else if (startDate != null) {
+            return post.createdAt.goe(startDate.atStartOfDay());
+        } else if (endDate != null) {
+            return post.createdAt.lt(endDate.plusDays(1).atStartOfDay());
+        }
+        return null;
     }
 
     private boolean hasText(String value) {

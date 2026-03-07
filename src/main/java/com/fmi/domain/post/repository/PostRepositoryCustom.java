@@ -8,6 +8,7 @@ import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -27,6 +28,9 @@ public interface PostRepositoryCustom {
                                     PostStatus postStatus,
                                     Category category,
                                     SortType sortType,
+                                    LocalDate startDate,
+                                    LocalDate endDate,
+                                    String keyword,
                                     Long cursor,
                                     int size);
 

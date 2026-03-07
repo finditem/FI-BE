@@ -133,6 +133,8 @@ public class UserController {
             - postType: LOST / FOUND
             - postStatus: SEARCHING / FOUND
             - category: ELECTRONICS / WALLET / ID_CARD / JEWELRY / BAG / CARD / ETC
+            - startDate, endDate: yyyy-MM-dd 형식 (예: 2024-01-01)
+            - keyword: 제목 또는 내용 검색
             """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 게시글 목록 조회 성공"),
@@ -144,11 +146,15 @@ public class UserController {
             @RequestParam(required = false) PostStatus postStatus,
             @RequestParam(required = false) Category category,
             @RequestParam(required = false, defaultValue = "LATEST") SortType sortType,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
         String email = userDetails.getUsername();
-        PostPageResponse response = userService.getMyPosts(email, postType, postStatus, category, sortType, cursor, size);
+        PostPageResponse response = userService.getMyPosts(email, postType, postStatus, category, sortType,
+                startDate, endDate, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 
