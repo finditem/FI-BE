@@ -2,6 +2,8 @@ package com.fmi.domain.commentlike.web.controller;
 
 import com.fmi.domain.commentlike.service.CommentLikeService;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -15,6 +17,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Objects;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,6 +47,10 @@ public class CommentLikeController {
     })
     public ResponseEntity<ApiResponse<Boolean>> createLike(@PathVariable Long commentId,
                                                            @AuthenticationPrincipal UserDetails userDetails) {
+        if(Objects.isNull(userDetails)){
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
+
         commentLikeService.createLike(commentId, userDetails);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(true));
@@ -69,6 +77,10 @@ public class CommentLikeController {
     })
     public ResponseEntity<ApiResponse<Boolean>> deleteLike(@PathVariable Long commentId,
                                                            @AuthenticationPrincipal UserDetails userDetails) {
+        if(Objects.isNull(userDetails)){
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+        }
+
 
         commentLikeService.deleteLike(commentId, userDetails);
 
