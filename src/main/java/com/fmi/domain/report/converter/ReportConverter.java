@@ -33,6 +33,7 @@ public class ReportConverter {
                 .reason(report.getReason())
                 .status(report.getStatus())
                 .answered(report.getAnswered())
+                .adminNote(report.getAdminNote())
                 .createdAt(report.getCreatedAt())
                 .resolvedAt(report.getResolvedAt())
                 .build();
