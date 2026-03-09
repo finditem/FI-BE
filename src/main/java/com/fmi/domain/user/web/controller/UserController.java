@@ -253,8 +253,9 @@ public class UserController {
             - 파일을 보내지 않으면 → 이미지 변경 없음
             - 파일을 보내면 → 기존 이미지 삭제 후 새 이미지로 업데이트
             
-            **이미지 삭제** (deleteProfileImage 파라미터):
+            **이미지 삭제** (request JSON 내 deleteProfileImage 필드):
             - true로 보내면 → 기존 이미지 삭제 (프로필 이미지 없음 상태)
+            - null 또는 필드 미포함 → 이미지 삭제 없음
             """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 정보 수정 성공"),
@@ -282,10 +283,10 @@ public class UserController {
     public ApiResponse<UserProfileResponse> updateMyProfile(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestPart(value = "request", required = false) @Valid UserUpdateRequest request,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
-            @RequestParam(value = "deleteProfileImage", required = false, defaultValue = "false") boolean deleteProfileImage
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
     ) {
         String email = userDetails.getUsername();
+        boolean deleteProfileImage = request != null && request.isDeleteProfileImage();
         UserProfileResponse response = userService.updateMyProfile(email, request, profileImage, deleteProfileImage);
         return ApiResponse.onSuccess(response);
     }
