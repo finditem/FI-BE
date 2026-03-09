@@ -102,9 +102,12 @@ jobs:
 
               if (!labelEvent) continue;
 
-              const labeledAt = new Date(labelEvent.created_at);
+              // 날짜 단위 비교 (시각 무시, UTC 기준 날짜 차이만 계산)
+              const labeledDate = new Date(labelEvent.created_at);
               const now = new Date();
-              const diffDays = Math.floor((now - labeledAt) / (1000 * 60 * 60 * 24));
+              const labeledDay = new Date(labeledDate.getFullYear(), labeledDate.getMonth(), labeledDate.getDate());
+              const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+              const diffDays = Math.round((today - labeledDay) / (1000 * 60 * 60 * 24));
 
               const transition = transitions[currentDLabel];
               if (!transition || diffDays < transition.days) continue;
@@ -131,25 +134,20 @@ jobs:
 
               console.log(`PR #${pr.number}: ${currentDLabel} → ${transition.next} (${diffDays}일 경과)`);
 
-              // D-0 전환 시 review-gate 재실행 (GITHUB_TOKEN 라벨은 다른 워크플로우를 트리거하지 않으므로)
+              // D-0 전환 시 review-gate를 workflow_dispatch로 새로 트리거
+              // (reRunWorkflow는 원래 페이로드를 사용하므로 D-0 라벨이 반영 안 됨)
               if (transition.next === 'D-0') {
                 try {
-                  const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                  await github.rest.actions.createWorkflowDispatch({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     workflow_id: 'review-gate.yml',
-                    head_sha: pr.head.sha
+                    ref: pr.head.ref,
+                    inputs: { pr_number: String(pr.number) }
                   });
-                  if (runs.total_count > 0) {
-                    await github.rest.actions.reRunWorkflow({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      run_id: runs.workflow_runs[0].id
-                    });
-                    console.log(`PR #${pr.number}: review-gate 재실행 완료`);
-                  }
+                  console.log(`PR #${pr.number}: review-gate dispatch 완료`);
                 } catch (e) {
-                  console.log(`PR #${pr.number}: review-gate 재실행 실패 — ${e.message}`);
+                  console.log(`PR #${pr.number}: review-gate dispatch 실패 — ${e.message}`);
                 }
               }
             }
