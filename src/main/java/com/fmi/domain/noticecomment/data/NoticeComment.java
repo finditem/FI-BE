@@ -39,8 +39,16 @@ public class NoticeComment {
     @Builder.Default
     private List<NoticeComment> replies = new ArrayList<>();
 
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<NoticeCommentImage> images = new ArrayList<>();
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean deleted = false;
 
     @Column(name = "like_count")
     @Builder.Default
@@ -66,6 +74,15 @@ public class NoticeComment {
     public void updateContent(String content) {
         this.content = content;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void softDelete() {
+        this.deleted = true;
+        this.content = "삭제된 댓글입니다.";
+    }
+
+    public int getDepth() {
+        return parent == null ? 0 : 1;
     }
 
 }

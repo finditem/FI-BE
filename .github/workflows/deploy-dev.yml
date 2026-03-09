@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-ec2
+  group: deploy-ec2-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

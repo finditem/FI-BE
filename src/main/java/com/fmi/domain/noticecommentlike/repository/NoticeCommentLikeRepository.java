@@ -10,11 +10,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.List;
 
 @Repository
 public interface NoticeCommentLikeRepository extends JpaRepository<NoticeCommentLike, Long> {
 
     Optional<NoticeCommentLike> findByUserAndComment(User user, NoticeComment comment);
+
+    @Query("SELECT ncl.comment.id FROM NoticeCommentLike ncl WHERE ncl.user.id = :userId AND ncl.comment.id IN :commentIds")
+    Set<Long> findByUserIdAndCommentIdIn(@Param("userId") Long userId, @Param("commentIds") List<Long> commentIds);
 
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM NoticeCommentLike ncl WHERE ncl.comment.id IN " +
