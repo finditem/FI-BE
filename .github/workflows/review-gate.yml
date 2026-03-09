@@ -5,6 +5,12 @@ on:
     types: [opened, synchronize, labeled]
   pull_request_review:
     types: [submitted]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR 번호 (D-0 전환 시 자동 호출용)'
+        required: true
+        type: string
 
 permissions:
   pull-requests: read
@@ -18,8 +24,20 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const prNumber = context.payload.pull_request.number;
-            const labels = context.payload.pull_request.labels.map(l => l.name);
+            // workflow_dispatch인 경우 PR 번호를 input에서 가져오고, 최신 라벨을 API로 조회
+            let prNumber, labels;
+            if (context.eventName === 'workflow_dispatch') {
+              prNumber = parseInt(context.payload.inputs.pr_number);
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber
+              });
+              labels = pr.labels.map(l => l.name);
+            } else {
+              prNumber = context.payload.pull_request.number;
+              labels = context.payload.pull_request.labels.map(l => l.name);
+            }
 
             // D-0 라벨 확인
             if (labels.includes('D-0')) {
