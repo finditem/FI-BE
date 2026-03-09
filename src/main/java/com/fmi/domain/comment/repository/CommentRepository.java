@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -33,6 +34,36 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     @Query("SELECT c FROM Comment c JOIN FETCH c.post WHERE c.user = :user AND c.deleted = false AND c.createdAt < :cursor ORDER BY c.createdAt DESC")
     Slice<Comment> findByUserAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
+
+    @Query("""
+            SELECT c FROM Comment c JOIN FETCH c.post
+            WHERE c.user = :user AND c.deleted = false
+              AND (:startDate IS NULL OR c.createdAt >= :startDate)
+              AND (:endDate IS NULL OR c.createdAt < :endDate)
+              AND (:keyword IS NULL OR c.content LIKE CONCAT('%', :keyword, '%')
+                   OR c.post.title LIKE CONCAT('%', :keyword, '%'))
+            ORDER BY c.createdAt DESC
+            """)
+    Slice<Comment> searchMyCommentsLatest(@Param("user") User user,
+                                          @Param("startDate") LocalDateTime startDate,
+                                          @Param("endDate") LocalDateTime endDate,
+                                          @Param("keyword") String keyword,
+                                          Pageable pageable);
+
+    @Query("""
+            SELECT c FROM Comment c JOIN FETCH c.post
+            WHERE c.user = :user AND c.deleted = false
+              AND (:startDate IS NULL OR c.createdAt >= :startDate)
+              AND (:endDate IS NULL OR c.createdAt < :endDate)
+              AND (:keyword IS NULL OR c.content LIKE CONCAT('%', :keyword, '%')
+                   OR c.post.title LIKE CONCAT('%', :keyword, '%'))
+            ORDER BY c.createdAt ASC
+            """)
+    Slice<Comment> searchMyCommentsOldest(@Param("user") User user,
+                                          @Param("startDate") LocalDateTime startDate,
+                                          @Param("endDate") LocalDateTime endDate,
+                                          @Param("keyword") String keyword,
+                                          Pageable pageable);
 
     long countByUser(User user);
 

@@ -199,32 +199,29 @@ public class UserService {
     }
 
     /**
-     * 내가 쓴 댓글 목록 조회 (커서 기반)
+     * 내가 쓴 댓글 목록 조회 (페이지 기반 + 필터)
      */
     @Transactional(readOnly = true)
-    public MyCommentPageResponse getMyComments(String email, Long cursor, int size) {
+    public MyCommentPageResponse getMyComments(String email, SortType sortType,
+                                                LocalDate startDate, LocalDate endDate,
+                                                String keyword, int page, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        PageRequest pageRequest = PageRequest.of(0, size);
-        Slice<Comment> commentSlice = (cursor == null)
-                ? commentRepository.findByUserOrderByIdDesc(user, pageRequest)
-                : commentRepository.findByUserAndIdLessThanOrderByIdDesc(user, cursor, pageRequest);
+        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = (endDate != null) ? endDate.plusDays(1).atStartOfDay() : null;
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
 
-        List<Comment> commentList = commentSlice.getContent().stream()
-                .filter(c -> !c.isDeleted())
-                .toList();
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Slice<Comment> commentSlice = (sortType == SortType.OLDEST)
+                ? commentRepository.searchMyCommentsOldest(user, startDateTime, endDateTime, trimmedKeyword, pageRequest)
+                : commentRepository.searchMyCommentsLatest(user, startDateTime, endDateTime, trimmedKeyword, pageRequest);
 
-        List<UserCommentSummaryResponse> comments = commentList.stream()
+        List<UserCommentSummaryResponse> comments = commentSlice.getContent().stream()
                 .map(UserConverter::toUserCommentSummaryResponse)
                 .toList();
 
-        boolean hasNext = commentSlice.hasNext();
-        Long nextCursor = (hasNext && !commentSlice.getContent().isEmpty())
-                ? commentSlice.getContent().get(commentSlice.getContent().size() - 1).getId()
-                : null;
-
-        return new MyCommentPageResponse(comments, nextCursor, hasNext);
+        return new MyCommentPageResponse(comments, null, commentSlice.hasNext());
     }
 
     /**
