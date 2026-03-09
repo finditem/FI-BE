@@ -38,6 +38,10 @@ public class NoticeResponseDTO {
     private String thumbnailUrl;
     @Schema(description = "이미지 URL 목록")
     private List<String> images;
+    @Schema(description = "NEW 표시 (24시간 이내)", example = "true")
+    private Boolean isNew;
+    @Schema(description = "HOT 표시 (인기 공지)", example = "false")
+    private Boolean isHot;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
     @Schema(description = "수정 시간", example = "2024-01-01T00:00:00")

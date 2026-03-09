@@ -158,6 +158,18 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
                                                @Param("cursor") Long cursor,
                                                @Param("limit") int limit);
 
+    @Query(value = """
+            SELECT n.id FROM notice n
+            LEFT JOIN notice_comment nc ON nc.notice_id = n.id
+            WHERE n.draft = false
+            GROUP BY n.id
+            HAVING COUNT(nc.comment_id) >= 1 OR n.view_cnt >= 10
+            ORDER BY COUNT(nc.comment_id) DESC, n.view_cnt DESC, n.like_count DESC
+            LIMIT :limit
+            """,
+            nativeQuery = true)
+    List<Long> findHotNoticeIds(@Param("limit") int limit);
+
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Notice n SET n.likeCount = n.likeCount + 1 WHERE n.noticeId = :noticeId")
     void incrementLikeCount(@Param("noticeId") Long noticeId);

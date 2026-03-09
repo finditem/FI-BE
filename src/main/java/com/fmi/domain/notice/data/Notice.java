@@ -76,6 +76,10 @@ public class Notice {
         this.viewCount = viewCount;
     }
 
+    public boolean isNew() {
+        return this.createdAt.isAfter(LocalDateTime.now().minusHours(24));
+    }
+
     public void update(String title, String content, NoticeCategory category, Boolean pinned, Boolean draft) {
         this.title = title;
         this.content = content;
