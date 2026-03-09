@@ -161,6 +161,7 @@ public class UserController {
     @GetMapping("/me/activities")
     @Operation(summary = "내 활동 내역 통합 조회", description = """
             현재 로그인한 사용자의 모든 활동 내역을 통합하여 최신순으로 조회합니다.
+            응답은 날짜별로 그룹화되어 반환됩니다.
 
             **활동 유형 (type):**
             - POST: 작성한 게시글
@@ -173,6 +174,9 @@ public class UserController {
             **날짜 필터:**
             - startDate, endDate: yyyy-MM-dd 형식 (예: 2024-01-01)
 
+            **검색:**
+            - keyword: 제목 또는 내용 검색
+
             **커서**: ISO datetime 형식 (예: 2024-01-01T00:00:00)
             """)
     @ApiResponses({
@@ -184,11 +188,12 @@ public class UserController {
             @RequestParam(required = false) ActivityType type,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
         String email = userDetails.getUsername();
-        MyActivityPageResponse response = userService.getMyActivities(email, type, startDate, endDate, cursor, size);
+        MyActivityPageResponse response = userService.getMyActivities(email, type, startDate, endDate, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 
