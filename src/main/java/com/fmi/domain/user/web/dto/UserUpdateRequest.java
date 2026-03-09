@@ -13,6 +13,8 @@ public class UserUpdateRequest {
     @Size(min = 2, max = 15, message = "닉네임은 2~15자 사이여야 합니다")
     private String nickname;
 
+    private Boolean deleteProfileImage;
+
     @JsonIgnore
     private boolean nicknameProvided = false;
 
@@ -20,5 +22,9 @@ public class UserUpdateRequest {
     public void setNickname(String nickname) {
         this.nicknameProvided = true;
         this.nickname = nickname;
+    }
+
+    public boolean isDeleteProfileImage() {
+        return Boolean.TRUE.equals(deleteProfileImage);
     }
 }
