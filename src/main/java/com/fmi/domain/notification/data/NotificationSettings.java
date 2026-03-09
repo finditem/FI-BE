@@ -1,10 +1,13 @@
 package com.fmi.domain.notification.data;
 
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.auth.data.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.EnumSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "notification_settings")
@@ -58,6 +61,19 @@ public class NotificationSettings {
     @Builder.Default
     private Boolean categoryEnabled = true;
 
+    // 전체 브라우저 알림
+    @Column(name = "browser_notification_enabled")
+    @Builder.Default
+    private Boolean browserNotificationEnabled = true;
+
+    // 카테고리별 키워드 알림 (활성화된 카테고리 목록)
+    @ElementCollection(targetClass = Category.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "notification_category_keywords", joinColumns = @JoinColumn(name = "settings_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category")
+    @Builder.Default
+    private Set<Category> enabledCategories = EnumSet.allOf(Category.class);
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -76,10 +92,10 @@ public class NotificationSettings {
     }
 
     // 설정 업데이트
-    public void updateSettings(Boolean commentEnabled, Boolean chatEnabled, 
+    public void updateSettings(Boolean commentEnabled, Boolean chatEnabled,
                                Boolean inquiryReplyEnabled, Boolean reportResultEnabled,
                                Boolean favoriteEnabled, Boolean noticeEnabled,
-                               Boolean categoryEnabled) {
+                               Boolean categoryEnabled, Boolean browserNotificationEnabled) {
         if (commentEnabled != null) this.commentEnabled = commentEnabled;
         if (chatEnabled != null) this.chatEnabled = chatEnabled;
         if (inquiryReplyEnabled != null) this.inquiryReplyEnabled = inquiryReplyEnabled;
@@ -87,6 +103,7 @@ public class NotificationSettings {
         if (favoriteEnabled != null) this.favoriteEnabled = favoriteEnabled;
         if (noticeEnabled != null) this.noticeEnabled = noticeEnabled;
         if (categoryEnabled != null) this.categoryEnabled = categoryEnabled;
+        if (browserNotificationEnabled != null) this.browserNotificationEnabled = browserNotificationEnabled;
     }
 }
 

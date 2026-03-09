@@ -217,9 +217,15 @@ public class NotificationService {
                 request.getReportResultEnabled(),
                 request.getFavoriteEnabled(),
                 request.getNoticeEnabled(),
-                request.getCategoryEnabled()
+                request.getCategoryEnabled(),
+                request.getBrowserNotificationEnabled()
         );
-        
+
+        if (request.getEnabledCategories() != null) {
+            settings.getEnabledCategories().clear();
+            settings.getEnabledCategories().addAll(request.getEnabledCategories());
+        }
+
         NotificationSettings saved = notificationSettingsRepository.save(settings);
         
         // User.marketingConsent 업데이트 (요청에 값이 있는 경우에만)
@@ -244,7 +250,7 @@ public class NotificationService {
         
         NotificationSettings settings = notificationSettingsRepository.findByUser(freshUser)
                 .orElseGet(() -> createDefaultSettings(freshUser));
-        settings.updateSettings(commentEnabled, chatEnabled, null, null, null, null, categoryEnabled);
+        settings.updateSettings(commentEnabled, chatEnabled, null, null, null, null, categoryEnabled, null);
         NotificationSettings saved = notificationSettingsRepository.save(settings);
         return notificationConverter.toSettingsDTO(saved, freshUser);
     }
