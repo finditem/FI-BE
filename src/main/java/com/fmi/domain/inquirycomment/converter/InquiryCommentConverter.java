@@ -8,8 +8,6 @@ import com.fmi.domain.inquirycomment.web.dto.CreateInquiryCommentDto;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class InquiryCommentConverter {
@@ -42,20 +40,13 @@ public class InquiryCommentConverter {
         User author = comment.getUser();
         Long authorId = author != null ? author.getId() : null;
         String authorName = author != null ? author.getNickname() : "비회원";
-        String authorEmail = comment.getEmail() != null ? comment.getEmail() : (author != null ? author.getEmail() : null);
 
         return InquiryCommentResponse.builder()
                 .id(comment.getId())
                 .content(comment.getContent())
                 .authorId(authorId)
                 .authorName(authorName)
-                .authorEmail(authorEmail)
-                .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
-                .replies(null) // 대댓글은 Service에서 처리
                 .createdAt(comment.getCreatedAt())
-                .updatedAt(comment.getUpdatedAt())
-                .canEdit(canEdit)
-                .canDelete(canDelete)
                 .build();
     }
 }

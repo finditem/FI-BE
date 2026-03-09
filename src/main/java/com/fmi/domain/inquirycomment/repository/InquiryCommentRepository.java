@@ -41,4 +41,10 @@ public interface InquiryCommentRepository extends JpaRepository<InquiryComment, 
      */
     @Query("SELECT c FROM InquiryComment c WHERE c.parent.id IN :parentIds ORDER BY c.id ASC")
     java.util.List<InquiryComment> findByParentIdInOrderByIdAsc(@Param("parentIds") java.util.List<Long> parentIds);
+
+    /**
+     * 문의의 모든 댓글 조회 (플랫 리스트)
+     */
+    @Query("SELECT c FROM InquiryComment c WHERE c.inquiry.id = :inquiryId ORDER BY c.id ASC")
+    java.util.List<InquiryComment> findByInquiryIdOrderByIdAsc(@Param("inquiryId") Long inquiryId);
 }
