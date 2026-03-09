@@ -27,6 +27,7 @@ repositories {
 
 ext['kotlin.version'] = '2.1.0'
 ext['spring-framework.version'] = '6.2.11'
+ext['jackson.version'] = '2.19.2'
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
