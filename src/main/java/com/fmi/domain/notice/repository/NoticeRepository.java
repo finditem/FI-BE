@@ -87,7 +87,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             SELECT * FROM notice n
             WHERE n.draft = false
               AND (:category IS NULL OR n.category = :category)
-              AND (:cursor IS NULL OR n.id < :cursor)
+              AND (:cursor IS NULL OR (n.id < :cursor AND n.pinned = false))
             ORDER BY n.pinned DESC, n.created_at DESC
             LIMIT :limit
             """,
@@ -101,7 +101,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             SELECT * FROM notice n
             WHERE n.draft = false
               AND (:category IS NULL OR n.category = :category)
-              AND (:cursor IS NULL OR n.id > :cursor)
+              AND (:cursor IS NULL OR (n.id > :cursor AND n.pinned = false))
             ORDER BY n.pinned DESC, n.created_at ASC
             LIMIT :limit
             """,
@@ -116,7 +116,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             WHERE n.draft = false
               AND (:category IS NULL OR n.category = :category)
               AND MATCH(n.title, n.content) AGAINST(:keyword IN BOOLEAN MODE)
-              AND (:cursor IS NULL OR n.id < :cursor)
+              AND (:cursor IS NULL OR (n.id < :cursor AND n.pinned = false))
             ORDER BY n.pinned DESC, n.created_at DESC
             LIMIT :limit
             """,
@@ -132,7 +132,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             WHERE n.draft = false
               AND (:category IS NULL OR n.category = :category)
               AND MATCH(n.title, n.content) AGAINST(:keyword IN BOOLEAN MODE)
-              AND (:cursor IS NULL OR n.id > :cursor)
+              AND (:cursor IS NULL OR (n.id > :cursor AND n.pinned = false))
             ORDER BY n.pinned DESC, n.created_at ASC
             LIMIT :limit
             """,
@@ -148,7 +148,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             WHERE n.draft = false
               AND (:category IS NULL OR n.category = :category)
               AND MATCH(n.title, n.content) AGAINST(:keyword IN BOOLEAN MODE)
-              AND (:cursor IS NULL OR n.id < :cursor)
+              AND (:cursor IS NULL OR (n.id < :cursor AND n.pinned = false))
             ORDER BY n.pinned DESC, n.view_cnt DESC, n.id DESC
             LIMIT :limit
             """,
