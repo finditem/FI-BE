@@ -1,10 +1,13 @@
 package com.fmi.domain.notification.web.dto.response;
 
+import com.fmi.domain.Enum.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.Set;
 
 @Getter
 @Builder
@@ -24,8 +27,12 @@ public class NotificationSettingsDTO {
     private Boolean favoriteEnabled;
     @Schema(description = "공지사항 알림 활성화 여부", example = "true")
     private Boolean noticeEnabled;
-    @Schema(description = "카테고리 알림 활성화 여부", example = "true")
+    @Schema(description = "카테고리 키워드 알림 전체 활성화 여부", example = "true")
     private Boolean categoryEnabled;
+    @Schema(description = "활성화된 카테고리 키워드 목록", example = "[\"ELECTRONICS\", \"WALLET\"]")
+    private Set<Category> enabledCategories;
+    @Schema(description = "전체 브라우저 알림 활성화 여부", example = "true")
+    private Boolean browserNotificationEnabled;
     @Schema(description = "마케팅 이메일 수신 동의", example = "false")
     private Boolean marketingConsent;
 }

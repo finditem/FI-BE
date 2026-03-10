@@ -31,6 +31,8 @@ public class NotificationConverter {
                 .favoriteEnabled(settings.getFavoriteEnabled())
                 .noticeEnabled(settings.getNoticeEnabled())
                 .categoryEnabled(settings.getCategoryEnabled())
+                .enabledCategories(settings.getEnabledCategories())
+                .browserNotificationEnabled(settings.getBrowserNotificationEnabled())
                 .marketingConsent(user.isMarketingConsent())
                 .build();
     }
