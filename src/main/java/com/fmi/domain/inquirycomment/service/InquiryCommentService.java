@@ -74,6 +74,9 @@ public class InquiryCommentService {
         InquiryComment comment = inquiryCommentConverter.toCommentEntity(dto, user, inquiry, parent, null);
         InquiryComment savedComment = inquiryCommentRepository.save(comment);
 
+        // 마지막 댓글 작성자 기준으로 answered 자동 토글
+        inquiry.updateAnswered(isAdmin(userDetails));
+
         // 알림 발송 (선택적)
         try {
             sendCommentNotification(inquiry, savedComment, parent);
