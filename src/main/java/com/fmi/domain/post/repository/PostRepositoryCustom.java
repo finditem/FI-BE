@@ -36,8 +36,9 @@ public interface PostRepositoryCustom {
 
     PostPageResponse searchMyFavorites(Long userId,
                                         PostType postType,
-                                        PostStatus postStatus,
                                         Category category,
+                                        String address,
+                                        String keyword,
                                         SortType sortType,
                                         Long cursor,
                                         int size);
