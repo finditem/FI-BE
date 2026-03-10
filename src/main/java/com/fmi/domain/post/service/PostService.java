@@ -49,7 +49,7 @@ public class PostService {
 
         Post savePost = postRepository.save(post);
 
-        postImageService.createPostImageAtS3AndDB(images ,savePost);
+        postImageService.createPostImageAtS3AndDB(images, savePost);
 
         notificationService.notifyCategoriesForPost(post);
 
@@ -105,9 +105,9 @@ public class PostService {
         Post post = postQueryService.findById(postId);
         checkPostAccessDenied(post, userDetails.getUsername());
 
+        post.softDelete();
         postImageService.deleteAllImageByPost(post);
         postFavoriteRepository.deleteAllByPostId(postId);
-        post.softDelete();
     }
 
     @Transactional
