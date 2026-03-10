@@ -402,17 +402,18 @@ public class AdminService {
     }
 
     public CursorPageResponse<AdminInquiryResponse> getInquiryCursorPage(
-            InquiryType type, InquiryStatus status, String keyword, Long cursor, int size) {
+            InquiryType type, InquiryStatus status, Boolean answered, String keyword, Long cursor, int size) {
         int fetchSize = size + 1;
+
         List<Inquiry> inquiries;
         if (keyword != null && !keyword.isBlank()) {
             String typeStr = type != null ? type.name() : null;
             String statusStr = status != null ? status.name() : null;
             inquiries = inquiryRepository.findAllForAdminWithKeywordCursor(
-                    typeStr, statusStr, sanitizeFulltextKeyword(keyword), cursor, fetchSize);
+                    typeStr, statusStr, answered, sanitizeFulltextKeyword(keyword), cursor, fetchSize);
         } else {
             Pageable limit = PageRequest.of(0, fetchSize);
-            inquiries = inquiryRepository.findAllForAdminCursor(type, status, cursor, limit);
+            inquiries = inquiryRepository.findAllForAdminCursor(type, status, answered, cursor, limit);
         }
 
         boolean hasNext = inquiries.size() > size;

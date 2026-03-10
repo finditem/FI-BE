@@ -158,12 +158,14 @@ public class AdminController {
     public ApiResponse<CursorPageResponse<AdminInquiryResponse>> getInquiries(
             @RequestParam(required = false) InquiryType type,
             @RequestParam(required = false) InquiryStatus status,
+            @Parameter(description = "답변 여부 필터 (true=답변완료, false=미답변)")
+            @RequestParam(required = false) Boolean answered,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
         CursorPageResponse<AdminInquiryResponse> response =
-                adminService.getInquiryCursorPage(type, status, keyword, cursor, size);
+                adminService.getInquiryCursorPage(type, status, answered, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 
