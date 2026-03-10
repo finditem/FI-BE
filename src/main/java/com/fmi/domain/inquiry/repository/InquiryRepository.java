@@ -245,7 +245,7 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
             SELECT i FROM Inquiry i
             WHERE (:type IS NULL OR i.inquiryType = :type)
               AND (:status IS NULL OR i.answerStatus = :status)
-              AND (:answered IS NULL OR (:answered = true AND i.answerStatus = com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED) OR (:answered = false AND i.answerStatus <> com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED))
+              AND (:answered IS NULL OR i.answered = :answered)
               AND (:cursor IS NULL OR i.id < :cursor)
             ORDER BY i.id DESC
             """)
@@ -260,7 +260,7 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
             SELECT * FROM customer_inquiry i
             WHERE (:type IS NULL OR i.inquiry_type = :type)
               AND (:status IS NULL OR i.answer_status = :status)
-              AND (:answered IS NULL OR (:answered = true AND i.answer_status = 'ANSWERED') OR (:answered = false AND i.answer_status <> 'ANSWERED'))
+              AND (:answered IS NULL OR i.answered = :answered)
               AND (:cursor IS NULL OR i.id < :cursor)
               AND MATCH(i.title, i.content) AGAINST(:keyword IN BOOLEAN MODE)
             ORDER BY i.id DESC
