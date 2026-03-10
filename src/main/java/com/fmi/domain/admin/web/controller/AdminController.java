@@ -1,8 +1,5 @@
 package com.fmi.domain.admin.web.controller;
 
-import com.fmi.domain.admin.dto.AdminCsDetailResponse;
-import com.fmi.domain.admin.dto.AdminCsPageResponse;
-import com.fmi.domain.admin.dto.AdminCsType;
 import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
 import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
 import com.fmi.domain.admin.dto.AdminGuestInquiryReplyRequestDTO;
@@ -62,52 +59,6 @@ public class AdminController {
     private final ReportService reportService;
     private final AuthService authService;
 
-    @GetMapping("/customer-service")
-    @Operation(summary = "관리자 신고/문의 통합 목록 조회", description = """
-            신고와 문의를 통합하여 최신순으로 조회합니다.
-
-            **type 파라미터:**
-            - 미지정: 신고 + 문의 전체
-            - REPORT: 신고만
-            - INQUIRY: 회원 문의만 (비회원 문의 제외)
-
-            **커서**: ISO datetime 형식 (예: 2024-01-01T00:00:00)
-            """)
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "통합 목록 조회 성공")
-    })
-    public ApiResponse<AdminCsPageResponse> getCustomerService(
-            @RequestParam(required = false) AdminCsType type,
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        AdminCsPageResponse response = adminService.getCustomerServicePage(type, cursor, size);
-        return ApiResponse.onSuccess(response);
-    }
-
-    @GetMapping("/customer-service/{type}/{id}")
-    @Operation(summary = "관리자 신고/문의 통합 상세 조회", description = "통합 목록에서 선택한 항목의 상세 정보를 조회합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "통합 상세 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "해당 항목을 찾을 수 없습니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"NOT_FOUND\", \"message\": \"해당 항목을 찾을 수 없습니다.\"}"
-                            )
-                    )
-            )
-    })
-    public ApiResponse<AdminCsDetailResponse> getCustomerServiceDetail(
-            @PathVariable AdminCsType type,
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        AdminCsDetailResponse response = adminService.getCustomerServiceDetail(type, id, userDetails);
-        return ApiResponse.onSuccess(response);
-    }
-
     @GetMapping("/guest-inquiries/{inquiryId}")
     @Operation(summary = "관리자 비회원 문의 상세 조회", description = "비회원이 작성한 문의의 상세 정보를 조회합니다.")
     @ApiResponses({
@@ -158,12 +109,14 @@ public class AdminController {
     public ApiResponse<CursorPageResponse<AdminInquiryResponse>> getInquiries(
             @RequestParam(required = false) InquiryType type,
             @RequestParam(required = false) InquiryStatus status,
+            @Parameter(description = "답변 여부 필터 (true=답변완료, false=미답변)")
+            @RequestParam(required = false) Boolean answered,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
         CursorPageResponse<AdminInquiryResponse> response =
-                adminService.getInquiryCursorPage(type, status, keyword, cursor, size);
+                adminService.getInquiryCursorPage(type, status, answered, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 

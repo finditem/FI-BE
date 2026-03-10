@@ -17,7 +17,7 @@ public class InquiryConverter {
                 .inquiryType(inquiry.getInquiryType())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
-                .answered(inquiry.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED)
+                .answered(inquiry.getAnswered())
                 .build();
     }
 
@@ -26,12 +26,9 @@ public class InquiryConverter {
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
                 .content(inquiry.getContent())
-                .inquiryType(inquiry.getInquiryType())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
-                .email(inquiry.getEmail())
-                .ip(inquiry.getIp())
-                .answered(inquiry.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED)
+                .answered(inquiry.getAnswered())
                 .build();
     }
 
@@ -40,12 +37,9 @@ public class InquiryConverter {
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
                 .content(inquiry.getContent())
-                .inquiryType(inquiry.getInquiryType())
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
-                .email(inquiry.getEmail())
-                .ip(inquiry.getIp())
-                .answered(inquiry.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED)
+                .answered(inquiry.getAnswered())
                 .comments(comments)
                 .build();
     }

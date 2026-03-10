@@ -263,10 +263,8 @@ public class InquiryService {
         }
 
         // 문의자에게 상태 변경 알림 및 이메일 발송
-        String statusMessage = getStatusMessage(status);
-        
-        // 회원 문의인 경우 앱 알림 발송
         if (inquiry.getUser() != null) {
+            String statusMessage = getStatusMessage(status);
             notificationService.createNotification(
                     inquiry.getUser(),
                     NotificationType.INQUIRY_REPLY,

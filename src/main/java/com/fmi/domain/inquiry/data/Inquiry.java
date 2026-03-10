@@ -42,6 +42,10 @@ public class Inquiry {
     @Column(length = 255)
     private String email;  // 비회원 문의 시 이메일
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean answered = false;
+
     @Column(length = 45)
     private String ip;  // 비회원 문의 시 IP
 
@@ -65,13 +69,17 @@ public class Inquiry {
     public void markAsAnswered() {
         this.answerStatus = InquiryStatus.ANSWERED;
     }
-    
+
     public void markAsPending() {
         this.answerStatus = InquiryStatus.PENDING;
     }
-    
+
     public void markAsReceived() {
         this.answerStatus = InquiryStatus.RECEIVED;
+    }
+
+    public void updateAnswered(boolean answered) {
+        this.answered = answered;
     }
 }
 

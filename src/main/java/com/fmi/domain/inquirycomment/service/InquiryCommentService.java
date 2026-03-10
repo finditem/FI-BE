@@ -74,6 +74,9 @@ public class InquiryCommentService {
         InquiryComment comment = inquiryCommentConverter.toCommentEntity(dto, user, inquiry, parent, null);
         InquiryComment savedComment = inquiryCommentRepository.save(comment);
 
+        // 마지막 댓글 작성자 기준으로 answered 자동 토글
+        inquiry.updateAnswered(isAdmin(userDetails));
+
         // 알림 발송 (선택적)
         try {
             sendCommentNotification(inquiry, savedComment, parent);
@@ -114,7 +117,9 @@ public class InquiryCommentService {
                 ? comments.getContent().get(comments.getContent().size() - 1).getId()
                 : null;
 
-        List<InquiryCommentResponse> result = buildResponsesWithReplies(comments.getContent(), userDetails);
+        List<InquiryCommentResponse> result = comments.getContent().stream()
+                .map(comment -> toResponse(comment, userDetails))
+                .collect(Collectors.toList());
 
         return new InquiryCommentSliceResponse(result, comments.hasNext(), nextCursor);
     }
@@ -222,71 +227,23 @@ public class InquiryCommentService {
         boolean canEdit = isOwner(comment, userDetails);
         boolean canDelete = isOwner(comment, userDetails) || isAdmin(userDetails);
 
-        // Converter로 기본 Response 생성
-        InquiryCommentResponse response = inquiryCommentConverter.toCommentResponse(comment, canEdit, canDelete);
-
-        // 대댓글 목록 변환 (각 대댓글마다 권한 체크)
-        List<InquiryCommentResponse> replies = comment.getReplies().stream()
-                .map(reply -> {
-                    boolean replyCanEdit = isOwner(reply, userDetails);
-                    boolean replyCanDelete = isOwner(reply, userDetails) || isAdmin(userDetails);
-                    return inquiryCommentConverter.toCommentResponse(reply, replyCanEdit, replyCanDelete);
-                })
-                .collect(Collectors.toList());
-
-        // 대댓글 목록 설정
-        response.setReplies(replies);
-
-        return response;
+        return inquiryCommentConverter.toCommentResponse(comment, canEdit, canDelete);
     }
 
     /**
-     * 문의 상세 조회용 댓글 전체 반환 (대댓글 포함, N+1 방지)
+     * 문의 상세 조회용 댓글 전체 반환 (플랫 리스트, parentId로 구분)
      */
     @Transactional(readOnly = true)
     public List<InquiryCommentResponse> getCommentsForDetail(Long inquiryId, UserDetails userDetails) {
         if (userDetails == null) {
             return java.util.Collections.emptyList();
         }
-        List<InquiryComment> parents = inquiryCommentRepository.findByInquiryIdAndParentIsNullOrderByIdAsc(inquiryId);
-        return buildResponsesWithReplies(parents, userDetails);
-    }
-
-    /**
-     * 최상위 댓글 + 대댓글 일괄 조회 후 Response 변환
-     */
-    private List<InquiryCommentResponse> buildResponsesWithReplies(List<InquiryComment> parents,
-                                                                  UserDetails userDetails) {
-        if (parents == null || parents.isEmpty()) {
-            return java.util.Collections.emptyList();
-        }
-
-        List<Long> parentIds = parents.stream()
-                .map(InquiryComment::getId)
-                .collect(Collectors.toList());
-
-        List<InquiryComment> replies = inquiryCommentRepository.findByParentIdInOrderByIdAsc(parentIds);
-        java.util.Map<Long, List<InquiryComment>> repliesByParentId = replies.stream()
-                .collect(Collectors.groupingBy(reply -> reply.getParent().getId()));
-
-        return parents.stream()
-                .map(parent -> {
-                    boolean canEdit = isOwner(parent, userDetails);
-                    boolean canDelete = isOwner(parent, userDetails) || isAdmin(userDetails);
-                    InquiryCommentResponse response = inquiryCommentConverter.toCommentResponse(parent, canEdit, canDelete);
-
-                    List<InquiryCommentResponse> replyResponses = repliesByParentId
-                            .getOrDefault(parent.getId(), java.util.Collections.emptyList())
-                            .stream()
-                            .map(reply -> {
-                                boolean replyCanEdit = isOwner(reply, userDetails);
-                                boolean replyCanDelete = isOwner(reply, userDetails) || isAdmin(userDetails);
-                                return inquiryCommentConverter.toCommentResponse(reply, replyCanEdit, replyCanDelete);
-                            })
-                            .collect(Collectors.toList());
-
-                    response.setReplies(replyResponses);
-                    return response;
+        List<InquiryComment> allComments = inquiryCommentRepository.findByInquiryIdOrderByIdAsc(inquiryId);
+        return allComments.stream()
+                .map(comment -> {
+                    boolean canEdit = isOwner(comment, userDetails);
+                    boolean canDelete = isOwner(comment, userDetails) || isAdmin(userDetails);
+                    return inquiryCommentConverter.toCommentResponse(comment, canEdit, canDelete);
                 })
                 .collect(Collectors.toList());
     }
