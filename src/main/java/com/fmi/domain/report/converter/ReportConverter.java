@@ -11,6 +11,7 @@ public class ReportConverter {
     
     public ReportListDTO toListDTO(Report report, String targetTitle) {
         return ReportListDTO.builder()
+                .nickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
                 .reportId(report.getReportId())
                 .targetType(report.getTargetType())
                 .targetId(report.getTargetId())
@@ -22,9 +23,10 @@ public class ReportConverter {
                 .resolvedAt(report.getResolvedAt())
                 .build();
     }
-    
+
     public ReportDetailDTO toDetailDTO(Report report, String targetTitle) {
         return ReportDetailDTO.builder()
+                .nickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
                 .reportId(report.getReportId())
                 .targetType(report.getTargetType())
                 .targetId(report.getTargetId())

@@ -31,9 +31,9 @@ public class AdminInquiryResponse {
     @Schema(description = "사용자 ID", example = "1")
     private Long userId;
     @Schema(description = "사용자 닉네임", example = "홍길동")
-    private String userNickname;
-    @Schema(description = "사용자 이메일", example = "user@example.com")
-    private String userEmail;
+    private String nickname;
+    @Schema(description = "사용자 이메일 (회원: 유저 이메일, 비회원: 문의 시 입력한 이메일)", example = "user@example.com")
+    private String email;
 
     @Schema(description = "문의 내용", example = "계정이 잠겼어요.")
     private String content;

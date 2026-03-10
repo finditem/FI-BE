@@ -11,6 +11,7 @@ public class InquiryConverter {
     
     public InquiryListDTO toListDTO(Inquiry inquiry) {
         return InquiryListDTO.builder()
+                .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
                 .content(inquiry.getContent())
@@ -23,6 +24,8 @@ public class InquiryConverter {
 
     public InquiryDetailDTO toDetailDTO(Inquiry inquiry) {
         return InquiryDetailDTO.builder()
+                .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
+                .email(inquiry.getEmail())
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
                 .content(inquiry.getContent())
@@ -34,6 +37,8 @@ public class InquiryConverter {
 
     public InquiryDetailDTO toDetailDTO(Inquiry inquiry, java.util.List<InquiryCommentResponse> comments) {
         return InquiryDetailDTO.builder()
+                .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
+                .email(inquiry.getEmail())
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
                 .content(inquiry.getContent())
