@@ -74,7 +74,7 @@ public class Comment {
         }
 
         int nextDepth = parent.getDepth() + 1;
-        if (nextDepth > 2) {
+        if (nextDepth > 3) {
             throw new GeneralException(ErrorStatus._COMMENT_DEPTH_EXCEEDED);
         }
 

@@ -37,12 +37,13 @@ public class CommentQueryService {
     private final CommentLikeService commentLikeService;
     private final BlockedUserRepository blockedUserRepository;
 
-    private static final int PAGE_SIZE = 10;
+    private static final int PARENT_PAGE_SIZE = 10;
+    private static final int CHILD_COMMENT_PAGE_SIZE = 5;
 
     @Transactional(readOnly = true)
     public CommentPageResponse getParentComments(Long postId, int page, UserDetails userDetails) {
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
-        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page, PARENT_PAGE_SIZE);
 
         Set<Long> excludedUserIds = getExcludedUserIds(user);
         boolean excludedEmpty = (excludedUserIds == null || excludedUserIds.isEmpty());
@@ -54,18 +55,17 @@ public class CommentQueryService {
                 pageable
         );
 
-        boolean hasNext = fetched.size() > PAGE_SIZE;
-        if (hasNext) fetched = fetched.subList(0, PAGE_SIZE);
-
-        Integer nextPage = hasNext ? page + 1 : null;
-
         long totalCount = commentRepository.countParentComments(
                 postId,
                 excludedEmpty ? Set.of(0L) : excludedUserIds,
                 excludedEmpty
         );
 
-        long shown = ((long) page * PAGE_SIZE) + fetched.size();
+        boolean hasNext = totalCount > (long) (page + 1) * PARENT_PAGE_SIZE;
+
+        Integer nextPage = hasNext ? page + 1 : null;
+
+        long shown = ((long) page * PARENT_PAGE_SIZE) + fetched.size();
         long remainingCount = Math.max(0, totalCount - shown);
 
         List<Long> parentIds = fetched.stream()
@@ -106,7 +106,7 @@ public class CommentQueryService {
         Set<Long> excludedUserIds = getExcludedUserIds(user);
         boolean excludedEmpty = excludedUserIds == null || excludedUserIds.isEmpty();
 
-        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page, CHILD_COMMENT_PAGE_SIZE);
 
         List<Comment> fetched = commentRepository.findReplies(
                 parentComment.getId(),
@@ -115,18 +115,16 @@ public class CommentQueryService {
                 pageable
         );
 
-        boolean hasNext = fetched.size() > PAGE_SIZE;
-        if (hasNext) fetched = fetched.subList(0, PAGE_SIZE);
-
-        Integer nextPage = hasNext ? page + 1 : null;
-
         long totalCount = commentRepository.countReplies(
                 parentComment.getId(),
                 excludedEmpty ? Set.of(0L) : excludedUserIds,
                 excludedEmpty
         );
 
-        long shown = (long) page * PAGE_SIZE + fetched.size();
+        boolean hasNext = totalCount > (long) (page + 1) * CHILD_COMMENT_PAGE_SIZE;
+        Integer nextPage = hasNext ? page + 1 : null;
+
+        long shown = (long) page * CHILD_COMMENT_PAGE_SIZE + fetched.size();
         long remainingCount = Math.max(0, totalCount - shown);
 
         List<Long> replyIds = fetched.stream()
@@ -146,7 +144,7 @@ public class CommentQueryService {
                             reply,
                             UserConverter.toUserCommentResponse(reply.getUser()),
                             imageMap.getOrDefault(reply.getId(), List.of()),
-                            (reply.getDepth() < 2) ? replyCountMap.getOrDefault(reply.getId(), 0L) : 0L,
+                            (reply.getDepth() < 3) ? replyCountMap.getOrDefault(reply.getId(), 0L) : 0L,
                             likeCountMap.getOrDefault(reply.getId(), 0L),
                             myLikeSet.contains(reply.getId()),
                             isAuthor
