@@ -270,33 +270,35 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     @Override
     public PostPageResponse searchMyFavorites(Long userId,
                                                PostType postType,
-                                               PostStatus postStatus,
                                                Category category,
+                                               String address,
+                                               String keyword,
                                                SortType sortType,
                                                Long cursor,
                                                int size) {
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
-        BooleanExpression baseWhere = Expressions.allOf(
-                postFavorite.user.id.eq(userId),
-                postFavorite.isFavorite.isTrue(),
-                post.deleted.isFalse(),
-                equalsPostType(post, postType),
-                equalsPostStatus(post, postStatus),
-                equalsCategory(post, category)
-        );
+        BooleanBuilder baseBuilder = new BooleanBuilder();
+        baseBuilder.and(postFavorite.user.id.eq(userId));
+        baseBuilder.and(postFavorite.isFavorite.isTrue());
+        baseBuilder.and(post.deleted.isFalse());
+        baseBuilder.and(equalsPostType(post, postType));
+        baseBuilder.and(equalsCategory(post, category));
+        baseBuilder.and(addressStartsWith(post, address));
 
-        BooleanExpression pageWhere = Expressions.allOf(
-                baseWhere,
-                cursorCondition(post, sortType, cursor)
-        );
+        if (hasText(keyword)) {
+            baseBuilder.and(buildKeywordCondition(post, keyword));
+        }
+
+        BooleanBuilder pageWhere = new BooleanBuilder(baseBuilder);
+        pageWhere.and(cursorCondition(post, sortType, cursor));
 
         Long postCount = queryFactory
                 .select(post.id.countDistinct())
                 .from(postFavorite)
                 .join(postFavorite.post, post)
-                .where(baseWhere)
+                .where(baseBuilder)
                 .fetchOne();
 
         if (Objects.isNull(postCount)) postCount = 0L;

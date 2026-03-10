@@ -272,11 +272,12 @@ public class PostQueryService {
 
     @Transactional(readOnly = true)
     public PostPageResponse getFavoritePost(UserDetails userDetails, PostType postType,
-                                             PostStatus postStatus, Category category,
-                                             SortType sortType, Long cursor, int size) {
+                                             Category category, String address,
+                                             String keyword, SortType sortType,
+                                             Long cursor, int size) {
         User user = userQueryService.findUser(userDetails.getUsername());
 
-        return postRepository.searchMyFavorites(user.getId(), postType, postStatus, category, sortType, cursor, size);
+        return postRepository.searchMyFavorites(user.getId(), postType, category, address, keyword, sortType, cursor, size);
     }
 
     @Transactional(readOnly = true)

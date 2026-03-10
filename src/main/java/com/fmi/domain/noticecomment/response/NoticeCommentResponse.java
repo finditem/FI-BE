@@ -1,8 +1,10 @@
 package com.fmi.domain.noticecomment.response;
 
+import com.fmi.domain.user.web.dto.response.UserCommentResponse;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -12,11 +14,14 @@ import java.time.LocalDateTime;
 public class NoticeCommentResponse {
     private Long id;
     private String content;
-    private Long authorId;
-    private String authorName;
-    private int likeCount;
+    private boolean deleted;
+    private int depth;
     private LocalDateTime createdAt;
-    private Long parentId;
+    private UserCommentResponse authorResponse;
+    private long childCommentCount;
+    private List<NoticeCommentImageResponse> imageList;
+    private int likeCount;
+    private boolean isLike;
     private boolean canEdit;
     private boolean canDelete;
 }

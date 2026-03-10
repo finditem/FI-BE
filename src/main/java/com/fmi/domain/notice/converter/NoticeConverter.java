@@ -8,15 +8,12 @@ import com.fmi.domain.post.data.ImageType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class NoticeConverter {
 
-    public NoticeListDTO toListDTO(Notice notice) {
-        return toListDTO(notice, null);
-    }
-
-    public NoticeListDTO toListDTO(Notice notice, String thumbnailUrl) {
+    public NoticeListDTO toListDTO(Notice notice, String thumbnailUrl, boolean isHot, int commentCount) {
         return NoticeListDTO.builder()
                 .noticeId(notice.getNoticeId())
                 .title(notice.getTitle())
@@ -24,9 +21,20 @@ public class NoticeConverter {
                 .pinned(notice.getPinned())
                 .viewCount(notice.getViewCount())
                 .likeCount(notice.getLikeCount())
+                .commentCount(commentCount)
                 .thumbnailUrl(thumbnailUrl)
+                .isNew(notice.isNew())
+                .isHot(isHot)
                 .createdAt(notice.getCreatedAt())
                 .build();
+    }
+
+    public NoticeListDTO toListDTO(Notice notice, String thumbnailUrl) {
+        return toListDTO(notice, thumbnailUrl, false, 0);
+    }
+
+    public NoticeListDTO toListDTO(Notice notice) {
+        return toListDTO(notice, null, false, 0);
     }
 
     public NoticeResponseDTO toResponseDTO(Notice notice) {
@@ -34,10 +42,14 @@ public class NoticeConverter {
     }
 
     public NoticeResponseDTO toResponseDTO(Notice notice, List<NoticeImage> images) {
-        return toResponseDTO(notice, images, 0);
+        return toResponseDTO(notice, images, 0, false);
     }
 
     public NoticeResponseDTO toResponseDTO(Notice notice, List<NoticeImage> images, int commentCount) {
+        return toResponseDTO(notice, images, commentCount, false);
+    }
+
+    public NoticeResponseDTO toResponseDTO(Notice notice, List<NoticeImage> images, int commentCount, boolean isHot) {
         List<String> imageUrls = images.stream()
                 .map(NoticeImage::getImgUrl)
                 .toList();
@@ -65,9 +77,10 @@ public class NoticeConverter {
                 .authorName(notice.getAuthor() != null ? notice.getAuthor().getNickname() : "관리자")
                 .thumbnailUrl(thumbnailUrl)
                 .images(imageUrls)
+                .isNew(notice.isNew())
+                .isHot(isHot)
                 .createdAt(notice.getCreatedAt())
                 .updatedAt(notice.getUpdatedAt())
                 .build();
     }
 }
-

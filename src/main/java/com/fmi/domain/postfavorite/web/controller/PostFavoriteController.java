@@ -2,7 +2,6 @@ package com.fmi.domain.postfavorite.web.controller;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
@@ -60,8 +59,9 @@ public class PostFavoriteController {
 
             **필터 파라미터** (모두 선택):
             - postType: LOST / FOUND
-            - postStatus: SEARCHING / FOUND
             - category: ELECTRONICS / WALLET / ID_CARD / JEWELRY / BAG / CARD / ETC
+            - address: 지역 필터 (예: 서울특별시, 서울특별시 강남구)
+            - keyword: 제목 또는 내용 검색
             """, tags = {"User"})
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 목록 조회 성공")
@@ -70,14 +70,15 @@ public class PostFavoriteController {
     public ResponseEntity<ApiResponse<PostPageResponse>> getFavoritePost(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) PostType postType,
-            @RequestParam(required = false) PostStatus postStatus,
             @RequestParam(required = false) Category category,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false, defaultValue = "LATEST") SortType sortType,
             @RequestParam(required = false) Long cursor,
             @RequestParam(required = false, defaultValue = "20") int size
     ) {
         PostPageResponse response = postQueryService.getFavoritePost(
-                userDetails, postType, postStatus, category, sortType, cursor, size);
+                userDetails, postType, category, address, keyword, sortType, cursor, size);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }

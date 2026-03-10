@@ -110,18 +110,29 @@ public class UserController {
     }
 
     @GetMapping("/me/comments")
-    @Operation(summary = "내가 쓴 댓글 목록", description = "현재 로그인한 사용자가 작성한 댓글 목록을 커서 기반으로 조회합니다. 삭제된 댓글은 제외됩니다.")
+    @Operation(summary = "내가 쓴 댓글 목록", description = """
+            현재 로그인한 사용자가 작성한 댓글 목록을 조회합니다. 삭제된 댓글은 제외됩니다.
+
+            **필터 파라미터** (모두 선택):
+            - startDate, endDate: yyyy-MM-dd 형식 (예: 2024-01-01)
+            - keyword: 댓글 내용 또는 게시글 제목 검색
+            - sort: LATEST(최신순, 기본값) / OLDEST(오래된순)
+            """)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 댓글 목록 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다")
     })
     public ApiResponse<MyCommentPageResponse> getMyComments(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(required = false) Long cursor,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false, defaultValue = "LATEST") SortType sort,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         String email = userDetails.getUsername();
-        MyCommentPageResponse response = userService.getMyComments(email, cursor, size);
+        MyCommentPageResponse response = userService.getMyComments(email, sort, startDate, endDate, keyword, page, size);
         return ApiResponse.onSuccess(response);
     }
 
@@ -161,6 +172,7 @@ public class UserController {
     @GetMapping("/me/activities")
     @Operation(summary = "내 활동 내역 통합 조회", description = """
             현재 로그인한 사용자의 모든 활동 내역을 통합하여 최신순으로 조회합니다.
+            응답은 날짜별로 그룹화되어 반환됩니다.
 
             **활동 유형 (type):**
             - POST: 작성한 게시글
@@ -173,6 +185,9 @@ public class UserController {
             **날짜 필터:**
             - startDate, endDate: yyyy-MM-dd 형식 (예: 2024-01-01)
 
+            **검색:**
+            - keyword: 제목 또는 내용 검색
+
             **커서**: ISO datetime 형식 (예: 2024-01-01T00:00:00)
             """)
     @ApiResponses({
@@ -184,11 +199,12 @@ public class UserController {
             @RequestParam(required = false) ActivityType type,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
         String email = userDetails.getUsername();
-        MyActivityPageResponse response = userService.getMyActivities(email, type, startDate, endDate, cursor, size);
+        MyActivityPageResponse response = userService.getMyActivities(email, type, startDate, endDate, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 

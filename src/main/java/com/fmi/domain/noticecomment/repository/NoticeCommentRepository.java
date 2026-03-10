@@ -9,10 +9,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface NoticeCommentRepository extends JpaRepository<NoticeComment, Long> {
+
+    long countByParentId(Long parentId);
+
+    @Query("SELECT c.parent.id, COUNT(c) FROM NoticeComment c WHERE c.parent.id IN :parentIds GROUP BY c.parent.id")
+    List<Object[]> countByParentIds(@Param("parentIds") List<Long> parentIds);
 
     @Query("select c from NoticeComment c join fetch c.user left join fetch c.parent " +
             "where c.notice.noticeId = :noticeId order by c.id desc")
@@ -25,6 +31,9 @@ public interface NoticeCommentRepository extends JpaRepository<NoticeComment, Lo
                                                                   Pageable pageable);
 
     long countByNoticeNoticeId(Long noticeId);
+
+    @Query("SELECT c.notice.noticeId, COUNT(c) FROM NoticeComment c WHERE c.notice.noticeId IN :noticeIds GROUP BY c.notice.noticeId")
+    List<Object[]> countByNoticeIds(@Param("noticeIds") List<Long> noticeIds);
 
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM NoticeComment c WHERE c.notice.noticeId = :noticeId")

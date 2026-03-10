@@ -30,10 +30,10 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.cache.annotation.Cacheable;
+
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -85,10 +85,26 @@ public class NoticeService {
                             (a, b) -> a));
         }
 
+        // HOT 공지 ID 조회
+        Set<Long> hotNoticeIds = getHotNoticeIds();
+
+        // 댓글 수 일괄 조회
+        Map<Long, Long> commentCountMap = Map.of();
+        if (!noticeIds.isEmpty()) {
+            commentCountMap = noticeCommentRepository.countByNoticeIds(noticeIds).stream()
+                    .collect(Collectors.toMap(
+                            row -> (Long) row[0],
+                            row -> (Long) row[1]
+                    ));
+        }
+
         Map<Long, String> finalThumbnailMap = thumbnailMap;
+        Map<Long, Long> finalCommentCountMap = commentCountMap;
         return notices.map(notice -> noticeConverter.toListDTO(
                 notice,
-                finalThumbnailMap.get(notice.getNoticeId())));
+                finalThumbnailMap.get(notice.getNoticeId()),
+                hotNoticeIds.contains(notice.getNoticeId()),
+                finalCommentCountMap.getOrDefault(notice.getNoticeId(), 0L).intValue()));
     }
     
     /**
@@ -131,9 +147,27 @@ public class NoticeService {
                             (a, b) -> a));
         }
 
+        // HOT 공지 ID 조회
+        Set<Long> hotNoticeIds = getHotNoticeIds();
+
+        // 댓글 수 일괄 조회
+        Map<Long, Long> commentCountMap = Map.of();
+        if (!noticeIds.isEmpty()) {
+            commentCountMap = noticeCommentRepository.countByNoticeIds(noticeIds).stream()
+                    .collect(Collectors.toMap(
+                            row -> (Long) row[0],
+                            row -> (Long) row[1]
+                    ));
+        }
+
         Map<Long, String> finalThumbnailMap = thumbnailMap;
+        Map<Long, Long> finalCommentCountMap = commentCountMap;
         List<NoticeListDTO> responseList = content.stream()
-                .map(notice -> noticeConverter.toListDTO(notice, finalThumbnailMap.get(notice.getNoticeId())))
+                .map(notice -> noticeConverter.toListDTO(
+                        notice,
+                        finalThumbnailMap.get(notice.getNoticeId()),
+                        hotNoticeIds.contains(notice.getNoticeId()),
+                        finalCommentCountMap.getOrDefault(notice.getNoticeId(), 0L).intValue()))
                 .toList();
 
         return new CursorPageResponse<>(responseList, nextCursor, hasNext);
@@ -321,6 +355,11 @@ public class NoticeService {
         }
         List<NoticeImage> images = noticeImageRepository.findByNotice(draft);
         return noticeConverter.toResponseDTO(draft, images);
+    }
+
+    @Cacheable(cacheNames = "hotNoticeIds")
+    public Set<Long> getHotNoticeIds() {
+        return new HashSet<>(noticeRepository.findHotNoticeIds(1));
     }
 
     /**
