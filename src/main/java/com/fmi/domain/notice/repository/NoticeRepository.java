@@ -162,7 +162,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             SELECT n.id FROM notice n
             LEFT JOIN notice_comment nc ON nc.notice_id = n.id
             WHERE n.draft = false
-            GROUP BY n.id
+            GROUP BY n.id, n.view_cnt, n.like_count
             HAVING COUNT(nc.comment_id) >= 1 OR n.view_cnt >= 10
             ORDER BY COUNT(nc.comment_id) DESC, n.view_cnt DESC, n.like_count DESC
             LIMIT :limit
