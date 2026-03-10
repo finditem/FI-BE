@@ -14,6 +14,9 @@ import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
 import com.fmi.domain.noticecommentlike.data.NoticeCommentLike;
 import com.fmi.domain.noticecommentlike.repository.NoticeCommentLikeRepository;
+import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
@@ -41,6 +44,7 @@ public class NoticeCommentService {
     private final NoticeCommentLikeRepository noticeCommentLikeRepository;
     private final NoticeCommentImageRepository noticeCommentImageRepository;
     private final S3Service s3Service;
+    private final NotificationService notificationService;
 
     @Transactional
     public NoticeCommentResponse createComment(Long noticeId, CreateNoticeCommentDto dto,
@@ -69,6 +73,30 @@ public class NoticeCommentService {
 
         // 이미지 업로드
         List<NoticeCommentImage> savedImages = uploadImages(images, saved);
+
+        // 공지 작성자(관리자)에게 알림 (본인 댓글 제외)
+        if (notice.getAuthor() != null && !notice.getAuthor().getId().equals(user.getId())) {
+            notificationService.createNotification(
+                    notice.getAuthor(),
+                    NotificationType.COMMENT,
+                    "공지사항에 새 댓글이 달렸습니다",
+                    dto.getContent(),
+                    ReferenceType.NOTICE,
+                    notice.getNoticeId()
+            );
+        }
+
+        // 대댓글인 경우 부모 댓글 작성자에게 알림 (본인 대댓글 제외)
+        if (parent != null && parent.getUser() != null && !parent.getUser().getId().equals(user.getId())) {
+            notificationService.createNotification(
+                    parent.getUser(),
+                    NotificationType.REPLY,
+                    "공지사항 댓글에 답글이 달렸습니다",
+                    dto.getContent(),
+                    ReferenceType.NOTICE,
+                    notice.getNoticeId()
+            );
+        }
 
         return toResponse(saved, userDetails, savedImages);
     }
