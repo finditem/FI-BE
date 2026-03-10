@@ -210,6 +210,15 @@ public class NoticeService {
         // Redis 조회수로 덮어쓰기
         response.setViewCount(currentViewCount.intValue());
 
+        // 좋아요 여부 확인 (로그인 사용자만)
+        boolean likeStatus = false;
+        if (userIdentifier != null && userIdentifier.contains("@")) {
+            likeStatus = userRepository.findByEmail(userIdentifier)
+                    .map(user -> noticeLikeRepository.findByUserAndNotice(user, notice).isPresent())
+                    .orElse(false);
+        }
+        response.setLikeStatus(likeStatus);
+
         return response;
     }
 

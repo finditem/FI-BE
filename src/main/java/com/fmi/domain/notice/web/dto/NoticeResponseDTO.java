@@ -42,6 +42,8 @@ public class NoticeResponseDTO {
     private Boolean isNew;
     @Schema(description = "HOT 표시 (인기 공지)", example = "false")
     private Boolean isHot;
+    @Schema(description = "내가 좋아요 눌렀는지 여부", example = "false")
+    private Boolean likeStatus;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
     @Schema(description = "수정 시간", example = "2024-01-01T00:00:00")
