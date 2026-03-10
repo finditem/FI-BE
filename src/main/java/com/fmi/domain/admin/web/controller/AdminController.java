@@ -29,6 +29,7 @@ import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
