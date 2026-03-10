@@ -27,6 +27,7 @@ import com.fmi.domain.user.response.ActivityResponse;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
 import com.fmi.domain.user.response.MyPostPageResponse;
+import com.fmi.domain.user.response.DailyActivityResponse;
 import com.fmi.domain.user.response.MyActivityPageResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
@@ -240,12 +241,12 @@ public class UserService {
     }
 
     /**
-     * 내 활동 내역 통합 조회 (커서 기반, createdAt 내림차순)
+     * 내 활동 내역 통합 조회 (커서 기반, createdAt 내림차순, 날짜별 그룹화)
      */
     @Transactional(readOnly = true)
     public MyActivityPageResponse getMyActivities(String email, ActivityType type,
                                                     LocalDate startDate, LocalDate endDate,
-                                                    String cursor, int size) {
+                                                    String keyword, String cursor, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
@@ -257,6 +258,7 @@ public class UserService {
 
         LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
         LocalDateTime endDateTime = (endDate != null) ? endDate.plusDays(1).atStartOfDay() : null;
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim().toLowerCase() : null;
 
         PageRequest pageRequest = PageRequest.of(0, size);
 
@@ -268,6 +270,7 @@ public class UserService {
                     : postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
             postSlice.getContent().stream()
                     .filter(p -> isWithinDateRange(p.getCreatedAt(), startDateTime, endDateTime))
+                    .filter(p -> matchesKeyword(trimmedKeyword, p.getTitle(), p.getContent()))
                     .forEach(p -> allActivities.add(new ActivityResponse(
                             "POST", p.getId(), p.getTitle(), truncate(p.getContent(), 100), p.getCreatedAt())));
         }
@@ -278,6 +281,7 @@ public class UserService {
                     : commentRepository.findByUserAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
             commentSlice.getContent().stream()
                     .filter(c -> isWithinDateRange(c.getCreatedAt(), startDateTime, endDateTime))
+                    .filter(c -> matchesKeyword(trimmedKeyword, c.getPost().getTitle(), c.getContent()))
                     .forEach(c -> allActivities.add(new ActivityResponse(
                             "COMMENT", c.getId(), c.getPost().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
         }
@@ -288,6 +292,7 @@ public class UserService {
                     : postFavoriteRepository.findByUserAndIsFavoriteTrueAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
             favoriteSlice.getContent().stream()
                     .filter(f -> isWithinDateRange(f.getCreatedAt(), startDateTime, endDateTime))
+                    .filter(f -> matchesKeyword(trimmedKeyword, f.getPost().getTitle(), null))
                     .forEach(f -> allActivities.add(new ActivityResponse(
                             "FAVORITE", f.getFavorite_id(), f.getPost().getTitle(), null, f.getCreatedAt())));
         }
@@ -298,6 +303,7 @@ public class UserService {
                     : inquiryRepository.findByUserAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
             inquirySlice.getContent().stream()
                     .filter(i -> isWithinDateRange(i.getCreatedAt(), startDateTime, endDateTime))
+                    .filter(i -> matchesKeyword(trimmedKeyword, i.getTitle(), i.getContent()))
                     .forEach(i -> allActivities.add(new ActivityResponse(
                             "INQUIRY", i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt())));
         }
@@ -308,6 +314,7 @@ public class UserService {
                     : reportRepository.findByReporterAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
             reportSlice.getContent().stream()
                     .filter(r -> isWithinDateRange(r.getCreatedAt(), startDateTime, endDateTime))
+                    .filter(r -> matchesKeyword(trimmedKeyword, r.getTargetType().getDescription(), r.getReason()))
                     .forEach(r -> allActivities.add(new ActivityResponse(
                             "REPORT", r.getReportId(), r.getTargetType().getDescription() + " 신고", truncate(r.getReason(), 100), r.getCreatedAt())));
         }
@@ -323,7 +330,17 @@ public class UserService {
                 ? result.get(result.size() - 1).createdAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 : null;
 
-        return new MyActivityPageResponse(result, nextCursorValue, hasNext);
+        List<DailyActivityResponse> grouped = result.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        a -> a.createdAt().toLocalDate().toString(),
+                        java.util.LinkedHashMap::new,
+                        java.util.stream.Collectors.toList()
+                ))
+                .entrySet().stream()
+                .map(e -> new DailyActivityResponse(e.getKey(), e.getValue()))
+                .toList();
+
+        return new MyActivityPageResponse(grouped, nextCursorValue, hasNext);
     }
 
     private boolean isWithinDateRange(LocalDateTime createdAt, LocalDateTime start, LocalDateTime end) {
@@ -335,6 +352,12 @@ public class UserService {
     private String truncate(String text, int maxLength) {
         if (text == null) return null;
         return text.length() > maxLength ? text.substring(0, maxLength) + "..." : text;
+    }
+
+    private boolean matchesKeyword(String keyword, String title, String content) {
+        if (keyword == null) return true;
+        if (title != null && title.toLowerCase().contains(keyword)) return true;
+        return content != null && content.toLowerCase().contains(keyword);
     }
 
     /**
