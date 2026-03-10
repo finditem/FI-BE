@@ -13,8 +13,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-ec2
-  cancel-in-progress: true
+  group: deploy-ec2-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'pull_request' }}
 
 jobs:
   ci:
