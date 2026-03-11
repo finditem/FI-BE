@@ -102,11 +102,13 @@ jobs:
 
               if (!labelEvent) continue;
 
-              // 날짜 단위 비교 (시각 무시, UTC 기준 날짜 차이만 계산)
-              const labeledDate = new Date(labelEvent.created_at);
-              const now = new Date();
-              const labeledDay = new Date(labeledDate.getFullYear(), labeledDate.getMonth(), labeledDate.getDate());
-              const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+              // 날짜 단위 비교 (KST 기준, UTC+9)
+              const toKSTDate = (d) => {
+                const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+                return new Date(kst.getFullYear(), kst.getMonth(), kst.getDate());
+              };
+              const labeledDay = toKSTDate(new Date(labelEvent.created_at));
+              const today = toKSTDate(new Date());
               const diffDays = Math.round((today - labeledDay) / (1000 * 60 * 60 * 24));
 
               const transition = transitions[currentDLabel];
