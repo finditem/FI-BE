@@ -1,5 +1,6 @@
 package com.fmi.domain.report.service;
 
+import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
@@ -57,6 +58,11 @@ public class ReportService {
     public Long createReport(ReportCreateRequestDTO request, UserDetails userDetails) {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        // 관리자 신고 차단
+        if (user.getRole() == Role.ADMIN) {
+            throw new GeneralException(ErrorStatus._REPORT_ADMIN_NOT_ALLOWED);
+        }
 
         // 중복 신고 확인
         reportRepository.findByReporterAndTargetTypeAndTargetId(
