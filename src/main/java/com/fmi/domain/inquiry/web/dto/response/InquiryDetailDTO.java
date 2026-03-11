@@ -17,6 +17,10 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "문의 상세 응답")
 public class InquiryDetailDTO {
+    @Schema(description = "유저 닉네임", example = "홍길동")
+    private String nickname;
+    @Schema(description = "비회원 이메일", example = "guest@example.com")
+    private String email;
     @Schema(description = "문의 ID", example = "1")
     private Long inquiryId;
     @Schema(description = "제목", example = "계정 관련 문의")

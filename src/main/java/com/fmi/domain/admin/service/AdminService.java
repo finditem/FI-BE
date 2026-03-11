@@ -80,8 +80,8 @@ public class AdminService {
                 .status(inquiry.getAnswerStatus())
                 .createdAt(inquiry.getCreatedAt())
                 .userId(inquiry.getUser() != null ? inquiry.getUser().getId() : null)
-                .userNickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
-                .userEmail(inquiry.getEmail() != null ? inquiry.getEmail() :
+                .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
+                .email(inquiry.getEmail() != null ? inquiry.getEmail() :
                         inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
                 .content(inquiry.getContent())
                 .ip(inquiry.getIp())
@@ -240,8 +240,8 @@ public class AdminService {
                         .status(inquiry.getAnswerStatus())
                         .createdAt(inquiry.getCreatedAt())
                         .userId(null)
-                        .userNickname(null)
-                        .userEmail(inquiry.getEmail())
+                        .nickname(null)
+                        .email(inquiry.getEmail())
                         .content(inquiry.getContent())
                         .ip(inquiry.getIp())
                         .answered(inquiry.getAnswered())
@@ -309,8 +309,8 @@ public class AdminService {
                         .status(inquiry.getAnswerStatus())
                         .createdAt(inquiry.getCreatedAt())
                         .userId(inquiry.getUser() != null ? inquiry.getUser().getId() : null)
-                        .userNickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
-                        .userEmail(inquiry.getEmail() != null ? inquiry.getEmail() :
+                        .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
+                        .email(inquiry.getEmail() != null ? inquiry.getEmail() :
                                 inquiry.getUser() != null ? inquiry.getUser().getEmail() : null)
                         .content(inquiry.getContent())
                         .ip(inquiry.getIp())

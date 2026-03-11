@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Schema(description = "신고 목록 응답")
 public class ReportListDTO {
+    @Schema(description = "유저 닉네임", example = "홍길동")
+    private String nickname;
     @Schema(description = "신고 ID", example = "1")
     private Long reportId;
     @Schema(description = "신고 대상 타입", example = "POST")
