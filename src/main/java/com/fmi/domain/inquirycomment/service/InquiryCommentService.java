@@ -6,6 +6,8 @@ import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.inquirycomment.converter.InquiryCommentConverter;
 import com.fmi.domain.inquirycomment.data.InquiryComment;
+import com.fmi.domain.inquirycomment.data.InquiryCommentImage;
+import com.fmi.domain.inquirycomment.repository.InquiryCommentImageRepository;
 import com.fmi.domain.inquirycomment.repository.InquiryCommentRepository;
 import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
 import com.fmi.domain.inquirycomment.response.InquiryCommentSliceResponse;
@@ -15,6 +17,7 @@ import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.global.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -23,8 +26,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -34,16 +39,18 @@ public class InquiryCommentService {
 
     private final InquiryRepository inquiryRepository;
     private final InquiryCommentRepository inquiryCommentRepository;
+    private final InquiryCommentImageRepository inquiryCommentImageRepository;
     private final UserRepository userRepository;
     private final InquiryCommentConverter inquiryCommentConverter;
     private final NotificationService notificationService;
+    private final S3Service s3Service;
 
     /**
      * 댓글 작성
-     * - 문의 작성자 또는 관리자만 작성 가능
      */
     @Transactional
-    public InquiryCommentResponse createComment(CreateInquiryCommentDto dto, UserDetails userDetails, Long inquiryId) {
+    public InquiryCommentResponse createComment(CreateInquiryCommentDto dto, List<MultipartFile> images,
+                                                 UserDetails userDetails, Long inquiryId) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
 
@@ -51,7 +58,6 @@ public class InquiryCommentService {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
 
-        // 권한 확인: 문의 작성자 또는 관리자만 댓글 작성 가능
         if (!canAccessInquiry(inquiry, userDetails)) {
             throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
         }
@@ -59,13 +65,10 @@ public class InquiryCommentService {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        // 부모 댓글 조회 (대댓글인 경우)
         InquiryComment parent = null;
         if (dto.getParentId() != null) {
             parent = inquiryCommentRepository.findById(dto.getParentId())
                     .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
-
-            // 부모 댓글이 같은 문의에 속하는지 확인
             if (!parent.getInquiry().getId().equals(inquiryId)) {
                 throw new GeneralException(ErrorStatus._BAD_REQUEST);
             }
@@ -74,22 +77,23 @@ public class InquiryCommentService {
         InquiryComment comment = inquiryCommentConverter.toCommentEntity(dto, user, inquiry, parent, null);
         InquiryComment savedComment = inquiryCommentRepository.save(comment);
 
+        // 이미지 업로드
+        List<InquiryCommentImage> savedImages = uploadImages(images, savedComment);
+
         // 마지막 댓글 작성자 기준으로 answered 자동 토글
         inquiry.updateAnswered(isAdmin(userDetails));
 
-        // 알림 발송 (선택적)
         try {
             sendCommentNotification(inquiry, savedComment, parent);
         } catch (Exception e) {
             log.warn("댓글 알림 발송 실패: {}", e.getMessage());
         }
 
-        return toResponse(savedComment, userDetails);
+        return toResponse(savedComment, userDetails, savedImages);
     }
 
     /**
      * 댓글 목록 조회 (커서 기반 무한스크롤)
-     * - 문의 작성자 또는 관리자만 조회 가능
      */
     @Transactional(readOnly = true)
     public InquiryCommentSliceResponse getComments(Long inquiryId, Long cursor, int size, UserDetails userDetails) {
@@ -100,13 +104,11 @@ public class InquiryCommentService {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
 
-        // 권한 확인: 문의 작성자 또는 관리자만 조회 가능
         if (!canAccessInquiry(inquiry, userDetails)) {
             throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
         }
 
         Slice<InquiryComment> comments;
-
         if (cursor == null) {
             comments = inquiryCommentRepository.findTopByInquiryIdOrderByIdDesc(inquiryId, Pageable.ofSize(size));
         } else {
@@ -117,8 +119,20 @@ public class InquiryCommentService {
                 ? comments.getContent().get(comments.getContent().size() - 1).getId()
                 : null;
 
-        List<InquiryCommentResponse> result = comments.getContent().stream()
-                .map(comment -> toResponse(comment, userDetails))
+        List<InquiryComment> commentList = comments.getContent();
+
+        // 이미지 일괄 조회 (N+1 방지)
+        List<Long> commentIds = commentList.stream().map(InquiryComment::getId).toList();
+        Map<Long, List<InquiryCommentImage>> imageMap = buildImageMap(commentIds);
+
+        List<InquiryCommentResponse> result = commentList.stream()
+                .map(comment -> {
+                    boolean canEdit = isOwner(comment, userDetails);
+                    boolean canDelete = isOwner(comment, userDetails) || isAdmin(userDetails);
+                    boolean admin = isCommentByAdmin(comment);
+                    List<InquiryCommentImage> imgs = imageMap.getOrDefault(comment.getId(), List.of());
+                    return inquiryCommentConverter.toCommentResponse(comment, canEdit, canDelete, admin, imgs);
+                })
                 .collect(Collectors.toList());
 
         return new InquiryCommentSliceResponse(result, comments.hasNext(), nextCursor);
@@ -126,10 +140,10 @@ public class InquiryCommentService {
 
     /**
      * 댓글 수정
-     * - 작성자만 수정 가능
      */
     @Transactional
-    public InquiryCommentResponse updateComment(CreateInquiryCommentDto dto, UserDetails userDetails, Long commentId) {
+    public InquiryCommentResponse updateComment(CreateInquiryCommentDto dto, List<MultipartFile> images,
+                                                 UserDetails userDetails, Long commentId) {
         InquiryComment comment = inquiryCommentRepository.findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
@@ -137,101 +151,58 @@ public class InquiryCommentService {
             throw new GeneralException(ErrorStatus._FORBIDDEN);
         }
 
-        // 작성자 확인
         if (comment.getUser() == null || !comment.getUser().getEmail().equals(userDetails.getUsername())) {
             throw new GeneralException(ErrorStatus._FORBIDDEN);
         }
 
         comment.updateContent(dto.getContent());
 
-        return toResponse(comment, userDetails);
+        // 기존 이미지 삭제 후 새 이미지 업로드
+        List<InquiryCommentImage> existingImages = inquiryCommentImageRepository.findByComment_Id(commentId);
+        if (!existingImages.isEmpty()) {
+            List<String> oldUrls = existingImages.stream().map(InquiryCommentImage::getImgUrl).toList();
+            s3Service.delete(oldUrls);
+            inquiryCommentImageRepository.deleteAllByCommentId(commentId);
+        }
+
+        List<InquiryCommentImage> savedImages = uploadImages(images, comment);
+
+        return toResponse(comment, userDetails, savedImages);
     }
 
     /**
      * 댓글 삭제
-     * - 작성자 또는 관리자만 삭제 가능 (관리자는 다른 사람의 댓글도 삭제 가능)
      */
     @Transactional
     public InquiryCommentResponse deleteComment(UserDetails userDetails, Long commentId) {
         InquiryComment comment = inquiryCommentRepository.findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
-        // 작성자 확인
         boolean isOwner = false;
         if (comment.getUser() != null && userDetails != null) {
             isOwner = comment.getUser().getEmail().equals(userDetails.getUsername());
         }
 
-        // 관리자 확인
-        boolean isAdmin = isAdmin(userDetails);
+        boolean admin = isAdmin(userDetails);
 
-        if (!isOwner && !isAdmin) {
+        if (!isOwner && !admin) {
             throw new GeneralException(ErrorStatus._FORBIDDEN);
+        }
+
+        // 이미지 S3 삭제
+        List<InquiryCommentImage> imgs = inquiryCommentImageRepository.findByComment_Id(commentId);
+        if (!imgs.isEmpty()) {
+            s3Service.delete(imgs.stream().map(InquiryCommentImage::getImgUrl).toList());
+            inquiryCommentImageRepository.deleteAllByCommentId(commentId);
         }
 
         inquiryCommentRepository.delete(comment);
 
-        return toResponse(comment, userDetails);
+        return toResponse(comment, userDetails, List.of());
     }
 
     /**
-     * 문의 접근 권한 확인
-     * - 문의 작성자 또는 관리자만 접근 가능
-     */
-    private boolean canAccessInquiry(Inquiry inquiry, UserDetails userDetails) {
-        // 관리자는 항상 접근 가능
-        if (isAdmin(userDetails)) {
-            return true;
-        }
-
-        // 회원 문의인 경우
-        if (inquiry.getUser() != null) {
-            return inquiry.getUser().getEmail().equals(userDetails.getUsername());
-        }
-
-        return false;
-    }
-
-    /**
-     * 관리자 여부 확인
-     */
-    private boolean isAdmin(UserDetails userDetails) {
-        if (userDetails == null) {
-            return false;
-        }
-
-        return userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
-    }
-
-    /**
-     * 댓글 작성자 확인
-     */
-    private boolean isOwner(InquiryComment comment, UserDetails userDetails) {
-        // 회원 댓글인 경우
-        if (comment.getUser() != null) {
-            if (userDetails == null) {
-                return false;
-            }
-            return comment.getUser().getEmail().equals(userDetails.getUsername());
-        }
-
-        return false;
-    }
-
-    /**
-     * 엔티티를 Response로 변환
-     */
-    private InquiryCommentResponse toResponse(InquiryComment comment, UserDetails userDetails) {
-        boolean canEdit = isOwner(comment, userDetails);
-        boolean canDelete = isOwner(comment, userDetails) || isAdmin(userDetails);
-
-        return inquiryCommentConverter.toCommentResponse(comment, canEdit, canDelete);
-    }
-
-    /**
-     * 문의 상세 조회용 댓글 전체 반환 (플랫 리스트, parentId로 구분)
+     * 문의 상세 조회용 댓글 전체 반환
      */
     @Transactional(readOnly = true)
     public List<InquiryCommentResponse> getCommentsForDetail(Long inquiryId, UserDetails userDetails) {
@@ -239,22 +210,78 @@ public class InquiryCommentService {
             return java.util.Collections.emptyList();
         }
         List<InquiryComment> allComments = inquiryCommentRepository.findByInquiryIdOrderByIdAsc(inquiryId);
+
+        // 이미지 일괄 조회
+        List<Long> commentIds = allComments.stream().map(InquiryComment::getId).toList();
+        Map<Long, List<InquiryCommentImage>> imageMap = buildImageMap(commentIds);
+
         return allComments.stream()
                 .map(comment -> {
                     boolean canEdit = isOwner(comment, userDetails);
                     boolean canDelete = isOwner(comment, userDetails) || isAdmin(userDetails);
-                    return inquiryCommentConverter.toCommentResponse(comment, canEdit, canDelete);
+                    boolean admin = isCommentByAdmin(comment);
+                    List<InquiryCommentImage> imgs = imageMap.getOrDefault(comment.getId(), List.of());
+                    return inquiryCommentConverter.toCommentResponse(comment, canEdit, canDelete, admin, imgs);
                 })
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 댓글 작성 시 알림 발송 (선택적)
-     */
+    private boolean canAccessInquiry(Inquiry inquiry, UserDetails userDetails) {
+        if (isAdmin(userDetails)) {
+            return true;
+        }
+        if (inquiry.getUser() != null) {
+            return inquiry.getUser().getEmail().equals(userDetails.getUsername());
+        }
+        return false;
+    }
+
+    private boolean isAdmin(UserDetails userDetails) {
+        if (userDetails == null) return false;
+        return userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+    }
+
+    private boolean isCommentByAdmin(InquiryComment comment) {
+        if (comment.getUser() == null) return false;
+        return comment.getUser().getRole() != null
+                && comment.getUser().getRole().name().equals("ADMIN");
+    }
+
+    private boolean isOwner(InquiryComment comment, UserDetails userDetails) {
+        if (comment.getUser() != null && userDetails != null) {
+            return comment.getUser().getEmail().equals(userDetails.getUsername());
+        }
+        return false;
+    }
+
+    private InquiryCommentResponse toResponse(InquiryComment comment, UserDetails userDetails, List<InquiryCommentImage> images) {
+        boolean canEdit = isOwner(comment, userDetails);
+        boolean canDelete = isOwner(comment, userDetails) || isAdmin(userDetails);
+        boolean admin = isCommentByAdmin(comment);
+        return inquiryCommentConverter.toCommentResponse(comment, canEdit, canDelete, admin, images);
+    }
+
+    private List<InquiryCommentImage> uploadImages(List<MultipartFile> images, InquiryComment comment) {
+        if (images == null || images.isEmpty()) {
+            return List.of();
+        }
+        List<String> urls = s3Service.upload(images);
+        List<InquiryCommentImage> commentImages = urls.stream()
+                .map(url -> InquiryCommentImage.create(url, comment))
+                .toList();
+        return inquiryCommentImageRepository.saveAll(commentImages);
+    }
+
+    private Map<Long, List<InquiryCommentImage>> buildImageMap(List<Long> commentIds) {
+        if (commentIds.isEmpty()) return Map.of();
+        return inquiryCommentImageRepository.findByComment_IdIn(commentIds).stream()
+                .collect(Collectors.groupingBy(img -> img.getComment().getId()));
+    }
+
     private void sendCommentNotification(Inquiry inquiry, InquiryComment comment, InquiryComment parent) {
-        // 대댓글인 경우 부모 댓글 작성자에게 알림
         if (parent != null && parent.getUser() != null && comment.getUser() != null) {
-            // 자신의 댓글에 대댓글을 단 경우 알림 생략
             if (!parent.getUser().getId().equals(comment.getUser().getId())) {
                 notificationService.createNotification(
                         parent.getUser(),
@@ -266,7 +293,6 @@ public class InquiryCommentService {
                 );
             }
         } else if (parent == null && inquiry.getUser() != null && comment.getUser() != null) {
-            // 일반 댓글인 경우 문의 작성자에게 알림 (자신의 문의에 댓글을 단 경우 알림 생략)
             if (!inquiry.getUser().getId().equals(comment.getUser().getId())) {
                 notificationService.createNotification(
                         inquiry.getUser(),
