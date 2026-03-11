@@ -14,6 +14,10 @@ import java.util.Set;
 public class NoticeConverter {
 
     public NoticeListDTO toListDTO(Notice notice, String thumbnailUrl, boolean isHot, int commentCount) {
+        String summary = notice.getContent() != null && notice.getContent().length() > 100
+                ? notice.getContent().substring(0, 100) + "..."
+                : notice.getContent();
+
         return NoticeListDTO.builder()
                 .noticeId(notice.getNoticeId())
                 .title(notice.getTitle())
@@ -23,6 +27,7 @@ public class NoticeConverter {
                 .likeCount(notice.getLikeCount())
                 .commentCount(commentCount)
                 .thumbnailUrl(thumbnailUrl)
+                .summary(summary)
                 .isNew(notice.isNew())
                 .isHot(isHot)
                 .createdAt(notice.getCreatedAt())
@@ -60,15 +65,10 @@ public class NoticeConverter {
                 .findFirst()
                 .orElse(imageUrls.isEmpty() ? null : imageUrls.get(0));
 
-        String summary = notice.getContent() != null && notice.getContent().length() > 100
-                ? notice.getContent().substring(0, 100) + "..."
-                : notice.getContent();
-
         return NoticeResponseDTO.builder()
                 .noticeId(notice.getNoticeId())
                 .title(notice.getTitle())
                 .content(notice.getContent())
-                .summary(summary)
                 .category(notice.getCategory())
                 .pinned(notice.getPinned())
                 .viewCount(notice.getViewCount())

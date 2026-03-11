@@ -20,8 +20,6 @@ public class NoticeResponseDTO {
     private String title;
     @Schema(description = "내용", example = "서비스 점검으로 인해 일시적으로 이용이 제한됩니다.")
     private String content;
-    @Schema(description = "내용 요약 (최대 100자)", example = "서비스 점검으로 인해 일시적으로 이용이 제한됩니다.")
-    private String summary;
     @Schema(description = "카테고리", example = "GENERAL")
     private NoticeCategory category;
     @Schema(description = "상단 고정 여부", example = "true")

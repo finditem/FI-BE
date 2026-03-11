@@ -368,7 +368,7 @@ public class NoticeService {
 
     @Cacheable(cacheNames = "hotNoticeIds")
     public Set<Long> getHotNoticeIds() {
-        return new HashSet<>(noticeRepository.findHotNoticeIds(1));
+        return new HashSet<>(noticeRepository.findHotNoticeIds(3));
     }
 
     /**
