@@ -384,10 +384,14 @@ public class UserService {
         // 기존 프로필 이미지 S3 삭제 (새 이미지 업로드 또는 삭제 요청 시)
         boolean shouldDeleteOldImage = (profileImage != null && !profileImage.isEmpty()) || deleteProfileImage;
         if (shouldDeleteOldImage && user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
-            try {
-                s3Service.delete(List.of(user.getProfile_img()));
-            } catch (Exception e) {
-                log.warn("기존 프로필 이미지 삭제 실패: {}", e.getMessage());
+            if (s3Service.isValidS3Url(user.getProfile_img())) {
+                try {
+                    s3Service.delete(List.of(user.getProfile_img()));
+                } catch (Exception e) {
+                    log.warn("기존 프로필 이미지 삭제 실패: {}", e.getMessage());
+                }
+            } else {
+                log.warn("유효하지 않은 프로필 이미지 URL, S3 삭제 생략: {}", user.getProfile_img());
             }
         }
 
@@ -493,10 +497,14 @@ public class UserService {
 
         // 프로필 이미지가 있다면 S3에서 삭제
         if (user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
-            try {
-                s3Service.delete(List.of(user.getProfile_img()));
-            } catch (Exception e) {
-                log.warn("프로필 이미지 삭제 실패: {}", e.getMessage());
+            if (s3Service.isValidS3Url(user.getProfile_img())) {
+                try {
+                    s3Service.delete(List.of(user.getProfile_img()));
+                } catch (Exception e) {
+                    log.warn("프로필 이미지 삭제 실패: {}", e.getMessage());
+                }
+            } else {
+                log.warn("유효하지 않은 프로필 이미지 URL, S3 삭제 생략: {}", user.getProfile_img());
             }
         }
 

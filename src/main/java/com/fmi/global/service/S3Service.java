@@ -126,6 +126,14 @@ public class S3Service {
         }
     }
 
+    // S3 URL 형식인지 검증
+    public boolean isValidS3Url(String url) {
+        if (url == null || url.isEmpty()) {
+            return false;
+        }
+        return url.startsWith("https://") && url.contains(".s3.");
+    }
+
     // 삭제에 필요한 key 반환
     private String getKeyFromImageUrls(String imageUrl) {
         try {

@@ -24,24 +24,49 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // workflow_dispatch인 경우 PR 번호를 input에서 가져오고, 최신 라벨을 API로 조회
-            let prNumber, labels;
+            // PR 번호 결정
+            let prNumber;
             if (context.eventName === 'workflow_dispatch') {
               prNumber = parseInt(context.payload.inputs.pr_number);
-              const { data: pr } = await github.rest.pulls.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prNumber
-              });
-              labels = pr.labels.map(l => l.name);
             } else {
               prNumber = context.payload.pull_request.number;
-              labels = context.payload.pull_request.labels.map(l => l.name);
             }
+
+            // 항상 API로 최신 라벨 조회 (재실행 시 payload는 옛날 라벨이므로)
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            const labels = pr.labels.map(l => l.name);
 
             // D-0 라벨 확인
             if (labels.includes('D-0')) {
               console.log(`PR #${prNumber}: D-0 라벨 있음 — 머지 허용`);
+
+              // workflow_dispatch에서 호출된 경우, 실패한 pull_request 체크 재실행
+              if (context.eventName === 'workflow_dispatch') {
+                try {
+                  const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    workflow_id: 'review-gate.yml',
+                    head_sha: pr.head.sha,
+                    event: 'pull_request',
+                    status: 'failure'
+                  });
+                  for (const run of runs.workflow_runs) {
+                    await github.rest.actions.reRunWorkflow({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: run.id
+                    });
+                    console.log(`PR #${prNumber}: 실패한 review-gate (run ${run.id}) 재실행`);
+                  }
+                } catch (e) {
+                  console.log(`PR #${prNumber}: 재실행 실패 — ${e.message}`);
+                }
+              }
               return;
             }
 
