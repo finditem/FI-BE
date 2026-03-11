@@ -36,7 +36,7 @@ public class ReportDetailDTO {
     @Schema(description = "답변 여부", example = "false")
     private Boolean answered;
     @Schema(description = "관리자 답변 내용", example = "확인 후 조치하였습니다.")
-    private String adminNote;
+    private String adminAnswer;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
     @Schema(description = "처리 완료 시간", example = "2024-01-01T00:00:00")

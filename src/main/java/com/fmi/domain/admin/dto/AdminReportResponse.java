@@ -30,8 +30,8 @@ public class AdminReportResponse {
     private ReportStatus status;
     @Schema(description = "신고 사유", example = "스팸 게시글입니다.")
     private String reason;
-    @Schema(description = "관리자 메모", example = "검토 완료")
-    private String adminNote;
+    @Schema(description = "신고 대상의 제목/내용 일부", example = "게시글 제목...")
+    private String targetTitle;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
     @Schema(description = "수정 시간", example = "2024-01-01T00:00:00")

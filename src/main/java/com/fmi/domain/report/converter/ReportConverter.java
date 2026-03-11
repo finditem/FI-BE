@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ReportConverter {
-    
+
     public ReportListDTO toListDTO(Report report, String targetTitle) {
         return ReportListDTO.builder()
                 .nickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
@@ -19,6 +19,7 @@ public class ReportConverter {
                 .reportType(report.getReportType())
                 .reason(report.getReason())
                 .status(report.getStatus())
+                .answered(report.getAnswered())
                 .createdAt(report.getCreatedAt())
                 .resolvedAt(report.getResolvedAt())
                 .build();
@@ -35,24 +36,27 @@ public class ReportConverter {
                 .reason(report.getReason())
                 .status(report.getStatus())
                 .answered(report.getAnswered())
-                .adminNote(report.getAdminNote())
+                .adminAnswer(report.getAdminAnswer())
                 .createdAt(report.getCreatedAt())
                 .resolvedAt(report.getResolvedAt())
                 .build();
     }
 
-    public ReportResponseDTO toResponseDTO(Report report) {
+    public ReportResponseDTO toResponseDTO(Report report, String targetTitle) {
         return ReportResponseDTO.builder()
                 .reportId(report.getReportId())
                 .targetType(report.getTargetType())
                 .targetId(report.getTargetId())
+                .targetTitle(targetTitle)
                 .reportType(report.getReportType())
                 .reason(report.getReason())
                 .status(report.getStatus())
-                .adminNote(report.getAdminNote())
+                .answered(report.getAnswered())
+                .adminAnswer(report.getAdminAnswer())
+                .reporterNickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
+                .reporterEmail(report.getReporter() != null ? report.getReporter().getEmail() : null)
                 .createdAt(report.getCreatedAt())
                 .resolvedAt(report.getResolvedAt())
                 .build();
     }
 }
-
