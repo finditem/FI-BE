@@ -20,6 +20,7 @@ import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
+import com.fmi.domain.admin.dto.AdminInquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
 import com.fmi.domain.inquirycomment.service.InquiryCommentService;
@@ -154,13 +155,13 @@ public class AdminService {
     /**
      * 문의 상세 조회 (관리자용 - 비공개 문의도 조회 가능)
      */
-    public InquiryDetailDTO getInquiryDetail(Long inquiryId, UserDetails userDetails) {
+    public AdminInquiryDetailDTO getInquiryDetail(Long inquiryId, UserDetails userDetails) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
-        
+
         List<InquiryCommentResponse> comments =
                 inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
-        return inquiryConverter.toDetailDTO(inquiry, comments);
+        return inquiryConverter.toAdminDetailDTO(inquiry, comments);
     }
 
     public InquiryDetailDTO getGuestInquiryDetail(Long inquiryId) {

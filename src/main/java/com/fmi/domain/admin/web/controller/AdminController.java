@@ -16,6 +16,7 @@ import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.service.InquiryService;
+import com.fmi.domain.admin.dto.AdminInquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.notice.service.NoticeService;
 import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
@@ -136,9 +137,9 @@ public class AdminController {
                     )
             )
     })
-    public ApiResponse<InquiryDetailDTO> getInquiryDetail(@PathVariable Long inquiryId,
-                                                          @AuthenticationPrincipal UserDetails userDetails) {
-        InquiryDetailDTO response = adminService.getInquiryDetail(inquiryId, userDetails);
+    public ApiResponse<AdminInquiryDetailDTO> getInquiryDetail(@PathVariable Long inquiryId,
+                                                               @AuthenticationPrincipal UserDetails userDetails) {
+        AdminInquiryDetailDTO response = adminService.getInquiryDetail(inquiryId, userDetails);
         return ApiResponse.onSuccess(response);
     }
 
