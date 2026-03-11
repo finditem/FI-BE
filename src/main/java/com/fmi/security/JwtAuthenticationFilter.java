@@ -54,6 +54,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
+        // 3. 헤더에도 없으면 쿼리 파라미터에서 읽기 (SSE 등 커스텀 헤더 불가능한 경우)
+        if (!StringUtils.hasText(token)) {
+            token = request.getParameter("token");
+        }
+
         if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
             try {
                 String username = tokenProvider.getSubject(token);
