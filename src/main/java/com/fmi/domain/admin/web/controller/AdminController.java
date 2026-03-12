@@ -25,6 +25,7 @@ import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.service.ReportService;
 import com.fmi.domain.report.web.dto.ReportStatusUpdateRequestDTO;
+import com.fmi.domain.report.web.dto.request.ReportAnswerRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
@@ -393,7 +394,28 @@ public class AdminController {
     })
     public ApiResponse<String> updateReportStatus(@PathVariable Long reportId,
                                                   @Valid @RequestBody ReportStatusUpdateRequestDTO request) {
-        reportService.updateStatus(reportId, request.getStatus(), request.getAdminNote(), request.getAnswered());
+        reportService.updateStatus(reportId, request.getStatus());
+        return ApiResponse.onSuccess("OK");
+    }
+
+    @PutMapping("/reports/{reportId}/answer")
+    @Operation(summary = "신고 답변 작성(관리자)", description = "신고에 대한 답변을 작성합니다. answered 상태가 자동으로 true로 설정됩니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "답변 작성 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "REPORT404-NOT_FOUND: 존재하지 않는 신고입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"REPORT404-NOT_FOUND\", \"message\": \"존재하지 않는 신고입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<String> answerReport(@PathVariable Long reportId,
+                                            @Valid @RequestBody ReportAnswerRequestDTO request) {
+        reportService.answerReport(reportId, request.getAdminAnswer());
         return ApiResponse.onSuccess("OK");
     }
 

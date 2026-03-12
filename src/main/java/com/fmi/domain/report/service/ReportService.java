@@ -1,5 +1,6 @@
 package com.fmi.domain.report.service;
 
+import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
@@ -57,6 +58,11 @@ public class ReportService {
     public Long createReport(ReportCreateRequestDTO request, UserDetails userDetails) {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        // 관리자 신고 차단
+        if (user.getRole() == Role.ADMIN) {
+            throw new GeneralException(ErrorStatus._REPORT_ADMIN_NOT_ALLOWED);
+        }
 
         // 중복 신고 확인
         reportRepository.findByReporterAndTargetTypeAndTargetId(
@@ -204,7 +210,7 @@ public class ReportService {
     /**
      * 신고 대상 제목 가져오기
      */
-    private String getTargetTitle(ReportTargetType targetType, Long targetId) {
+    public String getTargetTitle(ReportTargetType targetType, Long targetId) {
         try {
             switch (targetType) {
                 case POST:
@@ -235,67 +241,78 @@ public class ReportService {
      * 신고 상태 업데이트(관리자)
      */
     @Transactional
-    public void updateStatus(Long reportId, ReportStatus status, String adminNote, Boolean answered) {
+    public void updateStatus(Long reportId, ReportStatus status) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
 
-        // 관리자는 REVIEWED(처리중) 또는 RESOLVED(처리완료) 상태로 변경 가능
         switch (status) {
+            case PENDING:
+                report.pending();
+                break;
             case REVIEWED:
-                report.review(adminNote);
+                report.review();
                 break;
             case RESOLVED:
-                report.resolve(adminNote);
+                report.resolve();
                 break;
-            default:
-                throw new GeneralException(ErrorStatus._BAD_REQUEST);
         }
 
-        // 답변 상태 업데이트
-        report.updateAnswered(answered);
-
-        // 신고자에게 결과 알림 및 이메일 발송
+        // 신고자에게 상태 변경 알림
         User reporter = report.getReporter();
         if (reporter != null) {
             String statusText = status == ReportStatus.RESOLVED ? "처리 완료" : "처리 중";
-            String title = "신고 처리 결과: " + statusText;
-            String message = adminNote == null ? "" : adminNote;
             notificationService.createNotification(
                     reporter,
                     NotificationType.REPORT_RESULT,
-                    title,
-                    message,
+                    "신고 처리 결과: " + statusText,
+                    "",
                     ReferenceType.REPORT,
                     report.getReportId()
             );
-            
-            // 신고 결과 이메일 발송
+        }
+    }
+
+    /**
+     * 신고 답변 작성(관리자)
+     */
+    @Transactional
+    public void answerReport(Long reportId, String adminAnswer) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
+
+        report.answer(adminAnswer);
+
+        // 신고자에게 답변 알림 및 이메일 발송
+        User reporter = report.getReporter();
+        if (reporter != null) {
+            notificationService.createNotification(
+                    reporter,
+                    NotificationType.REPORT_RESULT,
+                    "신고에 대한 답변이 등록되었습니다",
+                    adminAnswer,
+                    ReferenceType.REPORT,
+                    report.getReportId()
+            );
+
             try {
                 String targetTitle = getTargetTitle(report.getTargetType(), report.getTargetId());
                 String reportDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                         .format(report.getCreatedAt() != null ? report.getCreatedAt() : java.time.LocalDateTime.now());
-                String resultText = status == ReportStatus.RESOLVED ? "처리 완료" : "처리 중";
-                String content = adminNote != null && !adminNote.isEmpty() 
-                        ? adminNote 
-                        : (status == ReportStatus.RESOLVED ? "처리 완료되었습니다." : "처리 중입니다.");
-                
-                String emailSubject = status == ReportStatus.RESOLVED 
-                        ? "신고 처리 결과 안내" 
-                        : "신고 처리 중 안내";
+
                 emailService.sendHtmlEmail(
                     reporter.getEmail(),
-                    emailSubject,
+                    "신고 답변 안내",
                     "report-result-email.html",
                     java.util.Map.of(
                         "TITLE", targetTitle,
                         "USER", reporter.getEmail(),
-                        "RESULT", resultText,
+                        "RESULT", "답변 완료",
                         "DATE", reportDate,
-                        "CONTENT", content
+                        "CONTENT", adminAnswer
                     )
                 );
             } catch (Exception e) {
-                log.error("신고 처리 결과 이메일 발송 실패: reportId={}", report.getReportId(), e);
+                log.error("신고 답변 이메일 발송 실패: reportId={}", report.getReportId(), e);
             }
         }
     }

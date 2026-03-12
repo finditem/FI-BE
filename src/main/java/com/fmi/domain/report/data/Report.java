@@ -45,8 +45,8 @@ public class Report {
     @Builder.Default
     private ReportStatus status = ReportStatus.PENDING;
 
-    @Column(name = "admin_note", columnDefinition = "TEXT")
-    private String adminNote;
+    @Column(name = "admin_answer", columnDefinition = "TEXT")
+    private String adminAnswer;
 
     @Column(name = "answered", nullable = false)
     @Builder.Default
@@ -72,25 +72,22 @@ public class Report {
         updatedAt = LocalDateTime.now();
     }
 
-    public void review(String adminNote) {
-        this.status = ReportStatus.REVIEWED;
-        this.adminNote = adminNote;
+    public void pending() {
+        this.status = ReportStatus.PENDING;
     }
 
-    public void resolve(String adminNote) {
+    public void review() {
+        this.status = ReportStatus.REVIEWED;
+    }
+
+    public void resolve() {
         this.status = ReportStatus.RESOLVED;
-        this.adminNote = adminNote;
         this.resolvedAt = LocalDateTime.now();
     }
 
-    public void markAsAnswered() {
+    public void answer(String adminAnswer) {
+        this.adminAnswer = adminAnswer;
         this.answered = true;
-    }
-
-    public void updateAnswered(Boolean answered) {
-        if (answered != null) {
-            this.answered = answered;
-        }
     }
 }
 

@@ -24,6 +24,7 @@ import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
 import com.fmi.domain.inquirycomment.service.InquiryCommentService;
 import com.fmi.domain.report.converter.ReportConverter;
+import com.fmi.domain.report.service.ReportService;
 import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
 import com.fmi.domain.user.data.UserCategory;
 import com.fmi.domain.user.repository.UserCategoryRepository;
@@ -53,6 +54,7 @@ public class AdminService {
     private final InquiryConverter inquiryConverter;
     private final ReportRepository reportRepository;
     private final ReportConverter reportConverter;
+    private final ReportService reportService;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
@@ -110,7 +112,7 @@ public class AdminService {
                 .reportType(report.getReportType())
                 .status(report.getStatus())
                 .reason(report.getReason())
-                .adminNote(report.getAdminNote())
+                .targetTitle(reportService.getTargetTitle(report.getTargetType(), report.getTargetId()))
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
                 .resolvedAt(report.getResolvedAt())
@@ -187,8 +189,9 @@ public class AdminService {
     public ReportResponseDTO getReportDetail(Long reportId) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
-        
-        return reportConverter.toResponseDTO(report);
+
+        String targetTitle = reportService.getTargetTitle(report.getTargetType(), report.getTargetId());
+        return reportConverter.toResponseDTO(report, targetTitle);
     }
 
     /**
@@ -348,7 +351,7 @@ public class AdminService {
                         .reportType(report.getReportType())
                         .status(report.getStatus())
                         .reason(report.getReason())
-                        .adminNote(report.getAdminNote())
+                        .targetTitle(reportService.getTargetTitle(report.getTargetType(), report.getTargetId()))
                         .createdAt(report.getCreatedAt())
                         .updatedAt(report.getUpdatedAt())
                         .resolvedAt(report.getResolvedAt())
