@@ -58,8 +58,19 @@ public class Report {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_id")
+    private User admin;
+
+    @Column(name = "answered_at")
+    private LocalDateTime answeredAt;
+
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
+
+    @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<ReportAnswerImage> answerImages = new java.util.ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -85,9 +96,11 @@ public class Report {
         this.resolvedAt = LocalDateTime.now();
     }
 
-    public void answer(String adminAnswer) {
+    public void answer(String adminAnswer, User admin) {
         this.adminAnswer = adminAnswer;
         this.answered = true;
+        this.admin = admin;
+        this.answeredAt = LocalDateTime.now();
     }
 }
 

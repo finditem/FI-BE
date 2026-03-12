@@ -415,8 +415,9 @@ public class AdminController {
             )
     })
     public ApiResponse<String> answerReport(@PathVariable Long reportId,
-                                            @Valid @RequestBody ReportAnswerRequestDTO request) {
-        reportService.answerReport(reportId, request.getAdminAnswer());
+                                            @Valid @RequestBody ReportAnswerRequestDTO request,
+                                            @AuthenticationPrincipal UserDetails userDetails) {
+        reportService.answerReport(reportId, request.getAdminAnswer(), request.getImages(), userDetails);
         return ApiResponse.onSuccess("OK");
     }
 
