@@ -1,5 +1,6 @@
 package com.fmi.domain.userblock.service;
 
+import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.userblock.data.BlockedUser;
@@ -33,6 +34,10 @@ public class BlockService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         User target = userRepository.findActiveById(targetUserId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        if (target.getRole() == Role.ADMIN) {
+            throw new GeneralException(ErrorStatus._CANNOT_BLOCK_ADMIN);
+        }
 
         saveBlockIfNotExists(blocker, target);
         saveBlockIfNotExists(target, blocker);

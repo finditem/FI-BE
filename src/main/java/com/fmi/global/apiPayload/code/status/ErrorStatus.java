@@ -46,6 +46,7 @@ public enum ErrorStatus implements BaseErrorCode {
     // 회원 관련 응답
     _USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER404-NOT_FOUND", "존재하지 않는 회원입니다."),
     _USER_BLOCK_SELF(HttpStatus.BAD_REQUEST, "USER400-BLOCK_SELF", "자기 자신은 차단할 수 없습니다."),
+    _CANNOT_BLOCK_ADMIN(HttpStatus.FORBIDDEN, "USER403-CANNOT_BLOCK_ADMIN", "관리자 계정은 차단할 수 없습니다."),
     _USER_ALREADY_BLOCKED(HttpStatus.CONFLICT, "USER409-ALREADY_BLOCKED", "이미 차단한 사용자입니다."),
     _USER_NOT_BLOCKED(HttpStatus.NOT_FOUND, "USER404-NOT_BLOCKED", "차단되지 않은 사용자입니다."),
     _CURRENT_PASSWORD_INCORRECT(HttpStatus.BAD_REQUEST, "USER400-PASSWORD_INCORRECT", "현재 비밀번호가 일치하지 않습니다."),
