@@ -200,12 +200,12 @@ public class UserService {
     }
 
     /**
-     * 내가 쓴 댓글 목록 조회 (페이지 기반 + 필터)
+     * 내가 쓴 댓글 목록 조회 (커서 기반 + 필터)
      */
     @Transactional(readOnly = true)
     public MyCommentPageResponse getMyComments(String email, SortType sortType,
                                                 LocalDate startDate, LocalDate endDate,
-                                                String keyword, int page, int size) {
+                                                String keyword, Long cursor, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
@@ -213,16 +213,19 @@ public class UserService {
         LocalDateTime endDateTime = (endDate != null) ? endDate.plusDays(1).atStartOfDay() : null;
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
 
-        PageRequest pageRequest = PageRequest.of(page, size);
+        PageRequest pageRequest = PageRequest.of(0, size);
         Slice<Comment> commentSlice = (sortType == SortType.OLDEST)
-                ? commentRepository.searchMyCommentsOldest(user, startDateTime, endDateTime, trimmedKeyword, pageRequest)
-                : commentRepository.searchMyCommentsLatest(user, startDateTime, endDateTime, trimmedKeyword, pageRequest);
+                ? commentRepository.searchMyCommentsOldest(user, cursor, startDateTime, endDateTime, trimmedKeyword, pageRequest)
+                : commentRepository.searchMyCommentsLatest(user, cursor, startDateTime, endDateTime, trimmedKeyword, pageRequest);
 
         List<UserCommentSummaryResponse> comments = commentSlice.getContent().stream()
                 .map(UserConverter::toUserCommentSummaryResponse)
                 .toList();
 
-        return new MyCommentPageResponse(comments, null, commentSlice.hasNext());
+        Long nextCursor = commentSlice.hasNext()
+                ? commentSlice.getContent().get(commentSlice.getContent().size() - 1).getId()
+                : null;
+        return new MyCommentPageResponse(comments, nextCursor, commentSlice.hasNext());
     }
 
     /**
