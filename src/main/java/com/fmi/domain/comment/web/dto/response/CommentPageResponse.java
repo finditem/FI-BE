@@ -6,5 +6,6 @@ public record CommentPageResponse(
         List<CommentResponse> comments,
         boolean hasNext,
         Integer nextPage,
+        long totalCommentCount,
         long remainingCount) {
 }

@@ -66,7 +66,8 @@ public class CommentQueryService {
         Integer nextPage = hasNext ? page + 1 : null;
 
         long shown = ((long) page * PARENT_PAGE_SIZE) + fetched.size();
-        long remainingCount = Math.max(0, totalCount - shown);
+
+        long remainingCount = Math.max(0, Math.min(PARENT_PAGE_SIZE, totalCount - shown));
 
         List<Long> parentIds = fetched.stream()
                 .map(Comment::getId)
@@ -93,7 +94,7 @@ public class CommentQueryService {
                 })
                 .toList();
 
-        return new CommentPageResponse(responses, hasNext, nextPage, remainingCount);
+        return new CommentPageResponse(responses, hasNext, nextPage, totalCount, remainingCount);
     }
 
     @Transactional(readOnly = true)
@@ -125,7 +126,8 @@ public class CommentQueryService {
         Integer nextPage = hasNext ? page + 1 : null;
 
         long shown = (long) page * CHILD_COMMENT_PAGE_SIZE + fetched.size();
-        long remainingCount = Math.max(0, totalCount - shown);
+
+        long remainingCount = Math.max(0, Math.min(CHILD_COMMENT_PAGE_SIZE, totalCount - shown));
 
         List<Long> replyIds = fetched.stream()
                 .map(Comment::getId)
@@ -152,7 +154,7 @@ public class CommentQueryService {
                 })
                 .toList();
 
-        return new CommentPageResponse(responses, hasNext, nextPage, remainingCount);
+        return new CommentPageResponse(responses, hasNext, nextPage, totalCount, remainingCount);
     }
 
 
