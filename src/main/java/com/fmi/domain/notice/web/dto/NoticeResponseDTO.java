@@ -1,6 +1,7 @@
 package com.fmi.domain.notice.web.dto;
 
 import com.fmi.domain.notice.data.enums.NoticeCategory;
+import com.fmi.domain.noticecomment.response.NoticeCommentResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -20,8 +21,6 @@ public class NoticeResponseDTO {
     private String title;
     @Schema(description = "내용", example = "서비스 점검으로 인해 일시적으로 이용이 제한됩니다.")
     private String content;
-    @Schema(description = "내용 요약 (최대 100자)", example = "서비스 점검으로 인해 일시적으로 이용이 제한됩니다.")
-    private String summary;
     @Schema(description = "카테고리", example = "GENERAL")
     private NoticeCategory category;
     @Schema(description = "상단 고정 여부", example = "true")
@@ -42,6 +41,10 @@ public class NoticeResponseDTO {
     private Boolean isNew;
     @Schema(description = "HOT 표시 (인기 공지)", example = "false")
     private Boolean isHot;
+    @Schema(description = "내가 좋아요 눌렀는지 여부", example = "false")
+    private Boolean likeStatus;
+    @Schema(description = "댓글 목록")
+    private List<NoticeCommentResponse> comments;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
     @Schema(description = "수정 시간", example = "2024-01-01T00:00:00")
