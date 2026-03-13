@@ -155,7 +155,8 @@ public class CommentController {
                                                 ],
                                                 "hasNext": true,
                                                 "nextPage": 1,
-                                                "remainingCount": 27
+                                                "totalCommentCount": 37
+                                                "remainingCount": 10
                                               }
                                             }
                                             """
@@ -234,7 +235,8 @@ public class CommentController {
                                                 ],
                                                 "hasNext": true,
                                                 "nextPage": 1,
-                                                "remainingCount": 8
+                                                "totalCommentCount": 37,
+                                                "remainingCount": 10
                                               }
                                             }
                                             """
