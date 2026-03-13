@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -35,6 +36,16 @@ public class ReportResponseDTO {
     private Boolean answered;
     @Schema(description = "관리자 답변 내용", example = "확인 후 조치하였습니다.")
     private String adminAnswer;
+    @Schema(description = "답변 작성 관리자 ID", example = "1")
+    private Long adminId;
+    @Schema(description = "답변 작성 관리자 닉네임", example = "관리자")
+    private String adminNickname;
+    @Schema(description = "답변 작성 관리자 프로필 이미지")
+    private String adminProfileImg;
+    @Schema(description = "답변 첨부 이미지 URL 목록")
+    private List<String> answerImageList;
+    @Schema(description = "답변 작성 시간", example = "2024-01-01T00:00:00")
+    private LocalDateTime answeredAt;
     @Schema(description = "신고자 닉네임", example = "홍길동")
     private String reporterNickname;
     @Schema(description = "신고자 이메일", example = "reporter@example.com")

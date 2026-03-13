@@ -3,11 +3,15 @@ package com.fmi.domain.chatroom.web.controller;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.chatmessage.service.ChatNotificationService;
+import com.fmi.domain.chatroom.data.ChatRoom;
+import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.domain.chatroom.service.ChatRoomService;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
+import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.service.UserQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,6 +42,9 @@ public class ChatRoomController {
     private final UserQueryService userService;
     private final ChatRoomService chatRoomService;
     private final ChatRoomPresenceService presenceService;
+    private final ChatNotificationService chatNotificationService;
+    private final ChatRoomRepository chatRoomRepository;
+    private final UserRepository userRepository;
 
     @Operation(summary = "채팅방 생성/조회", description = "특정 게시글에 대해 1:1 채팅방을 생성하거나 기존 채팅방을 조회합니다.")
     @ApiResponses({
@@ -129,6 +136,14 @@ public class ChatRoomController {
     public void enter(@DestinationVariable Long roomId, Principal p, StompHeaderAccessor acc) {
         Long userId = Long.parseLong(p.getName());
         presenceService.enter(roomId, userId, acc.getSessionId());
+
+        // 채팅방 입장 시 해당 채팅 알림 자동 읽음처리
+        chatRoomRepository.findById(roomId).ifPresent(chatRoom -> {
+            Long postId = chatRoom.getPost().getId();
+            userRepository.findById(userId).ifPresent(user ->
+                    chatNotificationService.markChatNotificationsAsRead(user, postId)
+            );
+        });
     }
 
     @MessageMapping("/rooms/{roomId}/ping")

@@ -4,9 +4,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class ReportAnswerRequestDTO {
     @NotBlank
     @Schema(description = "관리자 답변 내용", example = "확인 후 조치하였습니다.")
     private String adminAnswer;
+
+    @Schema(description = "답변 첨부 이미지 URL 목록")
+    private List<String> images;
 }

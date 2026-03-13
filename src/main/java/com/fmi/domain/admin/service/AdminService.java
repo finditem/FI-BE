@@ -16,8 +16,10 @@ import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.ipblock.service.IpBlacklistService;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.report.data.Report;
+import com.fmi.domain.report.data.ReportAnswerImage;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
+import com.fmi.domain.report.repository.ReportAnswerImageRepository;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
 import com.fmi.domain.admin.dto.AdminInquiryDetailDTO;
@@ -62,6 +64,7 @@ public class AdminService {
     private final UserCategoryRepository userCategoryRepository;
     private final InquiryCommentService inquiryCommentService;
     private final IpBlacklistService ipBlacklistService;
+    private final ReportAnswerImageRepository reportAnswerImageRepository;
 
     public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
                                                      InquiryStatus status,
@@ -192,7 +195,10 @@ public class AdminService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
 
         String targetTitle = reportService.getTargetTitle(report.getTargetType(), report.getTargetId());
-        return reportConverter.toResponseDTO(report, targetTitle);
+        List<String> answerImageUrls = reportAnswerImageRepository.findByReportReportId(reportId).stream()
+                .map(ReportAnswerImage::getImageUrl)
+                .toList();
+        return reportConverter.toResponseDTO(report, targetTitle, answerImageUrls);
     }
 
     /**

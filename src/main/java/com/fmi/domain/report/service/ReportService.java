@@ -12,9 +12,11 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.report.converter.ReportConverter;
 import com.fmi.domain.report.data.Report;
+import com.fmi.domain.report.data.ReportAnswerImage;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.event.ReportEvent;
+import com.fmi.domain.report.repository.ReportAnswerImageRepository;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
@@ -49,6 +51,7 @@ public class ReportService {
     private final ReportConverter reportConverter;
     private final NotificationService notificationService;
     private final EmailService emailService;
+    private final ReportAnswerImageRepository reportAnswerImageRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -276,11 +279,25 @@ public class ReportService {
      * 신고 답변 작성(관리자)
      */
     @Transactional
-    public void answerReport(Long reportId, String adminAnswer) {
+    public void answerReport(Long reportId, String adminAnswer, List<String> imageUrls, UserDetails userDetails) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
 
-        report.answer(adminAnswer);
+        User adminUser = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        report.answer(adminAnswer, adminUser);
+
+        // 기존 답변 이미지 삭제 후 새로 저장
+        reportAnswerImageRepository.deleteAll(
+                reportAnswerImageRepository.findByReportReportId(reportId));
+
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            List<ReportAnswerImage> images = imageUrls.stream()
+                    .map(url -> ReportAnswerImage.create(report, url))
+                    .toList();
+            reportAnswerImageRepository.saveAll(images);
+        }
 
         // 신고자에게 답변 알림 및 이메일 발송
         User reporter = report.getReporter();
