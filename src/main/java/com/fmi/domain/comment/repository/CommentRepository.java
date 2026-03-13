@@ -38,13 +38,15 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query("""
             SELECT c FROM Comment c JOIN FETCH c.post
             WHERE c.user = :user AND c.deleted = false
+              AND (:cursor IS NULL OR c.id < :cursor)
               AND (:startDate IS NULL OR c.createdAt >= :startDate)
               AND (:endDate IS NULL OR c.createdAt < :endDate)
               AND (:keyword IS NULL OR c.content LIKE CONCAT('%', :keyword, '%')
                    OR c.post.title LIKE CONCAT('%', :keyword, '%'))
-            ORDER BY c.createdAt DESC
+            ORDER BY c.id DESC
             """)
     Slice<Comment> searchMyCommentsLatest(@Param("user") User user,
+                                          @Param("cursor") Long cursor,
                                           @Param("startDate") LocalDateTime startDate,
                                           @Param("endDate") LocalDateTime endDate,
                                           @Param("keyword") String keyword,
@@ -53,13 +55,15 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query("""
             SELECT c FROM Comment c JOIN FETCH c.post
             WHERE c.user = :user AND c.deleted = false
+              AND (:cursor IS NULL OR c.id > :cursor)
               AND (:startDate IS NULL OR c.createdAt >= :startDate)
               AND (:endDate IS NULL OR c.createdAt < :endDate)
               AND (:keyword IS NULL OR c.content LIKE CONCAT('%', :keyword, '%')
                    OR c.post.title LIKE CONCAT('%', :keyword, '%'))
-            ORDER BY c.createdAt ASC
+            ORDER BY c.id ASC
             """)
     Slice<Comment> searchMyCommentsOldest(@Param("user") User user,
+                                          @Param("cursor") Long cursor,
                                           @Param("startDate") LocalDateTime startDate,
                                           @Param("endDate") LocalDateTime endDate,
                                           @Param("keyword") String keyword,

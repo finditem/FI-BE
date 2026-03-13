@@ -6,6 +6,7 @@ import com.fmi.domain.userblock.data.BlockedUser;
 import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.domain.userblock.web.dto.response.BlockedUserResponse;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,8 +17,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/reports")
@@ -59,14 +58,17 @@ public class BlockController {
     }
 
     @GetMapping("/block")
-    @Operation(summary = "내가 차단한 유저 목록", description = "차단한 유저의 ID, 닉네임, 프로필 사진을 반환합니다.")
+    @Operation(summary = "내가 차단한 유저 목록", description = "차단한 유저의 ID, 닉네임, 프로필 사진을 커서 기반으로 조회합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "차단 유저 목록 조회 성공")
     })
-    public ApiResponse<List<BlockedUserResponse>> list(@AuthenticationPrincipal UserDetails userDetails) {
+    public ApiResponse<CursorPageResponse<BlockedUserResponse>> list(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size) {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        List<BlockedUserResponse> blockedUsers = blockService.listWithUserInfo(user.getId());
+        CursorPageResponse<BlockedUserResponse> blockedUsers = blockService.listWithUserInfoCursor(user.getId(), cursor, size);
         return ApiResponse.onSuccess(blockedUsers);
     }
 }

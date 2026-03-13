@@ -14,6 +14,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fmi.global.apiPayload.CursorPageResponse;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+
 import java.util.List;
 
 @Slf4j
@@ -73,6 +77,27 @@ public class BlockService {
                         bu.getBlocked().getProfile_img()
                 ))
                 .toList();
+    }
+
+    public CursorPageResponse<BlockedUserResponse> listWithUserInfoCursor(Long blockerUserId, Long cursor, int size) {
+        User blocker = userRepository.findActiveById(blockerUserId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        PageRequest pageRequest = PageRequest.of(0, size);
+        Slice<BlockedUser> slice = (cursor == null)
+                ? blockedUserRepository.findByBlockerOrderByIdDesc(blocker, pageRequest)
+                : blockedUserRepository.findByBlockerAndIdLessThanOrderByIdDesc(blocker, cursor, pageRequest);
+
+        List<BlockedUserResponse> content = slice.getContent().stream()
+                .map(bu -> new BlockedUserResponse(
+                        bu.getBlocked().getId(),
+                        bu.getBlocked().getNickname(),
+                        bu.getBlocked().getProfile_img()
+                ))
+                .toList();
+
+        Long nextCursor = slice.hasNext() ? slice.getContent().get(slice.getContent().size() - 1).getId() : null;
+        return new CursorPageResponse<>(content, nextCursor, slice.hasNext());
     }
 
     private void saveBlockIfNotExists(User blocker, User blocked) {
