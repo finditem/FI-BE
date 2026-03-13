@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -58,20 +57,6 @@ public class ChatNotificationService {
                     ReferenceType.CHAT,
                     postId
             );
-        }
-    }
-
-    /**
-     * 채팅방 입장 시 해당 게시글의 CHAT/CHAT_REMINDER 알림을 읽음 처리합니다.
-     */
-    public void markChatNotificationsAsRead(User user, Long postId) {
-        List<Notification> notifications = notificationRepository.findAllByUserAndReferenceIdAndTypeIn(
-                user, postId, List.of(NotificationType.CHAT, NotificationType.CHAT_REMINDER)
-        );
-        for (Notification n : notifications) {
-            if (!n.isRead()) {
-                n.markAsRead();
-            }
         }
     }
 

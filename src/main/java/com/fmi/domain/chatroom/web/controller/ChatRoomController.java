@@ -3,12 +3,13 @@ package com.fmi.domain.chatroom.web.controller;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.Enum.Type;
 import com.fmi.domain.auth.data.User;
-import com.fmi.domain.chatmessage.service.ChatNotificationService;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.domain.chatroom.service.ChatRoomService;
 import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
 import com.fmi.domain.auth.repository.UserRepository;
@@ -30,6 +31,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResultDTO;
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.MyChatListDTO;
@@ -42,7 +44,7 @@ public class ChatRoomController {
     private final UserQueryService userService;
     private final ChatRoomService chatRoomService;
     private final ChatRoomPresenceService presenceService;
-    private final ChatNotificationService chatNotificationService;
+    private final NotificationService notificationService;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
 
@@ -141,7 +143,8 @@ public class ChatRoomController {
         chatRoomRepository.findById(roomId).ifPresent(chatRoom -> {
             Long postId = chatRoom.getPost().getId();
             userRepository.findById(userId).ifPresent(user ->
-                    chatNotificationService.markChatNotificationsAsRead(user, postId)
+                    notificationService.markNotificationsAsReadByReference(user, postId,
+                            List.of(NotificationType.CHAT, NotificationType.CHAT_REMINDER))
             );
         });
     }
