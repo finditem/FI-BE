@@ -132,6 +132,7 @@ public class ChatMessageService {
         List<ChatRoomParticipant> allParticipants = chatRoomParticipantRepository.findAllByChatRoom_Id(roomId);
         User sender = newMessage.getUser();
         Long senderId = sender.getId();
+        Long postId = newMessage.getChatRoom().getPost().getId();
 
         for (ChatRoomParticipant pt : allParticipants) {
             // 메시지 갱신 및 ACTIVE 설정
@@ -157,7 +158,7 @@ public class ChatMessageService {
                 } else {
                     // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
                     pt.onNewMessageArrived();
-                    chatNotificationService.saveOrUpdateChatNotification(pt.getUser(), roomId, newMessage.getContent(), NotificationType.CHAT);
+                    chatNotificationService.saveOrUpdateChatNotification(pt.getUser(), postId, newMessage.getContent(), NotificationType.CHAT);
                 }
             }
             // 갱신된 정보로 DTO 생성

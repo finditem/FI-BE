@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -24,9 +25,9 @@ public class ChatNotificationService {
 
     /**
      * 채팅 알림을 갱신하거나 새로 생성합니다.
-     * 채팅방당 하나의 알림 블록만 유지합니다.
+     * 게시글 ID를 referenceId로 사용합니다.
      */
-    public void saveOrUpdateChatNotification(User receiver, Long roomId, String content, NotificationType type) {
+    public void saveOrUpdateChatNotification(User receiver, Long postId, String content, NotificationType type) {
 
         Optional<NotificationSettings> notificationSettings = notificationSettingsRepository.findByUser(receiver);
 
@@ -40,7 +41,7 @@ public class ChatNotificationService {
 
         Optional<Notification> notification =
                 notificationRepository.findByUserAndReferenceIdAndType(
-                        receiver, roomId, type
+                        receiver, postId, type
                 );
 
         if (notification.isPresent()) {
@@ -55,8 +56,22 @@ public class ChatNotificationService {
                     title,
                     content,
                     ReferenceType.CHAT,
-                    roomId
+                    postId
             );
+        }
+    }
+
+    /**
+     * 채팅방 입장 시 해당 게시글의 CHAT/CHAT_REMINDER 알림을 읽음 처리합니다.
+     */
+    public void markChatNotificationsAsRead(User user, Long postId) {
+        List<Notification> notifications = notificationRepository.findAllByUserAndReferenceIdAndTypeIn(
+                user, postId, List.of(NotificationType.CHAT, NotificationType.CHAT_REMINDER)
+        );
+        for (Notification n : notifications) {
+            if (!n.isRead()) {
+                n.markAsRead();
+            }
         }
     }
 
