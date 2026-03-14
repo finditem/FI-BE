@@ -155,7 +155,6 @@ public class KakaoAuthController {
                 .secure(cookieSecure)
                 .sameSite(cookieSameSite)
                 .path("/")
-                .domain("finditem.kr")
                 .maxAge(Duration.between(Instant.now(), accessExp.toInstant()))
                 .build();
 
@@ -165,7 +164,6 @@ public class KakaoAuthController {
                 .secure(cookieSecure)
                 .sameSite(cookieSameSite)
                 .path("/")
-                .domain("finditem.kr")
                 .maxAge(Duration.between(Instant.now(), refreshExp.toInstant()))
                 .build();
 
