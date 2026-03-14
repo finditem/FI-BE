@@ -261,6 +261,7 @@ public class AuthController {
                 .secure(cookieSecure)
                 .sameSite(cookieSameSite)
                 .path("/")
+                .domain("finditem.kr")
                 .maxAge(java.time.Duration.between(java.time.Instant.now(), expiration.toInstant()))
                 .build();
     }
