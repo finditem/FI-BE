@@ -146,6 +146,19 @@ public class NotificationService {
     }
 
     /**
+     * referenceId + 알림 타입 목록으로 읽음 처리
+     */
+    @Transactional
+    public void markNotificationsAsReadByReference(User user, Long referenceId, List<NotificationType> types) {
+        List<Notification> notifications = notificationRepository.findAllByUserAndReferenceIdAndTypeIn(user, referenceId, types);
+        for (Notification n : notifications) {
+            if (!n.isRead()) {
+                n.markAsRead();
+            }
+        }
+    }
+
+    /**
      * 알림 다건 읽음 처리
      */
     @Transactional

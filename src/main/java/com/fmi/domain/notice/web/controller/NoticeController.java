@@ -1,8 +1,11 @@
 package com.fmi.domain.notice.web.controller;
 
+import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notice.data.enums.NoticeCategory;
 import com.fmi.domain.notice.data.enums.NoticeSortType;
 import com.fmi.domain.notice.service.NoticeService;
+import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
@@ -18,6 +21,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,6 +36,8 @@ public class NoticeController {
     
     private final NoticeService noticeService;
     private final NoticeCommentService noticeCommentService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
     
     /**
      * 공지사항 목록 조회
@@ -98,6 +104,14 @@ public class NoticeController {
                 ? (UserDetails) authentication.getPrincipal() : null;
         NoticeCommentSliceResponse commentSlice = noticeCommentService.getComments(noticeId, null, 20, userDetails);
         notice.setComments(commentSlice.getComments());
+
+        // 공지사항 조회 시 관련 알림 자동 읽음처리
+        if (userDetails != null) {
+            userRepository.findByEmail(userDetails.getUsername()).ifPresent(user ->
+                    notificationService.markNotificationsAsReadByReference(user, noticeId,
+                            List.of(NotificationType.COMMENT, NotificationType.REPLY, NotificationType.NOTICE))
+            );
+        }
 
         return ApiResponse.onSuccess(notice);
     }

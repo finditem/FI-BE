@@ -4,6 +4,10 @@ import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.post.service.TemporaryPostService;
@@ -12,6 +16,7 @@ import com.fmi.domain.post.web.dto.response.*;
 import com.fmi.domain.post.web.dto.response.temp.TemporaryPostResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.utils.IpUtil;
+import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -43,6 +48,8 @@ public class PostController {
     private final PostService postService;
     private final PostQueryService postQueryService;
     private final TemporaryPostService temporaryPostService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "게시글 생성")
@@ -208,6 +215,14 @@ public class PostController {
         String clientIp = (Objects.isNull(userDetails)) ? IpUtil.getClientIp(request) : null;
 
         PostGetResponse response = postQueryService.getPost(postId, userDetails, clientIp);
+
+        // 게시글 조회 시 관련 알림 자동 읽음처리
+        if (userDetails != null) {
+            userRepository.findByEmail(userDetails.getUsername()).ifPresent(user ->
+                    notificationService.markNotificationsAsReadByReference(user, postId,
+                            List.of(NotificationType.COMMENT, NotificationType.REPLY, NotificationType.FAVORITE, NotificationType.CATEGORY))
+            );
+        }
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }

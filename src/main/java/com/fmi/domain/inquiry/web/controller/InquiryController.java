@@ -4,6 +4,8 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.service.InquiryService;
+import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -18,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,6 +35,7 @@ public class InquiryController {
     
     private final InquiryService inquiryService;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
     
     /**
      * 1:1 개인 문의 작성
@@ -131,6 +135,15 @@ public class InquiryController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         InquiryDetailDTO inquiry = inquiryService.getInquiryDetail(inquiryId, userDetails);
+
+        // 문의 조회 시 관련 알림 자동 읽음처리
+        if (userDetails != null) {
+            userRepository.findByEmail(userDetails.getUsername()).ifPresent(user ->
+                    notificationService.markNotificationsAsReadByReference(user, inquiryId,
+                            List.of(NotificationType.COMMENT, NotificationType.REPLY, NotificationType.INQUIRY_REPLY))
+            );
+        }
+
         return ApiResponse.onSuccess(inquiry);
     }
 
