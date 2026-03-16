@@ -1,6 +1,7 @@
 package com.fmi.domain.post.repository;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.map.repository.PostMapCustom;
 import com.fmi.domain.post.data.Post;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryCustom {
+public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryCustom, PostMapCustom {
 
     Optional<Post> findByIdAndDeletedFalse(Long id);
 
