@@ -1,5 +1,7 @@
 package com.fmi.domain.map.enumeration;
 
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -33,6 +35,6 @@ public enum MapLevel {
                 .filter(l -> l.level == level)
                 .findFirst()
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Invalid map level: " + level));
+                        new GeneralException(ErrorStatus._MAP_LEVEL_INVALID));
     }
 }

@@ -104,7 +104,9 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // 알림 관련 응답
     _NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION404-NOT_FOUND", "존재하지 않는 알림입니다."),
-    _NOTIFICATION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "NOTIFICATION403-ACCESS_DENIED", "해당 알림에 접근할 권한이 없습니다.");
+    _NOTIFICATION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "NOTIFICATION403-ACCESS_DENIED", "해당 알림에 접근할 권한이 없습니다."),
+
+    _MAP_LEVEL_INVALID(HttpStatus.BAD_REQUEST, "MAP400-LEVEL_INVALID", "유효하지 않은 지도 레벨입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
