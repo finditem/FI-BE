@@ -7,6 +7,7 @@ import com.fmi.domain.notice.service.NoticeService;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
+import com.fmi.domain.notice.web.dto.NoticeMetaResponse;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecomment.service.NoticeCommentService;
@@ -60,6 +61,21 @@ public class NoticeController {
         return ApiResponse.onSuccess(notices);
     }
     
+    /**
+     * 공지사항 메타데이터 조회 (OG 태그용)
+     * GET /notices/{noticeId}/meta
+     */
+    @GetMapping("/{noticeId}/meta")
+    @Operation(summary = "공지사항 메타데이터 조회", description = "OG 태그 생성용 경량 API. 제목과 본문 요약(100자)을 반환합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "메타데이터 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "NOTICE404-NOT_FOUND: 존재하지 않는 공지사항입니다")
+    })
+    public ApiResponse<NoticeMetaResponse> getNoticeMeta(@PathVariable Long noticeId) {
+        NoticeMetaResponse meta = noticeService.getNoticeMeta(noticeId);
+        return ApiResponse.onSuccess(meta);
+    }
+
     /**
      * 공지사항 상세 조회
      * GET /notices/{noticeId}

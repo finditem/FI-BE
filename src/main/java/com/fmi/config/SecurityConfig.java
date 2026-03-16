@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/notices/**").permitAll()
                         .requestMatchers("/inquiries").permitAll()
                         .requestMatchers("/users/{userId}/page").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/users/{userId}/meta").permitAll()
                         .requestMatchers(HttpMethod.GET, "/posts/search/**", "/posts/*", "/posts/*/similar", "/posts/*/share").permitAll()
                         .requestMatchers(HttpMethod.GET, "/main/posts/**").permitAll()
                         // 관리자 전용 API 보호
