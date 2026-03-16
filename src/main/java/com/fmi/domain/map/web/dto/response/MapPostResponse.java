@@ -33,10 +33,10 @@ public record MapPostResponse(
         @Schema(description = "카테고리", example = "WALLET")
         Category category,
 
-        @Schema(description = "좋아요 수", example = "5")
+        @Schema(description = "즐겨찾기 수", example = "5")
         Long favoriteCount,
 
-        @Schema(description = "내가 좋아요 했는지 여부", example = "true")
+        @Schema(description = "내가 즐겨찾기 했는지 여부", example = "true")
         boolean favoriteStatus,
 
         @Schema(description = "조회수", example = "120")
