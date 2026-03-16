@@ -8,6 +8,9 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
+import com.fmi.domain.comment.service.CommentImageService;
+import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
+import com.fmi.domain.commentlike.service.CommentLikeService;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
@@ -79,6 +82,8 @@ public class UserService {
     private final RefreshTokenStore refreshTokenStore;
     private final InquiryRepository inquiryRepository;
     private final ReportRepository reportRepository;
+    private final CommentLikeService commentLikeService;
+    private final CommentImageService commentImageService;
 
     /**
      * 내 정보 조회
@@ -148,8 +153,18 @@ public class UserService {
                             .toList();
                 }
 
+                List<Long> commentIds = commentList.stream().map(Comment::getId).toList();
+                Map<Long, Long> likeCountMap = commentLikeService.buildLikeCountMap(commentIds);
+                Set<Long> myLikeSet = commentLikeService.buildMyLikeSet(commentIds, me);
+                Map<Long, List<CommentImageResponse>> imageMap = commentImageService.buildImageMap(commentIds);
+
                 comments = commentList.stream()
-                        .map(UserConverter::toUserCommentSummaryResponse)
+                        .map(comment -> UserConverter.toUserCommentSummaryResponse(
+                                comment,
+                                likeCountMap.getOrDefault(comment.getId(), 0L),
+                                myLikeSet.contains(comment.getId()),
+                                imageMap.getOrDefault(comment.getId(), List.of())
+                        ))
                         .toList();
 
                 hasNext = commentSlice.hasNext();
@@ -218,12 +233,24 @@ public class UserService {
                 ? commentRepository.searchMyCommentsOldest(user, cursor, startDateTime, endDateTime, trimmedKeyword, pageRequest)
                 : commentRepository.searchMyCommentsLatest(user, cursor, startDateTime, endDateTime, trimmedKeyword, pageRequest);
 
-        List<UserCommentSummaryResponse> comments = commentSlice.getContent().stream()
-                .map(UserConverter::toUserCommentSummaryResponse)
+        List<Comment> commentList = commentSlice.getContent();
+        List<Long> commentIds = commentList.stream().map(Comment::getId).toList();
+
+        Map<Long, Long> likeCountMap = commentLikeService.buildLikeCountMap(commentIds);
+        Set<Long> myLikeSet = commentLikeService.buildMyLikeSet(commentIds, user);
+        Map<Long, List<CommentImageResponse>> imageMap = commentImageService.buildImageMap(commentIds);
+
+        List<UserCommentSummaryResponse> comments = commentList.stream()
+                .map(comment -> UserConverter.toUserCommentSummaryResponse(
+                        comment,
+                        likeCountMap.getOrDefault(comment.getId(), 0L),
+                        myLikeSet.contains(comment.getId()),
+                        imageMap.getOrDefault(comment.getId(), List.of())
+                ))
                 .toList();
 
         Long nextCursor = commentSlice.hasNext()
-                ? commentSlice.getContent().get(commentSlice.getContent().size() - 1).getId()
+                ? commentList.get(commentList.size() - 1).getId()
                 : null;
         return new MyCommentPageResponse(comments, nextCursor, commentSlice.hasNext());
     }

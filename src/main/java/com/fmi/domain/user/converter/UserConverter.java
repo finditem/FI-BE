@@ -2,6 +2,7 @@ package com.fmi.domain.user.converter;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.comment.data.Comment;
+import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
@@ -39,12 +40,16 @@ public class UserConverter {
                 .build();
     }
 
-    public static UserCommentSummaryResponse toUserCommentSummaryResponse(Comment comment) {
+    public static UserCommentSummaryResponse toUserCommentSummaryResponse(
+            Comment comment, long likeCount, boolean isLike, List<CommentImageResponse> imageList) {
         return UserCommentSummaryResponse.builder()
                 .commentId(comment.getId())
                 .postId(comment.getPost().getId())
                 .postTitle(comment.getPost().getTitle())
                 .content(comment.getContent())
+                .likeCount(likeCount)
+                .isLike(isLike)
+                .imageList(imageList)
                 .createdAt(comment.getCreatedAt())
                 .build();
     }
