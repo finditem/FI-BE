@@ -31,6 +31,8 @@ public class InquiryDetailDTO {
     private InquiryStatus status;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
+    @Schema(description = "첨부 이미지 URL 목록")
+    private List<String> imageUrls;
     @Schema(description = "댓글 목록")
     private List<InquiryCommentResponse> comments;
 }

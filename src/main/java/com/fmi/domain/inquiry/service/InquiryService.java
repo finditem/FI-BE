@@ -4,9 +4,11 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
 import com.fmi.domain.inquiry.data.Inquiry;
+import com.fmi.domain.inquiry.data.InquiryImage;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.event.InquiryEvent;
+import com.fmi.domain.inquiry.repository.InquiryImageRepository;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
@@ -20,6 +22,7 @@ import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.global.service.S3Service;
 import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 
@@ -44,6 +48,7 @@ import java.time.Duration;
 public class InquiryService {
     
     private final InquiryRepository inquiryRepository;
+    private final InquiryImageRepository inquiryImageRepository;
     private final InquiryConverter inquiryConverter;
     private final NotificationService notificationService;
     private final EmailService emailService;
@@ -52,12 +57,21 @@ public class InquiryService {
     private final InquiryCommentService inquiryCommentService;
     private final StringRedisTemplate stringRedisTemplate;
     private final IpBlacklistService ipBlacklistService;
+    private final S3Service s3Service;
 
     /**
-     * 1:1 개인 문의 생성
+     * 1:1 개인 문의 생성 (하위 호환)
      */
     @Transactional
     public Long createInquiry(InquiryCreateRequestDTO request, UserDetails userDetails, String clientIp) {
+        return createInquiry(request, userDetails, clientIp, null);
+    }
+
+    /**
+     * 1:1 개인 문의 생성 (이미지 첨부 지원)
+     */
+    @Transactional
+    public Long createInquiry(InquiryCreateRequestDTO request, UserDetails userDetails, String clientIp, List<MultipartFile> images) {
 
         User user = null;
         String resolvedEmail;
@@ -84,22 +98,30 @@ public class InquiryService {
                         .title(request.getTitle())
                         .content(request.getContent())
                         .inquiryType(request.getInquiryType() != null ? request.getInquiryType() : InquiryType.ETC)
-                        .user(user) // 회원이면 user 세팅
-                        .email(user == null ? resolvedEmail : null) // 비회원이면 email 컬럼 세팅
+                        .user(user)
+                        .email(user == null ? resolvedEmail : null)
                         .ip(normalizedIp)
                         .build()
         );
 
+        // 이미지 업로드 및 저장
+        if (images != null && !images.isEmpty()) {
+            List<String> imageUrls = s3Service.upload(images);
+            for (String url : imageUrls) {
+                inquiryImageRepository.save(InquiryImage.create(url, saved));
+            }
+        }
+
         eventPublisher.publishEvent(InquiryEvent.from(saved));
-        
+
         // 문의 접수 이메일 발송
         try {
-            String recipientEmail = saved.getEmail() != null ? saved.getEmail() : 
+            String recipientEmail = saved.getEmail() != null ? saved.getEmail() :
                                    (saved.getUser() != null ? saved.getUser().getEmail() : null);
             if (recipientEmail != null) {
                 String inquiryDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                         .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
-                
+
                 emailService.sendHtmlEmail(
                     recipientEmail,
                     "문의가 접수되었습니다",
@@ -114,7 +136,7 @@ public class InquiryService {
         } catch (Exception e) {
             log.error("문의 접수 이메일 발송 실패: inquiryId={}", saved.getId(), e);
         }
-        
+
         return saved.getId();
     }
 
@@ -200,7 +222,10 @@ public class InquiryService {
         
         java.util.List<InquiryCommentResponse> comments =
                 inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
-        return inquiryConverter.toDetailDTO(inquiry, comments);
+        List<String> imageUrls = inquiryImageRepository.findByInquiryId(inquiry.getId()).stream()
+                .map(InquiryImage::getImgUrl)
+                .toList();
+        return inquiryConverter.toDetailDTO(inquiry, comments, imageUrls);
     }
     
     /**
