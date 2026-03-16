@@ -1,4 +1,4 @@
-package com.fmi.domain.map.enumeration;
+package com.fmi.domain.map.enums;
 
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

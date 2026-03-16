@@ -1,7 +1,7 @@
 package com.fmi.domain.map.service;
 
 import com.fmi.domain.auth.data.User;
-import com.fmi.domain.map.enumeration.MapLevel;
+import com.fmi.domain.map.enums.MapLevel;
 import com.fmi.domain.map.web.dto.request.MapPostRequest;
 import com.fmi.domain.map.web.dto.request.PostMarkerRequest;
 import com.fmi.domain.map.web.dto.request.RecentFoundPostRequest;
