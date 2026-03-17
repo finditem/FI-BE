@@ -12,6 +12,7 @@ import com.fmi.domain.notice.repository.NoticeRepository;
 import com.fmi.domain.noticelike.data.NoticeLike;
 import com.fmi.domain.noticelike.repository.NoticeLikeRepository;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
+import com.fmi.domain.notice.web.dto.NoticeMetaResponse;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
 import com.fmi.domain.notice.web.dto.NoticeUpdateRequestDTO;
@@ -171,6 +172,21 @@ public class NoticeService {
                 .toList();
 
         return new CursorPageResponse<>(responseList, nextCursor, hasNext);
+    }
+
+    /**
+     * 공지사항 메타데이터 조회 (OG 태그용)
+     */
+    public NoticeMetaResponse getNoticeMeta(Long noticeId) {
+        Notice notice = noticeRepository.findById(noticeId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
+
+        String description = notice.getContent();
+        if (description != null && description.length() > 100) {
+            description = description.substring(0, 100);
+        }
+
+        return new NoticeMetaResponse(notice.getTitle(), description);
     }
 
     /**

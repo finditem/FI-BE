@@ -29,6 +29,7 @@ import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.user.response.ActivityResponse;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
+import com.fmi.domain.user.response.UserMetaResponse;
 import com.fmi.domain.user.response.MyPostPageResponse;
 import com.fmi.domain.user.response.DailyActivityResponse;
 import com.fmi.domain.user.response.MyActivityPageResponse;
@@ -94,6 +95,16 @@ public class UserService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         return UserConverter.toUserProfileResponse(user);
+    }
+
+    /**
+     * 유저 메타데이터 조회 (OG 태그용)
+     */
+    @Transactional(readOnly = true)
+    public UserMetaResponse getUserMeta(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        return new UserMetaResponse(user.getNickname());
     }
 
     /**

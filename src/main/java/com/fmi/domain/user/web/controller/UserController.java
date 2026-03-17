@@ -10,6 +10,7 @@ import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
 import com.fmi.domain.user.response.MyActivityPageResponse;
+import com.fmi.domain.user.response.UserMetaResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.service.UserService;
@@ -210,6 +211,17 @@ public class UserController {
         String email = userDetails.getUsername();
         MyActivityPageResponse response = userService.getMyActivities(email, type, startDate, endDate, keyword, cursor, size);
         return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/{userId}/meta")
+    @Operation(summary = "유저 메타데이터 조회", description = "OG 태그 생성용 경량 API. 해당 유저의 닉네임을 반환합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "메타데이터 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다")
+    })
+    public ApiResponse<UserMetaResponse> getUserMeta(@PathVariable Long userId) {
+        UserMetaResponse meta = userService.getUserMeta(userId);
+        return ApiResponse.onSuccess(meta);
     }
 
     @GetMapping("/{userId}/page")
