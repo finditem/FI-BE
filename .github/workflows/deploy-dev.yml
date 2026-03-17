@@ -78,7 +78,9 @@ jobs:
               echo "SPRING_MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}"
               echo "SPRING_MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}"
               echo "KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}"
+              echo "KAKAO_REST_API_KEY_DEV=${{ secrets.KAKAO_REST_API_KEY_DEV }}"
               echo "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}"
+              echo "KAKAO_REDIRECT_URI_DEV=${{ secrets.KAKAO_REDIRECT_URI_DEV }}"
               echo "SLACK_WEBHOOK_INQUIRY_URL=${{ secrets.SLACK_WEBHOOK_INQUIRY_URL }}"
               echo "SLACK_WEBHOOK_REPORT_URL=${{ secrets.SLACK_WEBHOOK_REPORT_URL }}"
             } | sudo tee /etc/fmi-backend.env > /dev/null
