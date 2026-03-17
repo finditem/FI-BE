@@ -10,8 +10,10 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.inquiry.data.Inquiry;
+import com.fmi.domain.inquiry.data.InquiryImage;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
+import com.fmi.domain.inquiry.repository.InquiryImageRepository;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.ipblock.service.IpBlacklistService;
 import com.fmi.domain.post.repository.PostRepository;
@@ -54,6 +56,7 @@ import java.util.List;
 public class AdminService {
 
     private final InquiryRepository inquiryRepository;
+    private final InquiryImageRepository inquiryImageRepository;
     private final InquiryConverter inquiryConverter;
     private final ReportRepository reportRepository;
     private final ReportConverter reportConverter;
@@ -166,7 +169,10 @@ public class AdminService {
 
         List<InquiryCommentResponse> comments =
                 inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
-        return inquiryConverter.toAdminDetailDTO(inquiry, comments);
+        List<String> imageUrls = inquiryImageRepository.findByInquiryId(inquiry.getId()).stream()
+                .map(InquiryImage::getImgUrl)
+                .toList();
+        return inquiryConverter.toAdminDetailDTO(inquiry, comments, imageUrls);
     }
 
     public InquiryDetailDTO getGuestInquiryDetail(Long inquiryId) {

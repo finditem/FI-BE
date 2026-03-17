@@ -170,11 +170,11 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             nativeQuery = true)
     List<Long> findHotNoticeIds(@Param("limit") int limit);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Notice n SET n.likeCount = n.likeCount + 1 WHERE n.noticeId = :noticeId")
     void incrementLikeCount(@Param("noticeId") Long noticeId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Notice n SET n.likeCount = n.likeCount - 1 WHERE n.noticeId = :noticeId AND n.likeCount > 0")
     void decrementLikeCount(@Param("noticeId") Long noticeId);
 }

@@ -35,6 +35,8 @@ public class AdminInquiryDetailDTO {
     private boolean answered;
     @Schema(description = "IP 주소", example = "192.168.0.1")
     private String ip;
+    @Schema(description = "첨부 이미지 URL 목록")
+    private List<String> imageUrls;
     @Schema(description = "댓글 목록")
     private List<InquiryCommentResponse> comments;
 }

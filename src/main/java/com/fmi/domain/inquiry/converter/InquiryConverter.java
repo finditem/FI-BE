@@ -49,7 +49,25 @@ public class InquiryConverter {
                 .build();
     }
 
+    public InquiryDetailDTO toDetailDTO(Inquiry inquiry, List<InquiryCommentResponse> comments, List<String> imageUrls) {
+        return InquiryDetailDTO.builder()
+                .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
+                .email(inquiry.getEmail())
+                .inquiryId(inquiry.getId())
+                .title(inquiry.getTitle())
+                .content(inquiry.getContent())
+                .status(inquiry.getAnswerStatus())
+                .createdAt(inquiry.getCreatedAt())
+                .imageUrls(imageUrls)
+                .comments(comments)
+                .build();
+    }
+
     public AdminInquiryDetailDTO toAdminDetailDTO(Inquiry inquiry, List<InquiryCommentResponse> comments) {
+        return toAdminDetailDTO(inquiry, comments, List.of());
+    }
+
+    public AdminInquiryDetailDTO toAdminDetailDTO(Inquiry inquiry, List<InquiryCommentResponse> comments, List<String> imageUrls) {
         return AdminInquiryDetailDTO.builder()
                 .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
                 .email(inquiry.getEmail() != null ? inquiry.getEmail()
@@ -61,6 +79,7 @@ public class InquiryConverter {
                 .createdAt(inquiry.getCreatedAt())
                 .answered(inquiry.getAnswered())
                 .ip(inquiry.getIp())
+                .imageUrls(imageUrls)
                 .comments(comments)
                 .build();
     }

@@ -22,10 +22,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/inquiries")
@@ -41,8 +43,8 @@ public class InquiryController {
      * 1:1 개인 문의 작성
      * POST /api/inquiries
      */
-    @PostMapping
-    @Operation(summary = "1:1 개인 문의 작성", description = "비회원도 가능하며, 비회원인 경우 email 필수입니다.")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "1:1 개인 문의 작성", description = "비회원도 가능하며, 비회원인 경우 email 필수입니다. 이미지 첨부 가능합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 작성 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -67,11 +69,12 @@ public class InquiryController {
             )
     })
     public ApiResponse<Long> createInquiry(
-            @Valid @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO request,
+            @Valid @RequestPart("inquiry") com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest httpServletRequest) {
         String clientIp = getClientIpAddress(httpServletRequest);
-        Long inquiryId = inquiryService.createInquiry(request, userDetails, clientIp);
+        Long inquiryId = inquiryService.createInquiry(request, userDetails, clientIp, images);
         return ApiResponse.onSuccess(inquiryId);
     }
     
