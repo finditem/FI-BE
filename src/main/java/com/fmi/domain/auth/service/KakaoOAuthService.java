@@ -27,8 +27,12 @@ public class KakaoOAuthService {
 
     @Value("${KAKAO_REST_API_KEY:}")
     private String restApiKey;
+    @Value("${KAKAO_REST_API_KEY_DEV:}")
+    private String restApiKeyDev;
     @Value("${KAKAO_CLIENT_SECRET:}")
     private String clientSecret; // 선택 항목
+    @Value("${KAKAO_CLIENT_SECRET_DEV:}")
+    private String clientSecretDev;
     @Value("${KAKAO_REDIRECT_URI:}")
     private String redirectUri;
     @Value("${KAKAO_REDIRECT_URI_DEV:}")
@@ -46,23 +50,30 @@ public class KakaoOAuthService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        // environment에 따라 환경 변수에서 redirectUri 선택
+        // environment에 따라 환경 변수에서 앱 설정 선택
+        boolean isDev = environment != null && environment.equalsIgnoreCase("dev");
+
+        String finalRestApiKey;
         String finalRedirectUri;
-        if (environment != null && environment.equalsIgnoreCase("dev") && redirectUriDev != null && !redirectUriDev.isBlank()) {
-            // environment가 "dev"이면 개발용 사용
-            finalRedirectUri = redirectUriDev;
+        String finalClientSecret;
+
+        if (isDev && restApiKeyDev != null && !restApiKeyDev.isBlank()) {
+            finalRestApiKey = restApiKeyDev;
+            finalRedirectUri = (redirectUriDev != null && !redirectUriDev.isBlank()) ? redirectUriDev : this.redirectUri;
+            finalClientSecret = (clientSecretDev != null && !clientSecretDev.isBlank()) ? clientSecretDev : this.clientSecret;
         } else {
-            // 기본값(프로덕션) 사용
+            finalRestApiKey = this.restApiKey;
             finalRedirectUri = this.redirectUri;
+            finalClientSecret = this.clientSecret;
         }
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
-        params.add("client_id", restApiKey);
+        params.add("client_id", finalRestApiKey);
         params.add("redirect_uri", finalRedirectUri);
         params.add("code", code);
-        if (clientSecret != null && !clientSecret.isBlank()) {
-            params.add("client_secret", clientSecret);
+        if (finalClientSecret != null && !finalClientSecret.isBlank()) {
+            params.add("client_secret", finalClientSecret);
         }
 
         HttpEntity<MultiValueMap<String, String>> req = new HttpEntity<>(params, headers);
