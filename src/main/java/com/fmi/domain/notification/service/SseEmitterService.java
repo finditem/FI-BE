@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -79,6 +80,31 @@ public class SseEmitterService {
             emitters.remove(userId);
             emitter.completeWithError(e);
         }
+    }
+
+    public void sendUnreadNotifications(Long userId, List<?> unreadNotifications) {
+        if (unreadNotifications == null || unreadNotifications.isEmpty()) {
+            return;
+        }
+
+        SseEmitter emitter = emitters.get(userId);
+        if (emitter == null) {
+            return;
+        }
+
+        for (Object notification : unreadNotifications) {
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("notification")
+                        .data(notification));
+            } catch (IOException e) {
+                log.error("SSE 미읽은 알림 전송 실패: userId={}", userId, e);
+                emitters.remove(userId);
+                emitter.completeWithError(e);
+                return;
+            }
+        }
+        log.info("SSE 미읽은 알림 {} 건 전송: userId={}", unreadNotifications.size(), userId);
     }
 
     public void disconnect(Long userId) {

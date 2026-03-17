@@ -43,6 +43,7 @@ public class NotificationController {
     @GetMapping(value = "/subscribe", produces = "text/event-stream")
     @Operation(summary = "실시간 알림 구독 (SSE)",
                description = "Server-Sent Events를 통해 실시간으로 알림을 수신합니다. " +
+                           "연결 시 미읽은 알림을 자동으로 전송합니다. " +
                            "연결이 끊기면 클라이언트에서 자동으로 재연결해야 합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SSE 연결 성공")
@@ -50,7 +51,13 @@ public class NotificationController {
     public SseEmitter subscribe(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        return sseEmitterService.subscribe(user.getId());
+        SseEmitter emitter = sseEmitterService.subscribe(user.getId());
+
+        // 재연결 시 미읽은 알림 전송
+        sseEmitterService.sendUnreadNotifications(user.getId(),
+                notificationService.getUnreadNotificationDTOs(user));
+
+        return emitter;
     }
 
     /**

@@ -96,6 +96,18 @@ public class NotificationService {
     public Long getUnreadCount(User user) {
         return notificationRepository.countByUserAndIsReadFalse(user);
     }
+
+    /**
+     * 읽지 않은 알림 DTO 목록 조회 (SSE 재연결 시 전송용, 최대 50건)
+     */
+    @Transactional(readOnly = true)
+    public List<NotificationListDTO> getUnreadNotificationDTOs(User user) {
+        Pageable limit = PageRequest.of(0, 50);
+        List<Notification> unread = notificationRepository.findByUserAndIsReadFalseCursor(user, null, limit);
+        return unread.stream()
+                .map(notificationConverter::toListDTO)
+                .toList();
+    }
     
     /**
      * 알림 읽음 처리
