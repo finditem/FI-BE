@@ -83,6 +83,7 @@ jobs:
               echo "KAKAO_REDIRECT_URI_DEV=${{ secrets.KAKAO_REDIRECT_URI_DEV }}"
               echo "SLACK_WEBHOOK_INQUIRY_URL=${{ secrets.SLACK_WEBHOOK_INQUIRY_URL }}"
               echo "SLACK_WEBHOOK_REPORT_URL=${{ secrets.SLACK_WEBHOOK_REPORT_URL }}"
+              echo "JWT_COOKIE_DOMAIN=${{ secrets.JWT_COOKIE_DOMAIN }}"
             } | sudo tee /etc/fmi-backend.env > /dev/null
 
             # 환경 변수 파일 권한 설정

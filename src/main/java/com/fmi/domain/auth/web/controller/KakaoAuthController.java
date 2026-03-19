@@ -45,6 +45,8 @@ public class KakaoAuthController {
     private boolean cookieSecure;
     @Value("${jwt.cookie.same-site:Lax}")
     private String cookieSameSite;
+    @Value("${jwt.cookie.domain:}")
+    private String cookieDomain;
 
     @PostMapping
     @Operation(summary = "카카오 로그인", 
@@ -150,22 +152,12 @@ public class KakaoAuthController {
 
         // accessToken 쿠키 설정
         java.util.Date accessExp = jwtTokenProvider.getExpiration(accessToken);
-        ResponseCookie accessCookie = ResponseCookie.from(accessCookieName, accessToken)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(Duration.between(Instant.now(), accessExp.toInstant()))
-                .build();
+        ResponseCookie accessCookie = buildCookie(accessCookieName, accessToken,
+                Duration.between(Instant.now(), accessExp.toInstant()));
 
         // refreshToken 쿠키 설정
-        ResponseCookie refreshCookie = ResponseCookie.from(refreshCookieName, refreshToken)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(Duration.between(Instant.now(), refreshExp.toInstant()))
-                .build();
+        ResponseCookie refreshCookie = buildCookie(refreshCookieName, refreshToken,
+                Duration.between(Instant.now(), refreshExp.toInstant()));
 
         // 응답 생성 및 반환
         // accessToken과 refreshToken은 쿠키로 전송되므로 응답 body에는 포함하지 않습니다.
@@ -174,6 +166,19 @@ public class KakaoAuthController {
                 .header("Set-Cookie", accessCookie.toString())
                 .header("Set-Cookie", refreshCookie.toString())
                 .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(localUser.getId(), false)));
+    }
+
+    private ResponseCookie buildCookie(String name, String value, Duration maxAge) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(maxAge);
+        if (cookieDomain != null && !cookieDomain.isBlank()) {
+            builder.domain(cookieDomain);
+        }
+        return builder.build();
     }
 
     private static String sha256Hex(String value) {
