@@ -30,22 +30,22 @@ public class SseEmitterService {
         emitters.put(userId, emitter);
         log.info("SSE 연결 등록: userId={}, 현재 연결 수={}", userId, emitters.size());
 
-        // 연결 완료 시 제거
+        // 연결 완료 시 제거 (본인 emitter인 경우만)
         emitter.onCompletion(() -> {
             log.info("SSE 연결 완료: userId={}", userId);
-            emitters.remove(userId);
+            emitters.remove(userId, emitter);
         });
 
-        // 타임아웃 시 제거
+        // 타임아웃 시 제거 (본인 emitter인 경우만)
         emitter.onTimeout(() -> {
             log.info("SSE 타임아웃: userId={}", userId);
-            emitters.remove(userId);
+            emitters.remove(userId, emitter);
         });
 
-        // 에러 발생 시 제거
+        // 에러 발생 시 제거 (본인 emitter인 경우만)
         emitter.onError(e -> {
             log.error("SSE 에러 발생: userId={}, error={}", userId, e.getMessage());
-            emitters.remove(userId);
+            emitters.remove(userId, emitter);
         });
 
         // 연결 확인용 초기 메시지 전송
