@@ -7,6 +7,8 @@ public record NoticeMetaResponse(
         @Schema(description = "공지사항 제목")
         String title,
         @Schema(description = "공지사항 본문 요약 (최대 100자)")
-        String description
+        String description,
+        @Schema(description = "공지사항 썸네일 이미지 URL (없으면 null)")
+        String thumbnailUrl
 ) {
 }

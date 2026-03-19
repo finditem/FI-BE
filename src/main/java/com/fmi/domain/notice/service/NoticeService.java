@@ -186,7 +186,10 @@ public class NoticeService {
             description = description.substring(0, 100);
         }
 
-        return new NoticeMetaResponse(notice.getTitle(), description);
+        List<NoticeImage> thumbnails = noticeImageRepository.findThumbnailsByNoticeIds(List.of(noticeId));
+        String thumbnailUrl = thumbnails.isEmpty() ? null : thumbnails.get(0).getImgUrl();
+
+        return new NoticeMetaResponse(notice.getTitle(), description, thumbnailUrl);
     }
 
     /**
