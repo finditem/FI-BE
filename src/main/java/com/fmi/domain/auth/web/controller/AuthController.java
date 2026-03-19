@@ -43,6 +43,8 @@ public class AuthController {
     private boolean cookieSecure;
     @Value("${jwt.cookie.same-site:Lax}")
     private String cookieSameSite;
+    @Value("${jwt.cookie.domain:}")
+    private String cookieDomain;
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임을 입력해 회원을 생성합니다. 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다. 가입 성공 시 자동 로그인되어 토큰이 쿠키로 발급됩니다.")
@@ -255,14 +257,21 @@ public class AuthController {
                 .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), isTemporaryPassword)));
     }
 
-    private ResponseCookie buildCookie(String name, String value, java.util.Date expiration) {
-        return ResponseCookie.from(name, value)
+    private ResponseCookie buildCookie(String name, String value, java.time.Duration maxAge) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite(cookieSameSite)
                 .path("/")
-                .maxAge(java.time.Duration.between(java.time.Instant.now(), expiration.toInstant()))
-                .build();
+                .maxAge(maxAge);
+        if (cookieDomain != null && !cookieDomain.isBlank()) {
+            builder.domain(cookieDomain);
+        }
+        return builder.build();
+    }
+
+    private ResponseCookie buildCookie(String name, String value, java.util.Date expiration) {
+        return buildCookie(name, value, java.time.Duration.between(java.time.Instant.now(), expiration.toInstant()));
     }
 
     private static String sha256Hex(String value) {
@@ -293,22 +302,10 @@ public class AuthController {
         }
         
         // accessToken 쿠키 제거
-        ResponseCookie removeAccess = ResponseCookie.from(accessCookieName, "")
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(0)
-                .build();
-        
+        ResponseCookie removeAccess = buildCookie(accessCookieName, "", java.time.Duration.ZERO);
+
         // refreshToken 쿠키 제거
-        ResponseCookie removeRefresh = ResponseCookie.from(refreshCookieName, "")
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(0)
-                .build();
+        ResponseCookie removeRefresh = buildCookie(refreshCookieName, "", java.time.Duration.ZERO);
         
         return ResponseEntity.ok()
                 .header("Set-Cookie", removeAccess.toString())
