@@ -130,11 +130,8 @@ public class PostService {
 
         if (favoriteUserList.isEmpty()) return;
 
-        String title = "즐겨찾기한 게시글 상태 변경";
-        String message = switch (newStatus) {
-            case FOUND -> String.format("[%s] 게시글이 '찾음' 상태로 변경되었습니다.", post.getTitle());
-            case SEARCHING -> String.format("[%s] 게시글이 '찾는중' 상태로 변경되었습니다.", post.getTitle());
-        };
+        String title = "즐겨찾기 한 게시글의 상태가 변경되었어요.";
+        String message = post.getTitle();
 
         Long postOwnerId = post.getUser().getId();
 

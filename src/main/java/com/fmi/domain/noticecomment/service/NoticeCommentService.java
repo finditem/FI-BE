@@ -79,7 +79,7 @@ public class NoticeCommentService {
             notificationService.createNotification(
                     notice.getAuthor(),
                     NotificationType.COMMENT,
-                    "공지사항에 새 댓글이 달렸습니다",
+                    "새로운 댓글이 생겼어요.",
                     dto.getContent(),
                     ReferenceType.NOTICE,
                     notice.getNoticeId()
@@ -91,7 +91,7 @@ public class NoticeCommentService {
             notificationService.createNotification(
                     parent.getUser(),
                     NotificationType.COMMENT,
-                    "공지사항 댓글에 답글이 달렸습니다",
+                    "새로운 댓글이 생겼어요.",
                     dto.getContent(),
                     ReferenceType.NOTICE,
                     notice.getNoticeId()

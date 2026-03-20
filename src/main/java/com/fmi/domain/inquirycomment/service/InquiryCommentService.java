@@ -286,7 +286,7 @@ public class InquiryCommentService {
                 notificationService.createNotification(
                         parent.getUser(),
                         NotificationType.COMMENT,
-                        "댓글에 답글이 달렸습니다",
+                        "문의하신 내용에 답변이 생겼어요.",
                         comment.getContent(),
                         ReferenceType.INQUIRY,
                         inquiry.getId()
@@ -297,7 +297,7 @@ public class InquiryCommentService {
                 notificationService.createNotification(
                         inquiry.getUser(),
                         NotificationType.COMMENT,
-                        "문의에 댓글이 달렸습니다",
+                        "문의하신 내용에 답변이 생겼어요.",
                         comment.getContent(),
                         ReferenceType.INQUIRY,
                         inquiry.getId()

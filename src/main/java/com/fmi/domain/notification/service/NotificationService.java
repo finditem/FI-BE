@@ -350,7 +350,7 @@ public class NotificationService {
             for (User user : users) {
                 NotificationSettings settings = notificationSettingsRepository.findByUser(user).orElse(null);
                 if (settings == null || Boolean.TRUE.equals(settings.getNoticeEnabled())) {
-                    createNotification(user, NotificationType.NOTICE, title, message, ReferenceType.NOTICE, noticeId);
+                    createNotification(user, NotificationType.NOTICE, "새로운 공지사항이 등록되었습니다.", title, ReferenceType.NOTICE, noticeId);
                 }
             }
         } while (users.hasNext());
@@ -390,7 +390,7 @@ public class NotificationService {
             }
             
             String categoryName = getCategoryName(post.getCategory());
-            String title = "새로운 " + categoryName + " 게시글이 등록되었습니다";
+            String title = categoryName + " 새 게시글이 등록되었어요.";
             String message = post.getTitle();
             
             createNotification(
