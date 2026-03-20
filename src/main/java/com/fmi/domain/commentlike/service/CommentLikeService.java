@@ -204,7 +204,7 @@ public class CommentLikeService {
 
         notificationService.createNotification(
                 comment.getUser(),
-                NotificationType.LIKE,
+                NotificationType.COMMENT,
                 "댓글에 좋아요가 달렸습니다.",
                 message,
                 ReferenceType.COMMENT,

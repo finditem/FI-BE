@@ -285,7 +285,7 @@ public class InquiryCommentService {
             if (!parent.getUser().getId().equals(comment.getUser().getId())) {
                 notificationService.createNotification(
                         parent.getUser(),
-                        NotificationType.REPLY,
+                        NotificationType.COMMENT,
                         "댓글에 답글이 달렸습니다",
                         comment.getContent(),
                         ReferenceType.INQUIRY,

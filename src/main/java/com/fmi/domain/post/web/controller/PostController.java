@@ -220,7 +220,7 @@ public class PostController {
         if (userDetails != null) {
             userRepository.findByEmail(userDetails.getUsername()).ifPresent(user ->
                     notificationService.markNotificationsAsReadByReference(user, postId,
-                            List.of(NotificationType.COMMENT, NotificationType.REPLY, NotificationType.FAVORITE, NotificationType.CATEGORY))
+                            List.of(NotificationType.COMMENT, NotificationType.FAVORITE, NotificationType.CATEGORY))
             );
         }
 

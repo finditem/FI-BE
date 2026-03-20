@@ -90,7 +90,7 @@ public class NoticeCommentService {
         if (parent != null && parent.getUser() != null && !parent.getUser().getId().equals(user.getId())) {
             notificationService.createNotification(
                     parent.getUser(),
-                    NotificationType.REPLY,
+                    NotificationType.COMMENT,
                     "공지사항 댓글에 답글이 달렸습니다",
                     dto.getContent(),
                     ReferenceType.NOTICE,

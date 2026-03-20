@@ -143,7 +143,7 @@ public class InquiryController {
         if (userDetails != null) {
             userRepository.findByEmail(userDetails.getUsername()).ifPresent(user ->
                     notificationService.markNotificationsAsReadByReference(user, inquiryId,
-                            List.of(NotificationType.COMMENT, NotificationType.REPLY, NotificationType.INQUIRY_REPLY))
+                            List.of(NotificationType.COMMENT, NotificationType.INQUIRY_REPLY))
             );
         }
 
