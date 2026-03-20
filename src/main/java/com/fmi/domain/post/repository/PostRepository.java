@@ -20,7 +20,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 
     Optional<Post> findByIdAndDeletedFalse(Long id);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("update Post p set p.viewCount = p.viewCount + 1 where p.id = :postId and p.deleted = false")
     void increaseViewCount(@Param("postId") Long postId);
 
