@@ -31,6 +31,7 @@ public class ReportConverter {
     }
 
     public ReportDetailDTO toDetailDTO(Report report, String targetTitle) {
+        User admin = report.getAdmin();
         return ReportDetailDTO.builder()
                 .nickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
                 .reportId(report.getReportId())
@@ -42,6 +43,8 @@ public class ReportConverter {
                 .status(report.getStatus())
                 .answered(report.getAnswered())
                 .adminAnswer(report.getAdminAnswer())
+                .adminNickname(admin != null ? admin.getNickname() : null)
+                .adminProfileImg(admin != null ? admin.getProfile_img() : null)
                 .createdAt(report.getCreatedAt())
                 .resolvedAt(report.getResolvedAt())
                 .build();
