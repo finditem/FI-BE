@@ -1,6 +1,7 @@
 package com.fmi.domain.map.repository;
 
 import com.fmi.domain.Enum.Category;
+import com.fmi.domain.map.enums.MapLevel;
 import com.fmi.domain.map.web.dto.response.*;
 import com.fmi.domain.post.data.*;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
@@ -24,25 +25,23 @@ public class PostMapCustomImpl implements PostMapCustom {
     private static final int MAP_CARD_PAGE_SIZE = 10;
 
     @Override
-    public List<PostMarkerResponse> findPostMaker(double lat,
-                                                  double lng,
-                                                  int radiusMeter,
-                                                  Set<Long> excludedUserIds) {
+    public List<PostMarkerResponse> findPostMarker(double lat,
+                                                   double lng,
+                                                   MapLevel mapLevel,
+                                                   Set<Long> excludedUserIds) {
         QPost p = QPost.post;
-        double latDelta = radiusMeter / 111_320.0;
-        double lngDelta = radiusMeter / (111_320.0 * Math.cos(Math.toRadians(lat)));
+        double latDelta = mapLevel.getHalfHeightMeter() / 111_320.0;
+        double cosLat = Math.cos(Math.toRadians(lat));
+        if (Math.abs(cosLat) < 1e-8) {
+            cosLat = 1e-8;
+        }
+        double lngDelta = mapLevel.getHalfWidthMeter() / (111_320.0 * cosLat);
 
         double minLat = lat - latDelta;
         double maxLat = lat + latDelta;
         double minLng = lng - lngDelta;
         double maxLng = lng + lngDelta;
 
-        NumberExpression<Double> distanceMeter = Expressions.numberTemplate(
-                Double.class,
-                "ST_Distance_Sphere(POINT({0},{1}), POINT({2},{3}))",
-                p.longitude, p.latitude,
-                lng, lat
-        );
 
         BooleanBuilder where = new BooleanBuilder()
                 .and(p.deleted.isFalse())
@@ -50,7 +49,6 @@ public class PostMapCustomImpl implements PostMapCustom {
                 .and(p.longitude.isNotNull())
                 .and(p.latitude.between(minLat, maxLat))
                 .and(p.longitude.between(minLng, maxLng))
-                .and(distanceMeter.loe((double) radiusMeter))
                 .and(p.temporarySave.isFalse());
 
         if (excludedUserIds != null && !excludedUserIds.isEmpty()) {
@@ -75,7 +73,7 @@ public class PostMapCustomImpl implements PostMapCustom {
     @Override
     public MapPostPageResponse findMapPosts(double lat,
                                             double lng,
-                                            int radiusMeter,
+                                            MapLevel mapLevel,
                                             PostType postType,
                                             PostStatus postStatus,
                                             Category category,
@@ -90,8 +88,12 @@ public class PostMapCustomImpl implements PostMapCustom {
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
         QPostImage postImage = QPostImage.postImage;
 
-        double latDelta = radiusMeter / 111_320.0;
-        double lngDelta = radiusMeter / (111_320.0 * Math.cos(Math.toRadians(lat)));
+        double latDelta = mapLevel.getHalfHeightMeter() / 111_320.0;
+        double cosLat = Math.cos(Math.toRadians(lat));
+        if (Math.abs(cosLat) < 1e-8) {
+            cosLat = 1e-8;
+        }
+        double lngDelta = mapLevel.getHalfWidthMeter() / (111_320.0 * cosLat);
 
         double minLat = lat - latDelta;
         double maxLat = lat + latDelta;
@@ -113,7 +115,6 @@ public class PostMapCustomImpl implements PostMapCustom {
         where.and(post.longitude.isNotNull());
         where.and(post.latitude.between(minLat, maxLat));
         where.and(post.longitude.between(minLng, maxLng));
-        where.and(distanceMeter.loe((double) radiusMeter));
 
 
         if (postType != null) {
@@ -137,7 +138,10 @@ public class PostMapCustomImpl implements PostMapCustom {
         }
 
         if (Objects.nonNull(lastDistance) && Objects.nonNull(lastPostId)) {
-            where.and(distanceMeter.gt(lastDistance).or(distanceMeter.eq(lastDistance).and(post.id.lt(lastPostId))));
+            where.and(
+                    distanceMeter.gt(lastDistance)
+                            .or(distanceMeter.eq(lastDistance).and(post.id.lt(lastPostId)))
+            );
         }
 
         List<Tuple> tuples = jpaQueryFactory
@@ -263,25 +267,23 @@ public class PostMapCustomImpl implements PostMapCustom {
     @Override
     public List<RecentFoundPostResponse> findRecentFoundPostList(double lat,
                                                                  double lng,
-                                                                 int radiusMeter,
+                                                                 MapLevel mapLevel,
                                                                  Set<Long> excludedUserIds) {
         QPost p = QPost.post;
         QPostImage pi = QPostImage.postImage;
 
-        double latDelta = radiusMeter / 111_320.0;
-        double lngDelta = radiusMeter / (111_320.0 * Math.cos(Math.toRadians(lat)));
+        double latDelta = mapLevel.getHalfHeightMeter() / 111_320.0;
+        double cosLat = Math.cos(Math.toRadians(lat));
+        if (Math.abs(cosLat) < 1e-8) {
+            cosLat = 1e-8;
+        }
+        double lngDelta = mapLevel.getHalfWidthMeter() / (111_320.0 * cosLat);
 
         double minLat = lat - latDelta;
         double maxLat = lat + latDelta;
         double minLng = lng - lngDelta;
         double maxLng = lng + lngDelta;
 
-        NumberExpression<Double> distanceMeter = Expressions.numberTemplate(
-                Double.class,
-                "ST_Distance_Sphere(POINT({0},{1}), POINT({2},{3}))",
-                p.longitude, p.latitude,
-                lng, lat
-        );
 
         BooleanBuilder where = new BooleanBuilder()
                 .and(p.deleted.isFalse())
@@ -291,8 +293,7 @@ public class PostMapCustomImpl implements PostMapCustom {
                 .and(p.latitude.isNotNull())
                 .and(p.longitude.isNotNull())
                 .and(p.latitude.between(minLat, maxLat))
-                .and(p.longitude.between(minLng, maxLng))
-                .and(distanceMeter.loe((double) radiusMeter));
+                .and(p.longitude.between(minLng, maxLng));
 
         if (excludedUserIds != null && !excludedUserIds.isEmpty()) {
             where.and(p.user.id.notIn(excludedUserIds));
@@ -320,7 +321,7 @@ public class PostMapCustomImpl implements PostMapCustom {
     @Override
     public LocationMapPostPageResponse searchMapPostsByLocation(double lat,
                                                                 double lng,
-                                                                int radiusMeter,
+                                                                MapLevel mapLevel,
                                                                 PostType postType,
                                                                 PostStatus postStatus,
                                                                 Category category,
@@ -334,8 +335,13 @@ public class PostMapCustomImpl implements PostMapCustom {
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
         QPostImage postImage = QPostImage.postImage;
 
-        double latDelta = radiusMeter / 111_320.0;
-        double lngDelta = radiusMeter / (111_320.0 * Math.cos(Math.toRadians(lat)));
+        double latDelta = mapLevel.getHalfHeightMeter() / 111_320.0;
+
+        double cosLat = Math.cos(Math.toRadians(lat));
+        if (Math.abs(cosLat) < 1e-8) {
+            cosLat = 1e-8;
+        }
+        double lngDelta = mapLevel.getHalfWidthMeter() / (111_320.0 * cosLat);
 
         double minLat = lat - latDelta;
         double maxLat = lat + latDelta;
@@ -356,7 +362,6 @@ public class PostMapCustomImpl implements PostMapCustom {
         where.and(post.longitude.isNotNull());
         where.and(post.latitude.between(minLat, maxLat));
         where.and(post.longitude.between(minLng, maxLng));
-        where.and(distanceMeter.loe((double) radiusMeter));
 
         if (postType != null) {
             where.and(post.postType.eq(postType));

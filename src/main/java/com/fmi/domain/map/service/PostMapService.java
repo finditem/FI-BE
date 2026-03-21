@@ -11,7 +11,6 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.HotPostService;
 import com.fmi.domain.post.service.PostQueryService;
-import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.xml.stream.Location;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -37,16 +35,15 @@ public class PostMapService {
     @Transactional(readOnly = true)
     public List<PostMarkerResponse> getPostMaker(PostMarkerRequest request, UserDetails userDetails) {
         MapLevel mapLevel = MapLevel.from(request.level());
-        int radiusMeter = mapLevel.getRadiusMeter();
 
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
 
         Set<Long> excludedUserIds = getExcludedUserIds(user);
 
-        return postRepository.findPostMaker(
+        return postRepository.findPostMarker(
                 request.latitude(),
                 request.longitude(),
-                radiusMeter,
+                mapLevel,
                 excludedUserIds
         );
     }
@@ -55,7 +52,6 @@ public class PostMapService {
     public List<RecentFoundPostResponse> getRecentFoundPosts(RecentFoundPostRequest request,
                                                              UserDetails userDetails) {
         MapLevel mapLevel = MapLevel.from(request.level());
-        int radiusMeter = mapLevel.getRadiusMeter();
 
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
 
@@ -64,7 +60,7 @@ public class PostMapService {
         return postRepository.findRecentFoundPostList(
                 request.latitude(),
                 request.longitude(),
-                radiusMeter,
+                mapLevel,
                 excludedUserIds
         );
     }
@@ -76,7 +72,6 @@ public class PostMapService {
                                           Long lastPostId,
                                           UserDetails userDetails) {
         MapLevel mapLevel = MapLevel.from(request.level());
-        int radiusMeter = mapLevel.getRadiusMeter();
 
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
         Post post = postQueryService.findById(postId);
@@ -95,7 +90,7 @@ public class PostMapService {
         return postRepository.findMapPosts(
                 post.getLatitude(),
                 post.getLongitude(),
-                radiusMeter,
+                mapLevel,
                 request.postType(),
                 request.postStatus(),
                 request.category(),
@@ -114,7 +109,6 @@ public class PostMapService {
                                                              Long lastPostId,
                                                              UserDetails userDetails) {
         MapLevel mapLevel = MapLevel.from(request.level());
-        int radiusMeter = mapLevel.getRadiusMeter();
 
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
         Set<Long> excludedUserIds = getExcludedUserIds(user);
@@ -131,7 +125,7 @@ public class PostMapService {
         return postRepository.searchMapPostsByLocation(
                 request.latitude(),
                 request.longitude(),
-                radiusMeter,
+                mapLevel,
                 request.postType(),
                 request.postStatus(),
                 request.category(),
