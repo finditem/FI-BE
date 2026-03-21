@@ -1,12 +1,14 @@
 package com.fmi.domain.map.repository;
 
 import com.fmi.domain.Enum.Category;
+import com.fmi.domain.map.web.dto.response.MapPostPageResponse;
 import com.fmi.domain.map.web.dto.response.MapPostResponse;
 import com.fmi.domain.map.web.dto.response.PostMarkerResponse;
 import com.fmi.domain.map.web.dto.response.RecentFoundPostResponse;
 import com.fmi.domain.post.data.*;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PostMapCustomImpl implements PostMapCustom {
     private final JPAQueryFactory jpaQueryFactory;
+
+    private static final int MAP_CARD_PAGE_SIZE = 10;
 
     @Override
     public List<PostMarkerResponse> findPostMaker(double lat,
@@ -72,16 +76,18 @@ public class PostMapCustomImpl implements PostMapCustom {
     }
 
     @Override
-    public List<MapPostResponse> findMapPosts(double lat,
-                                              double lng,
-                                              int radiusMeter,
-                                              PostType postType,
-                                              PostStatus postStatus,
-                                              Category category,
-                                              String keyword,
-                                              Long userId,
-                                              Set<Long> excludedUserIds,
-                                              Set<Long> hotPostIds) {
+    public MapPostPageResponse findMapPosts(double lat,
+                                            double lng,
+                                            int radiusMeter,
+                                            PostType postType,
+                                            PostStatus postStatus,
+                                            Category category,
+                                            String keyword,
+                                            Long userId,
+                                            Set<Long> excludedUserIds,
+                                            Set<Long> hotPostIds,
+                                            Double lastDistance,
+                                            Long lastPostId) {
 
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
@@ -128,21 +134,50 @@ public class PostMapCustomImpl implements PostMapCustom {
                             .or(post.content.containsIgnoreCase(keyword))
             );
         }
+
         if (excludedUserIds != null && !excludedUserIds.isEmpty()) {
             where.and(post.user.id.notIn(excludedUserIds));
         }
 
-        List<Post> posts = jpaQueryFactory
-                .selectFrom(post)
-                .where(where)
-                .orderBy(distanceMeter.asc(), post.id.desc())
-                .fetch();
-
-        if (posts.isEmpty()) {
-            return List.of();
+        if (Objects.nonNull(lastDistance) && Objects.nonNull(lastPostId)) {
+            where.and(distanceMeter.gt(lastDistance).or(distanceMeter.eq(lastDistance).and(post.id.lt(lastPostId))));
         }
 
-        List<Long> postIdList = posts.stream().map(Post::getId).toList();
+        List<Tuple> tuples = jpaQueryFactory
+                .select(post, distanceMeter)
+                .from(post)
+                .where(where)
+                .orderBy(distanceMeter.asc(), post.id.desc())
+                .limit(MAP_CARD_PAGE_SIZE + 1)
+                .fetch();
+
+        boolean hasNext = tuples.size() > MAP_CARD_PAGE_SIZE;
+
+        if (hasNext) {
+            tuples = tuples.subList(0, MAP_CARD_PAGE_SIZE);
+        }
+
+        List<Post> posts = tuples.stream()
+                .map(tuple -> tuple.get(post))
+                .toList();
+
+        if (posts.isEmpty()) {
+            return new MapPostPageResponse(List.of(), false, null, null);
+        }
+
+        Double nextDistance = null;
+        Long nextPostId = null;
+
+        if (hasNext) {
+            Tuple lastTuple = tuples.get(tuples.size() - 1);
+            nextDistance = lastTuple.get(distanceMeter);
+            nextPostId = lastTuple.get(post).getId();
+        }
+
+
+        List<Long> postIdList = posts.stream()
+                .map(Post::getId)
+                .toList();
 
         Map<Long, String> thumbnailMap = jpaQueryFactory
                 .select(postImage.post.id, postImage.imgUrl)
@@ -200,7 +235,7 @@ public class PostMapCustomImpl implements PostMapCustom {
                 ));
 
 
-        return posts.stream()
+        List<MapPostResponse> content = posts.stream()
                 .map(p -> {
                     Long pid = p.getId();
                     boolean isHot = hotPostIds != null && hotPostIds.contains(pid);
@@ -224,6 +259,8 @@ public class PostMapCustomImpl implements PostMapCustom {
                     );
                 })
                 .toList();
+
+        return new MapPostPageResponse(content, hasNext, nextDistance, nextPostId);
     }
 
     @Override
