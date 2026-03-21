@@ -8,33 +8,33 @@ import java.util.Arrays;
 
 public enum MapLevel {
 
-    LEVEL_1(1, 75),
-    LEVEL_2(2, 150),
-    LEVEL_3(3, 300),
-    LEVEL_4(4, 500),
-    LEVEL_5(5, 800),
-    LEVEL_6(6, 1_500),
-    LEVEL_7(7, 3_000),
-    LEVEL_8(8, 6_000),
-    LEVEL_9(9, 12_000),
-    LEVEL_10(10, 25_000),
-    LEVEL_11(11, 50_000);
+    LEVEL_1(1, 100, 150),
+    LEVEL_2(2, 200, 300),
+    LEVEL_3(3, 300, 450),
+    LEVEL_4(4, 500, 750),
+    LEVEL_5(5, 800, 1_000),
+    LEVEL_6(6, 1_500, 1_700),
+    LEVEL_7(7, 2_000, 2_300),
+    LEVEL_8(8, 3_000, 3_100);
 
     private final int level;
 
     @Getter
-    private final int radiusMeter;
+    private final int halfWidthMeter;
 
-    MapLevel(int level, int radiusMeter) {
+    @Getter
+    private final int halfHeightMeter;
+
+    MapLevel(int level, int halfWidthMeter, int halfHeightMeter) {
         this.level = level;
-        this.radiusMeter = radiusMeter;
+        this.halfWidthMeter = halfWidthMeter;
+        this.halfHeightMeter = halfHeightMeter;
     }
 
     public static MapLevel from(int level) {
         return Arrays.stream(values())
                 .filter(l -> l.level == level)
                 .findFirst()
-                .orElseThrow(() ->
-                        new GeneralException(ErrorStatus._MAP_LEVEL_INVALID));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._MAP_LEVEL_INVALID));
     }
 }
