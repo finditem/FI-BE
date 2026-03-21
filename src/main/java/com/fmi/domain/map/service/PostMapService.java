@@ -2,16 +2,16 @@ package com.fmi.domain.map.service;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.map.enums.MapLevel;
+import com.fmi.domain.map.web.dto.request.LocationMapPostRequest;
 import com.fmi.domain.map.web.dto.request.MapPostRequest;
 import com.fmi.domain.map.web.dto.request.PostMarkerRequest;
 import com.fmi.domain.map.web.dto.request.RecentFoundPostRequest;
-import com.fmi.domain.map.web.dto.response.MapPostResponse;
-import com.fmi.domain.map.web.dto.response.PostMarkerResponse;
-import com.fmi.domain.map.web.dto.response.RecentFoundPostResponse;
+import com.fmi.domain.map.web.dto.response.*;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.HotPostService;
 import com.fmi.domain.post.service.PostQueryService;
+import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.xml.stream.Location;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -69,7 +70,11 @@ public class PostMapService {
     }
 
     @Transactional(readOnly = true)
-    public List<MapPostResponse> getPostMap(Long postId, MapPostRequest request, UserDetails userDetails) {
+    public MapPostPageResponse getPostMap(Long postId,
+                                          MapPostRequest request,
+                                          Double lastDistance,
+                                          Long lastPostId,
+                                          UserDetails userDetails) {
         MapLevel mapLevel = MapLevel.from(request.level());
         int radiusMeter = mapLevel.getRadiusMeter();
 
@@ -97,7 +102,44 @@ public class PostMapService {
                 request.keyword(),
                 Objects.nonNull(user) ? user.getId() : null,
                 excludedUserIds,
-                hotPostIds
+                hotPostIds,
+                lastDistance,
+                lastPostId
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public LocationMapPostPageResponse searchPostsByLocation(LocationMapPostRequest request,
+                                                             Double lastDistance,
+                                                             Long lastPostId,
+                                                             UserDetails userDetails) {
+        MapLevel mapLevel = MapLevel.from(request.level());
+        int radiusMeter = mapLevel.getRadiusMeter();
+
+        User user = userQueryService.findUserIfNullReturnNull(userDetails);
+        Set<Long> excludedUserIds = getExcludedUserIds(user);
+
+        Set<Long> hotPostIds = hotPostService.resolveHotPostIdsForUser(
+                request.postType(),
+                request.postStatus(),
+                request.category(),
+                null,
+                user != null ? user.getId() : null,
+                20
+        );
+
+        return postRepository.searchMapPostsByLocation(
+                request.latitude(),
+                request.longitude(),
+                radiusMeter,
+                request.postType(),
+                request.postStatus(),
+                request.category(),
+                Objects.nonNull(user) ? user.getId() : null,
+                excludedUserIds,
+                hotPostIds,
+                lastDistance,
+                lastPostId
         );
     }
 
