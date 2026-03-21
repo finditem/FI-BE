@@ -8,17 +8,17 @@ import java.util.Arrays;
 
 public enum MapLevel {
 
-    LEVEL_1(1, 20),
-    LEVEL_2(2, 30),
-    LEVEL_3(3, 50),
-    LEVEL_4(4, 100),
-    LEVEL_5(5, 250),
-    LEVEL_6(6, 500),
-    LEVEL_7(7, 1_000),
-    LEVEL_8(8, 2_000),
-    LEVEL_9(9, 4_000),
-    LEVEL_10(10, 8_000),
-    LEVEL_11(11, 16_000);
+    LEVEL_1(1, 50),
+    LEVEL_2(2, 100),
+    LEVEL_3(3, 200),
+    LEVEL_4(4, 400),
+    LEVEL_5(5, 800),
+    LEVEL_6(6, 1_500),
+    LEVEL_7(7, 3_000),
+    LEVEL_8(8, 6_000),
+    LEVEL_9(9, 12_000),
+    LEVEL_10(10, 25_000),
+    LEVEL_11(11, 50_000);
 
     private final int level;
 
