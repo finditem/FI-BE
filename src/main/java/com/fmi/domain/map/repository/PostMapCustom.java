@@ -1,10 +1,7 @@
 package com.fmi.domain.map.repository;
 
 import com.fmi.domain.Enum.Category;
-import com.fmi.domain.map.web.dto.response.MapPostPageResponse;
-import com.fmi.domain.map.web.dto.response.MapPostResponse;
-import com.fmi.domain.map.web.dto.response.PostMarkerResponse;
-import com.fmi.domain.map.web.dto.response.RecentFoundPostResponse;
+import com.fmi.domain.map.web.dto.response.*;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 
@@ -39,4 +36,16 @@ public interface PostMapCustom {
                                                           int radiusMeter,
                                                           Set<Long> excludedUserIds
     );
+
+    LocationMapPostPageResponse searchMapPostsByLocation(double lat,
+                                                         double lng,
+                                                         int radiusMeter,
+                                                         PostType postType,
+                                                         PostStatus postStatus,
+                                                         Category category,
+                                                         Long userId,
+                                                         Set<Long> excludedUserIds,
+                                                         Set<Long> hotPostIds,
+                                                         Double lastDistance,
+                                                         Long lastPostId);
 }
