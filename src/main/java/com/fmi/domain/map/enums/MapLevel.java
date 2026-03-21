@@ -8,10 +8,10 @@ import java.util.Arrays;
 
 public enum MapLevel {
 
-    LEVEL_1(1, 50),
-    LEVEL_2(2, 100),
-    LEVEL_3(3, 200),
-    LEVEL_4(4, 400),
+    LEVEL_1(1, 75),
+    LEVEL_2(2, 150),
+    LEVEL_3(3, 300),
+    LEVEL_4(4, 500),
     LEVEL_5(5, 800),
     LEVEL_6(6, 1_500),
     LEVEL_7(7, 3_000),
