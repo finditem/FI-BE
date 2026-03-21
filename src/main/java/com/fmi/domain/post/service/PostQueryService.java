@@ -86,7 +86,12 @@ public class PostQueryService {
             }
 
         } else {
-            canIncreaseViewCount = canIncreaseViewCount(postId, clientIp);
+            try {
+                canIncreaseViewCount = canIncreaseViewCount(postId, clientIp);
+            } catch (Exception e) {
+                log.warn("비회원 조회수 처리 실패", e);
+                canIncreaseViewCount = false;
+            }
         }
 
         long viewCount = post.getViewCount();
@@ -121,6 +126,9 @@ public class PostQueryService {
     }
 
     private boolean canIncreaseViewCount(Long postId, String clientIp) {
+        if (Objects.isNull(clientIp) || clientIp.isBlank() || "unknown".equalsIgnoreCase(clientIp)) {
+            return false;
+        }
         return isFirstToday(postId, "not-user", IpUtil.hashIp(clientIp));
     }
 
@@ -272,9 +280,9 @@ public class PostQueryService {
 
     @Transactional(readOnly = true)
     public PostPageResponse getFavoritePost(UserDetails userDetails, PostType postType,
-                                             Category category, String address,
-                                             String keyword, SortType sortType,
-                                             Long cursor, int size) {
+                                            Category category, String address,
+                                            String keyword, SortType sortType,
+                                            Long cursor, int size) {
         User user = userQueryService.findUser(userDetails.getUsername());
 
         return postRepository.searchMyFavorites(user.getId(), postType, category, address, keyword, sortType, cursor, size);
