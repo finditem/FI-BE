@@ -93,8 +93,8 @@ public class CommentService {
 
                     notificationService.createNotification(
                             mentionedUser,
-                            NotificationType.MENTION,
-                            comment.getUser().getNickname() + "님이 멘션했습니다",
+                            NotificationType.COMMENT,
+                            "새로운 댓글이 생겼어요.",
                             dto.content(),
                             ReferenceType.COMMENT,
                             comment.getId()
@@ -102,9 +102,8 @@ public class CommentService {
 
                     mentionedUserIds.add(mentionedUser.getId());
 
-                    log.info("MENTION 알림 전송: to={}, type={}, commentId={}",
+                    log.info("COMMENT(멘션) 알림 전송: to={}, commentId={}",
                             mentionedUser.getNickname(),
-                            NotificationType.MENTION,
                             comment.getId());
                 }
             });
@@ -143,7 +142,7 @@ public class CommentService {
         notificationService.createNotification(
                 post.getUser(),
                 NotificationType.COMMENT,
-                "새 댓글이 달렸습니다",
+                "새로운 댓글이 생겼어요.",
                 dto.content(),
                 ReferenceType.POST,
                 post.getId()
@@ -161,8 +160,8 @@ public class CommentService {
 
         notificationService.createNotification(
                 parentComment.getUser(),
-                NotificationType.REPLY,
-                "댓글에 답글이 달렸습니다",
+                NotificationType.COMMENT,
+                "새로운 댓글이 생겼어요.",
                 dto.content(),
                 ReferenceType.POST,
                 post.getId()

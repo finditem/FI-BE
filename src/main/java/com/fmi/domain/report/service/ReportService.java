@@ -263,11 +263,10 @@ public class ReportService {
         // 신고자에게 상태 변경 알림
         User reporter = report.getReporter();
         if (reporter != null) {
-            String statusText = status == ReportStatus.RESOLVED ? "처리 완료" : "처리 중";
             notificationService.createNotification(
                     reporter,
                     NotificationType.REPORT_RESULT,
-                    "신고 처리 결과: " + statusText,
+                    "신고에 대한 답변이 등록되었습니다.",
                     "",
                     ReferenceType.REPORT,
                     report.getReportId()

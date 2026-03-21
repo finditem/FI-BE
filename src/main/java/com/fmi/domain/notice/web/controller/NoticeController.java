@@ -125,7 +125,7 @@ public class NoticeController {
         if (userDetails != null) {
             userRepository.findByEmail(userDetails.getUsername()).ifPresent(user ->
                     notificationService.markNotificationsAsReadByReference(user, noticeId,
-                            List.of(NotificationType.COMMENT, NotificationType.REPLY, NotificationType.NOTICE))
+                            List.of(NotificationType.COMMENT, NotificationType.NOTICE))
             );
         }
 
