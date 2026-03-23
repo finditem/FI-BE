@@ -276,7 +276,8 @@ public class AdminService {
      * FULLTEXT BOOLEAN MODE 특수문자 제거
      */
     private String sanitizeFulltextKeyword(String keyword) {
-        return keyword.trim().replaceAll("[+\\-*~\"()<>@]", " ").trim();
+        String sanitized = keyword.trim().replaceAll("[+\\-*~\"()<>@]", " ").trim();
+        return sanitized.isEmpty() ? null : sanitized;
     }
 
     /**
