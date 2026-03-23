@@ -3,7 +3,7 @@ package com.fmi.domain.report.service;
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
-import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
+import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
@@ -32,10 +32,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -47,7 +47,7 @@ public class ReportService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
-    private final ChatMessageRepository chatMessageRepository;
+    private final ChatRoomRepository chatRoomRepository;
     private final ReportConverter reportConverter;
     private final NotificationService notificationService;
     private final EmailService emailService;
@@ -204,8 +204,8 @@ public class ReportService {
                         .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
                 break;
             case CHAT:
-                chatMessageRepository.findById(targetId)
-                        .orElseThrow(() -> new GeneralException(ErrorStatus._MESSAGE_NOT_FOUND));
+                chatRoomRepository.findById(targetId)
+                        .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
                 break;
         }
     }
@@ -229,9 +229,9 @@ public class ReportService {
                             .map(u -> u.getNickname() + " 사용자")
                             .orElse("삭제된 사용자");
                 case CHAT:
-                    return chatMessageRepository.findById(targetId)
-                            .map(msg -> "채팅: " + msg.getContent().substring(0, Math.min(30, msg.getContent().length())) + "...")
-                            .orElse("삭제된 채팅");
+                    return chatRoomRepository.findById(targetId)
+                            .map(room -> "채팅방: " + room.getId())
+                            .orElse("삭제된 채팅방");
                 default:
                     return "알 수 없음";
             }
