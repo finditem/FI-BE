@@ -240,10 +240,11 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
                                                               @Param("cursor") Long cursor,
                                                               Pageable pageable);
 
-    // 관리자 커서 기반 조회 - keyword 없을 때 (JPQL)
+    // 관리자 커서 기반 조회 - keyword 없을 때 (JPQL, 회원 문의만)
     @Query("""
             SELECT i FROM Inquiry i
-            WHERE (:type IS NULL OR i.inquiryType = :type)
+            WHERE i.user IS NOT NULL
+              AND (:type IS NULL OR i.inquiryType = :type)
               AND (:status IS NULL OR i.answerStatus = :status)
               AND (:answered IS NULL OR i.answered = :answered)
               AND (:cursor IS NULL OR i.id < :cursor)
@@ -255,10 +256,11 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
                                         @Param("cursor") Long cursor,
                                         Pageable pageable);
 
-    // 관리자 커서 기반 조회 - keyword 있을 때 (FULLTEXT + ngram)
+    // 관리자 커서 기반 조회 - keyword 있을 때 (FULLTEXT + ngram, 회원 문의만)
     @Query(value = """
             SELECT * FROM customer_inquiry i
-            WHERE (:type IS NULL OR i.inquiry_type = :type)
+            WHERE i.user_id IS NOT NULL
+              AND (:type IS NULL OR i.inquiry_type = :type)
               AND (:status IS NULL OR i.answer_status = :status)
               AND (:answered IS NULL OR i.answered = :answered)
               AND (:cursor IS NULL OR i.id < :cursor)

@@ -231,13 +231,14 @@ public class AdminService {
         PageRequest pageRequest = PageRequest.of(0, size);
         Slice<Inquiry> inquirySlice;
 
-        if (keyword != null && !keyword.isBlank()) {
+        String sanitizedKeyword = (keyword != null && !keyword.isBlank()) ? sanitizeFulltextKeyword(keyword) : null;
+        if (sanitizedKeyword != null) {
             String statusStr = effectiveStatus != null ? effectiveStatus.name() : null;
             inquirySlice = notAnsweredFilter
                     ? inquiryRepository.findGuestInquiriesNotAnsweredWithKeywordSlice(
-                            sanitizeFulltextKeyword(keyword), cursor, pageRequest)
+                            sanitizedKeyword, cursor, pageRequest)
                     : inquiryRepository.findGuestInquiriesForAdminWithKeywordSlice(
-                            statusStr, sanitizeFulltextKeyword(keyword), cursor, pageRequest);
+                            statusStr, sanitizedKeyword, cursor, pageRequest);
         } else if (notAnsweredFilter) {
             inquirySlice = (cursor == null)
                     ? inquiryRepository.findGuestInquiriesNotAnsweredOrderByIdDesc(pageRequest)
@@ -276,7 +277,8 @@ public class AdminService {
      * FULLTEXT BOOLEAN MODE 특수문자 제거
      */
     private String sanitizeFulltextKeyword(String keyword) {
-        return keyword.trim().replaceAll("[+\\-*~\"()<>@]", " ").trim();
+        String sanitized = keyword.trim().replaceAll("[+\\-*~\"()<>@]", " ").trim();
+        return sanitized.isEmpty() ? null : sanitized;
     }
 
     /**
@@ -303,11 +305,12 @@ public class AdminService {
         int fetchSize = size + 1;
 
         List<Inquiry> inquiries;
-        if (keyword != null && !keyword.isBlank()) {
+        String sanitizedKeyword = (keyword != null && !keyword.isBlank()) ? sanitizeFulltextKeyword(keyword) : null;
+        if (sanitizedKeyword != null) {
             String typeStr = type != null ? type.name() : null;
             String statusStr = status != null ? status.name() : null;
             inquiries = inquiryRepository.findAllForAdminWithKeywordCursor(
-                    typeStr, statusStr, answered, sanitizeFulltextKeyword(keyword), cursor, fetchSize);
+                    typeStr, statusStr, answered, sanitizedKeyword, cursor, fetchSize);
         } else {
             Pageable limit = PageRequest.of(0, fetchSize);
             inquiries = inquiryRepository.findAllForAdminCursor(type, status, answered, cursor, limit);
@@ -342,11 +345,12 @@ public class AdminService {
             String keyword, Long cursor, int size) {
         int fetchSize = size + 1;
         List<Report> reports;
-        if (keyword != null && !keyword.isBlank()) {
+        String sanitizedKeyword = (keyword != null && !keyword.isBlank()) ? sanitizeFulltextKeyword(keyword) : null;
+        if (sanitizedKeyword != null) {
             String statusStr = status != null ? status.name() : null;
             String targetTypeStr = targetType != null ? targetType.name() : null;
             reports = reportRepository.findAllForAdminWithKeywordCursor(
-                    statusStr, targetTypeStr, answered, sanitizeFulltextKeyword(keyword), cursor, fetchSize);
+                    statusStr, targetTypeStr, answered, sanitizedKeyword, cursor, fetchSize);
         } else {
             Pageable limit = PageRequest.of(0, fetchSize);
             reports = reportRepository.findAllForAdminCursor(status, targetType, answered, cursor, limit);
