@@ -1,5 +1,7 @@
 package com.fmi.domain.post.web.dto.response;
 
+import com.fmi.domain.post.data.PostType;
+
 public record PostShareResponse(
         String title,
         String summary,
@@ -7,6 +9,7 @@ public record PostShareResponse(
         String address,
         Long likeCount,
         Long commentCount,
-        Long viewCount
+        Long viewCount,
+        PostType postType
 ) {
 }

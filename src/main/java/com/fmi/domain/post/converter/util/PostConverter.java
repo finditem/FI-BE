@@ -139,7 +139,8 @@ public final class PostConverter {
                 post.getAddress(),
                 likeCount,
                 commentCount,
-                post.getViewCount()
+                post.getViewCount(),
+                post.getPostType()
         );
     }
 
