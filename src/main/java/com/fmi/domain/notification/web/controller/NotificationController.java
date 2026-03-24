@@ -152,6 +152,22 @@ public class NotificationController {
     }
 
     /**
+     * 알림 전체 삭제
+     * DELETE /notifications/all
+     */
+    @DeleteMapping("/all")
+    @Operation(summary = "알림 전체 삭제", description = "인증된 사용자의 모든 알림을 삭제합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 전체 삭제 성공")
+    })
+    public ApiResponse<String> deleteAll(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        notificationService.deleteAllNotifications(user);
+        return ApiResponse.onSuccess("모든 알림을 삭제했습니다.");
+    }
+
+    /**
      * 알림 다건 삭제
      * DELETE /notification/batch
      */

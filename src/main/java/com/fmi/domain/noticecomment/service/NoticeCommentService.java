@@ -9,6 +9,7 @@ import com.fmi.domain.noticecomment.data.NoticeComment;
 import com.fmi.domain.noticecomment.data.NoticeCommentImage;
 import com.fmi.domain.noticecomment.repository.NoticeCommentImageRepository;
 import com.fmi.domain.noticecomment.repository.NoticeCommentRepository;
+import com.fmi.domain.noticecomment.response.NoticeCommentPageResponse;
 import com.fmi.domain.noticecomment.response.NoticeCommentResponse;
 import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
@@ -21,6 +22,8 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.core.GrantedAuthority;
@@ -146,6 +149,48 @@ public class NoticeCommentService {
                 .toList();
 
         return new NoticeCommentSliceResponse(result, comments.hasNext(), nextCursor);
+    }
+
+    private static final int REPLY_PAGE_SIZE = 10;
+
+    public NoticeCommentPageResponse getReplies(Long parentId, int page, UserDetails userDetails) {
+        NoticeComment parent = noticeCommentRepository.findById(parentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
+
+        Pageable pageable = PageRequest.of(page, REPLY_PAGE_SIZE);
+        Page<NoticeComment> repliesPage = noticeCommentRepository.findRepliesByParentId(parentId, pageable);
+        long totalCount = repliesPage.getTotalElements();
+
+        boolean hasNext = repliesPage.hasNext();
+        Integer nextPage = hasNext ? page + 1 : null;
+        long shown = (long) page * REPLY_PAGE_SIZE + repliesPage.getContent().size();
+        long remainingCount = Math.max(0, Math.min(REPLY_PAGE_SIZE, totalCount - shown));
+
+        List<NoticeComment> replyList = repliesPage.getContent();
+        List<Long> replyIds = replyList.stream().map(NoticeComment::getId).toList();
+
+        Map<Long, List<NoticeCommentImage>> imageMap = Map.of();
+        if (!replyIds.isEmpty()) {
+            imageMap = noticeCommentImageRepository.findByComment_IdIn(replyIds).stream()
+                    .collect(Collectors.groupingBy(img -> img.getComment().getId()));
+        }
+
+        Set<Long> likedCommentIds = buildLikedCommentIds(replyIds, userDetails);
+        Map<Long, Long> childCountMap = buildChildCountMap(replyIds);
+
+        Map<Long, List<NoticeCommentImage>> finalImageMap = imageMap;
+        List<NoticeCommentResponse> result = replyList.stream()
+                .map(reply -> {
+                    boolean isOwner = isOwner(reply, userDetails);
+                    boolean isAdmin = isAdmin(userDetails);
+                    boolean isLike = likedCommentIds.contains(reply.getId());
+                    long childCount = childCountMap.getOrDefault(reply.getId(), 0L);
+                    List<NoticeCommentImage> imgs = finalImageMap.getOrDefault(reply.getId(), List.of());
+                    return noticeCommentConverter.toResponse(reply, isOwner, isOwner || isAdmin, isLike, childCount, imgs);
+                })
+                .toList();
+
+        return new NoticeCommentPageResponse(result, hasNext, nextPage, totalCount, remainingCount);
     }
 
     @Transactional
