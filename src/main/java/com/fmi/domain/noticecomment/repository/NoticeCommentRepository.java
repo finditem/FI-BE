@@ -1,6 +1,7 @@
 package com.fmi.domain.noticecomment.repository;
 
 import com.fmi.domain.noticecomment.data.NoticeComment;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,7 +34,7 @@ public interface NoticeCommentRepository extends JpaRepository<NoticeComment, Lo
     @Query(value = "select c from NoticeComment c join fetch c.user " +
             "where c.parent.id = :parentId order by c.id asc",
            countQuery = "select count(c) from NoticeComment c where c.parent.id = :parentId")
-    org.springframework.data.domain.Page<NoticeComment> findRepliesByParentId(@Param("parentId") Long parentId, Pageable pageable);
+    Page<NoticeComment> findRepliesByParentId(@Param("parentId") Long parentId, Pageable pageable);
 
     long countByNoticeNoticeId(Long noticeId);
 

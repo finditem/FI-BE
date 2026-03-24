@@ -22,6 +22,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -157,7 +158,7 @@ public class NoticeCommentService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(page, REPLY_PAGE_SIZE);
-        org.springframework.data.domain.Page<NoticeComment> repliesPage = noticeCommentRepository.findRepliesByParentId(parentId, pageable);
+        Page<NoticeComment> repliesPage = noticeCommentRepository.findRepliesByParentId(parentId, pageable);
         long totalCount = repliesPage.getTotalElements();
 
         boolean hasNext = repliesPage.hasNext();
