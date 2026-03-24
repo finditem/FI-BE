@@ -30,12 +30,10 @@ public interface NoticeCommentRepository extends JpaRepository<NoticeComment, Lo
                                                                   @Param("cursor") Long cursor,
                                                                   Pageable pageable);
 
-    @Query("select c from NoticeComment c join fetch c.user " +
-            "where c.parent.id = :parentId order by c.id asc")
-    Slice<NoticeComment> findRepliesByParentId(@Param("parentId") Long parentId, Pageable pageable);
-
-    @Query("select count(c) from NoticeComment c where c.parent.id = :parentId")
-    long countRepliesByParentId(@Param("parentId") Long parentId);
+    @Query(value = "select c from NoticeComment c join fetch c.user " +
+            "where c.parent.id = :parentId order by c.id asc",
+           countQuery = "select count(c) from NoticeComment c where c.parent.id = :parentId")
+    org.springframework.data.domain.Page<NoticeComment> findRepliesByParentId(@Param("parentId") Long parentId, Pageable pageable);
 
     long countByNoticeNoticeId(Long noticeId);
 
