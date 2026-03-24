@@ -157,15 +157,15 @@ public class NoticeCommentService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(page, REPLY_PAGE_SIZE);
-        Slice<NoticeComment> replies = noticeCommentRepository.findRepliesByParentId(parentId, pageable);
-        long totalCount = noticeCommentRepository.countRepliesByParentId(parentId);
+        org.springframework.data.domain.Page<NoticeComment> repliesPage = noticeCommentRepository.findRepliesByParentId(parentId, pageable);
+        long totalCount = repliesPage.getTotalElements();
 
-        boolean hasNext = totalCount > (long) (page + 1) * REPLY_PAGE_SIZE;
+        boolean hasNext = repliesPage.hasNext();
         Integer nextPage = hasNext ? page + 1 : null;
-        long shown = (long) page * REPLY_PAGE_SIZE + replies.getContent().size();
+        long shown = (long) page * REPLY_PAGE_SIZE + repliesPage.getContent().size();
         long remainingCount = Math.max(0, Math.min(REPLY_PAGE_SIZE, totalCount - shown));
 
-        List<NoticeComment> replyList = replies.getContent();
+        List<NoticeComment> replyList = repliesPage.getContent();
         List<Long> replyIds = replyList.stream().map(NoticeComment::getId).toList();
 
         Map<Long, List<NoticeCommentImage>> imageMap = Map.of();
