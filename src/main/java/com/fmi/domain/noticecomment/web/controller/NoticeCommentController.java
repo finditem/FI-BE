@@ -1,5 +1,6 @@
 package com.fmi.domain.noticecomment.web.controller;
 
+import com.fmi.domain.noticecomment.response.NoticeCommentPageResponse;
 import com.fmi.domain.noticecomment.response.NoticeCommentResponse;
 import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecomment.service.NoticeCommentService;
@@ -70,6 +71,28 @@ public class NoticeCommentController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         NoticeCommentSliceResponse response = noticeCommentService.getComments(noticeId, cursor, size, userDetails);
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @GetMapping("/comments/{commentId}/replies")
+    @Operation(summary = "공지사항 대댓글 조회 (페이지네이션)",
+            description = "특정 댓글의 대댓글 목록을 페이지네이션 방식으로 조회합니다. " +
+                    "첫 요청은 page=0, '더보기' 클릭 시 nextPage 값을 page로 넣어 다음 페이지를 요청합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "대댓글 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "COMMENT404-NOT_FOUND: 존재하지 않는 댓글입니다",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "{\"isSuccess\": false, \"code\": \"COMMENT404-NOT_FOUND\", \"message\": \"존재하지 않는 댓글입니다.\"}"))
+            )
+    })
+    public ResponseEntity<ApiResponse<NoticeCommentPageResponse>> getReplies(
+            @PathVariable Long commentId,
+            @RequestParam(defaultValue = "0") int page,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        NoticeCommentPageResponse response = noticeCommentService.getReplies(commentId, page, userDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
