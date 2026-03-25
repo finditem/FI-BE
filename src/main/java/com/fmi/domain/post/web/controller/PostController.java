@@ -103,7 +103,7 @@ public class PostController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content)
     })
     public ResponseEntity<ApiResponse<PostPageResponse>> searchPostFilterOrSort(@RequestParam(required = false) PostType postType,
-                                                                                @RequestParam(required = false, defaultValue = "SEARCHING") PostStatus postStatus,
+                                                                                @RequestParam(required = false) PostStatus postStatus,
                                                                                 @RequestParam(required = false) Category category,
                                                                                 @RequestParam(required = false) String address,
                                                                                 @RequestParam(required = false, defaultValue = "LATEST") SortType sortType,
