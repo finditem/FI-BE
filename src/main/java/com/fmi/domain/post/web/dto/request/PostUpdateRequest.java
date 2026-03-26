@@ -15,7 +15,7 @@ import java.util.List;
 public record PostUpdateRequest(
         PostType postType,
 
-        @Size(min = 1)
+        @Size(min = 1, max = 50, message = "제목은 최대 50자까지 입력 가능합니다.")
         String title,
 
         PostStatus postStatus,
@@ -29,7 +29,7 @@ public record PostUpdateRequest(
 
         Double longitude,
 
-        @Size(min = 1)
+        @Size(min = 1, max = 500, message = "본문은 최대 500자까지 입력 가능합니다.")
         String content,
 
         Boolean temporarySave,
