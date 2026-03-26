@@ -20,7 +20,7 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "title", nullable = false)
+    @Column(name = "title", nullable = false, length = 50)
     private String title;
 
     @Column(name = "address", nullable = false)
@@ -46,7 +46,7 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private Category category;
 
-    @Column(name = "content", nullable = false)
+    @Column(name = "content", nullable = false, length = 500)
     private String content;
 
     @Column(name = "temporary_save", nullable = false)
