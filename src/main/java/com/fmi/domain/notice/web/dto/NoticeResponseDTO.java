@@ -1,7 +1,6 @@
 package com.fmi.domain.notice.web.dto;
 
 import com.fmi.domain.notice.data.enums.NoticeCategory;
-import com.fmi.domain.noticecomment.response.NoticeCommentResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -43,8 +42,6 @@ public class NoticeResponseDTO {
     private Boolean isHot;
     @Schema(description = "내가 좋아요 눌렀는지 여부", example = "false")
     private Boolean likeStatus;
-    @Schema(description = "댓글 목록")
-    private List<NoticeCommentResponse> comments;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
     @Schema(description = "수정 시간", example = "2024-01-01T00:00:00")

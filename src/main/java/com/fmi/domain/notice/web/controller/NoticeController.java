@@ -9,8 +9,6 @@ import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
 import com.fmi.domain.notice.web.dto.NoticeMetaResponse;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
-import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
-import com.fmi.domain.noticecomment.service.NoticeCommentService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -36,7 +34,6 @@ import org.springframework.web.bind.annotation.*;
 public class NoticeController {
     
     private final NoticeService noticeService;
-    private final NoticeCommentService noticeCommentService;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
     
@@ -115,11 +112,8 @@ public class NoticeController {
         
         NoticeResponseDTO notice = noticeService.getNoticeDetail(noticeId, userIdentifier);
 
-        // 댓글 목록 조회
         UserDetails userDetails = (authentication != null && authentication.getPrincipal() instanceof UserDetails)
                 ? (UserDetails) authentication.getPrincipal() : null;
-        NoticeCommentSliceResponse commentSlice = noticeCommentService.getComments(noticeId, null, 20, userDetails);
-        notice.setComments(commentSlice.getComments());
 
         // 공지사항 조회 시 관련 알림 자동 읽음처리
         if (userDetails != null) {
