@@ -20,6 +20,8 @@ public class NotificationSettingsUpdateDTO {
     private Boolean categoryEnabled;         // 카테고리 키워드 알림 전체
     private Set<Category> enabledCategories; // 활성화된 카테고리 키워드 목록
     private Boolean browserNotificationEnabled; // 전체 브라우저 알림
+    private Boolean termsOfServiceAgreed;    // 이용약관 동의
+    private Boolean contentPolicyAgreed;     // 콘텐츠 활용 동의
     private Boolean marketingConsent;        // 마케팅 이메일 수신 동의
 }
 

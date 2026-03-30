@@ -33,6 +33,8 @@ public class NotificationConverter {
                 .categoryEnabled(settings.getCategoryEnabled())
                 .enabledCategories(settings.getEnabledCategories())
                 .browserNotificationEnabled(settings.getBrowserNotificationEnabled())
+                .termsOfServiceAgreed(user.isTermsOfServiceAgreed())
+                .contentPolicyAgreed(user.isContentPolicyAgreed())
                 .marketingConsent(user.isMarketingConsent())
                 .build();
     }

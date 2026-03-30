@@ -33,6 +33,10 @@ public class NotificationSettingsDTO {
     private Set<Category> enabledCategories;
     @Schema(description = "전체 브라우저 알림 활성화 여부", example = "true")
     private Boolean browserNotificationEnabled;
+    @Schema(description = "이용약관 동의", example = "true")
+    private Boolean termsOfServiceAgreed;
+    @Schema(description = "콘텐츠 활용 동의", example = "true")
+    private Boolean contentPolicyAgreed;
     @Schema(description = "마케팅 이메일 수신 동의", example = "false")
     private Boolean marketingConsent;
 }

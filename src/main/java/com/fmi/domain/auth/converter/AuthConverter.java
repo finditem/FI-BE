@@ -21,6 +21,8 @@ public class AuthConverter {
                 .nickname(request.getNickname())
                 .role(Role.USER) // 일반 회원가입은 항상 USER로 고정
                 .privacyPolicyAgreed(Boolean.TRUE.equals(request.getPrivacyPolicyAgreed()))
+                .termsOfServiceAgreed(Boolean.TRUE.equals(request.getTermsOfServiceAgreed()))
+                .contentPolicyAgreed(Boolean.TRUE.equals(request.getContentPolicyAgreed()))
                 .marketingConsent(Boolean.TRUE.equals(request.getMarketingConsent()))
                 .email_verified(emailVerified) // 백엔드에서 검증한 값만 사용
                 .build();
@@ -38,6 +40,8 @@ public class AuthConverter {
                 .nickname(request.getNickname())
                 .role(Role.ADMIN) // 관리자 회원가입은 항상 ADMIN으로 고정
                 .privacyPolicyAgreed(false)
+                .termsOfServiceAgreed(false)
+                .contentPolicyAgreed(false)
                 .marketingConsent(false)
                 .email_verified(Boolean.TRUE.equals(request.getEmailVerified()))
                 .build();
@@ -59,6 +63,8 @@ public class AuthConverter {
                 .role(Role.USER)
                 .email_verified(true)
                 .privacyPolicyAgreed(false)
+                .termsOfServiceAgreed(false)
+                .contentPolicyAgreed(false)
                 .marketingConsent(false)
                 .build();
     }

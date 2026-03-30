@@ -23,7 +23,15 @@ public class SignupRequest {
     @Schema(description = "개인정보 처리방침 동의", example = "true")
     @NotNull(message = "개인정보 처리방침 동의 값을 입력해주세요.")
     private Boolean privacyPolicyAgreed;
-    
+
+    @Schema(description = "이용약관 동의", example = "true")
+    @NotNull(message = "이용약관 동의 값을 입력해주세요.")
+    private Boolean termsOfServiceAgreed;
+
+    @Schema(description = "콘텐츠 활용 동의", example = "true")
+    @NotNull(message = "콘텐츠 활용 동의 값을 입력해주세요.")
+    private Boolean contentPolicyAgreed;
+
     @Schema(description = "마케팅 수신 동의", example = "false")
     @NotNull(message = "마케팅 수신 동의 값을 입력해주세요.")
     private Boolean marketingConsent;

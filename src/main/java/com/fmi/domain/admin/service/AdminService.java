@@ -149,6 +149,8 @@ public class AdminService {
                 .role(user.getRole())
                 .profileImg(user.getProfile_img())
                 .privacyPolicyAgreed(user.isPrivacyPolicyAgreed())
+                .termsOfServiceAgreed(user.isTermsOfServiceAgreed())
+                .contentPolicyAgreed(user.isContentPolicyAgreed())
                 .marketingConsent(user.isMarketingConsent())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
