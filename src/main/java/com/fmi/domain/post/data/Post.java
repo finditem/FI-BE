@@ -71,6 +71,9 @@ public class Post {
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     private Post(String title, String address, double latitude, double longitude, PostType postType, Category category, String content, boolean temporarySave, LocalDateTime date, Radius radius, User user) {
         this.title = title;
         this.address = address;
@@ -183,6 +186,7 @@ public class Post {
     public void softDelete() {
         this.deleted = true;
         this.updatedAt = LocalDateTime.now();
+        this.deletedAt = LocalDateTime.now();
     }
 
     private <T> void applyIfNotNull(T value, Consumer<T> setter) {

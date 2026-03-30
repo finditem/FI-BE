@@ -27,6 +27,13 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long>, Pos
             """)
     List<PostImage> findThumbnailImagesByPostIds(@Param("postIds") List<Long> postIds);
 
+    @Query("""
+                select pi
+                from PostImage pi
+                where pi.post.id in :postIds
+            """)
+    List<PostImage> findAllByPostIds(@Param("postIds") List<Long> postIds);
+
     @Modifying
     @Query("delete from PostImage pi where pi.post.id = :postId")
     void deleteAllByPostId(@Param("postId") Long postId);
@@ -59,4 +66,11 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long>, Pos
     default boolean existsThumbnailByPostId(Long postId) {
         return existsByPost_IdAndImageType(postId, ImageType.THUMBNAIL);
     }
+
+    @Modifying
+    @Query("""
+                delete from PostImage pi
+                where pi.post.id in :postIds
+            """)
+    void deleteAllByPostIds(@Param("postIds") List<Long> postIds);
 }

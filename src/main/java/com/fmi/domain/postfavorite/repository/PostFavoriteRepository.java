@@ -112,4 +112,11 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long
                 ORDER BY pf.createdAt DESC
             """)
     Slice<PostFavorite> findByUserAndIsFavoriteTrueAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
+
+    @Modifying
+    @Query("""
+                delete from PostFavorite pf
+                where pf.post.id in :postIds
+            """)
+    void deleteAllByPostIds(@Param("postIds") List<Long> postIds);
 }

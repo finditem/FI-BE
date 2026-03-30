@@ -34,4 +34,18 @@ public interface CommentImageRepository extends JpaRepository<CommentImage, Long
             """)
     void deleteAllByPostId(@Param("postId") Long postId);
 
+    @Query("""
+                select ci
+                from CommentImage ci
+                where ci.comment.post.id in :postIds
+            """)
+    List<CommentImage> findAllByPostIds(@Param("postIds") List<Long> postIds);
+
+    @Modifying
+    @Query("""
+                delete from CommentImage ci
+                where ci.comment.post.id in :postIds
+            """)
+    void deleteAllByPostIds(@Param("postIds") List<Long> postIds);
+
 }
