@@ -338,7 +338,7 @@ public class UserService {
                             "FAVORITE", f.getFavorite_id(), f.getPost().getTitle(), null, f.getCreatedAt())));
         }
 
-        if (type == null || type == ActivityType.INQUIRY || type == ActivityType.INQUIRY_RECEIVED || type == ActivityType.INQUIRY_ANSWERED) {
+        if (type == null || type == ActivityType.INQUIRY || type == ActivityType.INQUIRY_RECEIVED || type == ActivityType.INQUIRY_PENDING || type == ActivityType.INQUIRY_ANSWERED) {
             Slice<Inquiry> inquirySlice = (cursorTime == null)
                     ? inquiryRepository.findByUserOrderByCreatedAtDesc(user, pageRequest)
                     : inquiryRepository.findByUserAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
@@ -346,19 +346,23 @@ public class UserService {
                     .filter(i -> isWithinDateRange(i.getCreatedAt(), startDateTime, endDateTime))
                     .filter(i -> matchesKeyword(trimmedKeyword, i.getTitle(), i.getContent()))
                     .filter(i -> {
-                        if (type == ActivityType.INQUIRY_RECEIVED) return i.getAnswerStatus() != com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
+                        if (type == ActivityType.INQUIRY_RECEIVED) return i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.RECEIVED;
+                        if (type == ActivityType.INQUIRY_PENDING) return i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.PENDING;
                         if (type == ActivityType.INQUIRY_ANSWERED) return i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
                         return true;
                     })
                     .forEach(i -> {
-                        boolean isAnswered = i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
-                        String activityType = isAnswered ? "INQUIRY_ANSWERED" : "INQUIRY_RECEIVED";
+                        String activityType = switch (i.getAnswerStatus()) {
+                            case RECEIVED -> "INQUIRY_RECEIVED";
+                            case PENDING -> "INQUIRY_PENDING";
+                            case ANSWERED -> "INQUIRY_ANSWERED";
+                        };
                         allActivities.add(new ActivityResponse(
                                 activityType, i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt()));
                     });
         }
 
-        if (type == null || type == ActivityType.REPORT || type == ActivityType.REPORT_RECEIVED || type == ActivityType.REPORT_ANSWERED) {
+        if (type == null || type == ActivityType.REPORT || type == ActivityType.REPORT_RECEIVED || type == ActivityType.REPORT_REVIEWED || type == ActivityType.REPORT_ANSWERED) {
             Slice<Report> reportSlice = (cursorTime == null)
                     ? reportRepository.findByReporterOrderByCreatedAtDesc(user, pageRequest)
                     : reportRepository.findByReporterAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
@@ -366,13 +370,17 @@ public class UserService {
                     .filter(r -> isWithinDateRange(r.getCreatedAt(), startDateTime, endDateTime))
                     .filter(r -> matchesKeyword(trimmedKeyword, r.getTargetType().getDescription(), r.getReason()))
                     .filter(r -> {
-                        if (type == ActivityType.REPORT_RECEIVED) return !Boolean.TRUE.equals(r.getAnswered());
-                        if (type == ActivityType.REPORT_ANSWERED) return Boolean.TRUE.equals(r.getAnswered());
+                        if (type == ActivityType.REPORT_RECEIVED) return r.getStatus() == com.fmi.domain.report.data.enums.ReportStatus.PENDING;
+                        if (type == ActivityType.REPORT_REVIEWED) return r.getStatus() == com.fmi.domain.report.data.enums.ReportStatus.REVIEWED;
+                        if (type == ActivityType.REPORT_ANSWERED) return r.getStatus() == com.fmi.domain.report.data.enums.ReportStatus.RESOLVED;
                         return true;
                     })
                     .forEach(r -> {
-                        boolean isAnswered = Boolean.TRUE.equals(r.getAnswered());
-                        String activityType = isAnswered ? "REPORT_ANSWERED" : "REPORT_RECEIVED";
+                        String activityType = switch (r.getStatus()) {
+                            case PENDING -> "REPORT_RECEIVED";
+                            case REVIEWED -> "REPORT_REVIEWED";
+                            case RESOLVED -> "REPORT_ANSWERED";
+                        };
                         allActivities.add(new ActivityResponse(
                                 activityType, r.getReportId(), r.getTargetType().getDescription() + " 신고", truncate(r.getReason(), 100), r.getCreatedAt()));
                     });
