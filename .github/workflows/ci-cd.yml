@@ -122,7 +122,7 @@ jobs:
               echo "DEV_DB_USERNAME=${{ secrets.DEV_DB_USERNAME }}"
               echo "PROD_DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}"
               echo "DEV_DB_PASSWORD=${{ secrets.DEV_DB_PASSWORD }}"
-              echo "DDL_AUTO=${{ secrets.DDL_AUTO }}"
+              echo "DDL_AUTO=validate"
               echo "REDIS_HOST=${{ secrets.REDIS_HOST }}"
               echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}"
               echo "PROD_JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}"
@@ -140,6 +140,8 @@ jobs:
               echo "SLACK_WEBHOOK_INQUIRY_URL=${{ secrets.SLACK_WEBHOOK_INQUIRY_URL }}"
               echo "SLACK_WEBHOOK_REPORT_URL=${{ secrets.SLACK_WEBHOOK_REPORT_URL }}"
               echo "JWT_COOKIE_DOMAIN=${{ secrets.JWT_COOKIE_DOMAIN }}"
+              echo "SPRING_FLYWAY_BASELINE_ON_MIGRATE=true"
+              echo "SPRING_FLYWAY_BASELINE_VERSION=1"
             } > .env
 
             # 환경 변수 파일 권한 설정
