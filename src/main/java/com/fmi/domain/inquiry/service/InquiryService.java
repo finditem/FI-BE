@@ -123,7 +123,7 @@ public class InquiryService {
                         .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
 
                 String recipientName = saved.getUser() != null && saved.getUser().getNickname() != null
-                        ? saved.getUser().getNickname() : "이용자";
+                        ? saved.getUser().getNickname() : recipientEmail;
                 emailService.sendHtmlEmailAsync(
                     recipientEmail,
                     "문의가 접수되었습니다",
@@ -275,7 +275,7 @@ public class InquiryService {
                 "문의에 대한 답변이 도착했습니다",
                 "support-reply-email.html",
                 java.util.Map.of(
-                    "name", "이용자",
+                    "name", inquiry.getEmail(),
                     "TITLE", inquiry.getTitle(),
                     "DATE", replyDate,
                     "CONTENT", content,
