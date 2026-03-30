@@ -338,26 +338,44 @@ public class UserService {
                             "FAVORITE", f.getFavorite_id(), f.getPost().getTitle(), null, f.getCreatedAt())));
         }
 
-        if (type == null || type == ActivityType.INQUIRY) {
+        if (type == null || type == ActivityType.INQUIRY || type == ActivityType.INQUIRY_RECEIVED || type == ActivityType.INQUIRY_ANSWERED) {
             Slice<Inquiry> inquirySlice = (cursorTime == null)
                     ? inquiryRepository.findByUserOrderByCreatedAtDesc(user, pageRequest)
                     : inquiryRepository.findByUserAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
             inquirySlice.getContent().stream()
                     .filter(i -> isWithinDateRange(i.getCreatedAt(), startDateTime, endDateTime))
                     .filter(i -> matchesKeyword(trimmedKeyword, i.getTitle(), i.getContent()))
-                    .forEach(i -> allActivities.add(new ActivityResponse(
-                            "INQUIRY", i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt())));
+                    .filter(i -> {
+                        if (type == ActivityType.INQUIRY_RECEIVED) return i.getAnswerStatus() != com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
+                        if (type == ActivityType.INQUIRY_ANSWERED) return i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
+                        return true;
+                    })
+                    .forEach(i -> {
+                        boolean isAnswered = i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
+                        String activityType = isAnswered ? "INQUIRY_ANSWERED" : "INQUIRY_RECEIVED";
+                        allActivities.add(new ActivityResponse(
+                                activityType, i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt()));
+                    });
         }
 
-        if (type == null || type == ActivityType.REPORT) {
+        if (type == null || type == ActivityType.REPORT || type == ActivityType.REPORT_RECEIVED || type == ActivityType.REPORT_ANSWERED) {
             Slice<Report> reportSlice = (cursorTime == null)
                     ? reportRepository.findByReporterOrderByCreatedAtDesc(user, pageRequest)
                     : reportRepository.findByReporterAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
             reportSlice.getContent().stream()
                     .filter(r -> isWithinDateRange(r.getCreatedAt(), startDateTime, endDateTime))
                     .filter(r -> matchesKeyword(trimmedKeyword, r.getTargetType().getDescription(), r.getReason()))
-                    .forEach(r -> allActivities.add(new ActivityResponse(
-                            "REPORT", r.getReportId(), r.getTargetType().getDescription() + " 신고", truncate(r.getReason(), 100), r.getCreatedAt())));
+                    .filter(r -> {
+                        if (type == ActivityType.REPORT_RECEIVED) return !Boolean.TRUE.equals(r.getAnswered());
+                        if (type == ActivityType.REPORT_ANSWERED) return Boolean.TRUE.equals(r.getAnswered());
+                        return true;
+                    })
+                    .forEach(r -> {
+                        boolean isAnswered = Boolean.TRUE.equals(r.getAnswered());
+                        String activityType = isAnswered ? "REPORT_ANSWERED" : "REPORT_RECEIVED";
+                        allActivities.add(new ActivityResponse(
+                                activityType, r.getReportId(), r.getTargetType().getDescription() + " 신고", truncate(r.getReason(), 100), r.getCreatedAt()));
+                    });
         }
 
         allActivities.sort(Comparator.comparing(ActivityResponse::createdAt).reversed());

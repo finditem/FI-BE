@@ -5,5 +5,9 @@ public enum ActivityType {
     COMMENT,
     FAVORITE,
     INQUIRY,
-    REPORT
+    INQUIRY_RECEIVED,
+    INQUIRY_ANSWERED,
+    REPORT,
+    REPORT_RECEIVED,
+    REPORT_ANSWERED
 }
