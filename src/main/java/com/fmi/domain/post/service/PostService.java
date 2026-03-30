@@ -111,6 +111,15 @@ public class PostService {
     }
 
     @Transactional
+    public void softDeleteAllByUser(User user) {
+        List<Post> posts = postRepository.findByUser(user);
+
+        for (Post post : posts) {
+            post.softDelete();
+        }
+    }
+
+    @Transactional
     public void updateRadius(Long postId, PostRadiusUpdateRequest request, UserDetails userDetails) {
         Post post = postQueryService.findById(postId);
         checkPostAccessDenied(post, userDetails.getUsername());

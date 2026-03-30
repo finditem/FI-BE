@@ -16,6 +16,7 @@ import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostQueryService;
+import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.PostFavorite;
@@ -85,6 +86,7 @@ public class UserService {
     private final ReportRepository reportRepository;
     private final CommentLikeService commentLikeService;
     private final CommentImageService commentImageService;
+    private final PostService postService;
 
     /**
      * 내 정보 조회
@@ -230,8 +232,8 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public MyCommentPageResponse getMyComments(String email, SortType sortType,
-                                                LocalDate startDate, LocalDate endDate,
-                                                String keyword, Long cursor, int size) {
+                                               LocalDate startDate, LocalDate endDate,
+                                               String keyword, Long cursor, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
@@ -271,9 +273,9 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public PostPageResponse getMyPosts(String email, PostType postType, PostStatus postStatus,
-                                        Category category, SortType sortType,
-                                        LocalDate startDate, LocalDate endDate, String keyword,
-                                        Long cursor, int size) {
+                                       Category category, SortType sortType,
+                                       LocalDate startDate, LocalDate endDate, String keyword,
+                                       Long cursor, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
@@ -286,8 +288,8 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public MyActivityPageResponse getMyActivities(String email, ActivityType type,
-                                                    LocalDate startDate, LocalDate endDate,
-                                                    String keyword, String cursor, int size) {
+                                                  LocalDate startDate, LocalDate endDate,
+                                                  String keyword, String cursor, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
@@ -346,8 +348,10 @@ public class UserService {
                     .filter(i -> isWithinDateRange(i.getCreatedAt(), startDateTime, endDateTime))
                     .filter(i -> matchesKeyword(trimmedKeyword, i.getTitle(), i.getContent()))
                     .filter(i -> {
-                        if (type == ActivityType.INQUIRY_RECEIVED) return i.getAnswerStatus() != com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
-                        if (type == ActivityType.INQUIRY_ANSWERED) return i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
+                        if (type == ActivityType.INQUIRY_RECEIVED)
+                            return i.getAnswerStatus() != com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
+                        if (type == ActivityType.INQUIRY_ANSWERED)
+                            return i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
                         return true;
                     })
                     .forEach(i -> {
@@ -423,7 +427,7 @@ public class UserService {
      * 내 정보 수정 (닉네임 + 프로필 이미지 통합, multipart/form-data)
      */
     public UserProfileResponse updateMyProfile(String email, UserUpdateRequest request,
-                                                MultipartFile profileImage, boolean deleteProfileImage) {
+                                               MultipartFile profileImage, boolean deleteProfileImage) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
@@ -587,6 +591,8 @@ public class UserService {
         userRepository.save(user);
 
         refreshTokenStore.revokeAllForUser(email);
+
+        postService.softDeleteAllByUser(user);
 
         // 계정 삭제 이메일 발송
         try {
