@@ -58,14 +58,23 @@ public class NoticeService {
     public Page<NoticeListDTO> getNoticeList(NoticeCategory category, String keyword, NoticeSortType sortType, Pageable pageable) {
         Page<Notice> notices;
         if (keyword != null && !keyword.isBlank()) {
-            String categoryStr = category != null ? category.name() : null;
-            Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
             String sanitized = sanitizeFulltextKeyword(keyword);
-            notices = switch (sortType) {
-                case OLDEST -> noticeRepository.searchNoticesOldest(categoryStr, sanitized, unsorted);
-                case MOST_VIEWED -> noticeRepository.searchNoticesMostViewed(categoryStr, sanitized, unsorted);
-                default -> noticeRepository.searchNotices(categoryStr, sanitized, unsorted);
-            };
+            if (sanitized.isEmpty()) {
+                // 특수문자만 입력된 경우 키워드 없는 조회로 폴백
+                if (category != null) {
+                    notices = noticeRepository.findByDraftFalseAndCategory(category, pageable);
+                } else {
+                    notices = noticeRepository.findByDraftFalse(pageable);
+                }
+            } else {
+                String categoryStr = category != null ? category.name() : null;
+                Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+                notices = switch (sortType) {
+                    case OLDEST -> noticeRepository.searchNoticesOldest(categoryStr, sanitized, unsorted);
+                    case MOST_VIEWED -> noticeRepository.searchNoticesMostViewed(categoryStr, sanitized, unsorted);
+                    default -> noticeRepository.searchNotices(categoryStr, sanitized, unsorted);
+                };
+            }
         } else if (category != null) {
             notices = noticeRepository.findByDraftFalseAndCategory(category, pageable);
         } else {
@@ -118,11 +127,19 @@ public class NoticeService {
         List<Notice> notices;
         if (keyword != null && !keyword.isBlank()) {
             String sanitized = sanitizeFulltextKeyword(keyword);
-            notices = switch (sortType) {
-                case OLDEST -> noticeRepository.searchNoticesOldestCursor(categoryStr, sanitized, cursor, fetchSize);
-                case MOST_VIEWED -> noticeRepository.searchNoticesMostViewedCursor(categoryStr, sanitized, cursor, fetchSize);
-                default -> noticeRepository.searchNoticesCursor(categoryStr, sanitized, cursor, fetchSize);
-            };
+            if (sanitized.isEmpty()) {
+                // 특수문자만 입력된 경우 키워드 없는 조회로 폴백
+                notices = switch (sortType) {
+                    case OLDEST -> noticeRepository.findByDraftFalseOldestCursor(categoryStr, cursor, fetchSize);
+                    default -> noticeRepository.findByDraftFalseCursor(categoryStr, cursor, fetchSize);
+                };
+            } else {
+                notices = switch (sortType) {
+                    case OLDEST -> noticeRepository.searchNoticesOldestCursor(categoryStr, sanitized, cursor, fetchSize);
+                    case MOST_VIEWED -> noticeRepository.searchNoticesMostViewedCursor(categoryStr, sanitized, cursor, fetchSize);
+                    default -> noticeRepository.searchNoticesCursor(categoryStr, sanitized, cursor, fetchSize);
+                };
+            }
         } else {
             notices = switch (sortType) {
                 case OLDEST -> noticeRepository.findByDraftFalseOldestCursor(categoryStr, cursor, fetchSize);
@@ -197,6 +214,7 @@ public class NoticeService {
      * @param noticeId 공지사항 ID
      * @param userIdentifier 사용자 식별자 (이메일 또는 IP 주소)
      */
+    @Transactional
     public NoticeResponseDTO getNoticeDetail(Long noticeId, String userIdentifier) {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
@@ -217,11 +235,16 @@ public class NoticeService {
         }
         // 조회자 Set TTL 갱신
         stringRedisTemplate.expire(viewSetKey, Duration.ofMinutes(5));
-        
+
         // Redis에서 현재 조회수 가져오기
         Long currentViewCount = Optional.ofNullable(stringRedisTemplate.opsForValue().get(viewCountKey))
                 .map(Long::parseLong)
                 .orElse(notice.getViewCount().longValue());
+
+        // DB 조회수 동기화 (Redis 조회수 읽은 후 실행하여 stale 엔티티 문제 방지)
+        if (newViewer) {
+            noticeRepository.incrementViewCount(noticeId);
+        }
         
         List<NoticeImage> images = noticeImageRepository.findByNotice(notice);
         int commentCount = (int) noticeCommentRepository.countByNoticeNoticeId(noticeId);
