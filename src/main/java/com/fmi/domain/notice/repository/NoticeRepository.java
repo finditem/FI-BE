@@ -170,7 +170,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             nativeQuery = true)
     List<Long> findHotNoticeIds(@Param("limit") int limit);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("UPDATE Notice n SET n.viewCount = n.viewCount + 1 WHERE n.noticeId = :noticeId")
     void incrementViewCount(@Param("noticeId") Long noticeId);
 

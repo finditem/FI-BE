@@ -232,15 +232,19 @@ public class NoticeService {
         boolean newViewer = added != null && added > 0;
         if (newViewer) {
             stringRedisTemplate.opsForValue().increment(viewCountKey);
-            noticeRepository.incrementViewCount(noticeId);
         }
         // 조회자 Set TTL 갱신
         stringRedisTemplate.expire(viewSetKey, Duration.ofMinutes(5));
-        
+
         // Redis에서 현재 조회수 가져오기
         Long currentViewCount = Optional.ofNullable(stringRedisTemplate.opsForValue().get(viewCountKey))
                 .map(Long::parseLong)
                 .orElse(notice.getViewCount().longValue());
+
+        // DB 조회수 동기화 (Redis 조회수 읽은 후 실행하여 stale 엔티티 문제 방지)
+        if (newViewer) {
+            noticeRepository.incrementViewCount(noticeId);
+        }
         
         List<NoticeImage> images = noticeImageRepository.findByNotice(notice);
         int commentCount = (int) noticeCommentRepository.countByNoticeNoticeId(noticeId);
