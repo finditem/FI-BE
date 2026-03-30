@@ -31,7 +31,7 @@ public class User {
     private String nickname;
 
     @Email
-    @Column(name = "email",nullable = true)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     @Column(name = "email_verified")
