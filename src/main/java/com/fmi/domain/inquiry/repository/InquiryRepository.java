@@ -74,6 +74,50 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
                                                       @Param("cursor") Long cursor,
                                                       Pageable pageable);
 
+    // 사용자별 커서 기반 조회 - keyword 검색
+    @Query(value = """
+            SELECT * FROM customer_inquiry i
+            WHERE i.user_id = :#{#user.id}
+              AND (:cursor IS NULL OR i.id < :cursor)
+              AND MATCH(i.title, i.content) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY i.id DESC
+            """,
+            nativeQuery = true)
+    List<Inquiry> findByUserAndKeywordCursor(@Param("user") User user,
+                                              @Param("keyword") String keyword,
+                                              @Param("cursor") Long cursor,
+                                              Pageable pageable);
+
+    // 사용자별 커서 기반 조회 - 상태 필터 + keyword 검색
+    @Query(value = """
+            SELECT * FROM customer_inquiry i
+            WHERE i.user_id = :#{#user.id} AND i.answer_status = :#{#status.name()}
+              AND (:cursor IS NULL OR i.id < :cursor)
+              AND MATCH(i.title, i.content) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY i.id DESC
+            """,
+            nativeQuery = true)
+    List<Inquiry> findByUserAndAnswerStatusAndKeywordCursor(@Param("user") User user,
+                                                             @Param("status") InquiryStatus status,
+                                                             @Param("keyword") String keyword,
+                                                             @Param("cursor") Long cursor,
+                                                             Pageable pageable);
+
+    // 사용자별 커서 기반 조회 - 상태 제외 필터 + keyword 검색
+    @Query(value = """
+            SELECT * FROM customer_inquiry i
+            WHERE i.user_id = :#{#user.id} AND i.answer_status <> :#{#status.name()}
+              AND (:cursor IS NULL OR i.id < :cursor)
+              AND MATCH(i.title, i.content) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY i.id DESC
+            """,
+            nativeQuery = true)
+    List<Inquiry> findByUserAndAnswerStatusNotAndKeywordCursor(@Param("user") User user,
+                                                                @Param("status") InquiryStatus status,
+                                                                @Param("keyword") String keyword,
+                                                                @Param("cursor") Long cursor,
+                                                                Pageable pageable);
+
     // 관리자 전용 조회 - keyword 없을 때 (JPQL)
     @Query("""
             SELECT i FROM Inquiry i
