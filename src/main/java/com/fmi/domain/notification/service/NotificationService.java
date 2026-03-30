@@ -253,9 +253,21 @@ public class NotificationService {
 
         NotificationSettings saved = notificationSettingsRepository.save(settings);
         
-        // User.marketingConsent 업데이트 (요청에 값이 있는 경우에만)
+        // User 약관/동의 필드 업데이트 (요청에 값이 있는 경우에만)
+        boolean userUpdated = false;
+        if (request.getTermsOfServiceAgreed() != null) {
+            freshUser.setTermsOfServiceAgreed(request.getTermsOfServiceAgreed());
+            userUpdated = true;
+        }
+        if (request.getContentPolicyAgreed() != null) {
+            freshUser.setContentPolicyAgreed(request.getContentPolicyAgreed());
+            userUpdated = true;
+        }
         if (request.getMarketingConsent() != null) {
             freshUser.setMarketingConsent(request.getMarketingConsent());
+            userUpdated = true;
+        }
+        if (userUpdated) {
             userRepository.save(freshUser);
         }
         

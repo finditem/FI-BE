@@ -32,6 +32,10 @@ public class AdminUserDetailResponse {
     private String profileImg;
     @Schema(description = "개인정보 처리방침 동의 여부", example = "true")
     private boolean privacyPolicyAgreed;
+    @Schema(description = "이용약관 동의 여부", example = "true")
+    private boolean termsOfServiceAgreed;
+    @Schema(description = "콘텐츠 활용 동의 여부", example = "true")
+    private boolean contentPolicyAgreed;
     @Schema(description = "마케팅 수신 동의 여부", example = "false")
     private boolean marketingConsent;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")

@@ -73,6 +73,8 @@ public class User {
     private String withdrawalOtherReason;       // 탈퇴 사유 기타 (reason에 OTHER가 포함된 경우)
 
     private boolean privacyPolicyAgreed;       // 개인정보 처리방침 동의
+    private boolean termsOfServiceAgreed;      // 이용약관 동의
+    private boolean contentPolicyAgreed;       // 콘텐츠 활용 동의
     private boolean marketingConsent;           // 마케팅 수신 동의
 
     @OneToMany(mappedBy = "user")
