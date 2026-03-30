@@ -1,6 +1,7 @@
 package com.fmi.domain.auth.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,16 +20,19 @@ public class SignupRequest {
     @NotBlank
     private String nickname;
 
-    // 동의 항목 (모두 필수 - 값은 반드시 전송해야 함)
-    @Schema(description = "개인정보 처리방침 동의", example = "true")
+    // 필수 동의 항목
+    @Schema(description = "개인정보 처리방침 동의 (필수)", example = "true")
     @NotNull(message = "개인정보 처리방침 동의 값을 입력해주세요.")
+    @AssertTrue(message = "개인정보 처리방침에 동의해야 합니다.")
     private Boolean privacyPolicyAgreed;
 
-    @Schema(description = "이용약관 동의", example = "true")
+    @Schema(description = "이용약관 동의 (필수, 만 14세 이상)", example = "true")
     @NotNull(message = "이용약관 동의 값을 입력해주세요.")
+    @AssertTrue(message = "이용약관에 동의해야 합니다.")
     private Boolean termsOfServiceAgreed;
 
-    @Schema(description = "콘텐츠 활용 동의", example = "true")
+    // 선택 동의 항목
+    @Schema(description = "콘텐츠 활용 동의", example = "false")
     @NotNull(message = "콘텐츠 활용 동의 값을 입력해주세요.")
     private Boolean contentPolicyAgreed;
 
