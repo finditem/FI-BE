@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -55,6 +56,18 @@ public class EmailService {
             log.error("Tip: spring.mail.username/password 환경 변수를 확인하세요. 현재 fromEmail={}", fromEmail);
             // 이메일 발송 실패 시 GeneralException을 던져서 API가 실패 응답을 반환하도록 함
             throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
+        }
+    }
+
+    /**
+     * HTML 이메일 비동기 발송 (API 응답 블로킹 없음)
+     */
+    @Async
+    public void sendHtmlEmailAsync(String to, String subject, String templateName, Map<String, String> variables) {
+        try {
+            sendHtmlEmail(to, subject, templateName, variables);
+        } catch (Exception e) {
+            log.error("[EMAIL ASYNC FAILED] to={}, template={}, error={}", to, templateName, e.getMessage(), e);
         }
     }
 

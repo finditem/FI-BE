@@ -122,14 +122,18 @@ public class InquiryService {
                 String inquiryDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                         .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
 
-                emailService.sendHtmlEmail(
+                String recipientName = saved.getUser() != null && saved.getUser().getNickname() != null
+                        ? saved.getUser().getNickname() : recipientEmail;
+                emailService.sendHtmlEmailAsync(
                     recipientEmail,
                     "문의가 접수되었습니다",
                     "support-request-email.html",
                     java.util.Map.of(
+                        "name", recipientName,
                         "TITLE", saved.getTitle(),
                         "DATE", inquiryDate,
-                        "CONTENT", saved.getContent() != null ? saved.getContent() : ""
+                        "CONTENT", saved.getContent() != null ? saved.getContent() : "",
+                        "INQUIRY_ID", String.valueOf(saved.getId())
                     )
                 );
             }
@@ -164,21 +168,37 @@ public class InquiryService {
     /**
      * 내 문의 내역 조회 (커서 기반)
      */
-    public CursorPageResponse<InquiryListDTO> getMyInquiriesCursor(User user, InquiryStatus status, Boolean answered, Long cursor, int size) {
+    public CursorPageResponse<InquiryListDTO> getMyInquiriesCursor(User user, InquiryStatus status, Boolean answered, String keyword, Long cursor, int size) {
         int fetchSize = size + 1;
         Pageable limit = PageRequest.of(0, fetchSize);
         List<Inquiry> inquiries;
 
-        if (status != null) {
-            inquiries = inquiryRepository.findByUserAndAnswerStatusCursor(user, status, cursor, limit);
-        } else if (answered != null) {
-            if (answered) {
-                inquiries = inquiryRepository.findByUserAndAnswerStatusCursor(user, InquiryStatus.ANSWERED, cursor, limit);
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+
+        if (trimmedKeyword != null) {
+            if (status != null) {
+                inquiries = inquiryRepository.findByUserAndAnswerStatusAndKeywordCursor(user, status, trimmedKeyword, cursor, limit);
+            } else if (answered != null) {
+                if (answered) {
+                    inquiries = inquiryRepository.findByUserAndAnswerStatusAndKeywordCursor(user, InquiryStatus.ANSWERED, trimmedKeyword, cursor, limit);
+                } else {
+                    inquiries = inquiryRepository.findByUserAndAnswerStatusNotAndKeywordCursor(user, InquiryStatus.ANSWERED, trimmedKeyword, cursor, limit);
+                }
             } else {
-                inquiries = inquiryRepository.findByUserAndAnswerStatusNotCursor(user, InquiryStatus.ANSWERED, cursor, limit);
+                inquiries = inquiryRepository.findByUserAndKeywordCursor(user, trimmedKeyword, cursor, limit);
             }
         } else {
-            inquiries = inquiryRepository.findByUserCursor(user, cursor, limit);
+            if (status != null) {
+                inquiries = inquiryRepository.findByUserAndAnswerStatusCursor(user, status, cursor, limit);
+            } else if (answered != null) {
+                if (answered) {
+                    inquiries = inquiryRepository.findByUserAndAnswerStatusCursor(user, InquiryStatus.ANSWERED, cursor, limit);
+                } else {
+                    inquiries = inquiryRepository.findByUserAndAnswerStatusNotCursor(user, InquiryStatus.ANSWERED, cursor, limit);
+                }
+            } else {
+                inquiries = inquiryRepository.findByUserCursor(user, cursor, limit);
+            }
         }
 
         boolean hasNext = inquiries.size() > size;
@@ -250,14 +270,16 @@ public class InquiryService {
             String replyDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                     .format(java.time.LocalDateTime.now());
 
-            emailService.sendHtmlEmail(
+            emailService.sendHtmlEmailAsync(
                 inquiry.getEmail(),
                 "문의에 대한 답변이 도착했습니다",
                 "support-reply-email.html",
                 java.util.Map.of(
+                    "name", inquiry.getEmail(),
                     "TITLE", inquiry.getTitle(),
                     "DATE", replyDate,
-                    "CONTENT", content
+                    "CONTENT", content,
+                    "INQUIRY_ID", String.valueOf(inquiry.getId())
                 )
             );
         } catch (Exception e) {

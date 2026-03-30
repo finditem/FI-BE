@@ -94,12 +94,14 @@ public class InquiryController {
             @RequestParam(required = false) InquiryStatus status,
             @Parameter(description = "답변 여부 필터 (true=답변완료, false=미답변)")
             @RequestParam(required = false) Boolean answered,
+            @Parameter(description = "검색 키워드 (제목, 내용)")
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size) {
 
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        CursorPageResponse<InquiryListDTO> inquiries = inquiryService.getMyInquiriesCursor(user, status, answered, cursor, size);
+        CursorPageResponse<InquiryListDTO> inquiries = inquiryService.getMyInquiriesCursor(user, status, answered, keyword, cursor, size);
         return ApiResponse.onSuccess(inquiries);
     }
 
