@@ -142,12 +142,16 @@ public class ReportService {
     /**
      * 내 신고 내역 조회 (커서 기반)
      */
-    public CursorPageResponse<ReportListDTO> getMyReportsCursor(User user, ReportStatus status, Boolean answered, Long cursor, int size) {
+    public CursorPageResponse<ReportListDTO> getMyReportsCursor(User user, ReportStatus status, Boolean answered, String keyword, Long cursor, int size) {
         int fetchSize = size + 1;
         Pageable limit = PageRequest.of(0, fetchSize);
         List<Report> reports;
 
-        if (status != null && answered != null) {
+        if (keyword != null && !keyword.isBlank()) {
+            reports = reportRepository.findByReporterWithKeywordCursor(
+                    user.getId(), status != null ? status.name() : null,
+                    answered, keyword, cursor, fetchSize);
+        } else if (status != null && answered != null) {
             reports = reportRepository.findByReporterAndStatusAndAnsweredCursor(user, status, answered, cursor, limit);
         } else if (status != null) {
             reports = reportRepository.findByReporterAndStatusCursor(user, status, cursor, limit);

@@ -73,6 +73,25 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                                             @Param("keyword") String keyword,
                                             Pageable pageable);
 
+    // 사용자별 커서 기반 조회 - keyword 검색 (FULLTEXT + ngram)
+    @Query(value = """
+            SELECT * FROM report r
+            WHERE r.reporter_user_id = :reporterId
+              AND (:status IS NULL OR r.status = :status)
+              AND (:answered IS NULL OR r.answered = :answered)
+              AND (:cursor IS NULL OR r.report_id < :cursor)
+              AND MATCH(r.reason) AGAINST(:keyword IN BOOLEAN MODE)
+            ORDER BY r.report_id DESC
+            LIMIT :limit
+            """,
+            nativeQuery = true)
+    List<Report> findByReporterWithKeywordCursor(@Param("reporterId") Long reporterId,
+                                                  @Param("status") String status,
+                                                  @Param("answered") Boolean answered,
+                                                  @Param("keyword") String keyword,
+                                                  @Param("cursor") Long cursor,
+                                                  @Param("limit") int limit);
+
     // 사용자별 커서 기반 조회 - 전체
     @Query("""
             SELECT r FROM Report r
