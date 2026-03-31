@@ -6,6 +6,7 @@ import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.web.dto.response.MarketingConsentPostPageResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 
 import java.time.LocalDate;
@@ -24,28 +25,36 @@ public interface PostRepositoryCustom {
                                                  Set<Long> hotPostsIds);
 
     PostPageResponse searchMyPosts(Long userId,
-                                    PostType postType,
-                                    PostStatus postStatus,
-                                    Category category,
-                                    SortType sortType,
-                                    LocalDate startDate,
-                                    LocalDate endDate,
-                                    String keyword,
-                                    Long cursor,
-                                    int size);
+                                   PostType postType,
+                                   PostStatus postStatus,
+                                   Category category,
+                                   SortType sortType,
+                                   LocalDate startDate,
+                                   LocalDate endDate,
+                                   String keyword,
+                                   Long cursor,
+                                   int size);
 
     PostPageResponse searchMyFavorites(Long userId,
-                                        PostType postType,
-                                        Category category,
-                                        String address,
-                                        String keyword,
-                                        SortType sortType,
-                                        Long cursor,
-                                        int size);
+                                       PostType postType,
+                                       Category category,
+                                       String address,
+                                       String keyword,
+                                       SortType sortType,
+                                       Long cursor,
+                                       int size);
 
     List<Post> searchByKeywordWithCursor(String keyword, Long cursor, int size);
 
     long countByKeyword(String keyword);
 
     List<Post> findSimilarPosts(Long postId, int limit);
+
+    MarketingConsentPostPageResponse findMarketingConsentPosts(Long userId,
+                                                               Long cursor,
+                                                               int size,
+                                                               SortType sortType,
+                                                               Category category,
+                                                               PostStatus postStatus,
+                                                               Set<Long> hotPostsIds);
 }

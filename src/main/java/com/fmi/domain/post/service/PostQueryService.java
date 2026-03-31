@@ -321,4 +321,19 @@ public class PostQueryService {
                 )
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public MarketingConsentPostPageResponse getMarketingConsentPosts(Long cursor,
+                                                                     int size,
+                                                                     SortType sortType,
+                                                                     Category category,
+                                                                     PostStatus postStatus,
+                                                                     UserDetails userDetails) {
+        User user = userQueryService.findUser(userDetails.getUsername());
+
+        Set<Long> hotIds = hotPostService.resolveHotPostIdsForUser(
+                null, postStatus, category, null, user.getId(), 5);
+
+        return postRepository.findMarketingConsentPosts(user.getId(), cursor, size, sortType, category, postStatus, hotIds);
+    }
 }

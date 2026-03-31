@@ -597,4 +597,16 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
+    @GetMapping("/marketing-consent")
+    public ResponseEntity<ApiResponse<MarketingConsentPostPageResponse>> getMarketingConsentPosts(@RequestParam(required = false) Long cursor,
+                                                                                                  @RequestParam(defaultValue = "20") int size,
+                                                                                                  @RequestParam(defaultValue = "LATEST") SortType sortType,
+                                                                                                  @RequestParam(required = false) Category category,
+                                                                                                  @RequestParam(required = false) PostStatus postStatus,
+                                                                                                  @AuthenticationPrincipal UserDetails userDetails) {
+        MarketingConsentPostPageResponse response = postQueryService.getMarketingConsentPosts(cursor, size, sortType, category, postStatus, userDetails);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
 }
