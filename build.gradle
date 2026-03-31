@@ -30,7 +30,6 @@ ext['spring-framework.version'] = '6.2.11'
 ext['jackson.version'] = '2.19.2'
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
