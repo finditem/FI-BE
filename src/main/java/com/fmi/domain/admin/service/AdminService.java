@@ -47,6 +47,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
 
+import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.data.PostStatus;
+import com.fmi.domain.post.web.dto.response.PostBriefResponse;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -406,6 +410,50 @@ public class AdminService {
                         .withdrawalReason(user.getWithdrawalReason())
                         .withdrawalOtherReason(user.getWithdrawalOtherReason())
                         .build())
+                .toList();
+
+        return new CursorPageResponse<>(responseList, nextCursor, hasNext);
+    }
+
+    public CursorPageResponse<PostBriefResponse> getMarketingConsentPosts(
+            String sort, Category category, PostStatus postStatus, Long cursor, int size) {
+
+        int fetchSize = size + 1;
+        List<Post> posts;
+
+        String categoryStr = category != null ? category.name() : null;
+        String postStatusStr = postStatus != null ? postStatus.name() : null;
+
+        if ("popular".equals(sort)) {
+            posts = postRepository.findMarketingConsentPostsByPopular(
+                    categoryStr, postStatusStr, cursor, fetchSize);
+        } else {
+            posts = postRepository.findMarketingConsentPostsByLatest(
+                    categoryStr, postStatusStr, cursor, fetchSize);
+        }
+
+        boolean hasNext = posts.size() > size;
+        List<Post> content = hasNext ? posts.subList(0, size) : posts;
+        Long nextCursor = hasNext ? content.get(content.size() - 1).getId() : null;
+
+        List<PostBriefResponse> responseList = content.stream()
+                .map(post -> new PostBriefResponse(
+                        post.getId(),
+                        post.getTitle(),
+                        post.makeSummary(),
+                        null,
+                        post.getAddress(),
+                        post.getPostStatus(),
+                        post.getPostType(),
+                        post.getCategory(),
+                        0L,
+                        false,
+                        post.getViewCount(),
+                        post.isNew(),
+                        false,
+                        post.getCreatedAt(),
+                        0
+                ))
                 .toList();
 
         return new CursorPageResponse<>(responseList, nextCursor, hasNext);

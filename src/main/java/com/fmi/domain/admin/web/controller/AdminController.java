@@ -6,6 +6,9 @@ import com.fmi.domain.admin.dto.AdminGuestInquiryReplyRequestDTO;
 import com.fmi.domain.admin.dto.AdminInquiryResponse;
 import com.fmi.domain.admin.dto.AdminReportResponse;
 import com.fmi.domain.admin.dto.AdminUserDetailResponse;
+import com.fmi.domain.Enum.Category;
+import com.fmi.domain.post.data.PostStatus;
+import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.admin.service.AdminService;
 import com.fmi.domain.admin.web.dto.AdminIpBlockRequest;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
@@ -449,6 +452,38 @@ public class AdminController {
     public ApiResponse<SignupResponse> adminSignup(@Valid @RequestBody AdminSignupRequest request) {
         Long id = authService.adminSignup(request);
         return ApiResponse.onSuccess(AuthConverter.toSignupResponse(id));
+    }
+
+    @GetMapping("/posts/marketing")
+    @Operation(summary = "마케팅 동의 유저 게시글 목록 조회",
+            description = """
+                마케팅 수신 동의한 유저들의 게시글을 조회합니다.
+                커서 기반 무한스크롤을 지원하며, 정렬/카테고리/찾음 여부 필터를 제공합니다.
+
+                **정렬 (sort):**
+                - latest: 최신순 (기본값)
+                - popular: 인기순 (조회수)
+
+                **필터:**
+                - category: 카테고리 필터 (ELECTRONICS, WALLET, ID_CARD, JEWELRY, BAG, CARD, ETC)
+                - postStatus: 찾음 여부 필터 (SEARCHING, FOUND)
+                """)
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공")
+    })
+    public ApiResponse<CursorPageResponse<PostBriefResponse>> getMarketingConsentPosts(
+            @Parameter(description = "정렬 (latest=최신순, popular=인기순)")
+            @RequestParam(defaultValue = "latest") String sort,
+            @Parameter(description = "카테고리 필터")
+            @RequestParam(required = false) Category category,
+            @Parameter(description = "찾음 여부 필터 (SEARCHING=찾는중, FOUND=찾음)")
+            @RequestParam(required = false) PostStatus postStatus,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        CursorPageResponse<PostBriefResponse> response =
+                adminService.getMarketingConsentPosts(sort, category, postStatus, cursor, size);
+        return ApiResponse.onSuccess(response);
     }
 
     @GetMapping("/users/deleted")
