@@ -478,11 +478,14 @@ public class AdminController {
             @RequestParam(required = false) Category category,
             @Parameter(description = "찾음 여부 필터 (SEARCHING=찾는중, FOUND=찾음)")
             @RequestParam(required = false) PostStatus postStatus,
+            @Parameter(description = "커서 (마지막 게시글 ID)")
             @RequestParam(required = false) Long cursor,
+            @Parameter(description = "인기순 정렬 시 마지막 게시글의 조회수 (popular 정렬에서만 사용)")
+            @RequestParam(required = false) Long cursorViewCount,
             @RequestParam(defaultValue = "20") int size
     ) {
         CursorPageResponse<PostBriefResponse> response =
-                adminService.getMarketingConsentPosts(sort, category, postStatus, cursor, size);
+                adminService.getMarketingConsentPosts(sort, category, postStatus, cursor, cursorViewCount, size);
         return ApiResponse.onSuccess(response);
     }
 

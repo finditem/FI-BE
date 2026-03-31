@@ -49,10 +49,14 @@ import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
 
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
+import com.fmi.domain.post.converter.util.PostConverter;
+import com.fmi.domain.post.service.PostImageService;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
+import com.fmi.domain.postfavorite.service.PostFavoriteService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -71,6 +75,8 @@ public class AdminService {
     private final UserCategoryRepository userCategoryRepository;
     private final InquiryCommentService inquiryCommentService;
     private final IpBlacklistService ipBlacklistService;
+    private final PostFavoriteService postFavoriteService;
+    private final PostImageService postImageService;
     private final ReportAnswerImageRepository reportAnswerImageRepository;
 
     public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
@@ -416,8 +422,10 @@ public class AdminService {
     }
 
     public CursorPageResponse<PostBriefResponse> getMarketingConsentPosts(
-            String sort, Category category, PostStatus postStatus, Long cursor, int size) {
+            String sort, Category category, PostStatus postStatus,
+            Long cursor, Long cursorViewCount, int size) {
 
+        size = Math.max(1, Math.min(size, 50));
         int fetchSize = size + 1;
         List<Post> posts;
 
@@ -426,7 +434,7 @@ public class AdminService {
 
         if ("popular".equals(sort)) {
             posts = postRepository.findMarketingConsentPostsByPopular(
-                    categoryStr, postStatusStr, cursor, fetchSize);
+                    categoryStr, postStatusStr, cursorViewCount, cursor, fetchSize);
         } else {
             posts = postRepository.findMarketingConsentPostsByLatest(
                     categoryStr, postStatusStr, cursor, fetchSize);
@@ -436,23 +444,17 @@ public class AdminService {
         List<Post> content = hasNext ? posts.subList(0, size) : posts;
         Long nextCursor = hasNext ? content.get(content.size() - 1).getId() : null;
 
+        Map<Long, Long> favoriteCountMap = postFavoriteService.getFavoriteCountMap(content);
+        Map<Long, String> thumbnailMap = postImageService.findThumbnailUrlByPostList(content);
+        Map<Long, Integer> imageCountMap = postImageService.countImageByPostList(content);
+
         List<PostBriefResponse> responseList = content.stream()
-                .map(post -> new PostBriefResponse(
-                        post.getId(),
-                        post.getTitle(),
-                        post.makeSummary(),
-                        null,
-                        post.getAddress(),
-                        post.getPostStatus(),
-                        post.getPostType(),
-                        post.getCategory(),
-                        0L,
+                .map(post -> PostConverter.toPostBriefResponse(
+                        post,
                         false,
-                        post.getViewCount(),
-                        post.isNew(),
-                        false,
-                        post.getCreatedAt(),
-                        0
+                        thumbnailMap.getOrDefault(post.getId(), null),
+                        favoriteCountMap.getOrDefault(post.getId(), 0L),
+                        imageCountMap.getOrDefault(post.getId(), 0)
                 ))
                 .toList();
 

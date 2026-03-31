@@ -87,7 +87,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
                                                   @Param("cursor") Long cursor,
                                                   @Param("limit") int limit);
 
-    // 마케팅 동의 유저 게시글 - 인기순
+    // 마케팅 동의 유저 게시글 - 인기순 (view_count + id 복합 커서)
     @Query(value = """
             SELECT p.* FROM post p
             INNER JOIN users u ON p.user_id = u.id
@@ -95,13 +95,14 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
               AND p.temporary_save = false AND p.deleted = false
               AND (:category IS NULL OR p.category = :category)
               AND (:postStatus IS NULL OR p.item_status = :postStatus)
-              AND (:cursor IS NULL OR p.id < :cursor)
+              AND (:cursorViewCount IS NULL OR (p.view_count < :cursorViewCount OR (p.view_count = :cursorViewCount AND p.id < :cursorId)))
             ORDER BY p.view_count DESC, p.id DESC
             LIMIT :limit
             """, nativeQuery = true)
     List<Post> findMarketingConsentPostsByPopular(@Param("category") String category,
                                                    @Param("postStatus") String postStatus,
-                                                   @Param("cursor") Long cursor,
+                                                   @Param("cursorViewCount") Long cursorViewCount,
+                                                   @Param("cursorId") Long cursorId,
                                                    @Param("limit") int limit);
 
 }
