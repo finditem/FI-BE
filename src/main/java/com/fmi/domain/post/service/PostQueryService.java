@@ -328,12 +328,13 @@ public class PostQueryService {
                                                                      SortType sortType,
                                                                      Category category,
                                                                      PostStatus postStatus,
+                                                                     String keyword,
                                                                      UserDetails userDetails) {
         User user = userQueryService.findUser(userDetails.getUsername());
 
         Set<Long> hotIds = hotPostService.resolveHotPostIdsForUser(
-                null, postStatus, category, null, user.getId(), 5);
+                null, postStatus, category, null, null, 5);
 
-        return postRepository.findMarketingConsentPosts(user.getId(), cursor, size, sortType, category, postStatus, hotIds);
+        return postRepository.findMarketingConsentPosts(user.getId(), cursor, size, sortType, category, postStatus, keyword, hotIds);
     }
 }

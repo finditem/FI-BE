@@ -56,5 +56,6 @@ public interface PostRepositoryCustom {
                                                                SortType sortType,
                                                                Category category,
                                                                PostStatus postStatus,
+                                                               String keyword,
                                                                Set<Long> hotPostsIds);
 }

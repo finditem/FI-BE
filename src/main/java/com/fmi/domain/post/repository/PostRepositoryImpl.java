@@ -541,6 +541,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                                                                       SortType sortType,
                                                                       Category category,
                                                                       PostStatus postStatus,
+                                                                      String keyword,
                                                                       Set<Long> hotPostsIds) {
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
@@ -550,9 +551,12 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 post.temporarySave.isFalse(),
                 post.user.marketingConsent.isTrue(),
                 equalsCategory(post, category),
-                equalsPostStatus(post, postStatus),
-                excludeBlockedUsers(post, userId)
+                equalsPostStatus(post, postStatus)
         );
+
+        if (hasText(keyword)) {
+            baseWhere = baseWhere.and(buildKeywordCondition(post, keyword));
+        }
 
         BooleanExpression pageWhere = Expressions.allOf(
                 baseWhere,
