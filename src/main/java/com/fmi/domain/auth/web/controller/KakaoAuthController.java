@@ -135,7 +135,11 @@ public class KakaoAuthController {
             profile = profile != null ? profile : user.getProperties().getProfile_image();
         }
 
-        var localUser = socialLoginService.upsertUserFromKakao(user.getId(), email, nickname, profile);
+        var result = socialLoginService.upsertUserFromKakao(user.getId(), email, nickname, profile,
+                req.getPrivacyPolicyAgreed(), req.getTermsOfServiceAgreed(),
+                req.getContentPolicyAgreed(), req.getMarketingConsent());
+        var localUser = result.user();
+        boolean isNewUser = result.isNewUser();
 
         var claims = new java.util.HashMap<String, Object>();
         claims.put("userId", localUser.getId());
@@ -165,7 +169,7 @@ public class KakaoAuthController {
         return ResponseEntity.ok()
                 .header("Set-Cookie", accessCookie.toString())
                 .header("Set-Cookie", refreshCookie.toString())
-                .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(localUser.getId(), false)));
+                .body(ApiResponse.onSuccess(new LoginResponse(localUser.getId(), false, isNewUser)));
     }
 
     private ResponseCookie buildCookie(String name, String value, Duration maxAge) {
