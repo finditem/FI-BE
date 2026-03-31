@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'fmi-prod'
+    metrics_path: '/prod/actuator/prometheus'
+    static_configs:
+      - targets: ['<APP_SERVER_PRIVATE_IP>:80']
+
+
+  - job_name: 'fmi-dev'
+    metrics_path: '/dev/actuator/prometheus'
+    static_configs:
+      - targets: ['<APP_SERVER_PRIVATE_IP>:80']
