@@ -32,7 +32,7 @@ public class PasswordResetService {
     @Transactional
     public void issueTemporaryPassword(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._BAD_REQUEST));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         
         if (socialAccountsRepository.findByUser(user).isPresent()) {
             throw new GeneralException(ErrorStatus._SOCIAL_ACCOUNT);

@@ -183,8 +183,12 @@ public class UserController {
             - POST: 작성한 게시글
             - COMMENT: 작성한 댓글
             - FAVORITE: 즐겨찾기한 게시글
-            - INQUIRY: 문의 내역
-            - REPORT: 신고 내역
+            - INQUIRY: 문의 내역 (전체)
+            - INQUIRY_RECEIVED: 접수된 문의 (미답변)
+            - INQUIRY_ANSWERED: 답변 완료된 문의
+            - REPORT: 신고 내역 (전체)
+            - REPORT_RECEIVED: 접수된 신고 (미답변)
+            - REPORT_ANSWERED: 답변 완료된 신고
             - 미지정 시 전체 활동 조회
 
             **날짜 필터:**
