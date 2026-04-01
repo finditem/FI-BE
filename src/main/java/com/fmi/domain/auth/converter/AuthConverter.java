@@ -50,7 +50,9 @@ public class AuthConverter {
     /**
      * 소셜 로그인용 User Entity 생성
      */
-    public static User toSocialUserEntity(Long providerId, String email, String nickname, String profileImageUrl, String encodedPassword) {
+    public static User toSocialUserEntity(Long providerId, String email, String nickname, String profileImageUrl, String encodedPassword,
+                                           Boolean privacyPolicyAgreed, Boolean termsOfServiceAgreed,
+                                           Boolean contentPolicyAgreed, Boolean marketingConsent) {
         String effectiveEmail = (email != null && !email.isBlank())
                 ? email
                 : ("kakao_" + providerId + "@kakao.local");
@@ -62,10 +64,10 @@ public class AuthConverter {
                 .profile_img(profileImageUrl != null ? profileImageUrl : "")
                 .role(Role.USER)
                 .email_verified(true)
-                .privacyPolicyAgreed(false)
-                .termsOfServiceAgreed(false)
-                .contentPolicyAgreed(false)
-                .marketingConsent(false)
+                .privacyPolicyAgreed(Boolean.TRUE.equals(privacyPolicyAgreed))
+                .termsOfServiceAgreed(Boolean.TRUE.equals(termsOfServiceAgreed))
+                .contentPolicyAgreed(Boolean.TRUE.equals(contentPolicyAgreed))
+                .marketingConsent(Boolean.TRUE.equals(marketingConsent))
                 .build();
     }
 
