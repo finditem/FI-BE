@@ -42,6 +42,9 @@ public class Notification {
     @Column(name = "reference_id")
     private Long referenceId;
 
+    @Column(name = "room_id")
+    private Long roomId;
+
     @Column(name = "is_read")
     @Builder.Default
     private Boolean isRead = false;

@@ -17,6 +17,7 @@ public class NotificationConverter {
                 .message(notification.getMessage())
                 .referenceType(notification.getReferenceType())
                 .referenceId(notification.getReferenceId())
+                .roomId(notification.getRoomId())
                 .isRead(notification.getIsRead())
                 .createdAt(notification.getCreatedAt())
                 .build();

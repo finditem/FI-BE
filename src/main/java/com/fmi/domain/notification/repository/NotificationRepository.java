@@ -42,6 +42,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     Optional<Notification> findByUserAndReferenceIdAndType(User receiver, Long referenceId, NotificationType notificationType);
 
+    Optional<Notification> findByUserAndReferenceIdAndRoomIdAndType(User receiver, Long referenceId, Long roomId, NotificationType notificationType);
+
     // 채팅 알림 읽음 처리용 (CHAT + CHAT_REMINDER)
     List<Notification> findAllByUserAndReferenceIdAndTypeIn(User user, Long referenceId, List<NotificationType> types);
 
