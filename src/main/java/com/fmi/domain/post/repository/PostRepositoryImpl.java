@@ -2,9 +2,7 @@ package com.fmi.domain.post.repository;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.comment.data.QComment;
 import com.fmi.domain.post.data.*;
-import com.fmi.domain.post.web.dto.response.MarketingConsentPostPageResponse;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
@@ -13,7 +11,6 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -532,159 +529,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .orderBy(post.createdAt.desc(), post.id.desc())
                 .limit(limit)
                 .fetch();
-    }
-
-    @Override
-    public MarketingConsentPostPageResponse findMarketingConsentPosts(Long userId,
-                                                                      Long cursor,
-                                                                      int size,
-                                                                      SortType sortType,
-                                                                      Category category,
-                                                                      PostStatus postStatus,
-                                                                      String keyword,
-                                                                      Set<Long> hotPostsIds) {
-        QPost post = QPost.post;
-        QPostFavorite postFavorite = QPostFavorite.postFavorite;
-
-        BooleanExpression baseWhere = Expressions.allOf(
-                post.deleted.isFalse(),
-                post.temporarySave.isFalse(),
-                post.user.marketingConsent.isTrue(),
-                equalsCategory(post, category),
-                equalsPostStatus(post, postStatus)
-        );
-
-        if (hasText(keyword)) {
-            baseWhere = baseWhere.and(buildKeywordCondition(post, keyword));
-        }
-
-        BooleanExpression pageWhere = Expressions.allOf(
-                baseWhere,
-                cursorCondition(post, sortType, cursor)
-        );
-
-
-        List<Post> posts;
-        if (Objects.equals(sortType, SortType.MOST_FAVORITED)) {
-            posts = queryFactory
-                    .select(post)
-                    .from(post)
-                    .leftJoin(postFavorite).on(
-                            postFavorite.post.eq(post),
-                            postFavorite.isFavorite.isTrue()
-                    )
-                    .where(pageWhere)
-                    .groupBy(post.id)
-                    .orderBy(postFavorite.favorite_id.count().desc(), post.id.desc())
-                    .limit(size + 1)
-                    .fetch();
-        } else {
-            posts = queryFactory
-                    .selectFrom(post)
-                    .where(pageWhere)
-                    .orderBy(orderBySortType(post, sortType))
-                    .limit(size + 1)
-                    .fetch();
-        }
-
-        boolean hasNext = posts.size() > size;
-        if (hasNext) {
-            posts = posts.subList(0, size);
-        }
-
-        Long nextCursor = (hasNext && !posts.isEmpty())
-                ? posts.get(posts.size() - 1).getId()
-                : null;
-
-        if (posts.isEmpty()) {
-            return new MarketingConsentPostPageResponse(List.of(), null, false);
-        }
-
-        List<Long> postIdList = posts.stream()
-                .map(Post::getId)
-                .toList();
-
-        Map<Long, String> thumbnailMap = queryFactory
-                .select(postImage.post.id, postImage.imgUrl)
-                .from(postImage)
-                .where(
-                        postImage.post.id.in(postIdList),
-                        postImage.imageType.eq(ImageType.THUMBNAIL)
-                )
-                .fetch()
-                .stream()
-                .collect(Collectors.toMap(
-                        t -> Objects.requireNonNull(t.get(postImage.post.id)),
-                        t -> Objects.requireNonNull(t.get(postImage.imgUrl)),
-                        (a, b) -> a
-                ));
-
-        Map<Long, Long> favoriteCountMap = queryFactory
-                .select(postFavorite.post.id, postFavorite.favorite_id.count())
-                .from(postFavorite)
-                .where(
-                        postFavorite.post.id.in(postIdList),
-                        postFavorite.isFavorite.isTrue()
-                )
-                .groupBy(postFavorite.post.id)
-                .fetch()
-                .stream()
-                .collect(Collectors.toMap(
-                        t -> Objects.requireNonNull(t.get(postFavorite.post.id)),
-                        t -> Objects.requireNonNull(t.get(postFavorite.favorite_id.count()))
-                ));
-
-        Set<Long> myFavoritePostIds = Objects.isNull(userId) ? Set.of()
-                : new HashSet<>(
-                queryFactory
-                        .select(postFavorite.post.id)
-                        .from(postFavorite)
-                        .where(
-                                postFavorite.user.id.eq(userId),
-                                postFavorite.post.id.in(postIdList),
-                                postFavorite.isFavorite.isTrue()
-                        )
-                        .fetch()
-        );
-
-        Map<Long, Integer> imageCountMap = queryFactory
-                .select(postImage.post.id, postImage.id.count())
-                .from(postImage)
-                .where(postImage.post.id.in(postIdList))
-                .groupBy(postImage.post.id)
-                .fetch()
-                .stream()
-                .collect(Collectors.toMap(
-                        t -> Objects.requireNonNull(t.get(postImage.post.id)),
-                        t -> Objects.requireNonNull(t.get(postImage.id.count())).intValue()
-                ));
-
-        List<PostBriefResponse> postList = posts.stream()
-                .map(p -> {
-                    Long pid = p.getId();
-                    boolean isHot = hotPostsIds != null && hotPostsIds.contains(pid);
-
-                    return new PostBriefResponse(
-                            pid,
-                            p.getTitle(),
-                            p.makeSummary(),
-                            thumbnailMap.get(pid),
-                            p.getAddress(),
-                            p.getPostStatus(),
-                            p.getPostType(),
-                            p.getCategory(),
-                            favoriteCountMap.getOrDefault(pid, 0L),
-                            myFavoritePostIds.contains(pid),
-                            p.getViewCount(),
-                            p.isNew(),
-                            isHot,
-                            p.getCreatedAt(),
-                            imageCountMap.getOrDefault(pid, 0)
-                    );
-                })
-                .toList();
-
-        return new MarketingConsentPostPageResponse(postList, nextCursor, hasNext);
     }
 
     private BooleanExpression dateRange(QPost post, LocalDate startDate, LocalDate endDate) {

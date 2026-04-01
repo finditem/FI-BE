@@ -6,7 +6,6 @@ import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
-import com.fmi.domain.post.web.dto.response.MarketingConsentPostPageResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 
 import java.time.LocalDate;
@@ -49,13 +48,4 @@ public interface PostRepositoryCustom {
     long countByKeyword(String keyword);
 
     List<Post> findSimilarPosts(Long postId, int limit);
-
-    MarketingConsentPostPageResponse findMarketingConsentPosts(Long userId,
-                                                               Long cursor,
-                                                               int size,
-                                                               SortType sortType,
-                                                               Category category,
-                                                               PostStatus postStatus,
-                                                               String keyword,
-                                                               Set<Long> hotPostsIds);
 }
