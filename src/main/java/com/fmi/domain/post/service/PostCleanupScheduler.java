@@ -79,7 +79,7 @@ public class PostCleanupScheduler {
 
         postImageRepository.deleteAllByPostIds(postIdList);
         postFavoriteRepository.deleteAllByPostIds(postIdList);
-        postRepository.deleteExpiredDeletedPosts(threshold);
+        postRepository.deleteAllInBatch(expiredPosts);
 
         log.info("삭제 만료 게시글 정리 완료, postCount={}", postIdList.size());
 
