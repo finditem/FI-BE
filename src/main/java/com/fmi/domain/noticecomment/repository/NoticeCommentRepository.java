@@ -22,11 +22,11 @@ public interface NoticeCommentRepository extends JpaRepository<NoticeComment, Lo
     List<Object[]> countByParentIds(@Param("parentIds") List<Long> parentIds);
 
     @Query("select c from NoticeComment c join fetch c.user left join fetch c.parent " +
-            "where c.notice.noticeId = :noticeId order by c.id desc")
+            "where c.notice.noticeId = :noticeId and c.parent is null order by c.id desc")
     Slice<NoticeComment> findTopByNoticeIdOrderByIdDesc(@Param("noticeId") Long noticeId, Pageable pageable);
 
     @Query("select c from NoticeComment c join fetch c.user left join fetch c.parent " +
-            "where c.notice.noticeId = :noticeId and c.id < :cursor order by c.id desc")
+            "where c.notice.noticeId = :noticeId and c.parent is null and c.id < :cursor order by c.id desc")
     Slice<NoticeComment> findByNoticeIdAndIdLessThanOrderByIdDesc(@Param("noticeId") Long noticeId,
                                                                   @Param("cursor") Long cursor,
                                                                   Pageable pageable);
