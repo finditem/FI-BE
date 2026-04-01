@@ -50,13 +50,13 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                                  @Param("answered") Boolean answered,
                                  Pageable pageable);
 
-    // 관리자 전용 신고 목록 조회 - keyword 있을 때 (FULLTEXT + ngram)
+    // 관리자 전용 신고 목록 조회 - keyword 있을 때 (LIKE)
     @Query(value = """
             SELECT * FROM report r
             WHERE (:status IS NULL OR r.status = :status)
               AND (:targetType IS NULL OR r.target_type = :targetType)
               AND (:answered IS NULL OR r.answered = :answered)
-              AND MATCH(r.reason) AGAINST(:keyword IN BOOLEAN MODE)
+              AND r.reason LIKE CONCAT('%', :keyword, '%')
             ORDER BY r.created_at DESC
             """,
             countQuery = """
@@ -64,7 +64,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
             WHERE (:status IS NULL OR r.status = :status)
               AND (:targetType IS NULL OR r.target_type = :targetType)
               AND (:answered IS NULL OR r.answered = :answered)
-              AND MATCH(r.reason) AGAINST(:keyword IN BOOLEAN MODE)
+              AND r.reason LIKE CONCAT('%', :keyword, '%')
             """,
             nativeQuery = true)
     Page<Report> findAllForAdminWithKeyword(@Param("status") String status,
@@ -73,14 +73,14 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                                             @Param("keyword") String keyword,
                                             Pageable pageable);
 
-    // 사용자별 커서 기반 조회 - keyword 검색 (FULLTEXT + ngram)
+    // 사용자별 커서 기반 조회 - keyword 검색 (LIKE)
     @Query(value = """
             SELECT * FROM report r
             WHERE r.reporter_user_id = :reporterId
               AND (:status IS NULL OR r.status = :status)
               AND (:answered IS NULL OR r.answered = :answered)
               AND (:cursor IS NULL OR r.report_id < :cursor)
-              AND MATCH(r.reason) AGAINST(:keyword IN BOOLEAN MODE)
+              AND r.reason LIKE CONCAT('%', :keyword, '%')
             ORDER BY r.report_id DESC
             LIMIT :limit
             """,
@@ -147,6 +147,23 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     @Query("SELECT r FROM Report r WHERE r.reporter = :reporter AND r.createdAt < :cursor ORDER BY r.createdAt DESC")
     Slice<Report> findByReporterAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("reporter") User reporter, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
 
+    // 활동 내역용 - 날짜/키워드 필터 포함
+    @Query(value = """
+            SELECT r.* FROM report r
+            WHERE r.reporter_user_id = :reporterId
+              AND (:startDate IS NULL OR r.created_at >= :startDate)
+              AND (:endDate IS NULL OR r.created_at < :endDate)
+              AND (:keyword IS NULL OR r.reason LIKE CONCAT('%', :keyword, '%'))
+              AND (:cursor IS NULL OR r.created_at < :cursor)
+            ORDER BY r.created_at DESC
+            """, nativeQuery = true)
+    Slice<Report> findUserActivityReports(@Param("reporterId") Long reporterId,
+                                           @Param("startDate") java.time.LocalDateTime startDate,
+                                           @Param("endDate") java.time.LocalDateTime endDate,
+                                           @Param("keyword") String keyword,
+                                           @Param("cursor") java.time.LocalDateTime cursor,
+                                           Pageable pageable);
+
     long countByReporter(User reporter);
 
     // 통합 목록용 커서 기반 - 전체 신고
@@ -171,14 +188,14 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                                        @Param("cursor") Long cursor,
                                        Pageable pageable);
 
-    // 관리자 커서 기반 조회 - keyword 있을 때 (FULLTEXT + ngram)
+    // 관리자 커서 기반 조회 - keyword 있을 때 (LIKE)
     @Query(value = """
             SELECT * FROM report r
             WHERE (:status IS NULL OR r.status = :status)
               AND (:targetType IS NULL OR r.target_type = :targetType)
               AND (:answered IS NULL OR r.answered = :answered)
               AND (:cursor IS NULL OR r.report_id < :cursor)
-              AND MATCH(r.reason) AGAINST(:keyword IN BOOLEAN MODE)
+              AND r.reason LIKE CONCAT('%', :keyword, '%')
             ORDER BY r.report_id DESC
             LIMIT :limit
             """,

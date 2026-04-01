@@ -39,6 +39,24 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     @Query("SELECT i FROM Inquiry i WHERE i.user = :user AND i.createdAt < :cursor ORDER BY i.createdAt DESC")
     Slice<Inquiry> findByUserAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
 
+    // 활동 내역용 - 날짜/키워드 필터 포함
+    @Query("""
+            SELECT i FROM Inquiry i
+            WHERE i.user = :user
+              AND (:startDate IS NULL OR i.createdAt >= :startDate)
+              AND (:endDate IS NULL OR i.createdAt < :endDate)
+              AND (:keyword IS NULL OR i.title LIKE CONCAT('%', :keyword, '%')
+                   OR i.content LIKE CONCAT('%', :keyword, '%'))
+              AND (:cursor IS NULL OR i.createdAt < :cursor)
+            ORDER BY i.createdAt DESC
+            """)
+    Slice<Inquiry> findUserActivityInquiries(@Param("user") User user,
+                                              @Param("startDate") java.time.LocalDateTime startDate,
+                                              @Param("endDate") java.time.LocalDateTime endDate,
+                                              @Param("keyword") String keyword,
+                                              @Param("cursor") java.time.LocalDateTime cursor,
+                                              Pageable pageable);
+
     // 사용자별 커서 기반 조회 - 전체
     @Query("""
             SELECT i FROM Inquiry i
