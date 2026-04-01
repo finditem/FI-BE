@@ -69,6 +69,24 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
                                           @Param("keyword") String keyword,
                                           Pageable pageable);
 
+    // 활동 내역용 - 날짜/키워드 필터 포함
+    @Query("""
+            SELECT c FROM Comment c JOIN FETCH c.post
+            WHERE c.user = :user AND c.deleted = false
+              AND (:startDate IS NULL OR c.createdAt >= :startDate)
+              AND (:endDate IS NULL OR c.createdAt < :endDate)
+              AND (:keyword IS NULL OR c.content LIKE CONCAT('%', :keyword, '%')
+                   OR c.post.title LIKE CONCAT('%', :keyword, '%'))
+              AND (:cursor IS NULL OR c.createdAt < :cursor)
+            ORDER BY c.createdAt DESC
+            """)
+    Slice<Comment> findUserActivityComments(@Param("user") User user,
+                                            @Param("startDate") LocalDateTime startDate,
+                                            @Param("endDate") LocalDateTime endDate,
+                                            @Param("keyword") String keyword,
+                                            @Param("cursor") LocalDateTime cursor,
+                                            Pageable pageable);
+
     long countByUser(User user);
 
     @Query("select c from Comment c where c.post.id = :postId order by c.id desc")
