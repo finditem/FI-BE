@@ -47,9 +47,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
 
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.converter.util.PostConverter;
+import com.fmi.domain.post.service.HotPostService;
 import com.fmi.domain.post.service.PostImageService;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
@@ -57,6 +59,7 @@ import com.fmi.domain.postfavorite.service.PostFavoriteService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -77,6 +80,7 @@ public class AdminService {
     private final IpBlacklistService ipBlacklistService;
     private final PostFavoriteService postFavoriteService;
     private final PostImageService postImageService;
+    private final HotPostService hotPostService;
     private final ReportAnswerImageRepository reportAnswerImageRepository;
 
     public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
@@ -423,7 +427,8 @@ public class AdminService {
 
     public CursorPageResponse<PostBriefResponse> getContentPolicyPosts(
             String sort, Category category, PostStatus postStatus,
-            Long cursor, Long cursorViewCount, int size) {
+            String keyword, Long cursor, Long cursorViewCount, int size,
+            String adminEmail) {
 
         size = Math.max(1, Math.min(size, 50));
         int fetchSize = size + 1;
@@ -431,13 +436,14 @@ public class AdminService {
 
         String categoryStr = category != null ? category.name() : null;
         String postStatusStr = postStatus != null ? postStatus.name() : null;
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
 
         if ("popular".equals(sort)) {
             posts = postRepository.findContentPolicyPostsByPopular(
-                    categoryStr, postStatusStr, cursorViewCount, cursor, fetchSize);
+                    categoryStr, postStatusStr, trimmedKeyword, cursorViewCount, cursor, fetchSize);
         } else {
             posts = postRepository.findContentPolicyPostsByLatest(
-                    categoryStr, postStatusStr, cursor, fetchSize);
+                    categoryStr, postStatusStr, trimmedKeyword, cursor, fetchSize);
         }
 
         boolean hasNext = posts.size() > size;
@@ -448,14 +454,35 @@ public class AdminService {
         Map<Long, String> thumbnailMap = postImageService.findThumbnailUrlByPostList(content);
         Map<Long, Integer> imageCountMap = postImageService.countImageByPostList(content);
 
+        User adminUser = userRepository.findByEmail(adminEmail).orElse(null);
+        Map<Long, Boolean> favoriteStatusMap = (adminUser != null)
+                ? postFavoriteService.getIsFavoriteMap(adminUser, content)
+                : Map.of();
+
+        Set<Long> hotPostIds = hotPostService.resolveHotPostIdsForUser(
+                null, postStatus, category, null, null, 5);
+
         List<PostBriefResponse> responseList = content.stream()
-                .map(post -> PostConverter.toPostBriefResponse(
-                        post,
-                        false,
-                        thumbnailMap.getOrDefault(post.getId(), null),
-                        favoriteCountMap.getOrDefault(post.getId(), 0L),
-                        imageCountMap.getOrDefault(post.getId(), 0)
-                ))
+                .map(post -> {
+                    Long pid = post.getId();
+                    return new PostBriefResponse(
+                            pid,
+                            post.getTitle(),
+                            post.makeSummary(),
+                            thumbnailMap.getOrDefault(pid, null),
+                            post.getAddress(),
+                            post.getPostStatus(),
+                            post.getPostType(),
+                            post.getCategory(),
+                            favoriteCountMap.getOrDefault(pid, 0L),
+                            favoriteStatusMap.getOrDefault(pid, false),
+                            post.getViewCount(),
+                            post.isNew(),
+                            hotPostIds.contains(pid),
+                            post.getCreatedAt(),
+                            imageCountMap.getOrDefault(pid, 0)
+                    );
+                })
                 .toList();
 
         return new CursorPageResponse<>(responseList, nextCursor, hasNext);

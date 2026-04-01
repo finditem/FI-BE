@@ -462,11 +462,11 @@ public class AdminController {
         return ApiResponse.onSuccess(AuthConverter.toSignupResponse(id));
     }
 
-    @GetMapping("/posts/marketing")
+    @GetMapping("/posts/content-policy")
     @Operation(summary = "콘텐츠 활용 동의 유저 게시글 목록 조회",
             description = """
-                콘텐츠 활용 동의한 유저들의 게시글을 조회합니다.
-                커서 기반 무한스크롤을 지원하며, 정렬/카테고리/찾음 여부 필터를 제공합니다.
+                콘텐츠 활용에 동의한 유저들의 게시글을 조회합니다.
+                커서 기반 무한스크롤을 지원하며, 정렬/카테고리/찾음 여부/키워드 필터를 제공합니다.
 
                 **정렬 (sort):**
                 - latest: 최신순 (기본값)
@@ -475,9 +475,12 @@ public class AdminController {
                 **필터:**
                 - category: 카테고리 필터 (ELECTRONICS, WALLET, ID_CARD, JEWELRY, BAG, CARD, ETC)
                 - postStatus: 찾음 여부 필터 (SEARCHING, FOUND)
+                - keyword: 제목/내용 검색
                 """)
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자만 접근할 수 있습니다")
     })
     public ApiResponse<CursorPageResponse<PostBriefResponse>> getContentPolicyPosts(
             @Parameter(description = "정렬 (latest=최신순, popular=인기순)")
@@ -486,14 +489,17 @@ public class AdminController {
             @RequestParam(required = false) Category category,
             @Parameter(description = "찾음 여부 필터 (SEARCHING=찾는중, FOUND=찾음)")
             @RequestParam(required = false) PostStatus postStatus,
+            @Parameter(description = "제목/내용 키워드 검색")
+            @RequestParam(required = false) String keyword,
             @Parameter(description = "커서 (마지막 게시글 ID)")
             @RequestParam(required = false) Long cursor,
             @Parameter(description = "인기순 정렬 시 마지막 게시글의 조회수 (popular 정렬에서만 사용)")
             @RequestParam(required = false) Long cursorViewCount,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
         CursorPageResponse<PostBriefResponse> response =
-                adminService.getContentPolicyPosts(sort, category, postStatus, cursor, cursorViewCount, size);
+                adminService.getContentPolicyPosts(sort, category, postStatus, keyword, cursor, cursorViewCount, size, userDetails.getUsername());
         return ApiResponse.onSuccess(response);
     }
 

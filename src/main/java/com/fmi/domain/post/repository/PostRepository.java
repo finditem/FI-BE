@@ -96,14 +96,16 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
               AND p.temporary_save = false AND p.deleted = false
               AND (:category IS NULL OR p.category = :category)
               AND (:postStatus IS NULL OR p.item_status = :postStatus)
+              AND (:keyword IS NULL OR p.title LIKE CONCAT('%', :keyword, '%') OR p.content LIKE CONCAT('%', :keyword, '%'))
               AND (:cursor IS NULL OR p.id < :cursor)
             ORDER BY p.id DESC
             LIMIT :limit
             """, nativeQuery = true)
     List<Post> findContentPolicyPostsByLatest(@Param("category") String category,
-                                               @Param("postStatus") String postStatus,
-                                               @Param("cursor") Long cursor,
-                                               @Param("limit") int limit);
+                                              @Param("postStatus") String postStatus,
+                                              @Param("keyword") String keyword,
+                                              @Param("cursor") Long cursor,
+                                              @Param("limit") int limit);
 
     // 콘텐츠 활용 동의 유저 게시글 - 인기순 (view_count + id 복합 커서)
     @Query(value = """
@@ -113,14 +115,16 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
               AND p.temporary_save = false AND p.deleted = false
               AND (:category IS NULL OR p.category = :category)
               AND (:postStatus IS NULL OR p.item_status = :postStatus)
+              AND (:keyword IS NULL OR p.title LIKE CONCAT('%', :keyword, '%') OR p.content LIKE CONCAT('%', :keyword, '%'))
               AND (:cursorViewCount IS NULL OR (p.view_count < :cursorViewCount OR (p.view_count = :cursorViewCount AND p.id < :cursorId)))
             ORDER BY p.view_count DESC, p.id DESC
             LIMIT :limit
             """, nativeQuery = true)
     List<Post> findContentPolicyPostsByPopular(@Param("category") String category,
-                                                @Param("postStatus") String postStatus,
-                                                @Param("cursorViewCount") Long cursorViewCount,
-                                                @Param("cursorId") Long cursorId,
-                                                @Param("limit") int limit);
+                                               @Param("postStatus") String postStatus,
+                                               @Param("keyword") String keyword,
+                                               @Param("cursorViewCount") Long cursorViewCount,
+                                               @Param("cursorId") Long cursorId,
+                                               @Param("limit") int limit);
 
 }
