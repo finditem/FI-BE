@@ -54,25 +54,19 @@ public class EmailVerificationService {
         Instant expiresAt = Instant.now().plus(Duration.ofMinutes(5));
         // 코드와 만료 시간을 함께 저장 (만료 시간을 명시적으로 체크하기 위해)
         String value = code + ":" + expiresAt.getEpochSecond();
-        
-        // 이메일 발송을 먼저 시도 (실패 시 예외 발생)
-        try {
-            // HTML 템플릿 사용
-            emailService.sendHtmlEmail(
-                email,
-                "이메일 인증 코드",
-                "verify-code.html",
-                java.util.Map.of(
-                    "CODE", code
-                )
-            );
-            // 이메일 발송 성공 시에만 Redis에 코드 저장
-            redis.opsForValue().set(key(email), value, Duration.ofMinutes(5));
-        } catch (Exception e) {
-            // 이메일 발송 실패 시 Redis에 저장하지 않음 (이미 삭제했으므로 문제없음)
-            // 예외를 다시 던져서 API가 실패 응답을 반환하도록 함
-            throw e;
-        }
+
+        // Redis에 인증 코드 저장 (5분 TTL)
+        redis.opsForValue().set(key(email), value, Duration.ofMinutes(5));
+
+        // 이메일 비동기 발송 (SMTP 응답 대기 없이 즉시 API 응답)
+        emailService.sendHtmlEmailAsync(
+            email,
+            "이메일 인증 코드",
+            "verify-code.html",
+            java.util.Map.of(
+                "CODE", code
+            )
+        );
     }
 
     @Transactional
