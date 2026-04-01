@@ -421,7 +421,7 @@ public class AdminService {
         return new CursorPageResponse<>(responseList, nextCursor, hasNext);
     }
 
-    public CursorPageResponse<PostBriefResponse> getMarketingConsentPosts(
+    public CursorPageResponse<PostBriefResponse> getContentPolicyPosts(
             String sort, Category category, PostStatus postStatus,
             Long cursor, Long cursorViewCount, int size) {
 
@@ -433,10 +433,10 @@ public class AdminService {
         String postStatusStr = postStatus != null ? postStatus.name() : null;
 
         if ("popular".equals(sort)) {
-            posts = postRepository.findMarketingConsentPostsByPopular(
+            posts = postRepository.findContentPolicyPostsByPopular(
                     categoryStr, postStatusStr, cursorViewCount, cursor, fetchSize);
         } else {
-            posts = postRepository.findMarketingConsentPostsByLatest(
+            posts = postRepository.findContentPolicyPostsByLatest(
                     categoryStr, postStatusStr, cursor, fetchSize);
         }
 

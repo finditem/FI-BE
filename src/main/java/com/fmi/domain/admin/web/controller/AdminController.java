@@ -455,9 +455,9 @@ public class AdminController {
     }
 
     @GetMapping("/posts/marketing")
-    @Operation(summary = "마케팅 동의 유저 게시글 목록 조회",
+    @Operation(summary = "콘텐츠 활용 동의 유저 게시글 목록 조회",
             description = """
-                마케팅 수신 동의한 유저들의 게시글을 조회합니다.
+                콘텐츠 활용 동의한 유저들의 게시글을 조회합니다.
                 커서 기반 무한스크롤을 지원하며, 정렬/카테고리/찾음 여부 필터를 제공합니다.
 
                 **정렬 (sort):**
@@ -471,7 +471,7 @@ public class AdminController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공")
     })
-    public ApiResponse<CursorPageResponse<PostBriefResponse>> getMarketingConsentPosts(
+    public ApiResponse<CursorPageResponse<PostBriefResponse>> getContentPolicyPosts(
             @Parameter(description = "정렬 (latest=최신순, popular=인기순)")
             @RequestParam(defaultValue = "latest") String sort,
             @Parameter(description = "카테고리 필터")
@@ -485,7 +485,7 @@ public class AdminController {
             @RequestParam(defaultValue = "20") int size
     ) {
         CursorPageResponse<PostBriefResponse> response =
-                adminService.getMarketingConsentPosts(sort, category, postStatus, cursor, cursorViewCount, size);
+                adminService.getContentPolicyPosts(sort, category, postStatus, cursor, cursorViewCount, size);
         return ApiResponse.onSuccess(response);
     }
 
