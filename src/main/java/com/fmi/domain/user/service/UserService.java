@@ -85,6 +85,7 @@ public class UserService {
     private final ReportRepository reportRepository;
     private final CommentLikeService commentLikeService;
     private final CommentImageService commentImageService;
+    private final com.fmi.domain.inquirycomment.repository.InquiryCommentRepository inquiryCommentRepository;
 
     /**
      * 내 정보 조회
@@ -338,24 +339,28 @@ public class UserService {
                             "FAVORITE", f.getFavorite_id(), f.getPost().getTitle(), null, f.getCreatedAt())));
         }
 
-        if (type == null || type == ActivityType.INQUIRY || type == ActivityType.INQUIRY_RECEIVED || type == ActivityType.INQUIRY_ANSWERED) {
+        // 문의 등록 활동 (INQUIRY_RECEIVED)
+        if (type == null || type == ActivityType.INQUIRY || type == ActivityType.INQUIRY_RECEIVED) {
             Slice<Inquiry> inquirySlice = (cursorTime == null)
                     ? inquiryRepository.findByUserOrderByCreatedAtDesc(user, pageRequest)
                     : inquiryRepository.findByUserAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
             inquirySlice.getContent().stream()
                     .filter(i -> isWithinDateRange(i.getCreatedAt(), startDateTime, endDateTime))
                     .filter(i -> matchesKeyword(trimmedKeyword, i.getTitle(), i.getContent()))
-                    .filter(i -> {
-                        if (type == ActivityType.INQUIRY_RECEIVED) return i.getAnswerStatus() != com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
-                        if (type == ActivityType.INQUIRY_ANSWERED) return i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
-                        return true;
-                    })
-                    .forEach(i -> {
-                        boolean isAnswered = i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
-                        String activityType = isAnswered ? "INQUIRY_ANSWERED" : "INQUIRY_RECEIVED";
-                        allActivities.add(new ActivityResponse(
-                                activityType, i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt()));
-                    });
+                    .forEach(i -> allActivities.add(new ActivityResponse(
+                            "INQUIRY_RECEIVED", i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt())));
+        }
+
+        // 문의 답변 등록 활동 (INQUIRY_ANSWERED) - InquiryComment 기반
+        if (type == null || type == ActivityType.INQUIRY || type == ActivityType.INQUIRY_ANSWERED) {
+            Slice<com.fmi.domain.inquirycomment.data.InquiryComment> commentSlice = (cursorTime == null)
+                    ? inquiryCommentRepository.findByInquiryUserOrderByCreatedAtDesc(user, pageRequest)
+                    : inquiryCommentRepository.findByInquiryUserAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+            commentSlice.getContent().stream()
+                    .filter(c -> isWithinDateRange(c.getCreatedAt(), startDateTime, endDateTime))
+                    .filter(c -> matchesKeyword(trimmedKeyword, c.getInquiry().getTitle(), c.getContent()))
+                    .forEach(c -> allActivities.add(new ActivityResponse(
+                            "INQUIRY_ANSWERED", c.getInquiry().getId(), c.getInquiry().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
         }
 
         if (type == null || type == ActivityType.REPORT || type == ActivityType.REPORT_RECEIVED || type == ActivityType.REPORT_ANSWERED) {

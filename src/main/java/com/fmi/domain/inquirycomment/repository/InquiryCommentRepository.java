@@ -47,4 +47,13 @@ public interface InquiryCommentRepository extends JpaRepository<InquiryComment, 
      */
     @Query("SELECT c FROM InquiryComment c WHERE c.inquiry.id = :inquiryId ORDER BY c.id ASC")
     java.util.List<InquiryComment> findByInquiryIdOrderByIdAsc(@Param("inquiryId") Long inquiryId);
+
+    /**
+     * 특정 유저의 문의에 달린 답변 목록 조회 (활동 내역용, createdAt 내림차순)
+     */
+    @Query("SELECT c FROM InquiryComment c WHERE c.inquiry.user = :user AND c.parent IS NULL ORDER BY c.createdAt DESC")
+    Slice<InquiryComment> findByInquiryUserOrderByCreatedAtDesc(@Param("user") com.fmi.domain.auth.data.User user, Pageable pageable);
+
+    @Query("SELECT c FROM InquiryComment c WHERE c.inquiry.user = :user AND c.parent IS NULL AND c.createdAt < :cursor ORDER BY c.createdAt DESC")
+    Slice<InquiryComment> findByInquiryUserAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") com.fmi.domain.auth.data.User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
 }
