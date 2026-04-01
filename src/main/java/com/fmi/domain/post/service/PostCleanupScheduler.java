@@ -35,7 +35,7 @@ public class PostCleanupScheduler {
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     public void cleanupDeletedPosts() {
-        LocalDateTime threshold = LocalDateTime.now().minusMonths(1);
+        LocalDateTime threshold = LocalDateTime.now().minusDays(30);
 
         List<Post> expiredPosts = postRepository.findExpiredDeletedPosts(threshold);
 
