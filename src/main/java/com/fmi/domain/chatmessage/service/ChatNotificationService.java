@@ -39,8 +39,8 @@ public class ChatNotificationService {
                 : "새로운 채팅이 도착했어요.";
 
         Optional<Notification> notification =
-                notificationRepository.findByUserAndReferenceIdAndType(
-                        receiver, postId, type
+                notificationRepository.findByUserAndReferenceIdAndRoomIdAndType(
+                        receiver, postId, roomId, type
                 );
 
         if (notification.isPresent()) {
