@@ -18,6 +18,7 @@ import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
+import com.fmi.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +45,7 @@ public class InquiryCommentService {
     private final InquiryCommentConverter inquiryCommentConverter;
     private final NotificationService notificationService;
     private final S3Service s3Service;
+    private final EmailService emailService;
 
     /**
      * 댓글 작성
@@ -87,6 +89,30 @@ public class InquiryCommentService {
             sendCommentNotification(inquiry, savedComment, parent);
         } catch (Exception e) {
             log.warn("댓글 알림 발송 실패: {}", e.getMessage());
+        }
+
+        // 관리자 답변 시 문의 작성자에게 이메일 발송
+        if (isAdmin(userDetails) && inquiry.getUser() != null) {
+            try {
+                String replyDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                        .format(java.time.LocalDateTime.now());
+                String nickname = inquiry.getUser().getNickname() != null ? inquiry.getUser().getNickname() : "회원";
+
+                emailService.sendHtmlEmailAsync(
+                    inquiry.getUser().getEmail(),
+                    "문의에 대한 답변이 도착했습니다",
+                    "support-reply-email.html",
+                    java.util.Map.of(
+                        "name", nickname,
+                        "TITLE", inquiry.getTitle(),
+                        "DATE", replyDate,
+                        "CONTENT", savedComment.getContent(),
+                        "INQUIRY_ID", String.valueOf(inquiry.getId())
+                    )
+                );
+            } catch (Exception e) {
+                log.warn("문의 답변 이메일 발송 실패: inquiryId={}", inquiry.getId(), e);
+            }
         }
 
         return toResponse(savedComment, userDetails, savedImages);

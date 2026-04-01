@@ -316,14 +316,16 @@ public class ReportService {
 
             try {
                 String targetTitle = getTargetTitle(report.getTargetType(), report.getTargetId());
+                String reporterNickname = reporter.getNickname() != null ? reporter.getNickname() : "회원";
                 String reportDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                         .format(report.getCreatedAt() != null ? report.getCreatedAt() : java.time.LocalDateTime.now());
 
-                emailService.sendHtmlEmail(
+                emailService.sendHtmlEmailAsync(
                     reporter.getEmail(),
                     "신고 답변 안내",
                     "report-result-email.html",
                     java.util.Map.of(
+                        "name", reporterNickname,
                         "TITLE", targetTitle,
                         "USER", reporter.getEmail(),
                         "RESULT", "답변 완료",
@@ -334,6 +336,43 @@ public class ReportService {
             } catch (Exception e) {
                 log.error("신고 답변 이메일 발송 실패: reportId={}", report.getReportId(), e);
             }
+        }
+
+        // 피신고자에게 신고 조치 안내 이메일 발송
+        try {
+            User targetUser = findTargetUser(report.getTargetType(), report.getTargetId());
+            if (targetUser != null) {
+                String targetNickname = targetUser.getNickname() != null ? targetUser.getNickname() : "회원";
+                emailService.sendHtmlEmailAsync(
+                    targetUser.getEmail(),
+                    "신고 처리 결과 안내",
+                    "report-notification-email.html",
+                    java.util.Map.of(
+                        "name", targetNickname,
+                        "ACTION", adminAnswer
+                    )
+                );
+            }
+        } catch (Exception e) {
+            log.error("피신고자 이메일 발송 실패: reportId={}", report.getReportId(), e);
+        }
+    }
+
+    private User findTargetUser(ReportTargetType targetType, Long targetId) {
+        try {
+            switch (targetType) {
+                case POST:
+                    return postRepository.findById(targetId).map(Post::getUser).orElse(null);
+                case COMMENT:
+                    return commentRepository.findById(targetId).map(c -> c.getUser()).orElse(null);
+                case USER:
+                    return userRepository.findActiveById(targetId).orElse(null);
+                default:
+                    return null;
+            }
+        } catch (Exception e) {
+            log.warn("피신고자 조회 실패: targetType={}, targetId={}", targetType, targetId, e);
+            return null;
         }
     }
 }
