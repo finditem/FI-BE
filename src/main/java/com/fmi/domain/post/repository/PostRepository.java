@@ -86,4 +86,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             """)
     void deleteExpiredDeletedPosts(@Param("threshold") LocalDateTime threshold);
 
+    @Modifying
+    @Query("UPDATE Post p SET p.deleted = true, p.deletedAt = :now, p.updatedAt = :now WHERE p.user = :user AND p.deleted = false")
+    void softDeleteAllByUser(@Param("user") User user, @Param("now") LocalDateTime now);
+
 }

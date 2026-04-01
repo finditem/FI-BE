@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -112,11 +113,7 @@ public class PostService {
 
     @Transactional
     public void softDeleteAllByUser(User user) {
-        List<Post> posts = postRepository.findByUser(user);
-
-        for (Post post : posts) {
-            post.softDelete();
-        }
+        postRepository.softDeleteAllByUser(user, LocalDateTime.now());
     }
 
     @Transactional
