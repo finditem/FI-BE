@@ -4,6 +4,7 @@ import com.fmi.domain.comment.data.CommentImage;
 import com.fmi.domain.comment.repository.CommentImageRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.commentlike.repository.CommentLikeRepository;
+import com.fmi.domain.post.data.ImageType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.repository.PostImageRepository;
@@ -17,6 +18,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -51,6 +53,7 @@ public class PostCleanupScheduler {
         List<PostImage> postImageList = postImageRepository.findAllByPostIds(postIdList);
 
         List<String> imageUrlList = postImageList.stream()
+                .filter(postImage -> Objects.equals(postImage.getImageType(), ImageType.NORMAL))
                 .map(PostImage::getImgUrl)
                 .filter(url -> Objects.nonNull(url) && !url.isBlank())
                 .toList();
@@ -61,16 +64,17 @@ public class PostCleanupScheduler {
                 .filter(url -> url != null && !url.isBlank())
                 .toList();
 
-        try {
-            if (!imageUrlList.isEmpty()) {
-                s3Service.delete(imageUrlList);
-            }
+        List<String> allImageUrls = new ArrayList<>();
+        allImageUrls.addAll(imageUrlList);
+        allImageUrls.addAll(commentImageUrls);
 
-            if (!commentImageUrls.isEmpty()) {
-                s3Service.delete(commentImageUrls);
+
+        try {
+            if (!allImageUrls.isEmpty()) {
+                s3Service.delete(allImageUrls);
             }
         } catch (Exception e) {
-            log.error("s3 이미지 삭제 실패");
+            log.error("S3 삭제 실패 - 일부 이미지 누락 가능, count={}", allImageUrls.size(), e);
         }
 
         commentImageRepository.deleteAllByPostIds(postIdList);
