@@ -70,6 +70,24 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 
     Optional<Post> findByUserAndTemporarySaveTrueAndDeletedFalse(User user);
 
+    // 활동 내역용 - 날짜/키워드 필터 포함
+    @Query("""
+            SELECT p FROM Post p
+            WHERE p.user = :user AND p.temporarySave = false AND p.deleted = false
+              AND (:startDate IS NULL OR p.createdAt >= :startDate)
+              AND (:endDate IS NULL OR p.createdAt < :endDate)
+              AND (:keyword IS NULL OR p.title LIKE CONCAT('%', :keyword, '%')
+                   OR p.content LIKE CONCAT('%', :keyword, '%'))
+              AND (:cursor IS NULL OR p.createdAt < :cursor)
+            ORDER BY p.createdAt DESC
+            """)
+    Slice<Post> findUserActivities(@Param("user") User user,
+                                    @Param("startDate") java.time.LocalDateTime startDate,
+                                    @Param("endDate") java.time.LocalDateTime endDate,
+                                    @Param("keyword") String keyword,
+                                    @Param("cursor") java.time.LocalDateTime cursor,
+                                    Pageable pageable);
+
     // 마케팅 동의 유저 게시글 - 최신순
     @Query(value = """
             SELECT p.* FROM post p

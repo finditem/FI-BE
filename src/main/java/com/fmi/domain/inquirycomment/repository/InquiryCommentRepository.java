@@ -56,4 +56,22 @@ public interface InquiryCommentRepository extends JpaRepository<InquiryComment, 
 
     @Query("SELECT c FROM InquiryComment c WHERE c.inquiry.user = :user AND c.parent IS NULL AND c.createdAt < :cursor ORDER BY c.createdAt DESC")
     Slice<InquiryComment> findByInquiryUserAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") com.fmi.domain.auth.data.User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
+
+    // 활동 내역용 - 날짜/키워드 필터 포함
+    @Query("""
+            SELECT c FROM InquiryComment c JOIN FETCH c.inquiry
+            WHERE c.inquiry.user = :user AND c.parent IS NULL
+              AND (:startDate IS NULL OR c.createdAt >= :startDate)
+              AND (:endDate IS NULL OR c.createdAt < :endDate)
+              AND (:keyword IS NULL OR c.inquiry.title LIKE CONCAT('%', :keyword, '%')
+                   OR c.content LIKE CONCAT('%', :keyword, '%'))
+              AND (:cursor IS NULL OR c.createdAt < :cursor)
+            ORDER BY c.createdAt DESC
+            """)
+    Slice<InquiryComment> findUserActivityInquiryAnswers(@Param("user") com.fmi.domain.auth.data.User user,
+                                                          @Param("startDate") java.time.LocalDateTime startDate,
+                                                          @Param("endDate") java.time.LocalDateTime endDate,
+                                                          @Param("keyword") String keyword,
+                                                          @Param("cursor") java.time.LocalDateTime cursor,
+                                                          Pageable pageable);
 }
