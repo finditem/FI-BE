@@ -185,8 +185,9 @@ public class Post {
 
     public void softDelete() {
         this.deleted = true;
-        this.updatedAt = LocalDateTime.now();
-        this.deletedAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.updatedAt = now;
+        this.deletedAt = now;
     }
 
     private <T> void applyIfNotNull(T value, Consumer<T> setter) {
