@@ -45,6 +45,7 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import com.fmi.security.RefreshTokenStore;
 import com.fmi.service.EmailService;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +86,7 @@ public class UserService {
     private final ReportRepository reportRepository;
     private final CommentLikeService commentLikeService;
     private final CommentImageService commentImageService;
-    private final com.fmi.domain.auth.repository.SocialAccountsRepository socialAccountsRepository;
+    private final SocialAccountsRepository socialAccountsRepository;
 
     /**
      * 내 정보 조회
@@ -561,7 +562,7 @@ public class UserService {
             if (request.getPassword() == null || request.getPassword().isBlank()) {
                 throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
             }
-            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            if (!verifyPassword(email, request.getPassword())) {
                 throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
             }
         }
