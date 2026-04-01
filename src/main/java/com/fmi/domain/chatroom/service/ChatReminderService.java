@@ -44,11 +44,13 @@ public class ChatReminderService {
             try {
                 User receiver = pt.getUser();
                 Long postId = pt.getChatRoom().getPost().getId();
+                Long roomId = pt.getChatRoom().getId();
                 String content = pt.getLastMessage().getContent();
 
                 chatNotificationService.saveOrUpdateChatNotification(
                         receiver,
                         postId,
+                        roomId,
                         content,
                         NotificationType.CHAT_REMINDER
                 );
