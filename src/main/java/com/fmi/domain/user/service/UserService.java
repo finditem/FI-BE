@@ -45,6 +45,7 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import com.fmi.security.RefreshTokenStore;
 import com.fmi.service.EmailService;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +86,7 @@ public class UserService {
     private final ReportRepository reportRepository;
     private final CommentLikeService commentLikeService;
     private final CommentImageService commentImageService;
+    private final SocialAccountsRepository socialAccountsRepository;
 
     /**
      * 내 정보 조회
@@ -553,6 +555,17 @@ public class UserService {
     public void deleteAccount(String email, AccountDeleteRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        // 소셜 로그인 유저가 아닌 경우 비밀번호 검증
+        boolean isSocialUser = socialAccountsRepository.findByUser(user).isPresent();
+        if (!isSocialUser) {
+            if (request.getPassword() == null || request.getPassword().isBlank()) {
+                throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
+            }
+            if (!verifyPassword(email, request.getPassword())) {
+                throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
+            }
+        }
 
         // 프로필 이미지가 있다면 S3에서 삭제
         if (user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
