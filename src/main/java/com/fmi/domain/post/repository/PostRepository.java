@@ -90,4 +90,57 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     @Query("UPDATE Post p SET p.deleted = true, p.deletedAt = :now, p.updatedAt = :now WHERE p.user = :user AND p.deleted = false")
     void softDeleteAllByUser(@Param("user") User user, @Param("now") LocalDateTime now);
 
+    // 활동 내역용 - 날짜/키워드 필터 포함
+    @Query("""
+            SELECT p FROM Post p
+            WHERE p.user = :user AND p.temporarySave = false AND p.deleted = false
+              AND (:startDate IS NULL OR p.createdAt >= :startDate)
+              AND (:endDate IS NULL OR p.createdAt < :endDate)
+              AND (:keyword IS NULL OR p.title LIKE CONCAT('%', :keyword, '%')
+                   OR p.content LIKE CONCAT('%', :keyword, '%'))
+              AND (:cursor IS NULL OR p.createdAt < :cursor)
+            ORDER BY p.createdAt DESC
+            """)
+    Slice<Post> findUserActivities(@Param("user") User user,
+                                    @Param("startDate") java.time.LocalDateTime startDate,
+                                    @Param("endDate") java.time.LocalDateTime endDate,
+                                    @Param("keyword") String keyword,
+                                    @Param("cursor") java.time.LocalDateTime cursor,
+                                    Pageable pageable);
+
+    // 콘텐츠 활용 동의 유저 게시글 - 최신순
+    @Query(value = """
+            SELECT p.* FROM post p
+            INNER JOIN users u ON p.user_id = u.id
+            WHERE u.content_policy_agreed = true AND u.deleted = false
+              AND p.temporary_save = false AND p.deleted = false
+              AND (:category IS NULL OR p.category = :category)
+              AND (:postStatus IS NULL OR p.item_status = :postStatus)
+              AND (:cursor IS NULL OR p.id < :cursor)
+            ORDER BY p.id DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<Post> findContentPolicyPostsByLatest(@Param("category") String category,
+                                               @Param("postStatus") String postStatus,
+                                               @Param("cursor") Long cursor,
+                                               @Param("limit") int limit);
+
+    // 콘텐츠 활용 동의 유저 게시글 - 인기순 (view_count + id 복합 커서)
+    @Query(value = """
+            SELECT p.* FROM post p
+            INNER JOIN users u ON p.user_id = u.id
+            WHERE u.content_policy_agreed = true AND u.deleted = false
+              AND p.temporary_save = false AND p.deleted = false
+              AND (:category IS NULL OR p.category = :category)
+              AND (:postStatus IS NULL OR p.item_status = :postStatus)
+              AND (:cursorViewCount IS NULL OR (p.view_count < :cursorViewCount OR (p.view_count = :cursorViewCount AND p.id < :cursorId)))
+            ORDER BY p.view_count DESC, p.id DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<Post> findContentPolicyPostsByPopular(@Param("category") String category,
+                                                @Param("postStatus") String postStatus,
+                                                @Param("cursorViewCount") Long cursorViewCount,
+                                                @Param("cursorId") Long cursorId,
+                                                @Param("limit") int limit);
+
 }

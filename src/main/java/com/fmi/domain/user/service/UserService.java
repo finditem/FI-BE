@@ -46,6 +46,9 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import com.fmi.security.RefreshTokenStore;
 import com.fmi.service.EmailService;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.inquirycomment.data.InquiryComment;
+import com.fmi.domain.inquirycomment.repository.InquiryCommentRepository;
 import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -87,6 +90,8 @@ public class UserService {
     private final CommentLikeService commentLikeService;
     private final CommentImageService commentImageService;
     private final PostService postService;
+    private final InquiryCommentRepository inquiryCommentRepository;
+    private final SocialAccountsRepository socialAccountsRepository;
 
     /**
      * 내 정보 조회
@@ -306,69 +311,55 @@ public class UserService {
         PageRequest pageRequest = PageRequest.of(0, size);
 
         List<ActivityResponse> allActivities = new ArrayList<>();
+        boolean anySliceHasNext = false;
 
         if (type == null || type == ActivityType.POST) {
-            Slice<Post> postSlice = (cursorTime == null)
-                    ? postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseOrderByCreatedAtDesc(user, pageRequest)
-                    : postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
-            postSlice.getContent().stream()
-                    .filter(p -> isWithinDateRange(p.getCreatedAt(), startDateTime, endDateTime))
-                    .filter(p -> matchesKeyword(trimmedKeyword, p.getTitle(), p.getContent()))
-                    .forEach(p -> allActivities.add(new ActivityResponse(
-                            "POST", p.getId(), p.getTitle(), truncate(p.getContent(), 100), p.getCreatedAt())));
+            Slice<Post> postSlice = postRepository.findUserActivities(
+                    user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
+            anySliceHasNext = anySliceHasNext || postSlice.hasNext();
+            postSlice.getContent().forEach(p -> allActivities.add(new ActivityResponse(
+                    "POST", p.getId(), p.getTitle(), truncate(p.getContent(), 100), p.getCreatedAt())));
         }
 
         if (type == null || type == ActivityType.COMMENT) {
-            Slice<Comment> commentSlice = (cursorTime == null)
-                    ? commentRepository.findByUserAndDeletedFalseOrderByCreatedAtDesc(user, pageRequest)
-                    : commentRepository.findByUserAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
-            commentSlice.getContent().stream()
-                    .filter(c -> isWithinDateRange(c.getCreatedAt(), startDateTime, endDateTime))
-                    .filter(c -> matchesKeyword(trimmedKeyword, c.getPost().getTitle(), c.getContent()))
-                    .forEach(c -> allActivities.add(new ActivityResponse(
-                            "COMMENT", c.getId(), c.getPost().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
+            Slice<Comment> commentSlice = commentRepository.findUserActivityComments(
+                    user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
+            anySliceHasNext = anySliceHasNext || commentSlice.hasNext();
+            commentSlice.getContent().forEach(c -> allActivities.add(new ActivityResponse(
+                    "COMMENT", c.getId(), c.getPost().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
         }
 
         if (type == null || type == ActivityType.FAVORITE) {
-            Slice<PostFavorite> favoriteSlice = (cursorTime == null)
-                    ? postFavoriteRepository.findByUserAndIsFavoriteTrueOrderByCreatedAtDesc(user, pageRequest)
-                    : postFavoriteRepository.findByUserAndIsFavoriteTrueAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
-            favoriteSlice.getContent().stream()
-                    .filter(f -> isWithinDateRange(f.getCreatedAt(), startDateTime, endDateTime))
-                    .filter(f -> matchesKeyword(trimmedKeyword, f.getPost().getTitle(), null))
-                    .forEach(f -> allActivities.add(new ActivityResponse(
-                            "FAVORITE", f.getFavorite_id(), f.getPost().getTitle(), null, f.getCreatedAt())));
+            Slice<PostFavorite> favoriteSlice = postFavoriteRepository.findUserActivityFavorites(
+                    user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
+            anySliceHasNext = anySliceHasNext || favoriteSlice.hasNext();
+            favoriteSlice.getContent().forEach(f -> allActivities.add(new ActivityResponse(
+                    "FAVORITE", f.getFavorite_id(), f.getPost().getTitle(), null, f.getCreatedAt())));
         }
 
-        if (type == null || type == ActivityType.INQUIRY || type == ActivityType.INQUIRY_RECEIVED || type == ActivityType.INQUIRY_ANSWERED) {
-            Slice<Inquiry> inquirySlice = (cursorTime == null)
-                    ? inquiryRepository.findByUserOrderByCreatedAtDesc(user, pageRequest)
-                    : inquiryRepository.findByUserAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
-            inquirySlice.getContent().stream()
-                    .filter(i -> isWithinDateRange(i.getCreatedAt(), startDateTime, endDateTime))
-                    .filter(i -> matchesKeyword(trimmedKeyword, i.getTitle(), i.getContent()))
-                    .filter(i -> {
-                        if (type == ActivityType.INQUIRY_RECEIVED)
-                            return i.getAnswerStatus() != com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
-                        if (type == ActivityType.INQUIRY_ANSWERED)
-                            return i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
-                        return true;
-                    })
-                    .forEach(i -> {
-                        boolean isAnswered = i.getAnswerStatus() == com.fmi.domain.inquiry.data.enums.InquiryStatus.ANSWERED;
-                        String activityType = isAnswered ? "INQUIRY_ANSWERED" : "INQUIRY_RECEIVED";
-                        allActivities.add(new ActivityResponse(
-                                activityType, i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt()));
-                    });
+        // 문의 등록 활동 (INQUIRY_RECEIVED)
+        if (type == null || type == ActivityType.INQUIRY || type == ActivityType.INQUIRY_RECEIVED) {
+            Slice<Inquiry> inquirySlice = inquiryRepository.findUserActivityInquiries(
+                    user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
+            anySliceHasNext = anySliceHasNext || inquirySlice.hasNext();
+            inquirySlice.getContent().forEach(i -> allActivities.add(new ActivityResponse(
+                    "INQUIRY_RECEIVED", i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt())));
+        }
+
+        // 문의 답변 등록 활동 (INQUIRY_ANSWERED) - InquiryComment 기반
+        if (type == null || type == ActivityType.INQUIRY || type == ActivityType.INQUIRY_ANSWERED) {
+            Slice<InquiryComment> commentSlice = inquiryCommentRepository.findUserActivityInquiryAnswers(
+                    user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
+            anySliceHasNext = anySliceHasNext || commentSlice.hasNext();
+            commentSlice.getContent().forEach(c -> allActivities.add(new ActivityResponse(
+                    "INQUIRY_ANSWERED", c.getInquiry().getId(), c.getInquiry().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
         }
 
         if (type == null || type == ActivityType.REPORT || type == ActivityType.REPORT_RECEIVED || type == ActivityType.REPORT_ANSWERED) {
-            Slice<Report> reportSlice = (cursorTime == null)
-                    ? reportRepository.findByReporterOrderByCreatedAtDesc(user, pageRequest)
-                    : reportRepository.findByReporterAndCreatedAtBeforeOrderByCreatedAtDesc(user, cursorTime, pageRequest);
+            Slice<Report> reportSlice = reportRepository.findUserActivityReports(
+                    user.getId(), startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
+            anySliceHasNext = anySliceHasNext || reportSlice.hasNext();
             reportSlice.getContent().stream()
-                    .filter(r -> isWithinDateRange(r.getCreatedAt(), startDateTime, endDateTime))
-                    .filter(r -> matchesKeyword(trimmedKeyword, r.getTargetType().getDescription(), r.getReason()))
                     .filter(r -> {
                         if (type == ActivityType.REPORT_RECEIVED) return !Boolean.TRUE.equals(r.getAnswered());
                         if (type == ActivityType.REPORT_ANSWERED) return Boolean.TRUE.equals(r.getAnswered());
@@ -384,7 +375,7 @@ public class UserService {
 
         allActivities.sort(Comparator.comparing(ActivityResponse::createdAt).reversed());
 
-        boolean hasNext = allActivities.size() > size;
+        boolean hasNext = anySliceHasNext || allActivities.size() > size;
         List<ActivityResponse> result = allActivities.size() > size
                 ? allActivities.subList(0, size)
                 : allActivities;
@@ -557,6 +548,17 @@ public class UserService {
     public void deleteAccount(String email, AccountDeleteRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        // 소셜 로그인 유저가 아닌 경우 비밀번호 검증
+        boolean isSocialUser = socialAccountsRepository.findByUser(user).isPresent();
+        if (!isSocialUser) {
+            if (request.getPassword() == null || request.getPassword().isBlank()) {
+                throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
+            }
+            if (!verifyPassword(email, request.getPassword())) {
+                throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
+            }
+        }
 
         // 프로필 이미지가 있다면 S3에서 삭제
         if (user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {

@@ -86,6 +86,23 @@ public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long
     Slice<PostFavorite> findByUserAndIsFavoriteTrueAndIdLessThanOrderByIdDesc(@Param("user") User user, @Param("cursor") Long cursor, Pageable pageable
     );
 
+    // 활동 내역용 - 날짜/키워드 필터 포함
+    @Query("""
+                SELECT pf FROM PostFavorite pf JOIN FETCH pf.post p
+                WHERE pf.user = :user AND pf.isFavorite = true AND p.deleted = false
+                  AND (:startDate IS NULL OR pf.createdAt >= :startDate)
+                  AND (:endDate IS NULL OR pf.createdAt < :endDate)
+                  AND (:keyword IS NULL OR p.title LIKE CONCAT('%', :keyword, '%'))
+                  AND (:cursor IS NULL OR pf.createdAt < :cursor)
+                ORDER BY pf.createdAt DESC
+            """)
+    Slice<PostFavorite> findUserActivityFavorites(@Param("user") User user,
+                                                  @Param("startDate") java.time.LocalDateTime startDate,
+                                                  @Param("endDate") java.time.LocalDateTime endDate,
+                                                  @Param("keyword") String keyword,
+                                                  @Param("cursor") java.time.LocalDateTime cursor,
+                                                  Pageable pageable);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from PostFavorite pf where pf.post.id = :postId")
     void deleteAllByPostId(@Param("postId") Long postId);

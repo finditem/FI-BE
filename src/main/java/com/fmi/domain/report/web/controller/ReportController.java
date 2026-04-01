@@ -100,12 +100,14 @@ public class ReportController {
             @RequestParam(required = false) ReportStatus status,
             @Parameter(description = "답변 여부 필터 (true=답변완료, false=미답변)")
             @RequestParam(required = false) Boolean answered,
+            @Parameter(description = "신고 사유 키워드 검색")
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size) {
 
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        CursorPageResponse<ReportListDTO> reports = reportService.getMyReportsCursor(user, status, answered, cursor, size);
+        CursorPageResponse<ReportListDTO> reports = reportService.getMyReportsCursor(user, status, answered, keyword, cursor, size);
         return ApiResponse.onSuccess(reports);
     }
 }

@@ -28,14 +28,18 @@ public class SocialLoginService {
     private final PasswordEncoder passwordEncoder;
     private final NicknameGeneratorService nicknameGeneratorService;
 
-    public User upsertUserFromKakao(Long kakaoId, String email, String nickname, String profileImageUrl) {
+    public record KakaoLoginResult(User user, boolean isNewUser) {}
+
+    public KakaoLoginResult upsertUserFromKakao(Long kakaoId, String email, String nickname, String profileImageUrl,
+                                       Boolean privacyPolicyAgreed, Boolean termsOfServiceAgreed,
+                                       Boolean contentPolicyAgreed, Boolean marketingConsent) {
         String providerId = String.valueOf(kakaoId);
 
         // 이미 존재하는 소셜 계정인지 확인
         Optional<SocialAccounts> existingAccount = socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.KAKAO, providerId);
         if (existingAccount.isPresent()) {
             log.info("기존 카카오 계정 찾음: providerId={}, userId={}", providerId, existingAccount.get().getUser().getId());
-            return reloadUser(existingAccount.get().getUser());
+            return new KakaoLoginResult(reloadUser(existingAccount.get().getUser()), false);
         }
 
         log.info("새 카카오 계정 생성 시작: providerId={}", providerId);
@@ -62,7 +66,11 @@ public class SocialLoginService {
                             email,
                             effectiveNickname,
                             profileImageUrl,
-                            passwordEncoder.encode("{noop}-" + providerId)
+                            passwordEncoder.encode("{noop}-" + providerId),
+                            privacyPolicyAgreed,
+                            termsOfServiceAgreed,
+                            contentPolicyAgreed,
+                            marketingConsent
                     );
                     return userRepository.save(u);
                 });
@@ -72,7 +80,7 @@ public class SocialLoginService {
         Optional<SocialAccounts> existingAccountAfterUser = socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.KAKAO, providerId);
         if (existingAccountAfterUser.isPresent()) {
             log.info("동시 요청으로 인해 이미 소셜 계정이 생성됨: providerId={}, userId={}", providerId, existingAccountAfterUser.get().getUser().getId());
-            return reloadUser(existingAccountAfterUser.get().getUser());
+            return new KakaoLoginResult(reloadUser(existingAccountAfterUser.get().getUser()), false);
         }
 
         // 소셜 계정 연결 저장
@@ -84,14 +92,14 @@ public class SocialLoginService {
                     .build();
             SocialAccounts savedAccount = socialAccountsRepository.save(account);
             log.info("소셜 계정 저장 성공: socialId={}, providerId={}, userId={}", savedAccount.getSocialId(), providerId, user.getId());
-            return reloadUser(user);
+            return new KakaoLoginResult(reloadUser(user), true);
         } catch (DataIntegrityViolationException e) {
             log.warn("소셜 계정 저장 중 중복 키 위반 발생 (동시 요청 가능성): providerId={}, error={}", providerId, e.getMessage());
             // 중복 키 위반 시 다시 조회해서 반환
             Optional<SocialAccounts> retryAccount = socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.KAKAO, providerId);
             if (retryAccount.isPresent()) {
                 log.info("중복 키 위반 후 재조회 성공: providerId={}, userId={}", providerId, retryAccount.get().getUser().getId());
-                return reloadUser(retryAccount.get().getUser());
+                return new KakaoLoginResult(reloadUser(retryAccount.get().getUser()), false);
             }
             // 재조회도 실패한 경우
             log.error("소셜 계정 저장 실패 후 재조회도 실패: providerId={}, 원본 에러: {}", providerId, e.getMessage(), e);

@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
-                        .requestMatchers("/", "/actuator/health", "/actuator/info", "/ws/**", "/error", "/health", "/api/health").permitAll()
+                        .requestMatchers("/", "/actuator/health", "/actuator/info", "/actuator/prometheus", "/ws/**", "/error", "/health", "/api/health").permitAll()
                         .requestMatchers("/auth/**", "/s3/**", "/chat-test.html", "/chat-test2.html", "/posts/filter").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         // 공지사항 - 조회만 공개, 좋아요/댓글 작성은 인증 필요

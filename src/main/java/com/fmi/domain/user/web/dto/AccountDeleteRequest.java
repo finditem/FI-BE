@@ -10,6 +10,9 @@ import java.util.List;
 
 @Data
 public class AccountDeleteRequest {
+    @Schema(description = "현재 비밀번호 (일반 회원 필수, 소셜 로그인 회원은 불필요)", example = "Password1!")
+    private String password;
+
     @Schema(description = "탈퇴 사유 (최대 3개)", example = "[\"NOT_USING\", \"DIFFICULT_TO_USE\"]", required = true)
     @NotEmpty(message = "탈퇴 사유를 최소 1개 선택해주세요")
     @Size(max = 3, message = "탈퇴 사유는 최대 3개까지 선택 가능합니다")
