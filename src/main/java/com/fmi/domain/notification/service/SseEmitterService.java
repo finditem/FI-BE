@@ -102,7 +102,12 @@ public class SseEmitterService {
         }
 
         // 가장 최근 연결된 emitter에만 미읽은 알림 전송 (중복 방지)
-        SseEmitter latestEmitter = userEmitters.get(userEmitters.size() - 1);
+        SseEmitter latestEmitter;
+        try {
+            latestEmitter = userEmitters.get(userEmitters.size() - 1);
+        } catch (IndexOutOfBoundsException e) {
+            return;
+        }
         for (Object notification : unreadNotifications) {
             try {
                 latestEmitter.send(SseEmitter.event()
@@ -138,12 +143,9 @@ public class SseEmitterService {
     }
 
     private void removeEmitter(Long userId, SseEmitter emitter) {
-        List<SseEmitter> userEmitters = emitters.get(userId);
-        if (userEmitters != null) {
+        emitters.computeIfPresent(userId, (key, userEmitters) -> {
             userEmitters.remove(emitter);
-            if (userEmitters.isEmpty()) {
-                emitters.remove(userId);
-            }
-        }
+            return userEmitters.isEmpty() ? null : userEmitters;
+        });
     }
 }
