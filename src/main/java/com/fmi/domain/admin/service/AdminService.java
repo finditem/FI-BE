@@ -1,6 +1,7 @@
 package com.fmi.domain.admin.service;
 
 import com.fmi.domain.Enum.Category;
+import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
 import com.fmi.domain.admin.dto.AdminInquiryResponse;
@@ -426,8 +427,8 @@ public class AdminService {
     }
 
     public CursorPageResponse<PostBriefResponse> getContentPolicyPosts(
-            String sort, Category category, PostStatus postStatus,
-            String keyword, Long cursor, Long cursorViewCount, int size,
+            SortType sortType, Category category, PostStatus postStatus,
+            String keyword, Long cursor, Long cursorViewCount, Long cursorFavCount, int size,
             String adminEmail) {
 
         size = Math.max(1, Math.min(size, 50));
@@ -438,13 +439,16 @@ public class AdminService {
         String postStatusStr = postStatus != null ? postStatus.name() : null;
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
 
-        if ("popular".equals(sort)) {
-            posts = postRepository.findContentPolicyPostsByPopular(
-                    categoryStr, postStatusStr, trimmedKeyword, cursorViewCount, cursor, fetchSize);
-        } else {
-            posts = postRepository.findContentPolicyPostsByLatest(
+        posts = switch (sortType) {
+            case OLDEST -> postRepository.findContentPolicyPostsByOldest(
                     categoryStr, postStatusStr, trimmedKeyword, cursor, fetchSize);
-        }
+            case MOST_VIEWED -> postRepository.findContentPolicyPostsByMostViewed(
+                    categoryStr, postStatusStr, trimmedKeyword, cursorViewCount, cursor, fetchSize);
+            case MOST_FAVORITED -> postRepository.findContentPolicyPostsByMostFavorited(
+                    categoryStr, postStatusStr, trimmedKeyword, cursorFavCount, cursor, fetchSize);
+            default -> postRepository.findContentPolicyPostsByLatest(
+                    categoryStr, postStatusStr, trimmedKeyword, cursor, fetchSize);
+        };
 
         boolean hasNext = posts.size() > size;
         List<Post> content = hasNext ? posts.subList(0, size) : posts;
