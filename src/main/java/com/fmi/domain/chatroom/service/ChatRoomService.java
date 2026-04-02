@@ -15,6 +15,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
+import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,7 @@ public class ChatRoomService {
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final PostImageService postImageService;
+    private final BlockService blockService;
 
     public Pair<ChatRoomResultDTO, Boolean> createChatRoom(Long postId, Long contactUserId) {
 
@@ -62,13 +64,15 @@ public class ChatRoomService {
 
         String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
 
+        boolean isBlocked = blockService.isBlocked(contactUserId, opponentUser.getId());
+
         // 채팅방이 이미 존재하는 경우
         if (optionalChatRoom.isPresent()) {
             ChatRoom existingRoom = optionalChatRoom.get();
 
             Long unreadCount = existingRoom.getParticipant(contactUserId).getUnreadCount();
 
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(existingRoom, opponentUser, post, unreadCount, thumbnailImageUrl);
+            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(existingRoom, opponentUser, post, unreadCount, thumbnailImageUrl, isBlocked);
 
             return Pair.of(dto, false);
         }
@@ -97,7 +101,7 @@ public class ChatRoomService {
 
             chatRoomRepository.save(newRoom);
 
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(newRoom, opponentUser, post, 0L, thumbnailImageUrl);
+            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(newRoom, opponentUser, post, 0L, thumbnailImageUrl, isBlocked);
 
             return Pair.of(dto, true);
         }
@@ -164,7 +168,9 @@ public class ChatRoomService {
 
         String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
 
-        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount, thumbnailImageUrl);
+        boolean isBlocked = blockService.isBlocked(user.getId(), opponent.getId());
+
+        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount, thumbnailImageUrl, isBlocked);
 
     }
 
