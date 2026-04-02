@@ -98,14 +98,14 @@ public class ReportService {
                     .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
             String reportContent = saved.getReason() != null ? saved.getReason() : "";
             
-            emailService.sendHtmlEmail(
+            emailService.sendHtmlEmailAsync(
                 user.getEmail(),
                 "신고가 접수되었습니다",
                 "report-received-email.html",
                 java.util.Map.of(
                     "NAME", nickname,
                     "TITLE", targetTitle,
-                    "USER", targetTitle, // 신고 대상 정보
+                    "USER", user.getEmail(),
                     "DATE", reportDate,
                     "CONTENT", reportContent
                 )
@@ -343,13 +343,16 @@ public class ReportService {
             User targetUser = findTargetUser(report.getTargetType(), report.getTargetId());
             if (targetUser != null) {
                 String targetNickname = targetUser.getNickname() != null ? targetUser.getNickname() : "회원";
+                String categoryName = report.getTargetType() != null ? report.getTargetType().getDescription() : "";
                 emailService.sendHtmlEmailAsync(
                     targetUser.getEmail(),
                     "신고 처리 결과 안내",
                     "report-notification-email.html",
                     java.util.Map.of(
                         "name", targetNickname,
-                        "ACTION", adminAnswer
+                        "CATEGORY", categoryName,
+                        "USER", targetUser.getEmail(),
+                        "NICKNAME", targetNickname
                     )
                 );
             }
