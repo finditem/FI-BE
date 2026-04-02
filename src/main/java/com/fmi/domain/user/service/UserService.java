@@ -599,7 +599,7 @@ public class UserService {
             String deletionDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                     .format(LocalDateTime.now());
 
-            emailService.sendHtmlEmail(
+            emailService.sendHtmlEmailAsync(
                     userEmail,
                     "계정이 삭제되었습니다",
                     "account-deletion-email.html",

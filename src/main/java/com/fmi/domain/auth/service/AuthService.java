@@ -10,6 +10,7 @@ import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.service.EmailService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -78,7 +80,7 @@ public class AuthService {
             String signupDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                     .format(savedUser.getCreatedAt() != null ? savedUser.getCreatedAt() : LocalDateTime.now());
             
-            emailService.sendHtmlEmail(
+            emailService.sendHtmlEmailAsync(
                 email,
                 "회원가입을 환영합니다",
                 "welcome-email.html",
@@ -89,8 +91,7 @@ public class AuthService {
                 )
             );
         } catch (Exception e) {
-            // 이메일 발송 실패해도 회원가입은 성공 처리
-            // 로그만 남기고 계속 진행
+            log.warn("회원가입 환영 이메일 발송 실패: email={}", savedUser.getEmail(), e);
         }
         
         return savedUser;
