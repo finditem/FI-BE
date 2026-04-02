@@ -91,7 +91,7 @@ public class AuthService {
                 )
             );
         } catch (Exception e) {
-            log.warn("회원가입 환영 이메일 발송 실패: email={}", email, e);
+            log.warn("회원가입 환영 이메일 발송 실패: email={}", savedUser.getEmail(), e);
         }
         
         return savedUser;
