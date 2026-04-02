@@ -28,6 +28,8 @@ public class NotificationListDTO {
     private ReferenceType referenceType;
     @Schema(description = "참조 ID", example = "1")
     private Long referenceId;
+    @Schema(description = "채팅방 ID (채팅 알림에서만 사용)", example = "5")
+    private Long roomId;
     @Schema(description = "읽음 여부", example = "false")
     private Boolean isRead;
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")

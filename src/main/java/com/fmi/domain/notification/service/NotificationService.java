@@ -310,9 +310,15 @@ public class NotificationService {
     @Transactional
     public void createNotification(User user, NotificationType type, String title,
                                    String message, ReferenceType referenceType, Long referenceId) {
+        createNotification(user, type, title, message, referenceType, referenceId, null);
+    }
+
+    @Transactional
+    public void createNotification(User user, NotificationType type, String title,
+                                   String message, ReferenceType referenceType, Long referenceId, Long roomId) {
         // 알림 설정 확인
         NotificationSettings settings = notificationSettingsRepository.findByUser(user).orElse(null);
-        
+
         // 설정이 없거나 해당 타입 알림이 켜져있으면 생성
         if (settings == null || isNotificationEnabled(settings, type)) {
             Notification notification = Notification.builder()
@@ -322,6 +328,7 @@ public class NotificationService {
                     .message(message)
                     .referenceType(referenceType)
                     .referenceId(referenceId)
+                    .roomId(roomId)
                     .build();
             
             notificationRepository.save(notification);

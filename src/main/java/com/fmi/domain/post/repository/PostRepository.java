@@ -88,11 +88,11 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
                                     @Param("cursor") java.time.LocalDateTime cursor,
                                     Pageable pageable);
 
-    // 마케팅 동의 유저 게시글 - 최신순
+    // 콘텐츠 활용 동의 유저 게시글 - 최신순
     @Query(value = """
             SELECT p.* FROM post p
             INNER JOIN users u ON p.user_id = u.id
-            WHERE u.marketing_consent = true AND u.deleted = false
+            WHERE u.content_policy_agreed = true AND u.deleted = false
               AND p.temporary_save = false AND p.deleted = false
               AND (:category IS NULL OR p.category = :category)
               AND (:postStatus IS NULL OR p.item_status = :postStatus)
@@ -100,16 +100,16 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             ORDER BY p.id DESC
             LIMIT :limit
             """, nativeQuery = true)
-    List<Post> findMarketingConsentPostsByLatest(@Param("category") String category,
-                                                  @Param("postStatus") String postStatus,
-                                                  @Param("cursor") Long cursor,
-                                                  @Param("limit") int limit);
+    List<Post> findContentPolicyPostsByLatest(@Param("category") String category,
+                                               @Param("postStatus") String postStatus,
+                                               @Param("cursor") Long cursor,
+                                               @Param("limit") int limit);
 
-    // 마케팅 동의 유저 게시글 - 인기순 (view_count + id 복합 커서)
+    // 콘텐츠 활용 동의 유저 게시글 - 인기순 (view_count + id 복합 커서)
     @Query(value = """
             SELECT p.* FROM post p
             INNER JOIN users u ON p.user_id = u.id
-            WHERE u.marketing_consent = true AND u.deleted = false
+            WHERE u.content_policy_agreed = true AND u.deleted = false
               AND p.temporary_save = false AND p.deleted = false
               AND (:category IS NULL OR p.category = :category)
               AND (:postStatus IS NULL OR p.item_status = :postStatus)
@@ -117,10 +117,10 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             ORDER BY p.view_count DESC, p.id DESC
             LIMIT :limit
             """, nativeQuery = true)
-    List<Post> findMarketingConsentPostsByPopular(@Param("category") String category,
-                                                   @Param("postStatus") String postStatus,
-                                                   @Param("cursorViewCount") Long cursorViewCount,
-                                                   @Param("cursorId") Long cursorId,
-                                                   @Param("limit") int limit);
+    List<Post> findContentPolicyPostsByPopular(@Param("category") String category,
+                                                @Param("postStatus") String postStatus,
+                                                @Param("cursorViewCount") Long cursorViewCount,
+                                                @Param("cursorId") Long cursorId,
+                                                @Param("limit") int limit);
 
 }

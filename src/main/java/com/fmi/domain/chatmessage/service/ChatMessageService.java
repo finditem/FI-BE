@@ -158,7 +158,7 @@ public class ChatMessageService {
                 } else {
                     // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
                     pt.onNewMessageArrived();
-                    chatNotificationService.saveOrUpdateChatNotification(pt.getUser(), postId, newMessage.getContent(), NotificationType.CHAT);
+                    chatNotificationService.saveOrUpdateChatNotification(pt.getUser(), postId, roomId, newMessage.getContent(), NotificationType.CHAT);
                 }
             }
             // 갱신된 정보로 DTO 생성

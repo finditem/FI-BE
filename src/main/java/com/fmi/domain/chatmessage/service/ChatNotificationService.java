@@ -24,9 +24,9 @@ public class ChatNotificationService {
 
     /**
      * 채팅 알림을 갱신하거나 새로 생성합니다.
-     * 게시글 ID를 referenceId로 사용합니다.
+     * 게시글 ID를 referenceId로, 채팅방 ID를 roomId로 사용합니다.
      */
-    public void saveOrUpdateChatNotification(User receiver, Long postId, String content, NotificationType type) {
+    public void saveOrUpdateChatNotification(User receiver, Long postId, Long roomId, String content, NotificationType type) {
 
         Optional<NotificationSettings> notificationSettings = notificationSettingsRepository.findByUser(receiver);
 
@@ -39,8 +39,8 @@ public class ChatNotificationService {
                 : "새로운 채팅이 도착했어요.";
 
         Optional<Notification> notification =
-                notificationRepository.findByUserAndReferenceIdAndType(
-                        receiver, postId, type
+                notificationRepository.findByUserAndReferenceIdAndRoomIdAndType(
+                        receiver, postId, roomId, type
                 );
 
         if (notification.isPresent()) {
@@ -55,7 +55,8 @@ public class ChatNotificationService {
                     title,
                     content,
                     ReferenceType.CHAT,
-                    postId
+                    postId,
+                    roomId
             );
         }
     }
