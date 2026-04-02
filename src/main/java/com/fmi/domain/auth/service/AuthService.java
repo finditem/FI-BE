@@ -78,7 +78,7 @@ public class AuthService {
             String signupDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                     .format(savedUser.getCreatedAt() != null ? savedUser.getCreatedAt() : LocalDateTime.now());
             
-            emailService.sendHtmlEmail(
+            emailService.sendHtmlEmailAsync(
                 email,
                 "회원가입을 환영합니다",
                 "welcome-email.html",

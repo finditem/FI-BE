@@ -98,7 +98,7 @@ public class ReportService {
                     .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
             String reportContent = saved.getReason() != null ? saved.getReason() : "";
             
-            emailService.sendHtmlEmail(
+            emailService.sendHtmlEmailAsync(
                 user.getEmail(),
                 "신고가 접수되었습니다",
                 "report-received-email.html",
@@ -319,7 +319,7 @@ public class ReportService {
                 String reportDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                         .format(report.getCreatedAt() != null ? report.getCreatedAt() : java.time.LocalDateTime.now());
 
-                emailService.sendHtmlEmail(
+                emailService.sendHtmlEmailAsync(
                     reporter.getEmail(),
                     "신고 답변 안내",
                     "report-result-email.html",
