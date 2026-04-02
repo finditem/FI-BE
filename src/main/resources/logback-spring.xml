@@ -4,13 +4,15 @@
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
     <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
                 <timestamp/>
                 <logLevel/>
-                <mdc/> <loggerName/>
+                <mdc/>
+                <loggerName/>
                 <message/>
-                <stackTrace/> </providers>
+                <stackTrace/>
+            </providers>
         </encoder>
     </appender>
 
