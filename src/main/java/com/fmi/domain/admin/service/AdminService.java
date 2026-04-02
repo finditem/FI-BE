@@ -467,26 +467,14 @@ public class AdminService {
                 null, postStatus, category, null, null, 5);
 
         List<PostBriefResponse> responseList = content.stream()
-                .map(post -> {
-                    Long pid = post.getId();
-                    return new PostBriefResponse(
-                            pid,
-                            post.getTitle(),
-                            post.makeSummary(),
-                            thumbnailMap.getOrDefault(pid, null),
-                            post.getAddress(),
-                            post.getPostStatus(),
-                            post.getPostType(),
-                            post.getCategory(),
-                            favoriteCountMap.getOrDefault(pid, 0L),
-                            favoriteStatusMap.getOrDefault(pid, false),
-                            post.getViewCount(),
-                            post.isNew(),
-                            hotPostIds.contains(pid),
-                            post.getCreatedAt(),
-                            imageCountMap.getOrDefault(pid, 0)
-                    );
-                })
+                .map(post -> PostConverter.toPostBriefResponse(
+                        post,
+                        favoriteStatusMap.getOrDefault(post.getId(), false),
+                        thumbnailMap.getOrDefault(post.getId(), null),
+                        favoriteCountMap.getOrDefault(post.getId(), 0L),
+                        imageCountMap.getOrDefault(post.getId(), 0),
+                        hotPostIds.contains(post.getId())
+                ))
                 .toList();
 
         return new CursorPageResponse<>(responseList, nextCursor, hasNext);
