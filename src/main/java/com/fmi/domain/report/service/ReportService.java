@@ -78,7 +78,7 @@ public class ReportService {
                 });
         
         // 신고 대상 존재 여부 확인
-        validateTargetExists(request.getTargetType(), request.getTargetId());
+        validateTargetExists(request.getTargetType(), request.getTargetId(), user);
         
         // 신고 생성
         Report report = Report.builder()
@@ -199,7 +199,7 @@ public class ReportService {
     /**
      * 신고 대상 존재 확인
      */
-    private void validateTargetExists(ReportTargetType targetType, Long targetId) {
+    private void validateTargetExists(ReportTargetType targetType, Long targetId, User reporter) {
         switch (targetType) {
             case POST:
                 postRepository.findById(targetId)
@@ -214,8 +214,11 @@ public class ReportService {
                         .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
                 break;
             case CHAT:
-                chatRoomRepository.findById(targetId)
+                ChatRoom room = chatRoomRepository.findById(targetId)
                         .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+                if (!room.isParticipant(reporter)) {
+                    throw new GeneralException(ErrorStatus._CHATROOM_ACCESS_DENIED);
+                }
                 break;
         }
     }
@@ -395,11 +398,6 @@ public class ReportService {
 
         ChatRoom room = chatRoomRepository.findById(request.getTargetId())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
-
-        // 신고자가 해당 채팅방 참여자가 아니면 차단 로직 진행 안 함
-        if (!room.isParticipant(reporter)) {
-            throw new GeneralException(ErrorStatus._CHATROOM_ACCESS_DENIED);
-        }
 
         User targetUser = room.getOtherParticipant(reporter.getId());
 
