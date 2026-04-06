@@ -57,7 +57,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
         JPAQuery<ChatRoomParticipant> query = queryFactory
                 .selectFrom(pt)
                 .join(pt.chatRoom, cr).fetchJoin()
-                .join(cr.post, p).fetchJoin()
+                .leftJoin(cr.post, p).fetchJoin()
                 .join(pt.lastMessage, lm).fetchJoin()
                 .join(cr.participants, otherPt)
                 .join(otherPt.user, otherUser).fetchJoin()
@@ -119,7 +119,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
     }
 
     private BooleanExpression typeEq(PostType type) {
-        return type != null ? QPost.post.postType.eq(type) : null;
+        return type != null ? QChatRoom.chatRoom.source_post_type.eq(type) : null;
     }
 
     private BooleanExpression addressEq(String address) {
@@ -130,7 +130,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
 
         for (String token : tokens) {
             String normalized = ADDRESS_ALIASES.getOrDefault(token, token);
-            BooleanExpression contains = QPost.post.address.contains(normalized);
+            BooleanExpression contains = QChatRoom.chatRoom.source_address.contains(normalized);
             result = (result == null) ? contains : result.and(contains);
         }
 

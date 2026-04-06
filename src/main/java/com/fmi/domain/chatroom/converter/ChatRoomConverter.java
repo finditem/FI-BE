@@ -44,6 +44,35 @@ public class ChatRoomConverter {
                 .build();
     }
 
+    public static ChatRoomResultDTO toChatRoomResultDTOFromSnapshot(ChatRoom chatRoom, User opponent, Long unreadCount, boolean isBlocked) {
+
+        var opponentUser = opponentUserDTO.builder()
+                .opponentUserId(opponent.getId())
+                .nickname(opponent.getNickname())
+                .profileImageUrl(opponent.getProfile_img())
+                .emailVerified(opponent.isEmail_verified())
+                .blocked(isBlocked)
+                .build();
+
+        var postInfo = PostInfoDTO.builder()
+                .postId(chatRoom.getSource_post_id())
+                .postType(chatRoom.getSource_post_type())
+                .category(chatRoom.getSource_category())
+                .title(chatRoom.getSource_title())
+                .address(chatRoom.getSource_address())
+                .thumbnailUrl(chatRoom.getSource_thumbnail_url())
+                .postStatus(chatRoom.getSource_postStatus())
+                .deleted(true)
+                .build();
+
+        return ChatRoomResultDTO.builder()
+                .roomId(chatRoom.getId())
+                .unreadCount(unreadCount)
+                .opponentUser(opponentUser)
+                .postInfo(postInfo)
+                .build();
+    }
+
     public static List<ChatRoomSummaryDTO> toChatRoomSummaryListDTO(List<ChatRoomParticipant> participants, User currentUser, Map<Long, String> thumbnailMap) {
         return participants.stream()
                 .map(pt -> {
@@ -63,20 +92,33 @@ public class ChatRoomConverter {
                 .profileImageUrl(contactUser.getProfile_img())
                 .build();
 
-        Post post = participant.getChatRoom().getPost();
+        ChatRoom room = participant.getChatRoom();
 
-        String thumbnailUrl = thumbnailMap.get(post.getId());
-
-        PostInfoDTO postInfoDTO = PostInfoDTO.builder()
-                .postId(post.getId())
-                .postType(post.getPostType())
-                .category(post.getCategory())
-                .title(post.getTitle())
-                .address(post.getAddress())
-                .thumbnailUrl(thumbnailUrl)
-                .postStatus(post.getPostStatus())
-                .deleted(post.isDeleted())
-                .build();
+        PostInfoDTO postInfoDTO;
+        if (!room.isSource_post_deleted()) {
+            Post post = room.getPost();
+            postInfoDTO = PostInfoDTO.builder()
+                    .postId(post.getId())
+                    .postType(post.getPostType())
+                    .category(post.getCategory())
+                    .title(post.getTitle())
+                    .address(post.getAddress())
+                    .thumbnailUrl(thumbnailMap.get(post.getId()))
+                    .postStatus(post.getPostStatus())
+                    .deleted(false)
+                    .build();
+        } else {
+            postInfoDTO = PostInfoDTO.builder()
+                    .postId(room.getSource_post_id())
+                    .postType(room.getSource_post_type())
+                    .category(room.getSource_category())
+                    .title(room.getSource_title())
+                    .address(room.getSource_address())
+                    .thumbnailUrl(room.getSource_thumbnail_url())
+                    .postStatus(room.getSource_postStatus())
+                    .deleted(true)
+                    .build();
+        }
 
         ChatMessage lastMessage = participant.getLastMessage();
         String content = null;
