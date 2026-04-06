@@ -16,6 +16,7 @@ import com.fmi.domain.notice.web.dto.NoticeMetaResponse;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
 import com.fmi.domain.notice.web.dto.NoticeUpdateRequestDTO;
+import com.fmi.domain.noticecomment.repository.NoticeCommentImageRepository;
 import com.fmi.domain.noticecomment.repository.NoticeCommentRepository;
 import com.fmi.domain.noticecommentlike.repository.NoticeCommentLikeRepository;
 import com.fmi.domain.notification.service.NotificationService;
@@ -48,6 +49,7 @@ public class NoticeService {
     private final UserRepository userRepository;
     private final NoticeConverter noticeConverter;
     private final NotificationService notificationService;
+    private final NoticeCommentImageRepository noticeCommentImageRepository;
     private final NoticeCommentRepository noticeCommentRepository;
     private final NoticeCommentLikeRepository noticeCommentLikeRepository;
     private final StringRedisTemplate stringRedisTemplate;
@@ -350,6 +352,7 @@ public class NoticeService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
 
         noticeCommentLikeRepository.deleteAllByNoticeId(noticeId);
+        noticeCommentImageRepository.deleteAllByNoticeId(noticeId);
         noticeLikeRepository.deleteByNoticeNoticeId(noticeId);
         noticeImageRepository.deleteAllByNotice(notice);
         noticeCommentRepository.deleteByNoticeNoticeId(noticeId);
