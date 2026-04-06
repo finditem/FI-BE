@@ -3,6 +3,7 @@ package com.fmi.domain.report.service;
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
@@ -21,6 +22,7 @@ import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
+import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -53,6 +55,7 @@ public class ReportService {
     private final EmailService emailService;
     private final ReportAnswerImageRepository reportAnswerImageRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final BlockService blockService;
 
     /**
      * 신고하기 (통합)
@@ -75,7 +78,7 @@ public class ReportService {
                 });
         
         // 신고 대상 존재 여부 확인
-        validateTargetExists(request.getTargetType(), request.getTargetId());
+        validateTargetExists(request.getTargetType(), request.getTargetId(), user);
         
         // 신고 생성
         Report report = Report.builder()
@@ -87,6 +90,9 @@ public class ReportService {
                 .build();
         
         Report saved = reportRepository.save(report);
+
+        // 채팅 신고면 상대방 차단
+        autoBlockOnChatReport(request, user);
 
         eventPublisher.publishEvent(ReportEvent.from(saved, user));
 
@@ -193,7 +199,7 @@ public class ReportService {
     /**
      * 신고 대상 존재 확인
      */
-    private void validateTargetExists(ReportTargetType targetType, Long targetId) {
+    private void validateTargetExists(ReportTargetType targetType, Long targetId, User reporter) {
         switch (targetType) {
             case POST:
                 postRepository.findById(targetId)
@@ -208,8 +214,11 @@ public class ReportService {
                         .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
                 break;
             case CHAT:
-                chatRoomRepository.findById(targetId)
+                ChatRoom room = chatRoomRepository.findById(targetId)
                         .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+                if (!room.isParticipant(reporter)) {
+                    throw new GeneralException(ErrorStatus._CHATROOM_ACCESS_DENIED);
+                }
                 break;
         }
     }
@@ -377,6 +386,22 @@ public class ReportService {
             log.warn("피신고자 조회 실패: targetType={}, targetId={}", targetType, targetId, e);
             return null;
         }
+    }
+
+    /**
+     * 채팅 신고면 상대방 차단
+     */
+    private void autoBlockOnChatReport(ReportCreateRequestDTO request, User reporter) {
+        if (request.getTargetType() != ReportTargetType.CHAT) {
+            return;
+        }
+
+        ChatRoom room = chatRoomRepository.findById(request.getTargetId())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+
+        User targetUser = room.getOtherParticipant(reporter.getId());
+
+        blockService.block(reporter.getId(), targetUser.getId());
     }
 }
 

@@ -34,6 +34,7 @@ public class ChatRoomResponseDTO {
         private String nickname;
         private String profileImageUrl;
         private boolean emailVerified;
+        private boolean blocked;
     }
 
     @Builder

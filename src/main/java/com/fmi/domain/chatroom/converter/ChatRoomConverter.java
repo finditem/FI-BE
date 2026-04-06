@@ -15,13 +15,14 @@ import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.*;
 
 public class ChatRoomConverter {
 
-    public static ChatRoomResultDTO toChatRoomResultDTO(ChatRoom chatRoom, User user, Post post, Long unreadCount, String thumbnailUrl) {
+    public static ChatRoomResultDTO toChatRoomResultDTO(ChatRoom chatRoom, User user, Post post, Long unreadCount, String thumbnailUrl, boolean isBlocked) {
 
         var opponentUser = opponentUserDTO.builder()
                 .opponentUserId(user.getId())
                 .nickname(user.getNickname())
                 .profileImageUrl(user.getProfile_img() == null ? null : user.getProfile_img())
                 .emailVerified(user.isEmail_verified())
+                .blocked(isBlocked)
                 .build();
 
         var postInfo = PostInfoDTO.builder()
