@@ -119,7 +119,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
     }
 
     private BooleanExpression typeEq(PostType type) {
-        return type != null ? QChatRoom.chatRoom.source_post_type.eq(type) : null;
+        return type != null ? QChatRoom.chatRoom.sourcePostType.eq(type) : null;
     }
 
     private BooleanExpression addressEq(String address) {
@@ -130,7 +130,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
 
         for (String token : tokens) {
             String normalized = ADDRESS_ALIASES.getOrDefault(token, token);
-            BooleanExpression contains = QChatRoom.chatRoom.source_address.contains(normalized);
+            BooleanExpression contains = QChatRoom.chatRoom.sourceAddress.contains(normalized);
             result = (result == null) ? contains : result.and(contains);
         }
 

@@ -34,12 +34,12 @@ class ChatRoomEntityTest {
 
         chatRoom.initFromPost(post);
 
-        assertThat(chatRoom.getSource_post_id()).isEqualTo(42L);
-        assertThat(chatRoom.getSource_title()).isEqualTo("잃어버린 지갑");
-        assertThat(chatRoom.getSource_address()).isEqualTo("서울특별시 강남구");
-        assertThat(chatRoom.getSource_post_type()).isEqualTo(PostType.LOST);
-        assertThat(chatRoom.getSource_category()).isEqualTo(Category.WALLET);
-        assertThat(chatRoom.getPostStatus()).isEqualTo(PostStatus.SEARCHING);
+        assertThat(chatRoom.getSourcePostId()).isEqualTo(42L);
+        assertThat(chatRoom.getSourceTitle()).isEqualTo("잃어버린 지갑");
+        assertThat(chatRoom.getSourceAddress()).isEqualTo("서울특별시 강남구");
+        assertThat(chatRoom.getSourcePostType()).isEqualTo(PostType.LOST);
+        assertThat(chatRoom.getSourceCategory()).isEqualTo(Category.WALLET);
+        assertThat(chatRoom.getSourcePostStatus()).isEqualTo(PostStatus.SEARCHING);
     }
 
     @Test
@@ -49,7 +49,7 @@ class ChatRoomEntityTest {
 
         chatRoom.initFromPost(post);
 
-        assertThat(chatRoom.isSource_post_deleted()).isFalse();
+        assertThat(chatRoom.isSourcePostDeleted()).isFalse();
     }
 
     @Test
@@ -59,7 +59,7 @@ class ChatRoomEntityTest {
 
         chatRoom.initFromPost(post);
 
-        assertThat(chatRoom.getSource_thumbnail_url()).isNull();
+        assertThat(chatRoom.getSourceThumbnailUrl()).isNull();
     }
 
     @Test
@@ -69,14 +69,14 @@ class ChatRoomEntityTest {
 
         chatRoom.snapshotFromPost(post, "https://s3.example.com/thumb.jpg");
 
-        assertThat(chatRoom.getSource_post_id()).isEqualTo(42L);
-        assertThat(chatRoom.getSource_title()).isEqualTo("잃어버린 지갑");
-        assertThat(chatRoom.getSource_address()).isEqualTo("서울특별시 강남구");
-        assertThat(chatRoom.getSource_post_type()).isEqualTo(PostType.LOST);
-        assertThat(chatRoom.getSource_category()).isEqualTo(Category.WALLET);
-        assertThat(chatRoom.getPostStatus()).isEqualTo(PostStatus.SEARCHING);
-        assertThat(chatRoom.getSource_thumbnail_url()).isEqualTo("https://s3.example.com/thumb.jpg");
-        assertThat(chatRoom.isSource_post_deleted()).isTrue();
+        assertThat(chatRoom.getSourcePostId()).isEqualTo(42L);
+        assertThat(chatRoom.getSourceTitle()).isEqualTo("잃어버린 지갑");
+        assertThat(chatRoom.getSourceAddress()).isEqualTo("서울특별시 강남구");
+        assertThat(chatRoom.getSourcePostType()).isEqualTo(PostType.LOST);
+        assertThat(chatRoom.getSourceCategory()).isEqualTo(Category.WALLET);
+        assertThat(chatRoom.getSourcePostStatus()).isEqualTo(PostStatus.SEARCHING);
+        assertThat(chatRoom.getSourceThumbnailUrl()).isEqualTo("https://s3.example.com/thumb.jpg");
+        assertThat(chatRoom.isSourcePostDeleted()).isTrue();
     }
 
     @Test
@@ -86,8 +86,8 @@ class ChatRoomEntityTest {
 
         chatRoom.snapshotFromPost(post, null);
 
-        assertThat(chatRoom.getSource_thumbnail_url()).isNull();
-        assertThat(chatRoom.isSource_post_deleted()).isTrue();
+        assertThat(chatRoom.getSourceThumbnailUrl()).isNull();
+        assertThat(chatRoom.isSourcePostDeleted()).isTrue();
     }
 
     @Test

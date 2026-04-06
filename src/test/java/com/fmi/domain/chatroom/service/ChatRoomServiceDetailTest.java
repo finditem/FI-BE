@@ -75,7 +75,7 @@ class ChatRoomServiceDetailTest {
 
         ChatRoom chatRoom = mock(ChatRoom.class);
         given(chatRoom.getId()).willReturn(10L);
-        given(chatRoom.isSource_post_deleted()).willReturn(false);
+        given(chatRoom.isSourcePostDeleted()).willReturn(false);
         given(chatRoom.getPost()).willReturn(post);
         given(chatRoom.getOtherParticipant(currentUser.getId())).willReturn(opponent);
         given(chatRoom.getParticipant(currentUser.getId())).willReturn(participant);
@@ -96,14 +96,14 @@ class ChatRoomServiceDetailTest {
     void getChatRoomDetail_postSoftDeleted_returnsSnapshotTitle() {
         ChatRoom chatRoom = mock(ChatRoom.class);
         given(chatRoom.getId()).willReturn(10L);
-        given(chatRoom.isSource_post_deleted()).willReturn(true);
-        given(chatRoom.getSource_post_id()).willReturn(99L);
-        given(chatRoom.getSource_title()).willReturn("삭제 전 제목");
-        given(chatRoom.getSource_post_type()).willReturn(PostType.LOST);
-        given(chatRoom.getSource_category()).willReturn(Category.WALLET);
-        given(chatRoom.getSource_address()).willReturn("서울");
-        given(chatRoom.getSource_thumbnail_url()).willReturn("https://s3.example.com/old-thumb.jpg");
-        given(chatRoom.getPostStatus()).willReturn(PostStatus.SEARCHING);
+        given(chatRoom.isSourcePostDeleted()).willReturn(true);
+        given(chatRoom.getSourcePostId()).willReturn(99L);
+        given(chatRoom.getSourceTitle()).willReturn("삭제 전 제목");
+        given(chatRoom.getSourcePostType()).willReturn(PostType.LOST);
+        given(chatRoom.getSourceCategory()).willReturn(Category.WALLET);
+        given(chatRoom.getSourceAddress()).willReturn("서울");
+        given(chatRoom.getSourceThumbnailUrl()).willReturn("https://s3.example.com/old-thumb.jpg");
+        given(chatRoom.getSourcePostStatus()).willReturn(PostStatus.SEARCHING);
         given(chatRoom.getOtherParticipant(currentUser.getId())).willReturn(opponent);
         given(chatRoom.getParticipant(currentUser.getId())).willReturn(participant);
 
@@ -122,14 +122,14 @@ class ChatRoomServiceDetailTest {
     void getChatRoomDetail_postSoftDeleted_doesNotQueryPostImageService() {
         ChatRoom chatRoom = mock(ChatRoom.class);
         given(chatRoom.getId()).willReturn(10L);
-        given(chatRoom.isSource_post_deleted()).willReturn(true);
-        given(chatRoom.getSource_post_id()).willReturn(99L);
-        given(chatRoom.getSource_title()).willReturn("삭제 전 제목");
-        given(chatRoom.getSource_post_type()).willReturn(PostType.LOST);
-        given(chatRoom.getSource_category()).willReturn(Category.WALLET);
-        given(chatRoom.getSource_address()).willReturn("서울");
-        given(chatRoom.getSource_thumbnail_url()).willReturn(null);
-        given(chatRoom.getPostStatus()).willReturn(PostStatus.SEARCHING);
+        given(chatRoom.isSourcePostDeleted()).willReturn(true);
+        given(chatRoom.getSourcePostId()).willReturn(99L);
+        given(chatRoom.getSourceTitle()).willReturn("삭제 전 제목");
+        given(chatRoom.getSourcePostType()).willReturn(PostType.LOST);
+        given(chatRoom.getSourceCategory()).willReturn(Category.WALLET);
+        given(chatRoom.getSourceAddress()).willReturn("서울");
+        given(chatRoom.getSourceThumbnailUrl()).willReturn(null);
+        given(chatRoom.getSourcePostStatus()).willReturn(PostStatus.SEARCHING);
         given(chatRoom.getOtherParticipant(currentUser.getId())).willReturn(opponent);
         given(chatRoom.getParticipant(currentUser.getId())).willReturn(participant);
 
@@ -156,9 +156,9 @@ class ChatRoomServiceDetailTest {
 
         ChatRoom chatRoom = mock(ChatRoom.class);
         given(chatRoom.getId()).willReturn(10L);
-        given(chatRoom.isSource_post_deleted()).willReturn(false);
+        given(chatRoom.isSourcePostDeleted()).willReturn(false);
         given(chatRoom.getPost()).willReturn(post);
-        given(chatRoom.getPostStatus()).willReturn(PostStatus.SEARCHING); // source_* 초기값
+        given(chatRoom.getSourcePostStatus()).willReturn(PostStatus.SEARCHING); // source_* 초기값
         given(chatRoom.getOtherParticipant(currentUser.getId())).willReturn(opponent);
         given(chatRoom.getParticipant(currentUser.getId())).willReturn(participant);
 
@@ -176,15 +176,15 @@ class ChatRoomServiceDetailTest {
     void getChatRoomDetail_postHardDeleted_returnsSnapshot() {
         ChatRoom chatRoom = mock(ChatRoom.class);
         given(chatRoom.getId()).willReturn(10L);
-        given(chatRoom.isSource_post_deleted()).willReturn(true); // 소프트딜리트 때 이미 true
+        given(chatRoom.isSourcePostDeleted()).willReturn(true); // 소프트딜리트 때 이미 true
         given(chatRoom.getPost()).willReturn(null); // 하드딜리트 후 null
-        given(chatRoom.getSource_post_id()).willReturn(99L);
-        given(chatRoom.getSource_title()).willReturn("삭제된 게시글");
-        given(chatRoom.getSource_post_type()).willReturn(PostType.LOST);
-        given(chatRoom.getSource_category()).willReturn(Category.WALLET);
-        given(chatRoom.getSource_address()).willReturn("서울");
-        given(chatRoom.getSource_thumbnail_url()).willReturn(null);
-        given(chatRoom.getPostStatus()).willReturn(PostStatus.SEARCHING);
+        given(chatRoom.getSourcePostId()).willReturn(99L);
+        given(chatRoom.getSourceTitle()).willReturn("삭제된 게시글");
+        given(chatRoom.getSourcePostType()).willReturn(PostType.LOST);
+        given(chatRoom.getSourceCategory()).willReturn(Category.WALLET);
+        given(chatRoom.getSourceAddress()).willReturn("서울");
+        given(chatRoom.getSourceThumbnailUrl()).willReturn(null);
+        given(chatRoom.getSourcePostStatus()).willReturn(PostStatus.SEARCHING);
         given(chatRoom.getOtherParticipant(currentUser.getId())).willReturn(opponent);
         given(chatRoom.getParticipant(currentUser.getId())).willReturn(participant);
 
@@ -211,7 +211,7 @@ class ChatRoomServiceDetailTest {
 
         ChatRoom chatRoom = mock(ChatRoom.class);
         given(chatRoom.getId()).willReturn(10L);
-        given(chatRoom.isSource_post_deleted()).willReturn(false);
+        given(chatRoom.isSourcePostDeleted()).willReturn(false);
         given(chatRoom.getPost()).willReturn(post);
         given(chatRoom.getOtherParticipant(currentUser.getId())).willReturn(opponent);
         given(chatRoom.getParticipant(currentUser.getId())).willReturn(participant); // unreadCount=3

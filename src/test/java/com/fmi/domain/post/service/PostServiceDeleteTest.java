@@ -4,6 +4,7 @@ import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.service.UserQueryService;
 import org.junit.jupiter.api.BeforeEach;

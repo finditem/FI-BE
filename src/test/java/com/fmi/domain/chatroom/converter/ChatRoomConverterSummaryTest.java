@@ -46,7 +46,7 @@ class ChatRoomConverterSummaryTest {
 
         ChatRoom room = mock(ChatRoom.class);
         given(room.getId()).willReturn(10L);
-        given(room.isSource_post_deleted()).willReturn(false);
+        given(room.isSourcePostDeleted()).willReturn(false);
         given(room.getPost()).willReturn(post);
 
         participant = mock(ChatRoomParticipant.class);
@@ -70,14 +70,14 @@ class ChatRoomConverterSummaryTest {
     void toChatRoomSummaryDTO_postDeleted_usesSnapshotData() {
         ChatRoom room = mock(ChatRoom.class);
         given(room.getId()).willReturn(10L);
-        given(room.isSource_post_deleted()).willReturn(true);
-        given(room.getSource_post_id()).willReturn(99L);
-        given(room.getSource_title()).willReturn("삭제 전 제목");
-        given(room.getSource_post_type()).willReturn(PostType.LOST);
-        given(room.getSource_category()).willReturn(Category.WALLET);
-        given(room.getSource_address()).willReturn("서울특별시");
-        given(room.getSource_thumbnail_url()).willReturn("https://s3.example.com/snapshot-thumb.jpg");
-        given(room.getPostStatus()).willReturn(PostStatus.SEARCHING);
+        given(room.isSourcePostDeleted()).willReturn(true);
+        given(room.getSourcePostId()).willReturn(99L);
+        given(room.getSourceTitle()).willReturn("삭제 전 제목");
+        given(room.getSourcePostType()).willReturn(PostType.LOST);
+        given(room.getSourceCategory()).willReturn(Category.WALLET);
+        given(room.getSourceAddress()).willReturn("서울특별시");
+        given(room.getSourceThumbnailUrl()).willReturn("https://s3.example.com/snapshot-thumb.jpg");
+        given(room.getSourcePostStatus()).willReturn(PostStatus.SEARCHING);
 
         participant = mock(ChatRoomParticipant.class);
         given(participant.getChatRoom()).willReturn(room);
@@ -98,14 +98,14 @@ class ChatRoomConverterSummaryTest {
     void toChatRoomSummaryDTO_postDeleted_emptyThumbnailMapNoNpe() {
         ChatRoom room = mock(ChatRoom.class);
         given(room.getId()).willReturn(10L);
-        given(room.isSource_post_deleted()).willReturn(true);
-        given(room.getSource_post_id()).willReturn(99L);
-        given(room.getSource_title()).willReturn("제목");
-        given(room.getSource_post_type()).willReturn(PostType.LOST);
-        given(room.getSource_category()).willReturn(Category.WALLET);
-        given(room.getSource_address()).willReturn("서울");
-        given(room.getSource_thumbnail_url()).willReturn(null);
-        given(room.getPostStatus()).willReturn(PostStatus.SEARCHING);
+        given(room.isSourcePostDeleted()).willReturn(true);
+        given(room.getSourcePostId()).willReturn(99L);
+        given(room.getSourceTitle()).willReturn("제목");
+        given(room.getSourcePostType()).willReturn(PostType.LOST);
+        given(room.getSourceCategory()).willReturn(Category.WALLET);
+        given(room.getSourceAddress()).willReturn("서울");
+        given(room.getSourceThumbnailUrl()).willReturn(null);
+        given(room.getSourcePostStatus()).willReturn(PostStatus.SEARCHING);
 
         participant = mock(ChatRoomParticipant.class);
         given(participant.getChatRoom()).willReturn(room);
@@ -133,9 +133,9 @@ class ChatRoomConverterSummaryTest {
 
         ChatRoom room = mock(ChatRoom.class);
         given(room.getId()).willReturn(10L);
-        given(room.isSource_post_deleted()).willReturn(false);
+        given(room.isSourcePostDeleted()).willReturn(false);
         given(room.getPost()).willReturn(post);
-        given(room.getPostStatus()).willReturn(PostStatus.SEARCHING);
+        given(room.getSourcePostStatus()).willReturn(PostStatus.SEARCHING);
 
         participant = mock(ChatRoomParticipant.class);
         given(participant.getChatRoom()).willReturn(room);

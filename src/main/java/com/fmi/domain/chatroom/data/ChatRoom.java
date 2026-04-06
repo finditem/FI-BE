@@ -36,24 +36,24 @@ public class ChatRoom {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    private Long source_post_id;
+    private Long sourcePostId;
 
-    private String source_address;
+    private String sourceAddress;
 
-    private String source_title;
-
-    @Enumerated(EnumType.STRING)
-    private PostType source_post_type;
+    private String sourceTitle;
 
     @Enumerated(EnumType.STRING)
-    private PostStatus source_postStatus;
-
-    private String source_thumbnail_url;
-
-    private boolean source_post_deleted;
+    private PostType sourcePostType;
 
     @Enumerated(EnumType.STRING)
-    private Category source_category;
+    private PostStatus sourcePostStatus;
+
+    private String sourceThumbnailUrl;
+
+    private boolean sourcePostDeleted;
+
+    @Enumerated(EnumType.STRING)
+    private Category sourceCategory;
 
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -65,23 +65,23 @@ public class ChatRoom {
     }
 
     public void initFromPost(Post post) {
-        this.source_post_id = post.getId();
-        this.source_title = post.getTitle();
-        this.source_address = post.getAddress();
-        this.source_post_type = post.getPostType();
-        this.source_category = post.getCategory();
-        this.source_postStatus = post.getPostStatus();
+        this.sourcePostId = post.getId();
+        this.sourceTitle = post.getTitle();
+        this.sourceAddress = post.getAddress();
+        this.sourcePostType = post.getPostType();
+        this.sourceCategory = post.getCategory();
+        this.sourcePostStatus = post.getPostStatus();
     }
 
     public void snapshotFromPost(Post post, String thumbnailUrl) {
-        this.source_post_id = post.getId();
-        this.source_title = post.getTitle();
-        this.source_address = post.getAddress();
-        this.source_post_type = post.getPostType();
-        this.source_category = post.getCategory();
-        this.source_postStatus = post.getPostStatus();
-        this.source_thumbnail_url = thumbnailUrl;
-        this.source_post_deleted = true;
+        this.sourcePostId = post.getId();
+        this.sourceTitle = post.getTitle();
+        this.sourceAddress = post.getAddress();
+        this.sourcePostType = post.getPostType();
+        this.sourceCategory = post.getCategory();
+        this.sourcePostStatus = post.getPostStatus();
+        this.sourceThumbnailUrl = thumbnailUrl;
+        this.sourcePostDeleted = true;
     }
 
     public void clearPostReference() {

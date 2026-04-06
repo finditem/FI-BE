@@ -55,13 +55,13 @@ public class ChatRoomConverter {
                 .build();
 
         var postInfo = PostInfoDTO.builder()
-                .postId(chatRoom.getSource_post_id())
-                .postType(chatRoom.getSource_post_type())
-                .category(chatRoom.getSource_category())
-                .title(chatRoom.getSource_title())
-                .address(chatRoom.getSource_address())
-                .thumbnailUrl(chatRoom.getSource_thumbnail_url())
-                .postStatus(chatRoom.getSource_postStatus())
+                .postId(chatRoom.getSourcePostId())
+                .postType(chatRoom.getSourcePostType())
+                .category(chatRoom.getSourceCategory())
+                .title(chatRoom.getSourceTitle())
+                .address(chatRoom.getSourceAddress())
+                .thumbnailUrl(chatRoom.getSourceThumbnailUrl())
+                .postStatus(chatRoom.getSourcePostStatus())
                 .deleted(true)
                 .build();
 
@@ -95,7 +95,7 @@ public class ChatRoomConverter {
         ChatRoom room = participant.getChatRoom();
 
         PostInfoDTO postInfoDTO;
-        if (!room.isSource_post_deleted()) {
+        if (!room.isSourcePostDeleted()) {
             Post post = room.getPost();
             postInfoDTO = PostInfoDTO.builder()
                     .postId(post.getId())
@@ -109,13 +109,13 @@ public class ChatRoomConverter {
                     .build();
         } else {
             postInfoDTO = PostInfoDTO.builder()
-                    .postId(room.getSource_post_id())
-                    .postType(room.getSource_post_type())
-                    .category(room.getSource_category())
-                    .title(room.getSource_title())
-                    .address(room.getSource_address())
-                    .thumbnailUrl(room.getSource_thumbnail_url())
-                    .postStatus(room.getSource_postStatus())
+                    .postId(room.getSourcePostId())
+                    .postType(room.getSourcePostType())
+                    .category(room.getSourceCategory())
+                    .title(room.getSourceTitle())
+                    .address(room.getSourceAddress())
+                    .thumbnailUrl(room.getSourceThumbnailUrl())
+                    .postStatus(room.getSourcePostStatus())
                     .deleted(true)
                     .build();
         }
