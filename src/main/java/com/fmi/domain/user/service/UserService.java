@@ -350,7 +350,7 @@ public class UserService {
                     user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
             anySliceHasNext = anySliceHasNext || commentSlice.hasNext();
             commentSlice.getContent().forEach(c -> allActivities.add(new ActivityResponse(
-                    "INQUIRY_ANSWERED", c.getInquiry().getId(), c.getInquiry().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
+                    "INQUIRY_ANSWERED", c.getId(), c.getInquiry().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
         }
 
         if (type == null || type == ActivityType.REPORT || type == ActivityType.REPORT_RECEIVED || type == ActivityType.REPORT_ANSWERED) {
