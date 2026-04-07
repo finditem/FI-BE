@@ -478,6 +478,8 @@ public class AdminController {
                 - category: 카테고리 필터 (ELECTRONICS, WALLET, ID_CARD, JEWELRY, BAG, CARD, ETC)
                 - postStatus: 찾음 여부 필터 (SEARCHING, FOUND)
                 - keyword: 제목/내용 검색
+                - startDate: 조회 시작일 (yyyy-MM-dd)
+                - endDate: 조회 종료일 (yyyy-MM-dd)
 
                 **커서:**
                 - cursor: 마지막 게시글 ID
@@ -498,6 +500,10 @@ public class AdminController {
             @RequestParam(required = false) PostStatus postStatus,
             @Parameter(description = "제목/내용 키워드 검색")
             @RequestParam(required = false) String keyword,
+            @Parameter(description = "조회 시작일 (yyyy-MM-dd)", example = "2026-01-01")
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate startDate,
+            @Parameter(description = "조회 종료일 (yyyy-MM-dd)", example = "2026-12-31")
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate endDate,
             @Parameter(description = "커서 (마지막 게시글 ID)")
             @RequestParam(required = false) Long cursor,
             @Parameter(description = "MOST_VIEWED 정렬 시 마지막 게시글의 조회수")
@@ -508,7 +514,7 @@ public class AdminController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         CursorPageResponse<PostBriefResponse> response =
-                adminService.getContentPolicyPosts(sortType, category, postStatus, keyword, cursor, cursorViewCount, cursorFavCount, size, userDetails.getUsername());
+                adminService.getContentPolicyPosts(sortType, category, postStatus, keyword, startDate, endDate, cursor, cursorViewCount, cursorFavCount, size, userDetails.getUsername());
         return ApiResponse.onSuccess(response);
     }
 

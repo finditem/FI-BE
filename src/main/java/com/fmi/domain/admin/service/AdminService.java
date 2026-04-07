@@ -46,6 +46,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
 
 import com.fmi.domain.auth.data.User;
@@ -428,7 +432,8 @@ public class AdminService {
 
     public CursorPageResponse<PostBriefResponse> getContentPolicyPosts(
             SortType sortType, Category category, PostStatus postStatus,
-            String keyword, Long cursor, Long cursorViewCount, Long cursorFavCount, int size,
+            String keyword, LocalDate startDate, LocalDate endDate,
+            Long cursor, Long cursorViewCount, Long cursorFavCount, int size,
             String adminEmail) {
 
         size = Math.max(1, Math.min(size, 50));
@@ -438,16 +443,18 @@ public class AdminService {
         String categoryStr = category != null ? category.name() : null;
         String postStatusStr = postStatus != null ? postStatus.name() : null;
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
 
         posts = switch (sortType) {
             case OLDEST -> postRepository.findContentPolicyPostsByOldest(
-                    categoryStr, postStatusStr, trimmedKeyword, cursor, fetchSize);
+                    categoryStr, postStatusStr, trimmedKeyword, startDateTime, endDateTime, cursor, fetchSize);
             case MOST_VIEWED -> postRepository.findContentPolicyPostsByMostViewed(
-                    categoryStr, postStatusStr, trimmedKeyword, cursorViewCount, cursor, fetchSize);
+                    categoryStr, postStatusStr, trimmedKeyword, startDateTime, endDateTime, cursorViewCount, cursor, fetchSize);
             case MOST_FAVORITED -> postRepository.findContentPolicyPostsByMostFavorited(
-                    categoryStr, postStatusStr, trimmedKeyword, cursorFavCount, cursor, fetchSize);
+                    categoryStr, postStatusStr, trimmedKeyword, startDateTime, endDateTime, cursorFavCount, cursor, fetchSize);
             default -> postRepository.findContentPolicyPostsByLatest(
-                    categoryStr, postStatusStr, trimmedKeyword, cursor, fetchSize);
+                    categoryStr, postStatusStr, trimmedKeyword, startDateTime, endDateTime, cursor, fetchSize);
         };
 
         boolean hasNext = posts.size() > size;
