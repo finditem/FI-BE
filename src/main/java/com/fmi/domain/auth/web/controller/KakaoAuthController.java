@@ -78,11 +78,12 @@ public class KakaoAuthController {
                                       "message": "성공입니다.",
                                       "result": {
                                         "userId": 1,
-                                        "isTemporaryPassword": false
+                                        "isTemporaryPassword": false,
+                                        "isNewUser": true
                                       }
                                     }
                                     """,
-                                    summary = "로그인 성공 시 응답"
+                                    summary = "로그인 성공 시 응답 (isNewUser: true=신규가입, false=기존유저)"
                             )
                     )
             ),
