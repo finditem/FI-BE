@@ -97,6 +97,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
               AND (:category IS NULL OR p.category = :category)
               AND (:postStatus IS NULL OR p.item_status = :postStatus)
               AND (:keyword IS NULL OR p.title LIKE CONCAT('%', :keyword, '%') OR p.content LIKE CONCAT('%', :keyword, '%'))
+              AND (:startDate IS NULL OR p.created_at >= :startDate)
+              AND (:endDate IS NULL OR p.created_at <= :endDate)
               AND (:cursor IS NULL OR p.id < :cursor)
             ORDER BY p.id DESC
             LIMIT :limit
@@ -104,6 +106,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     List<Post> findContentPolicyPostsByLatest(@Param("category") String category,
                                               @Param("postStatus") String postStatus,
                                               @Param("keyword") String keyword,
+                                              @Param("startDate") java.time.LocalDateTime startDate,
+                                              @Param("endDate") java.time.LocalDateTime endDate,
                                               @Param("cursor") Long cursor,
                                               @Param("limit") int limit);
 
@@ -116,6 +120,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
               AND (:category IS NULL OR p.category = :category)
               AND (:postStatus IS NULL OR p.item_status = :postStatus)
               AND (:keyword IS NULL OR p.title LIKE CONCAT('%', :keyword, '%') OR p.content LIKE CONCAT('%', :keyword, '%'))
+              AND (:startDate IS NULL OR p.created_at >= :startDate)
+              AND (:endDate IS NULL OR p.created_at <= :endDate)
               AND (:cursor IS NULL OR p.id > :cursor)
             ORDER BY p.id ASC
             LIMIT :limit
@@ -123,6 +129,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     List<Post> findContentPolicyPostsByOldest(@Param("category") String category,
                                               @Param("postStatus") String postStatus,
                                               @Param("keyword") String keyword,
+                                              @Param("startDate") java.time.LocalDateTime startDate,
+                                              @Param("endDate") java.time.LocalDateTime endDate,
                                               @Param("cursor") Long cursor,
                                               @Param("limit") int limit);
 
@@ -135,6 +143,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
               AND (:category IS NULL OR p.category = :category)
               AND (:postStatus IS NULL OR p.item_status = :postStatus)
               AND (:keyword IS NULL OR p.title LIKE CONCAT('%', :keyword, '%') OR p.content LIKE CONCAT('%', :keyword, '%'))
+              AND (:startDate IS NULL OR p.created_at >= :startDate)
+              AND (:endDate IS NULL OR p.created_at <= :endDate)
               AND (:cursorViewCount IS NULL OR (p.view_count < :cursorViewCount OR (p.view_count = :cursorViewCount AND p.id < :cursorId)))
             ORDER BY p.view_count DESC, p.id DESC
             LIMIT :limit
@@ -142,6 +152,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     List<Post> findContentPolicyPostsByMostViewed(@Param("category") String category,
                                                    @Param("postStatus") String postStatus,
                                                    @Param("keyword") String keyword,
+                                                   @Param("startDate") java.time.LocalDateTime startDate,
+                                                   @Param("endDate") java.time.LocalDateTime endDate,
                                                    @Param("cursorViewCount") Long cursorViewCount,
                                                    @Param("cursorId") Long cursorId,
                                                    @Param("limit") int limit);
@@ -156,6 +168,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
               AND (:category IS NULL OR p.category = :category)
               AND (:postStatus IS NULL OR p.item_status = :postStatus)
               AND (:keyword IS NULL OR p.title LIKE CONCAT('%', :keyword, '%') OR p.content LIKE CONCAT('%', :keyword, '%'))
+              AND (:startDate IS NULL OR p.created_at >= :startDate)
+              AND (:endDate IS NULL OR p.created_at <= :endDate)
             GROUP BY p.id
             HAVING (:cursorFavCount IS NULL OR COUNT(pf.favorite_id) < :cursorFavCount
                     OR (COUNT(pf.favorite_id) = :cursorFavCount AND p.id < :cursorId))
@@ -165,6 +179,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     List<Post> findContentPolicyPostsByMostFavorited(@Param("category") String category,
                                                       @Param("postStatus") String postStatus,
                                                       @Param("keyword") String keyword,
+                                                      @Param("startDate") java.time.LocalDateTime startDate,
+                                                      @Param("endDate") java.time.LocalDateTime endDate,
                                                       @Param("cursorFavCount") Long cursorFavCount,
                                                       @Param("cursorId") Long cursorId,
                                                       @Param("limit") int limit);
