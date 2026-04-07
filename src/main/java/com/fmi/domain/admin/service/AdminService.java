@@ -46,6 +46,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
 
 import com.fmi.domain.auth.data.User;
@@ -428,7 +432,7 @@ public class AdminService {
 
     public CursorPageResponse<PostBriefResponse> getContentPolicyPosts(
             SortType sortType, Category category, PostStatus postStatus,
-            String keyword, java.time.LocalDate startDate, java.time.LocalDate endDate,
+            String keyword, LocalDate startDate, LocalDate endDate,
             Long cursor, Long cursorViewCount, Long cursorFavCount, int size,
             String adminEmail) {
 
@@ -439,8 +443,8 @@ public class AdminService {
         String categoryStr = category != null ? category.name() : null;
         String postStatusStr = postStatus != null ? postStatus.name() : null;
         String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
-        java.time.LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
-        java.time.LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
 
         posts = switch (sortType) {
             case OLDEST -> postRepository.findContentPolicyPostsByOldest(

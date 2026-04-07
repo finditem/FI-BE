@@ -106,8 +106,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     List<Post> findContentPolicyPostsByLatest(@Param("category") String category,
                                               @Param("postStatus") String postStatus,
                                               @Param("keyword") String keyword,
-                                              @Param("startDate") java.time.LocalDateTime startDate,
-                                              @Param("endDate") java.time.LocalDateTime endDate,
+                                              @Param("startDate") LocalDateTime startDate,
+                                              @Param("endDate") LocalDateTime endDate,
                                               @Param("cursor") Long cursor,
                                               @Param("limit") int limit);
 
@@ -129,8 +129,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     List<Post> findContentPolicyPostsByOldest(@Param("category") String category,
                                               @Param("postStatus") String postStatus,
                                               @Param("keyword") String keyword,
-                                              @Param("startDate") java.time.LocalDateTime startDate,
-                                              @Param("endDate") java.time.LocalDateTime endDate,
+                                              @Param("startDate") LocalDateTime startDate,
+                                              @Param("endDate") LocalDateTime endDate,
                                               @Param("cursor") Long cursor,
                                               @Param("limit") int limit);
 
@@ -152,8 +152,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     List<Post> findContentPolicyPostsByMostViewed(@Param("category") String category,
                                                    @Param("postStatus") String postStatus,
                                                    @Param("keyword") String keyword,
-                                                   @Param("startDate") java.time.LocalDateTime startDate,
-                                                   @Param("endDate") java.time.LocalDateTime endDate,
+                                                   @Param("startDate") LocalDateTime startDate,
+                                                   @Param("endDate") LocalDateTime endDate,
                                                    @Param("cursorViewCount") Long cursorViewCount,
                                                    @Param("cursorId") Long cursorId,
                                                    @Param("limit") int limit);
@@ -179,8 +179,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     List<Post> findContentPolicyPostsByMostFavorited(@Param("category") String category,
                                                       @Param("postStatus") String postStatus,
                                                       @Param("keyword") String keyword,
-                                                      @Param("startDate") java.time.LocalDateTime startDate,
-                                                      @Param("endDate") java.time.LocalDateTime endDate,
+                                                      @Param("startDate") LocalDateTime startDate,
+                                                      @Param("endDate") LocalDateTime endDate,
                                                       @Param("cursorFavCount") Long cursorFavCount,
                                                       @Param("cursorId") Long cursorId,
                                                       @Param("limit") int limit);
