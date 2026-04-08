@@ -37,9 +37,12 @@ public class KakaoOAuthService {
     private String redirectUri;
     @Value("${KAKAO_REDIRECT_URI_DEV:}")
     private String redirectUriDev;
+    @Value("${KAKAO_ADMIN_KEY:}")
+    private String adminKey;
 
     private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String USERINFO_URL = "https://kapi.kakao.com/v2/user/me";
+    private static final String UNLINK_URL = "https://kapi.kakao.com/v1/user/unlink";
 
     public KakaoToken exchangeCodeForToken(String code) {
         return exchangeCodeForToken(code, null);
@@ -147,6 +150,26 @@ public class KakaoOAuthService {
         } catch (RestClientException e) {
             log.error("카카오 사용자 정보 조회 실패: 네트워크 오류", e);
             throw new GeneralException(ErrorStatus._KAKAO_USERINFO_FETCH_FAILED);
+        }
+    }
+
+    public void unlinkUser(String kakaoUserId) {
+        RestTemplate rt = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.set("Authorization", "KakaoAK " + adminKey);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("target_id_type", "user_id");
+        params.add("target_id", kakaoUserId);
+
+        HttpEntity<MultiValueMap<String, String>> req = new HttpEntity<>(params, headers);
+
+        try {
+            rt.postForEntity(UNLINK_URL, req, String.class);
+            log.info("카카오 연결 끊기 성공: kakaoUserId={}", kakaoUserId);
+        } catch (RestClientException e) {
+            log.warn("카카오 연결 끊기 실패: kakaoUserId={}, error={}", kakaoUserId, e.getMessage());
         }
     }
 

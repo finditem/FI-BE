@@ -40,6 +40,10 @@ import com.fmi.domain.user.web.dto.AccountDeleteRequest;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
+import com.fmi.domain.Enum.Provider;
+import com.fmi.domain.auth.data.SocialAccounts;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.service.KakaoOAuthService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
@@ -89,6 +93,8 @@ public class UserService {
     private final CommentLikeService commentLikeService;
     private final CommentImageService commentImageService;
     private final InquiryCommentRepository inquiryCommentRepository;
+    private final SocialAccountsRepository socialAccountsRepository;
+    private final KakaoOAuthService kakaoOAuthService;
 
 
     /**
@@ -99,7 +105,23 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        return UserConverter.toUserProfileResponse(user);
+        boolean isSocialUser = socialAccountsRepository.existsByUser(user);
+        return UserConverter.toUserProfileResponse(user, isSocialUser);
+    }
+
+    /**
+     * 약관 동의 처리
+     */
+    @Transactional
+    public void agreeTerms(String email, com.fmi.domain.user.web.dto.TermsAgreeRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        user.setPrivacyPolicyAgreed(request.isPrivacyPolicyAgreed());
+        user.setTermsOfServiceAgreed(request.isTermsOfServiceAgreed());
+        user.setContentPolicyAgreed(request.isContentPolicyAgreed());
+        user.setMarketingConsent(request.isMarketingConsent());
+        userRepository.save(user);
     }
 
     /**
@@ -457,7 +479,8 @@ public class UserService {
 
         user.setUpdatedAt(LocalDateTime.now());
         User updatedUser = userRepository.save(user);
-        return UserConverter.toUserProfileResponse(updatedUser);
+        boolean isSocialUser = socialAccountsRepository.findByUser(updatedUser).isPresent();
+        return UserConverter.toUserProfileResponse(updatedUser, isSocialUser);
     }
 
     /**
@@ -574,6 +597,11 @@ public class UserService {
         if (request.getReasons().contains(com.fmi.domain.Enum.WithdrawalReason.OTHER)) {
             user.setWithdrawalOtherReason(request.getOtherReason());
         }
+
+        // 카카오 회원이면 카카오 연결 끊기
+        socialAccountsRepository.findByUser(user)
+                .filter(sa -> sa.getProvider() == Provider.KAKAO)
+                .ifPresent(sa -> kakaoOAuthService.unlinkUser(sa.getProviderId()));
 
         // Soft Delete (deletedAt 설정)
         user.setDeletedAt(LocalDateTime.now());
