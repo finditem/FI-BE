@@ -101,7 +101,7 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        boolean isSocialUser = socialAccountsRepository.findByUser(user).isPresent();
+        boolean isSocialUser = socialAccountsRepository.existsByUser(user);
         return UserConverter.toUserProfileResponse(user, isSocialUser);
     }
 
