@@ -110,6 +110,21 @@ public class UserService {
     }
 
     /**
+     * 약관 동의 처리
+     */
+    @Transactional
+    public void agreeTerms(String email, com.fmi.domain.user.web.dto.TermsAgreeRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        user.setPrivacyPolicyAgreed(request.isPrivacyPolicyAgreed());
+        user.setTermsOfServiceAgreed(request.isTermsOfServiceAgreed());
+        user.setContentPolicyAgreed(request.isContentPolicyAgreed());
+        user.setMarketingConsent(request.isMarketingConsent());
+        userRepository.save(user);
+    }
+
+    /**
      * 유저 메타데이터 조회 (OG 태그용)
      */
     @Transactional(readOnly = true)

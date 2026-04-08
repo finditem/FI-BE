@@ -125,6 +125,30 @@ public class UserController {
         return ApiResponse.onSuccess(response);
     }
 
+    @PatchMapping("/me/terms")
+    @Operation(summary = "약관 동의", description = "카카오 회원가입 후 약관 동의를 처리합니다. 개인정보 처리방침과 이용약관은 필수입니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "약관 동의 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"USER404-NOT_FOUND\", \"message\": \"존재하지 않는 회원입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<Void> agreeTerms(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody com.fmi.domain.user.web.dto.TermsAgreeRequest request
+    ) {
+        String email = userDetails.getUsername();
+        userService.agreeTerms(email, request);
+        return ApiResponse.onSuccess(null);
+    }
+
     @GetMapping("/me/comments")
     @Operation(summary = "내가 쓴 댓글 목록", description = """
             현재 로그인한 사용자가 작성한 댓글 목록을 커서 기반으로 조회합니다. 삭제된 댓글은 제외됩니다.
