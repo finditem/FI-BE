@@ -21,13 +21,14 @@ public class UserConverter {
      * User Entity → UserProfileResponse 변환
      * 닉네임, 이메일, 프로필 이미지만 반환
      */
-    public static UserProfileResponse toUserProfileResponse(User user) {
+    public static UserProfileResponse toUserProfileResponse(User user, boolean isSocialUser) {
         return UserProfileResponse.builder()
                 .userId(user.getId())
                 .nickname(user.getNickname())
                 .email(user.getEmail())
                 .profileImg(user.getProfile_img())
                 .role(user.getRole())
+                .isSocialUser(isSocialUser)
                 .build();
     }
 

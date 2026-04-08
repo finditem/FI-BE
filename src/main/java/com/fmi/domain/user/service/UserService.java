@@ -40,6 +40,7 @@ import com.fmi.domain.user.web.dto.AccountDeleteRequest;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
@@ -89,6 +90,7 @@ public class UserService {
     private final CommentLikeService commentLikeService;
     private final CommentImageService commentImageService;
     private final InquiryCommentRepository inquiryCommentRepository;
+    private final SocialAccountsRepository socialAccountsRepository;
 
 
     /**
@@ -99,7 +101,8 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        return UserConverter.toUserProfileResponse(user);
+        boolean isSocialUser = socialAccountsRepository.findByUser(user).isPresent();
+        return UserConverter.toUserProfileResponse(user, isSocialUser);
     }
 
     /**
@@ -457,7 +460,8 @@ public class UserService {
 
         user.setUpdatedAt(LocalDateTime.now());
         User updatedUser = userRepository.save(user);
-        return UserConverter.toUserProfileResponse(updatedUser);
+        boolean isSocialUser = socialAccountsRepository.findByUser(updatedUser).isPresent();
+        return UserConverter.toUserProfileResponse(updatedUser, isSocialUser);
     }
 
     /**
