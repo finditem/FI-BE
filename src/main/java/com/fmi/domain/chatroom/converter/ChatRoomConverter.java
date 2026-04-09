@@ -95,7 +95,7 @@ public class ChatRoomConverter {
         ChatRoom room = participant.getChatRoom();
 
         PostInfoDTO postInfoDTO;
-        if (!room.isSourcePostDeleted()) {
+        if (!room.isSourcePostDeleted() && room.getPost() != null) {
             Post post = room.getPost();
             postInfoDTO = PostInfoDTO.builder()
                     .postId(post.getId())

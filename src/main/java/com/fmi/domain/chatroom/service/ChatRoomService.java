@@ -130,7 +130,7 @@ public class ChatRoomService {
         List<ChatRoomParticipant> participants = participantSlice.getContent();
 
         List<Long> postIds = participants.stream()
-                .filter(p -> !p.getChatRoom().isSourcePostDeleted())
+                .filter(p -> !p.getChatRoom().isSourcePostDeleted() && p.getChatRoom().getPost() != null)
                 .map(p -> p.getChatRoom().getPost().getId())
                 .distinct()
                 .collect(Collectors.toList());
@@ -173,7 +173,7 @@ public class ChatRoomService {
         boolean isBlocked = blockService.isBlocked(user.getId(), opponent.getId());
 
         // 게시글 완전 삭제 아닐 경우 -> fk로 최신 데이터
-        if(!chatRoom.isSourcePostDeleted()) {
+        if(!chatRoom.isSourcePostDeleted() && chatRoom.getPost() != null) {
             Post post = chatRoom.getPost();
             String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
             return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount, thumbnailImageUrl, isBlocked);
