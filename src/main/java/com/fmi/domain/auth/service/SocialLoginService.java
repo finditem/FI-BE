@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Slf4j
@@ -38,8 +39,22 @@ public class SocialLoginService {
         // 이미 존재하는 소셜 계정인지 확인
         Optional<SocialAccounts> existingAccount = socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.KAKAO, providerId);
         if (existingAccount.isPresent()) {
-            log.info("기존 카카오 계정 찾음: providerId={}, userId={}", providerId, existingAccount.get().getUser().getId());
-            return new KakaoLoginResult(reloadUser(existingAccount.get().getUser()), false);
+            User existingUser = existingAccount.get().getUser();
+            // 탈퇴한 사용자인 경우 재가입 방지
+            if (existingUser.getDeletedAt() != null) {
+                LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+                if (existingUser.getDeletedAt().isAfter(oneWeekAgo)) {
+                    log.info("최근 탈퇴한 카카오 계정 재로그인 차단: providerId={}, deletedAt={}", providerId, existingUser.getDeletedAt());
+                    throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
+                }
+                // 7일 지난 탈퇴 계정: 기존 소셜 계정 삭제 후 새로 생성 진행
+                log.info("7일 경과 탈퇴 카카오 계정, 기존 소셜 계정 삭제 후 재가입 허용: providerId={}", providerId);
+                socialAccountsRepository.delete(existingAccount.get());
+                socialAccountsRepository.flush();
+            } else {
+                log.info("기존 카카오 계정 찾음: providerId={}, userId={}", providerId, existingUser.getId());
+                return new KakaoLoginResult(reloadUser(existingUser), false);
+            }
         }
 
         log.info("새 카카오 계정 생성 시작: providerId={}", providerId);
@@ -48,6 +63,13 @@ public class SocialLoginService {
         String effectiveEmail = (email != null && !email.isBlank())
                 ? email
                 : ("kakao_" + providerId + "@kakao.local");
+
+        // 이메일 기준 7일 재가입 방지 체크
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+        if (userRepository.existsRecentlyDeletedByEmail(effectiveEmail, oneWeekAgo)) {
+            log.info("최근 탈퇴한 이메일로 카카오 재가입 차단: email={}", effectiveEmail);
+            throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
+        }
 
         // 사용자 존재 여부 확인(이메일 기준)
         User user = userRepository.findByEmail(effectiveEmail)
