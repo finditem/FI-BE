@@ -45,10 +45,13 @@ public class SocialLoginService {
                     log.info("최근 탈퇴한 카카오 계정 재로그인 차단: providerId={}, deletedAt={}", providerId, existingUser.getDeletedAt());
                     throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
                 }
-                // 7일 지난 탈퇴 계정: 기존 소셜 계정 삭제 후 새로 생성 진행
-                log.info("7일 경과 탈퇴 카카오 계정, 기존 소셜 계정 삭제 후 재가입 허용: providerId={}", providerId);
+                // 7일 지난 탈퇴 계정: User 재활성화 및 소셜 계정 재생성
+                log.info("7일 경과 탈퇴 카카오 계정, User 재활성화 및 소셜 계정 재생성: providerId={}, userId={}", providerId, existingUser.getId());
+                existingUser.setDeletedAt(null);
+                userRepository.save(existingUser);
                 socialAccountsRepository.delete(existingAccount.get());
                 socialAccountsRepository.flush();
+                return new KakaoLoginResult(reloadUser(existingUser));
             } else {
                 log.info("기존 카카오 계정 찾음: providerId={}, userId={}", providerId, existingUser.getId());
                 return new KakaoLoginResult(reloadUser(existingUser));
