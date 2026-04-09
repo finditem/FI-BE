@@ -25,4 +25,5 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     long countByPostId(Long postId);
 
     List<ChatRoom> findAllByPost(Post post);
+
 }
