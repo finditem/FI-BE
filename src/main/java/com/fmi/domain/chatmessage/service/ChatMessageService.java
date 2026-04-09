@@ -132,7 +132,9 @@ public class ChatMessageService {
         List<ChatRoomParticipant> allParticipants = chatRoomParticipantRepository.findAllByChatRoom_Id(roomId);
         User sender = newMessage.getUser();
         Long senderId = sender.getId();
-        Long postId = newMessage.getChatRoom().getPost().getId();
+        Long postId = newMessage.getChatRoom().isSourcePostDeleted() || newMessage.getChatRoom().getPost() == null
+                ? newMessage.getChatRoom().getSourcePostId()
+                : newMessage.getChatRoom().getPost().getId();
 
         for (ChatRoomParticipant pt : allParticipants) {
             // 메시지 갱신 및 ACTIVE 설정
