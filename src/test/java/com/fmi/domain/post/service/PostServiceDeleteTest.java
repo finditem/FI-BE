@@ -49,7 +49,6 @@ class PostServiceDeleteTest {
                 .build();
 
         post = mock(Post.class);
-        given(post.getId()).willReturn(10L);
         given(post.getUser()).willReturn(author);
 
         userDetails = mock(UserDetails.class);
