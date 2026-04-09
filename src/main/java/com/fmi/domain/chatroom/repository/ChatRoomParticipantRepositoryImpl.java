@@ -57,7 +57,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
         JPAQuery<ChatRoomParticipant> query = queryFactory
                 .selectFrom(pt)
                 .join(pt.chatRoom, cr).fetchJoin()
-                .join(cr.post, p).fetchJoin()
+                .leftJoin(cr.post, p).fetchJoin()
                 .join(pt.lastMessage, lm).fetchJoin()
                 .join(cr.participants, otherPt)
                 .join(otherPt.user, otherUser).fetchJoin()
@@ -68,8 +68,8 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
                         pt.participantState.eq(ParticipantState.ACTIVE),
                         pt.lastMessage.isNotNull(),
 
-                        typeEq(type),
-                        addressEq(address)
+                        typeEq(type, p, cr),
+                        addressEq(address, p, cr)
                 );
 
         ChatRoomParticipant cursor = null;
@@ -118,11 +118,14 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
         return new SliceImpl<>(participants, pageable, hasNext);
     }
 
-    private BooleanExpression typeEq(PostType type) {
-        return type != null ? QPost.post.postType.eq(type) : null;
+    private BooleanExpression typeEq(PostType type, QPost p, QChatRoom cr) {
+        if (type == null) return null;
+        return cr.sourcePostDeleted.isFalse().and(p.postType.eq(type))
+                .or(cr.sourcePostDeleted.isTrue().or(p.id.isNull())
+                        .and(cr.sourcePostType.eq(type)));
     }
 
-    private BooleanExpression addressEq(String address) {
+    private BooleanExpression addressEq(String address, QPost p, QChatRoom cr) {
         if (address == null || address.isBlank()) return null;
 
         String[] tokens = address.trim().split("\\s+");
@@ -130,8 +133,10 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
 
         for (String token : tokens) {
             String normalized = ADDRESS_ALIASES.getOrDefault(token, token);
-            BooleanExpression contains = QPost.post.address.contains(normalized);
-            result = (result == null) ? contains : result.and(contains);
+            BooleanExpression oneToken = cr.sourcePostDeleted.isFalse().and(p.address.contains(normalized))
+                    .or(cr.sourcePostDeleted.isTrue().or(p.id.isNull())
+                            .and(cr.sourceAddress.contains(normalized)));
+            result = (result == null) ? oneToken : result.and(oneToken);
         }
 
         return result;

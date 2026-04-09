@@ -43,7 +43,9 @@ public class ChatReminderService {
         for (ChatRoomParticipant pt : targets) {
             try {
                 User receiver = pt.getUser();
-                Long postId = pt.getChatRoom().getPost().getId();
+                Long postId = pt.getChatRoom().isSourcePostDeleted() || pt.getChatRoom().getPost() == null
+                        ? pt.getChatRoom().getSourcePostId()
+                        : pt.getChatRoom().getPost().getId();
                 Long roomId = pt.getChatRoom().getId();
                 String content = pt.getLastMessage().getContent();
 

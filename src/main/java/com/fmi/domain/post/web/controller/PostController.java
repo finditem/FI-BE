@@ -2,11 +2,11 @@ package com.fmi.domain.post.web.controller;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.domain.post.data.PostStatus;
+import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.post.service.TemporaryPostService;
@@ -15,9 +15,6 @@ import com.fmi.domain.post.web.dto.response.*;
 import com.fmi.domain.post.web.dto.response.temp.TemporaryPostResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.utils.IpUtil;
-
-import java.util.List;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,6 +33,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Objects;
 
 @Slf4j

@@ -51,6 +51,10 @@ public class ChatRoomService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
 
+        if (post.isDeleted()) {
+            throw new GeneralException(ErrorStatus._POST_NOT_FOUND);
+        }
+
         // 게시글 작성자의 ID와 채팅을 요청한 사용자의 ID가 같은지 확인
         if (post.getUser().getId().equals(contactUserId)) {
             // 같다면, 본인 글에 대한 채팅 시도이므로 예외 발생
@@ -86,6 +90,7 @@ public class ChatRoomService {
                     .post(post)
                     .createdAt(LocalDateTime.now())
                     .build();
+            newRoom.initFromPost(post);
 
             // 두 명의 참여자(게시글 작성자, 연락한 사람)에 대한 ChatRoomParticipant 엔티티를 생성
             ChatRoomParticipant authorParticipant = ChatRoomParticipant.builder()
@@ -125,6 +130,7 @@ public class ChatRoomService {
         List<ChatRoomParticipant> participants = participantSlice.getContent();
 
         List<Long> postIds = participants.stream()
+                .filter(p -> !p.getChatRoom().isSourcePostDeleted() && p.getChatRoom().getPost() != null)
                 .map(p -> p.getChatRoom().getPost().getId())
                 .distinct()
                 .collect(Collectors.toList());
@@ -164,13 +170,17 @@ public class ChatRoomService {
 
         User opponent = chatRoom.getOtherParticipant(user.getId());
 
-        Post post = chatRoom.getPost();
-
-        String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
-
         boolean isBlocked = blockService.isBlocked(user.getId(), opponent.getId());
 
-        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount, thumbnailImageUrl, isBlocked);
+        // 게시글 완전 삭제 아닐 경우 -> fk로 최신 데이터
+        if(!chatRoom.isSourcePostDeleted() && chatRoom.getPost() != null) {
+            Post post = chatRoom.getPost();
+            String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
+            return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount, thumbnailImageUrl, isBlocked);
+        }
+
+        // 게시글 완전 삭제 -> 스냅샷 사용
+        return ChatRoomConverter.toChatRoomResultDTOFromSnapshot(chatRoom, opponent, unreadCount, isBlocked);
 
     }
 

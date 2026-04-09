@@ -1,7 +1,10 @@
 package com.fmi.domain.chatroom.data;
 
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.data.PostStatus;
+import com.fmi.domain.post.data.PostType;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.persistence.*;
@@ -26,12 +29,31 @@ public class ChatRoom {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "post_id", nullable = true)
     private Post post;
 
     // 채팅방 생성 시간
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    private Long sourcePostId;
+
+    private String sourceAddress;
+
+    private String sourceTitle;
+
+    @Enumerated(EnumType.STRING)
+    private PostType sourcePostType;
+
+    @Enumerated(EnumType.STRING)
+    private PostStatus sourcePostStatus;
+
+    private String sourceThumbnailUrl;
+
+    private boolean sourcePostDeleted;
+
+    @Enumerated(EnumType.STRING)
+    private Category sourceCategory;
 
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -40,6 +62,30 @@ public class ChatRoom {
     public void addParticipant(ChatRoomParticipant participant) {
         this.participants.add(participant);
         participant.setChatRoom(this);
+    }
+
+    public void initFromPost(Post post) {
+        this.sourcePostId = post.getId();
+        this.sourceTitle = post.getTitle();
+        this.sourceAddress = post.getAddress();
+        this.sourcePostType = post.getPostType();
+        this.sourceCategory = post.getCategory();
+        this.sourcePostStatus = post.getPostStatus();
+    }
+
+    public void snapshotFromPost(Post post, String thumbnailUrl) {
+        this.sourcePostId = post.getId();
+        this.sourceTitle = post.getTitle();
+        this.sourceAddress = post.getAddress();
+        this.sourcePostType = post.getPostType();
+        this.sourceCategory = post.getCategory();
+        this.sourcePostStatus = post.getPostStatus();
+        this.sourceThumbnailUrl = thumbnailUrl;
+        this.sourcePostDeleted = true;
+    }
+
+    public void clearPostReference() {
+        this.post = null;
     }
 
     //나를 제외한 다른 참여자를 찾기
