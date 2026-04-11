@@ -102,7 +102,8 @@ public class SecurityConfig {
                 "http://localhost:*",
                 "http://127.0.0.1:*",
                 "https://finditem.kr",
-                "https://www.finditem.kr"
+                "https://www.finditem.kr",
+                "https://finditem-release.vercel.app"
                 ));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
