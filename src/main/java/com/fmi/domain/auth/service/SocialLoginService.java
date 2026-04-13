@@ -10,6 +10,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -29,6 +31,10 @@ public class SocialLoginService {
     private final PasswordEncoder passwordEncoder;
     private final NicknameGeneratorService nicknameGeneratorService;
 
+    /** 재가입 7일 제한을 면제할 카카오 테스트 계정 ID 목록 (쉼표 구분) */
+    @Value("#{'${KAKAO_TEST_ACCOUNT_IDS:}'.split(',').![#this.trim()].?[!#this.isEmpty()]}")
+    private Set<String> testAccountIds;
+
     public record KakaoLoginResult(User user) {}
 
     public KakaoLoginResult upsertUserFromKakao(Long kakaoId, String email, String nickname, String profileImageUrl) {
@@ -40,13 +46,17 @@ public class SocialLoginService {
             User existingUser = existingAccount.get().getUser();
             // 탈퇴한 사용자인 경우 재가입 방지
             if (existingUser.getDeletedAt() != null) {
+                boolean isTestAccount = isTestAccount(providerId);
                 LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
-                if (existingUser.getDeletedAt().isAfter(oneWeekAgo)) {
+                if (!isTestAccount && existingUser.getDeletedAt().isAfter(oneWeekAgo)) {
                     log.info("최근 탈퇴한 카카오 계정 재로그인 차단: providerId={}, deletedAt={}", providerId, existingUser.getDeletedAt());
                     throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
                 }
-                // 7일 지난 탈퇴 계정: User 재활성화 및 소셜 계정 재생성
-                log.info("7일 경과 탈퇴 카카오 계정, User 재활성화 및 소셜 계정 재생성: providerId={}, userId={}", providerId, existingUser.getId());
+                // 7일 지난 탈퇴 계정 또는 테스트 계정: User 재활성화 및 소셜 계정 재생성
+                if (isTestAccount) {
+                    log.info("테스트 계정 재가입 제한 면제: providerId={}, userId={}", providerId, existingUser.getId());
+                }
+                log.info("탈퇴 카카오 계정, User 재활성화 및 소셜 계정 재생성: providerId={}, userId={}", providerId, existingUser.getId());
                 existingUser.setDeletedAt(null);
                 userRepository.save(existingUser);
                 socialAccountsRepository.delete(existingAccount.get());
@@ -65,11 +75,13 @@ public class SocialLoginService {
                 ? email
                 : ("kakao_" + providerId + "@kakao.local");
 
-        // 이메일 기준 7일 재가입 방지 체크
-        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
-        if (userRepository.existsRecentlyDeletedByEmail(effectiveEmail, oneWeekAgo)) {
-            log.info("최근 탈퇴한 이메일로 카카오 재가입 차단: email={}", effectiveEmail);
-            throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
+        // 이메일 기준 7일 재가입 방지 체크 (테스트 계정 제외)
+        if (!isTestAccount(providerId)) {
+            LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+            if (userRepository.existsRecentlyDeletedByEmail(effectiveEmail, oneWeekAgo)) {
+                log.info("최근 탈퇴한 이메일로 카카오 재가입 차단: email={}", effectiveEmail);
+                throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
+            }
         }
 
         // 사용자 존재 여부 확인(이메일 기준)
@@ -124,6 +136,10 @@ public class SocialLoginService {
             log.error("소셜 계정 저장 실패 후 재조회도 실패: providerId={}, 원본 에러: {}", providerId, e.getMessage(), e);
             throw new GeneralException(ErrorStatus._INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private boolean isTestAccount(String providerId) {
+        return testAccountIds != null && testAccountIds.contains(providerId);
     }
 
     private User reloadUser(User user) {
