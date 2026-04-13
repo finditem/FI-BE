@@ -17,10 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -34,8 +32,8 @@ public class SocialLoginService {
     private final NicknameGeneratorService nicknameGeneratorService;
 
     /** 재가입 7일 제한을 면제할 카카오 테스트 계정 ID 목록 (쉼표 구분) */
-    @Value("${KAKAO_TEST_ACCOUNT_IDS:}")
-    private String testAccountIds;
+    @Value("#{'${KAKAO_TEST_ACCOUNT_IDS:}'.split(',').![#this.trim()].?[!#this.isEmpty()]}")
+    private Set<String> testAccountIds;
 
     public record KakaoLoginResult(User user) {}
 
@@ -141,14 +139,7 @@ public class SocialLoginService {
     }
 
     private boolean isTestAccount(String providerId) {
-        if (testAccountIds == null || testAccountIds.isBlank()) {
-            return false;
-        }
-        Set<String> ids = Arrays.stream(testAccountIds.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toSet());
-        return ids.contains(providerId);
+        return testAccountIds != null && testAccountIds.contains(providerId);
     }
 
     private User reloadUser(User user) {
