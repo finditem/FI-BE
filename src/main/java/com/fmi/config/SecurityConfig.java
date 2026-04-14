@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/users/{userId}/meta").permitAll()
                         .requestMatchers(HttpMethod.GET, "/posts/search/**", "/posts/*", "/posts/*/similar", "/posts/*/share").permitAll()
                         .requestMatchers(HttpMethod.GET, "/main/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/push/vapid-key").permitAll()
                         // 관리자 전용 API 보호
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

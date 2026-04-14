@@ -139,6 +139,8 @@ jobs:
               echo "KAKAO_REDIRECT_URI_DEV=${{ secrets.KAKAO_REDIRECT_URI_DEV }}"
               echo "KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}"
               echo "KAKAO_TEST_ACCOUNT_EMAILS=${{ secrets.KAKAO_TEST_ACCOUNT_EMAILS }}"
+              echo "VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}"
+              echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}"
               echo "SLACK_WEBHOOK_INQUIRY_URL=${{ secrets.SLACK_WEBHOOK_INQUIRY_URL }}"
               echo "SLACK_WEBHOOK_REPORT_URL=${{ secrets.SLACK_WEBHOOK_REPORT_URL }}"
               echo "JWT_COOKIE_DOMAIN=${{ secrets.JWT_COOKIE_DOMAIN }}"
