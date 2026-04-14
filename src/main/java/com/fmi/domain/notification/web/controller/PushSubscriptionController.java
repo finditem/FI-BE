@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/push")
+@RequestMapping("/push")
 @RequiredArgsConstructor
 @Tag(name = "Web Push", description = "Web Push 알림 구독 API")
 public class PushSubscriptionController {
@@ -37,7 +37,7 @@ public class PushSubscriptionController {
 
     /**
      * VAPID 공개키 조회
-     * GET /api/push/vapid-key
+     * GET /push/vapid-key
      */
     @GetMapping("/vapid-key")
     @Operation(summary = "VAPID 공개키 조회",
@@ -52,7 +52,7 @@ public class PushSubscriptionController {
 
     /**
      * 푸시 구독 등록
-     * POST /api/push/subscribe
+     * POST /push/subscribe
      */
     @PostMapping("/subscribe")
     @PreAuthorize("isAuthenticated()")
@@ -100,7 +100,7 @@ public class PushSubscriptionController {
 
     /**
      * 푸시 구독 해제
-     * DELETE /api/push/subscribe
+     * DELETE /push/subscribe
      */
     @DeleteMapping("/subscribe")
     @PreAuthorize("isAuthenticated()")
