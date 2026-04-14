@@ -1,6 +1,7 @@
 package com.fmi.domain.admin.web.controller;
 
 import com.fmi.domain.Enum.Category;
+import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
 import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
 import com.fmi.domain.admin.dto.AdminGuestInquiryReplyRequestDTO;
