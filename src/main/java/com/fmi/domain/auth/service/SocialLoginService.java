@@ -31,9 +31,9 @@ public class SocialLoginService {
     private final PasswordEncoder passwordEncoder;
     private final NicknameGeneratorService nicknameGeneratorService;
 
-    /** 재가입 7일 제한을 면제할 카카오 테스트 계정 ID 목록 (쉼표 구분) */
-    @Value("#{'${KAKAO_TEST_ACCOUNT_IDS:}'.split(',').![#this.trim()].?[!#this.isEmpty()]}")
-    private Set<String> testAccountIds;
+    /** 재가입 7일 제한을 면제할 카카오 테스트 계정 이메일 목록 (쉼표 구분) */
+    @Value("#{'${KAKAO_TEST_ACCOUNT_EMAILS:}'.split(',').![#this.trim()].?[!#this.isEmpty()]}")
+    private Set<String> testAccountEmails;
 
     public record KakaoLoginResult(User user) {}
 
@@ -46,7 +46,7 @@ public class SocialLoginService {
             User existingUser = existingAccount.get().getUser();
             // 탈퇴한 사용자인 경우 재가입 방지
             if (existingUser.getDeletedAt() != null) {
-                boolean isTestAccount = isTestAccount(providerId);
+                boolean isTestAccount = isTestAccount(existingUser.getEmail());
                 LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
                 if (!isTestAccount && existingUser.getDeletedAt().isAfter(oneWeekAgo)) {
                     log.info("최근 탈퇴한 카카오 계정 재로그인 차단: providerId={}, deletedAt={}", providerId, existingUser.getDeletedAt());
@@ -80,7 +80,7 @@ public class SocialLoginService {
                 : ("kakao_" + providerId + "@kakao.local");
 
         // 이메일 기준 7일 재가입 방지 체크 (테스트 계정 제외)
-        if (!isTestAccount(providerId)) {
+        if (!isTestAccount(effectiveEmail)) {
             LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
             if (userRepository.existsRecentlyDeletedByEmail(effectiveEmail, oneWeekAgo)) {
                 log.info("최근 탈퇴한 이메일로 카카오 재가입 차단: email={}", effectiveEmail);
@@ -142,8 +142,8 @@ public class SocialLoginService {
         }
     }
 
-    private boolean isTestAccount(String providerId) {
-        return testAccountIds != null && testAccountIds.contains(providerId);
+    private boolean isTestAccount(String email) {
+        return testAccountEmails != null && testAccountEmails.contains(email);
     }
 
     private User reloadUser(User user) {
