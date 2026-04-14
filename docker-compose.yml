@@ -33,6 +33,11 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   fmi-dev:
     image: ${ECR_IMAGE_URL}:latest
@@ -53,6 +58,28 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  alloy:
+    image: grafana/alloy:v1.15.0
+    container_name: alloy
+    restart: unless-stopped
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
+      - /var/run/docker.sock:/var/run/docker.sock:ro # 컨테이너 로그 접근 권한
+      - alloy_data:/var/lib/alloy/data
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
+    depends_on:
+      - fmi-prod
+      - fmi-dev
 
 volumes:
   redis_data:
+  alloy_data:

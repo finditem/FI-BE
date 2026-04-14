@@ -3,6 +3,7 @@ package com.fmi.domain.report.service;
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
@@ -21,6 +22,7 @@ import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
+import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -53,6 +55,7 @@ public class ReportService {
     private final EmailService emailService;
     private final ReportAnswerImageRepository reportAnswerImageRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final BlockService blockService;
 
     /**
      * 신고하기 (통합)
@@ -75,7 +78,7 @@ public class ReportService {
                 });
         
         // 신고 대상 존재 여부 확인
-        validateTargetExists(request.getTargetType(), request.getTargetId());
+        validateTargetExists(request.getTargetType(), request.getTargetId(), user);
         
         // 신고 생성
         Report report = Report.builder()
@@ -88,6 +91,9 @@ public class ReportService {
         
         Report saved = reportRepository.save(report);
 
+        // 채팅 신고면 상대방 차단
+        autoBlockOnChatReport(request, user);
+
         eventPublisher.publishEvent(ReportEvent.from(saved, user));
 
         // 신고 접수 이메일 발송 (신고자에게)
@@ -98,14 +104,14 @@ public class ReportService {
                     .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
             String reportContent = saved.getReason() != null ? saved.getReason() : "";
             
-            emailService.sendHtmlEmail(
+            emailService.sendHtmlEmailAsync(
                 user.getEmail(),
                 "신고가 접수되었습니다",
                 "report-received-email.html",
                 java.util.Map.of(
                     "NAME", nickname,
                     "TITLE", targetTitle,
-                    "USER", targetTitle, // 신고 대상 정보
+                    "USER", user.getEmail(),
                     "DATE", reportDate,
                     "CONTENT", reportContent
                 )
@@ -193,7 +199,7 @@ public class ReportService {
     /**
      * 신고 대상 존재 확인
      */
-    private void validateTargetExists(ReportTargetType targetType, Long targetId) {
+    private void validateTargetExists(ReportTargetType targetType, Long targetId, User reporter) {
         switch (targetType) {
             case POST:
                 postRepository.findById(targetId)
@@ -208,8 +214,11 @@ public class ReportService {
                         .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
                 break;
             case CHAT:
-                chatRoomRepository.findById(targetId)
+                ChatRoom room = chatRoomRepository.findById(targetId)
                         .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+                if (!room.isParticipant(reporter)) {
+                    throw new GeneralException(ErrorStatus._CHATROOM_ACCESS_DENIED);
+                }
                 break;
         }
     }
@@ -316,14 +325,16 @@ public class ReportService {
 
             try {
                 String targetTitle = getTargetTitle(report.getTargetType(), report.getTargetId());
+                String reporterNickname = reporter.getNickname() != null ? reporter.getNickname() : "회원";
                 String reportDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                         .format(report.getCreatedAt() != null ? report.getCreatedAt() : java.time.LocalDateTime.now());
 
-                emailService.sendHtmlEmail(
+                emailService.sendHtmlEmailAsync(
                     reporter.getEmail(),
                     "신고 답변 안내",
                     "report-result-email.html",
                     java.util.Map.of(
+                        "name", reporterNickname,
                         "TITLE", targetTitle,
                         "USER", reporter.getEmail(),
                         "RESULT", "답변 완료",
@@ -335,6 +346,62 @@ public class ReportService {
                 log.error("신고 답변 이메일 발송 실패: reportId={}", report.getReportId(), e);
             }
         }
+
+        // 피신고자에게 신고 조치 안내 이메일 발송
+        try {
+            User targetUser = findTargetUser(report.getTargetType(), report.getTargetId());
+            if (targetUser != null) {
+                String targetNickname = targetUser.getNickname() != null ? targetUser.getNickname() : "회원";
+                String categoryName = report.getTargetType() != null ? report.getTargetType().getDescription() : "";
+                emailService.sendHtmlEmailAsync(
+                    targetUser.getEmail(),
+                    "신고 처리 결과 안내",
+                    "report-notification-email.html",
+                    java.util.Map.of(
+                        "name", targetNickname,
+                        "CATEGORY", categoryName,
+                        "USER", targetUser.getEmail(),
+                        "NICKNAME", targetNickname
+                    )
+                );
+            }
+        } catch (Exception e) {
+            log.error("피신고자 이메일 발송 실패: reportId={}", report.getReportId(), e);
+        }
+    }
+
+    private User findTargetUser(ReportTargetType targetType, Long targetId) {
+        try {
+            switch (targetType) {
+                case POST:
+                    return postRepository.findById(targetId).map(Post::getUser).orElse(null);
+                case COMMENT:
+                    return commentRepository.findById(targetId).map(c -> c.getUser()).orElse(null);
+                case USER:
+                    return userRepository.findActiveById(targetId).orElse(null);
+                default:
+                    return null;
+            }
+        } catch (Exception e) {
+            log.warn("피신고자 조회 실패: targetType={}, targetId={}", targetType, targetId, e);
+            return null;
+        }
+    }
+
+    /**
+     * 채팅 신고면 상대방 차단
+     */
+    private void autoBlockOnChatReport(ReportCreateRequestDTO request, User reporter) {
+        if (request.getTargetType() != ReportTargetType.CHAT) {
+            return;
+        }
+
+        ChatRoom room = chatRoomRepository.findById(request.getTargetId())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+
+        User targetUser = room.getOtherParticipant(reporter.getId());
+
+        blockService.block(reporter.getId(), targetUser.getId());
     }
 }
 

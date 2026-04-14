@@ -10,12 +10,15 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -28,18 +31,47 @@ public class SocialLoginService {
     private final PasswordEncoder passwordEncoder;
     private final NicknameGeneratorService nicknameGeneratorService;
 
-    public record KakaoLoginResult(User user, boolean isNewUser) {}
+    /** 재가입 7일 제한을 면제할 카카오 테스트 계정 이메일 목록 (쉼표 구분) */
+    @Value("#{'${KAKAO_TEST_ACCOUNT_EMAILS:}'.split(',').![#this.trim()].?[!#this.isEmpty()]}")
+    private Set<String> testAccountEmails;
 
-    public KakaoLoginResult upsertUserFromKakao(Long kakaoId, String email, String nickname, String profileImageUrl,
-                                       Boolean privacyPolicyAgreed, Boolean termsOfServiceAgreed,
-                                       Boolean contentPolicyAgreed, Boolean marketingConsent) {
+    public record KakaoLoginResult(User user) {}
+
+    public KakaoLoginResult upsertUserFromKakao(Long kakaoId, String email, String nickname, String profileImageUrl) {
         String providerId = String.valueOf(kakaoId);
 
         // 이미 존재하는 소셜 계정인지 확인
         Optional<SocialAccounts> existingAccount = socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.KAKAO, providerId);
         if (existingAccount.isPresent()) {
-            log.info("기존 카카오 계정 찾음: providerId={}, userId={}", providerId, existingAccount.get().getUser().getId());
-            return new KakaoLoginResult(reloadUser(existingAccount.get().getUser()), false);
+            User existingUser = existingAccount.get().getUser();
+            // 탈퇴한 사용자인 경우 재가입 방지
+            if (existingUser.getDeletedAt() != null) {
+                boolean isTestAccount = isTestAccount(existingUser.getEmail());
+                LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+                if (!isTestAccount && existingUser.getDeletedAt().isAfter(oneWeekAgo)) {
+                    log.info("최근 탈퇴한 카카오 계정 재로그인 차단: providerId={}, deletedAt={}", providerId, existingUser.getDeletedAt());
+                    throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
+                }
+                // 7일 지난 탈퇴 계정 또는 테스트 계정: User 재활성화 및 소셜 계정 재생성
+                if (isTestAccount) {
+                    log.info("테스트 계정 재가입 제한 면제: providerId={}, userId={}", providerId, existingUser.getId());
+                }
+                log.info("탈퇴 카카오 계정, User 재활성화 및 소셜 계정 재생성: providerId={}, userId={}", providerId, existingUser.getId());
+                existingUser.setDeletedAt(null);
+                existingUser.setPrivacyPolicyAgreed(false);
+                existingUser.setTermsOfServiceAgreed(false);
+                existingUser.setContentPolicyAgreed(false);
+                existingUser.setMarketingConsent(false);
+                existingUser.setWithdrawalReason(null);
+                existingUser.setWithdrawalOtherReason(null);
+                userRepository.save(existingUser);
+                socialAccountsRepository.delete(existingAccount.get());
+                socialAccountsRepository.flush();
+                return new KakaoLoginResult(reloadUser(existingUser));
+            } else {
+                log.info("기존 카카오 계정 찾음: providerId={}, userId={}", providerId, existingUser.getId());
+                return new KakaoLoginResult(reloadUser(existingUser));
+            }
         }
 
         log.info("새 카카오 계정 생성 시작: providerId={}", providerId);
@@ -48,6 +80,15 @@ public class SocialLoginService {
         String effectiveEmail = (email != null && !email.isBlank())
                 ? email
                 : ("kakao_" + providerId + "@kakao.local");
+
+        // 이메일 기준 7일 재가입 방지 체크 (테스트 계정 제외)
+        if (!isTestAccount(effectiveEmail)) {
+            LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+            if (userRepository.existsRecentlyDeletedByEmail(effectiveEmail, oneWeekAgo)) {
+                log.info("최근 탈퇴한 이메일로 카카오 재가입 차단: email={}", effectiveEmail);
+                throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
+            }
+        }
 
         // 사용자 존재 여부 확인(이메일 기준)
         User user = userRepository.findByEmail(effectiveEmail)
@@ -66,11 +107,7 @@ public class SocialLoginService {
                             email,
                             effectiveNickname,
                             profileImageUrl,
-                            passwordEncoder.encode("{noop}-" + providerId),
-                            privacyPolicyAgreed,
-                            termsOfServiceAgreed,
-                            contentPolicyAgreed,
-                            marketingConsent
+                            passwordEncoder.encode("{noop}-" + providerId)
                     );
                     return userRepository.save(u);
                 });
@@ -80,7 +117,7 @@ public class SocialLoginService {
         Optional<SocialAccounts> existingAccountAfterUser = socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.KAKAO, providerId);
         if (existingAccountAfterUser.isPresent()) {
             log.info("동시 요청으로 인해 이미 소셜 계정이 생성됨: providerId={}, userId={}", providerId, existingAccountAfterUser.get().getUser().getId());
-            return new KakaoLoginResult(reloadUser(existingAccountAfterUser.get().getUser()), false);
+            return new KakaoLoginResult(reloadUser(existingAccountAfterUser.get().getUser()));
         }
 
         // 소셜 계정 연결 저장
@@ -92,19 +129,23 @@ public class SocialLoginService {
                     .build();
             SocialAccounts savedAccount = socialAccountsRepository.save(account);
             log.info("소셜 계정 저장 성공: socialId={}, providerId={}, userId={}", savedAccount.getSocialId(), providerId, user.getId());
-            return new KakaoLoginResult(reloadUser(user), true);
+            return new KakaoLoginResult(reloadUser(user));
         } catch (DataIntegrityViolationException e) {
             log.warn("소셜 계정 저장 중 중복 키 위반 발생 (동시 요청 가능성): providerId={}, error={}", providerId, e.getMessage());
             // 중복 키 위반 시 다시 조회해서 반환
             Optional<SocialAccounts> retryAccount = socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.KAKAO, providerId);
             if (retryAccount.isPresent()) {
                 log.info("중복 키 위반 후 재조회 성공: providerId={}, userId={}", providerId, retryAccount.get().getUser().getId());
-                return new KakaoLoginResult(reloadUser(retryAccount.get().getUser()), false);
+                return new KakaoLoginResult(reloadUser(retryAccount.get().getUser()));
             }
             // 재조회도 실패한 경우
             log.error("소셜 계정 저장 실패 후 재조회도 실패: providerId={}, 원본 에러: {}", providerId, e.getMessage(), e);
             throw new GeneralException(ErrorStatus._INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private boolean isTestAccount(String email) {
+        return testAccountEmails != null && testAccountEmails.contains(email);
     }
 
     private User reloadUser(User user) {

@@ -1,5 +1,7 @@
 package com.fmi.domain.chatroom.repository;
 
+import com.fmi.domain.chatroom.data.QChatRoom;
+import com.fmi.domain.post.data.QPost;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,9 +30,9 @@ class ChatRoomParticipantRepositoryImplTest {
 
     private BooleanExpression invokeAddressEq(String address) throws Exception {
         Method method = ChatRoomParticipantRepositoryImpl.class
-                .getDeclaredMethod("addressEq", String.class);
+                .getDeclaredMethod("addressEq", String.class, QPost.class, QChatRoom.class);
         method.setAccessible(true);
-        return (BooleanExpression) method.invoke(repository, address);
+        return (BooleanExpression) method.invoke(repository, address, QPost.post, QChatRoom.chatRoom);
     }
 
     @Test

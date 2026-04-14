@@ -12,13 +12,13 @@ public class LoginResponse {
     private Long userId;
     @Schema(description = "임시 비밀번호로 로그인했는지 여부 (비밀번호 변경 페이지 리다이렉트용)", example = "false")
     private boolean isTemporaryPassword;
-    @Schema(description = "신규 가입 여부 (카카오 로그인 시 약관 동의 화면 분기용, 일반 로그인은 항상 false)", example = "false")
-    private boolean isNewUser;
+    @Schema(description = "필수 약관 동의 완료 여부 (false면 약관 동의 화면으로 이동 필요)", example = "true")
+    private boolean termsAgreed;
 
     public LoginResponse(Long userId, boolean isTemporaryPassword) {
         this.userId = userId;
         this.isTemporaryPassword = isTemporaryPassword;
-        this.isNewUser = false;
+        this.termsAgreed = true;
     }
 }
 

@@ -15,6 +15,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
+import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -43,11 +44,16 @@ public class ChatRoomService {
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final PostImageService postImageService;
+    private final BlockService blockService;
 
     public Pair<ChatRoomResultDTO, Boolean> createChatRoom(Long postId, Long contactUserId) {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
+
+        if (post.isDeleted()) {
+            throw new GeneralException(ErrorStatus._POST_NOT_FOUND);
+        }
 
         // 게시글 작성자의 ID와 채팅을 요청한 사용자의 ID가 같은지 확인
         if (post.getUser().getId().equals(contactUserId)) {
@@ -62,13 +68,15 @@ public class ChatRoomService {
 
         String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
 
+        boolean isBlocked = blockService.isBlocked(contactUserId, opponentUser.getId());
+
         // 채팅방이 이미 존재하는 경우
         if (optionalChatRoom.isPresent()) {
             ChatRoom existingRoom = optionalChatRoom.get();
 
             Long unreadCount = existingRoom.getParticipant(contactUserId).getUnreadCount();
 
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(existingRoom, opponentUser, post, unreadCount, thumbnailImageUrl);
+            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(existingRoom, opponentUser, post, unreadCount, thumbnailImageUrl, isBlocked);
 
             return Pair.of(dto, false);
         }
@@ -82,6 +90,7 @@ public class ChatRoomService {
                     .post(post)
                     .createdAt(LocalDateTime.now())
                     .build();
+            newRoom.initFromPost(post);
 
             // 두 명의 참여자(게시글 작성자, 연락한 사람)에 대한 ChatRoomParticipant 엔티티를 생성
             ChatRoomParticipant authorParticipant = ChatRoomParticipant.builder()
@@ -97,7 +106,7 @@ public class ChatRoomService {
 
             chatRoomRepository.save(newRoom);
 
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(newRoom, opponentUser, post, 0L, thumbnailImageUrl);
+            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(newRoom, opponentUser, post, 0L, thumbnailImageUrl, isBlocked);
 
             return Pair.of(dto, true);
         }
@@ -121,6 +130,7 @@ public class ChatRoomService {
         List<ChatRoomParticipant> participants = participantSlice.getContent();
 
         List<Long> postIds = participants.stream()
+                .filter(p -> !p.getChatRoom().isSourcePostDeleted() && p.getChatRoom().getPost() != null)
                 .map(p -> p.getChatRoom().getPost().getId())
                 .distinct()
                 .collect(Collectors.toList());
@@ -160,11 +170,17 @@ public class ChatRoomService {
 
         User opponent = chatRoom.getOtherParticipant(user.getId());
 
-        Post post = chatRoom.getPost();
+        boolean isBlocked = blockService.isBlocked(user.getId(), opponent.getId());
 
-        String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
+        // 게시글 완전 삭제 아닐 경우 -> fk로 최신 데이터
+        if(!chatRoom.isSourcePostDeleted() && chatRoom.getPost() != null) {
+            Post post = chatRoom.getPost();
+            String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
+            return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount, thumbnailImageUrl, isBlocked);
+        }
 
-        return ChatRoomConverter.toChatRoomResultDTO(chatRoom, opponent, post, unreadCount, thumbnailImageUrl);
+        // 게시글 완전 삭제 -> 스냅샷 사용
+        return ChatRoomConverter.toChatRoomResultDTOFromSnapshot(chatRoom, opponent, unreadCount, isBlocked);
 
     }
 

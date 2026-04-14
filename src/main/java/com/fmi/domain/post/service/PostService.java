@@ -1,9 +1,11 @@
 package com.fmi.domain.post.service;
 
 import com.fmi.domain.auth.data.User;
-import com.fmi.domain.comment.service.CommentService;
+import com.fmi.domain.chatroom.data.ChatRoom;
+import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.converter.util.PostConverter;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
@@ -20,7 +22,6 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
-import com.fmi.domain.notification.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -40,6 +42,7 @@ public class PostService {
     private final UserQueryService userQueryService;
     private final PostImageService postImageService;
     private final PostQueryService postQueryService;
+    private final ChatRoomRepository chatRoomRepository;
 
     // 게시글 생성
     @Transactional
@@ -105,6 +108,10 @@ public class PostService {
     public void deletePost(Long postId, UserDetails userDetails) {
         Post post = postQueryService.findById(postId);
         checkPostAccessDenied(post, userDetails.getUsername());
+
+        String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
+        List<ChatRoom> chatRooms = chatRoomRepository.findAllByPost(post);
+        chatRooms.forEach(room -> room.snapshotFromPost(post, thumbnailImageUrl));
 
         post.softDelete();
         postImageService.deleteAllImageByPost(post);

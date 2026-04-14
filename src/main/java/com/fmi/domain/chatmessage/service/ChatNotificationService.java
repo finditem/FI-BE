@@ -5,6 +5,9 @@ import com.fmi.domain.notification.data.Notification;
 import com.fmi.domain.notification.data.NotificationSettings;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.chatroom.data.ChatRoom;
+import com.fmi.domain.chatroom.repository.ChatRoomRepository;
+import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notification.repository.NotificationRepository;
 import com.fmi.domain.notification.repository.NotificationSettingsRepository;
 import com.fmi.domain.notification.service.NotificationService;
@@ -12,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -21,6 +25,8 @@ public class ChatNotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationSettingsRepository notificationSettingsRepository;
     private final NotificationService notificationService;
+    private final ChatRoomRepository chatRoomRepository;
+    private final UserRepository userRepository;
 
     /**
      * 채팅 알림을 갱신하거나 새로 생성합니다.
@@ -59,6 +65,18 @@ public class ChatNotificationService {
                     roomId
             );
         }
+    }
+
+    public void markAsReadOnEnter(Long roomId, Long userId) {
+        chatRoomRepository.findById(roomId).ifPresent(chatRoom -> {
+            Long postId = chatRoom.isSourcePostDeleted() || chatRoom.getPost() == null
+                    ? chatRoom.getSourcePostId()
+                    : chatRoom.getPost().getId();
+            userRepository.findById(userId).ifPresent(user ->
+                    notificationService.markNotificationsAsReadByReference(user, postId,
+                            List.of(NotificationType.CHAT, NotificationType.CHAT_REMINDER))
+            );
+        });
     }
 
 }

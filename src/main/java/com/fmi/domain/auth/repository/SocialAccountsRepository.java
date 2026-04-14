@@ -15,6 +15,7 @@ public interface SocialAccountsRepository extends JpaRepository<SocialAccounts, 
     Optional<SocialAccounts> findByProviderAndProviderIdWithUser(@Param("provider") Provider provider,
                                                                  @Param("providerId") String providerId);
     Optional<SocialAccounts> findByUser(User user);
+    boolean existsByUser(User user);
 }
 
 

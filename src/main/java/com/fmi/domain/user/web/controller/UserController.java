@@ -103,7 +103,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 기본 프로필 정보를 조회합니다. (닉네임, 이메일, 프로필 이미지)")
+    @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 기본 프로필 정보를 조회합니다. (닉네임, 이메일, 프로필 이미지, 소셜 로그인 여부)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 정보 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -123,6 +123,30 @@ public class UserController {
         String email = userDetails.getUsername();
         UserProfileResponse response = userService.getMyProfile(email);
         return ApiResponse.onSuccess(response);
+    }
+
+    @PatchMapping("/me/terms")
+    @Operation(summary = "약관 동의", description = "카카오 회원가입 후 약관 동의를 처리합니다. 개인정보 처리방침과 이용약관은 필수입니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "약관 동의 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"isSuccess\": false, \"code\": \"USER404-NOT_FOUND\", \"message\": \"존재하지 않는 회원입니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ApiResponse<Void> agreeTerms(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody com.fmi.domain.user.web.dto.TermsAgreeRequest request
+    ) {
+        String email = userDetails.getUsername();
+        userService.agreeTerms(email, request);
+        return ApiResponse.onSuccess(null);
     }
 
     @GetMapping("/me/comments")

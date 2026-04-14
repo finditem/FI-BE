@@ -1,6 +1,7 @@
 package com.fmi.domain.admin.service;
 
 import com.fmi.domain.Enum.Category;
+import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
 import com.fmi.domain.admin.dto.AdminInquiryResponse;
@@ -45,11 +46,17 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
 
+import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.converter.util.PostConverter;
+import com.fmi.domain.post.service.HotPostService;
 import com.fmi.domain.post.service.PostImageService;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
@@ -57,6 +64,7 @@ import com.fmi.domain.postfavorite.service.PostFavoriteService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -77,6 +85,7 @@ public class AdminService {
     private final IpBlacklistService ipBlacklistService;
     private final PostFavoriteService postFavoriteService;
     private final PostImageService postImageService;
+    private final HotPostService hotPostService;
     private final ReportAnswerImageRepository reportAnswerImageRepository;
 
     public Page<AdminInquiryResponse> getInquiryPage(InquiryType type,
@@ -422,8 +431,10 @@ public class AdminService {
     }
 
     public CursorPageResponse<PostBriefResponse> getContentPolicyPosts(
-            String sort, Category category, PostStatus postStatus,
-            Long cursor, Long cursorViewCount, int size) {
+            SortType sortType, Category category, PostStatus postStatus,
+            String keyword, LocalDate startDate, LocalDate endDate,
+            Long cursor, Long cursorViewCount, Long cursorFavCount, int size,
+            String adminEmail) {
 
         size = Math.max(1, Math.min(size, 50));
         int fetchSize = size + 1;
@@ -431,14 +442,20 @@ public class AdminService {
 
         String categoryStr = category != null ? category.name() : null;
         String postStatusStr = postStatus != null ? postStatus.name() : null;
+        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
 
-        if ("popular".equals(sort)) {
-            posts = postRepository.findContentPolicyPostsByPopular(
-                    categoryStr, postStatusStr, cursorViewCount, cursor, fetchSize);
-        } else {
-            posts = postRepository.findContentPolicyPostsByLatest(
-                    categoryStr, postStatusStr, cursor, fetchSize);
-        }
+        posts = switch (sortType) {
+            case OLDEST -> postRepository.findContentPolicyPostsByOldest(
+                    categoryStr, postStatusStr, trimmedKeyword, startDateTime, endDateTime, cursor, fetchSize);
+            case MOST_VIEWED -> postRepository.findContentPolicyPostsByMostViewed(
+                    categoryStr, postStatusStr, trimmedKeyword, startDateTime, endDateTime, cursorViewCount, cursor, fetchSize);
+            case MOST_FAVORITED -> postRepository.findContentPolicyPostsByMostFavorited(
+                    categoryStr, postStatusStr, trimmedKeyword, startDateTime, endDateTime, cursorFavCount, cursor, fetchSize);
+            default -> postRepository.findContentPolicyPostsByLatest(
+                    categoryStr, postStatusStr, trimmedKeyword, startDateTime, endDateTime, cursor, fetchSize);
+        };
 
         boolean hasNext = posts.size() > size;
         List<Post> content = hasNext ? posts.subList(0, size) : posts;
@@ -448,13 +465,22 @@ public class AdminService {
         Map<Long, String> thumbnailMap = postImageService.findThumbnailUrlByPostList(content);
         Map<Long, Integer> imageCountMap = postImageService.countImageByPostList(content);
 
+        User adminUser = userRepository.findByEmail(adminEmail).orElse(null);
+        Map<Long, Boolean> favoriteStatusMap = (adminUser != null)
+                ? postFavoriteService.getIsFavoriteMap(adminUser, content)
+                : Map.of();
+
+        Set<Long> hotPostIds = hotPostService.resolveHotPostIdsForUser(
+                null, postStatus, category, null, null, 5);
+
         List<PostBriefResponse> responseList = content.stream()
                 .map(post -> PostConverter.toPostBriefResponse(
                         post,
-                        false,
+                        favoriteStatusMap.getOrDefault(post.getId(), false),
                         thumbnailMap.getOrDefault(post.getId(), null),
                         favoriteCountMap.getOrDefault(post.getId(), 0L),
-                        imageCountMap.getOrDefault(post.getId(), 0)
+                        imageCountMap.getOrDefault(post.getId(), 0),
+                        hotPostIds.contains(post.getId())
                 ))
                 .toList();
 

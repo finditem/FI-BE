@@ -59,6 +59,10 @@ public final class PostConverter {
     }
 
     public static PostBriefResponse toPostBriefResponse(Post post, boolean isFavorite, String thumbnailImageUrl, Long favoriteCount, Integer imageCount) {
+        return toPostBriefResponse(post, isFavorite, thumbnailImageUrl, favoriteCount, imageCount, false);
+    }
+
+    public static PostBriefResponse toPostBriefResponse(Post post, boolean isFavorite, String thumbnailImageUrl, Long favoriteCount, Integer imageCount, boolean isHot) {
         return new PostBriefResponse(
                 post.getId(),
                 post.getTitle(),
@@ -72,7 +76,7 @@ public final class PostConverter {
                 isFavorite,
                 post.getViewCount(),
                 post.isNew(),
-                false,
+                isHot,
                 post.getCreatedAt(),
                 imageCount
         );

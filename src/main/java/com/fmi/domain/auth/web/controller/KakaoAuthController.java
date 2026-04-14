@@ -78,11 +78,12 @@ public class KakaoAuthController {
                                       "message": "성공입니다.",
                                       "result": {
                                         "userId": 1,
-                                        "isTemporaryPassword": false
+                                        "isTemporaryPassword": false,
+                                        "termsAgreed": false
                                       }
                                     }
                                     """,
-                                    summary = "로그인 성공 시 응답"
+                                    summary = "로그인 성공 시 응답 (termsAgreed: true=약관동의완료, false=약관동의필요)"
                             )
                     )
             ),
@@ -135,11 +136,9 @@ public class KakaoAuthController {
             profile = profile != null ? profile : user.getProperties().getProfile_image();
         }
 
-        var result = socialLoginService.upsertUserFromKakao(user.getId(), email, nickname, profile,
-                req.getPrivacyPolicyAgreed(), req.getTermsOfServiceAgreed(),
-                req.getContentPolicyAgreed(), req.getMarketingConsent());
+        var result = socialLoginService.upsertUserFromKakao(user.getId(), email, nickname, profile);
         var localUser = result.user();
-        boolean isNewUser = result.isNewUser();
+        boolean termsAgreed = localUser.isPrivacyPolicyAgreed() && localUser.isTermsOfServiceAgreed();
 
         var claims = new java.util.HashMap<String, Object>();
         claims.put("userId", localUser.getId());
@@ -169,7 +168,7 @@ public class KakaoAuthController {
         return ResponseEntity.ok()
                 .header("Set-Cookie", accessCookie.toString())
                 .header("Set-Cookie", refreshCookie.toString())
-                .body(ApiResponse.onSuccess(new LoginResponse(localUser.getId(), false, isNewUser)));
+                .body(ApiResponse.onSuccess(new LoginResponse(localUser.getId(), false, termsAgreed)));
     }
 
     private ResponseCookie buildCookie(String name, String value, Duration maxAge) {

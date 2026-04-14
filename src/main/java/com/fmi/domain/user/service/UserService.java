@@ -41,12 +41,16 @@ import com.fmi.domain.user.web.dto.AccountDeleteRequest;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
+import com.fmi.domain.Enum.Provider;
+import com.fmi.domain.auth.data.SocialAccounts;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.service.KakaoOAuthService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import com.fmi.security.RefreshTokenStore;
 import com.fmi.service.EmailService;
-import com.fmi.domain.auth.repository.SocialAccountsRepository;
+
 import com.fmi.domain.inquirycomment.data.InquiryComment;
 import com.fmi.domain.inquirycomment.repository.InquiryCommentRepository;
 import com.fmi.service.UserQueryService;
@@ -92,6 +96,8 @@ public class UserService {
     private final PostService postService;
     private final InquiryCommentRepository inquiryCommentRepository;
     private final SocialAccountsRepository socialAccountsRepository;
+    private final KakaoOAuthService kakaoOAuthService;
+
 
     /**
      * 내 정보 조회
@@ -101,7 +107,23 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        return UserConverter.toUserProfileResponse(user);
+        boolean isSocialUser = socialAccountsRepository.existsByUser(user);
+        return UserConverter.toUserProfileResponse(user, isSocialUser);
+    }
+
+    /**
+     * 약관 동의 처리
+     */
+    @Transactional
+    public void agreeTerms(String email, com.fmi.domain.user.web.dto.TermsAgreeRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        user.setPrivacyPolicyAgreed(request.isPrivacyPolicyAgreed());
+        user.setTermsOfServiceAgreed(request.isTermsOfServiceAgreed());
+        user.setContentPolicyAgreed(request.isContentPolicyAgreed());
+        user.setMarketingConsent(request.isMarketingConsent());
+        userRepository.save(user);
     }
 
     /**
@@ -352,7 +374,7 @@ public class UserService {
                     user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
             anySliceHasNext = anySliceHasNext || commentSlice.hasNext();
             commentSlice.getContent().forEach(c -> allActivities.add(new ActivityResponse(
-                    "INQUIRY_ANSWERED", c.getInquiry().getId(), c.getInquiry().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
+                    "INQUIRY_ANSWERED", c.getId(), c.getInquiry().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
         }
 
         if (type == null || type == ActivityType.REPORT || type == ActivityType.REPORT_RECEIVED || type == ActivityType.REPORT_ANSWERED) {
@@ -459,7 +481,8 @@ public class UserService {
 
         user.setUpdatedAt(LocalDateTime.now());
         User updatedUser = userRepository.save(user);
-        return UserConverter.toUserProfileResponse(updatedUser);
+        boolean isSocialUser = socialAccountsRepository.findByUser(updatedUser).isPresent();
+        return UserConverter.toUserProfileResponse(updatedUser, isSocialUser);
     }
 
     /**
@@ -549,17 +572,6 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        // 소셜 로그인 유저가 아닌 경우 비밀번호 검증
-        boolean isSocialUser = socialAccountsRepository.findByUser(user).isPresent();
-        if (!isSocialUser) {
-            if (request.getPassword() == null || request.getPassword().isBlank()) {
-                throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
-            }
-            if (!verifyPassword(email, request.getPassword())) {
-                throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
-            }
-        }
-
         // 프로필 이미지가 있다면 S3에서 삭제
         if (user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
             if (s3Service.isValidS3Url(user.getProfile_img())) {
@@ -588,6 +600,11 @@ public class UserService {
             user.setWithdrawalOtherReason(request.getOtherReason());
         }
 
+        // 카카오 회원이면 카카오 연결 끊기
+        socialAccountsRepository.findByUser(user)
+                .filter(sa -> sa.getProvider() == Provider.KAKAO)
+                .ifPresent(sa -> kakaoOAuthService.unlinkUser(sa.getProviderId()));
+
         // Soft Delete (deletedAt 설정)
         user.setDeletedAt(LocalDateTime.now());
         userRepository.save(user);
@@ -603,7 +620,7 @@ public class UserService {
             String deletionDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                     .format(LocalDateTime.now());
 
-            emailService.sendHtmlEmail(
+            emailService.sendHtmlEmailAsync(
                     userEmail,
                     "계정이 삭제되었습니다",
                     "account-deletion-email.html",
