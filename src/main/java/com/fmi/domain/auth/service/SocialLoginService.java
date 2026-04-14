@@ -62,6 +62,8 @@ public class SocialLoginService {
                 existingUser.setTermsOfServiceAgreed(false);
                 existingUser.setContentPolicyAgreed(false);
                 existingUser.setMarketingConsent(false);
+                existingUser.setWithdrawalReason(null);
+                existingUser.setWithdrawalOtherReason(null);
                 userRepository.save(existingUser);
                 socialAccountsRepository.delete(existingAccount.get());
                 socialAccountsRepository.flush();
