@@ -81,9 +81,7 @@ public class PushSubscriptionController {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         // 이미 같은 endpoint가 등록되어 있으면 무시
-        boolean exists = pushSubscriptionRepository.findByUser(user).stream()
-                .anyMatch(sub -> sub.getEndpoint().equals(request.getEndpoint()));
-        if (exists) {
+        if (pushSubscriptionRepository.existsByUserAndEndpoint(user, request.getEndpoint())) {
             return ApiResponse.onSuccess("이미 등록된 구독입니다");
         }
 
