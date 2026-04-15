@@ -208,7 +208,7 @@ public class CommentLikeService {
                 "새로운 댓글이 생겼어요.",
                 message,
                 ReferenceType.COMMENT,
-                comment.getId()
+                comment.getPost().getId()
         );
 
         stringRedisTemplate.delete(key);
