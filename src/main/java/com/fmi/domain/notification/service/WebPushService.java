@@ -1,5 +1,6 @@
 package com.fmi.domain.notification.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notification.data.PushSubscription;
 import com.fmi.domain.notification.repository.PushSubscriptionRepository;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.security.GeneralSecurityException;
 import java.security.Security;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -23,6 +25,7 @@ import java.util.List;
 public class WebPushService {
 
     private final PushSubscriptionRepository pushSubscriptionRepository;
+    private final ObjectMapper objectMapper;
 
     @Value("${VAPID_PUBLIC_KEY:}")
     private String vapidPublicKey;
@@ -81,10 +84,12 @@ public class WebPushService {
 
     private void sendToSubscription(PushSubscription sub, String title, String body, String url, String type) {
         try {
-            String payload = String.format(
-                    "{\"title\":\"%s\",\"body\":\"%s\",\"url\":\"%s\",\"type\":\"%s\"}",
-                    escapeJson(title), escapeJson(body), escapeJson(url), escapeJson(type)
-            );
+            String payload = objectMapper.writeValueAsString(Map.of(
+                    "title", title != null ? title : "",
+                    "body", body != null ? body : "",
+                    "url", url != null ? url : "/",
+                    "type", type != null ? type : ""
+            ));
 
             Notification notification = new Notification(
                     sub.getEndpoint(),
@@ -105,14 +110,5 @@ public class WebPushService {
         } catch (Exception e) {
             log.error("Web Push 발송 중 오류: endpoint={}", sub.getEndpoint(), e);
         }
-    }
-
-    private String escapeJson(String value) {
-        if (value == null) return "";
-        return value.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
     }
 }
