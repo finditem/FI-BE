@@ -70,6 +70,26 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 
     Optional<Post> findByUserAndTemporarySaveTrueAndDeletedFalse(User user);
 
+    @Query("""
+                select p
+                from Post p
+                where p.deleted = true
+                  and p.deletedAt < :threshold
+            """)
+    List<Post> findExpiredDeletedPosts(@Param("threshold") LocalDateTime threshold);
+
+    @Modifying
+    @Query("""
+                delete from Post p
+                where p.deleted = true
+                  and p.deletedAt < :threshold
+            """)
+    void deleteExpiredDeletedPosts(@Param("threshold") LocalDateTime threshold);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.deleted = true, p.deletedAt = :now, p.updatedAt = :now WHERE p.user = :user AND p.deleted = false")
+    void softDeleteAllByUser(@Param("user") User user, @Param("now") LocalDateTime now);
+
     // 활동 내역용 - 날짜/키워드 필터 포함
     @Query("""
             SELECT p FROM Post p

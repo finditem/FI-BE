@@ -8,7 +8,6 @@ import com.fmi.domain.admin.dto.AdminGuestInquiryReplyRequestDTO;
 import com.fmi.domain.admin.dto.AdminInquiryResponse;
 import com.fmi.domain.admin.dto.AdminReportResponse;
 import com.fmi.domain.admin.dto.AdminUserDetailResponse;
-import com.fmi.domain.Enum.Category;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.admin.service.AdminService;
@@ -27,9 +26,7 @@ import com.fmi.domain.notice.service.NoticeService;
 import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
 import com.fmi.domain.notice.web.dto.NoticeUpdateRequestDTO;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
-import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.service.PostQueryService;
-import com.fmi.domain.post.web.dto.response.MarketingConsentPostPageResponse;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.service.ReportService;
@@ -38,7 +35,6 @@ import com.fmi.domain.report.web.dto.request.ReportAnswerRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,7 +43,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,7 +66,6 @@ public class AdminController {
     private final InquiryService inquiryService;
     private final ReportService reportService;
     private final AuthService authService;
-    private final PostQueryService postQueryService;
 
     @GetMapping("/guest-inquiries/{inquiryId}")
     @Operation(summary = "관리자 비회원 문의 상세 조회", description = "비회원이 작성한 문의의 상세 정보를 조회합니다.")
@@ -534,112 +528,5 @@ public class AdminController {
         return ApiResponse.onSuccess(response);
     }
 
-
-    @GetMapping("/marketing-consent/posts")
-    @Operation(
-            summary = "마케팅 수신 동의 사용자 게시글 조회 (관리자 전용)",
-            description = """
-                    마케팅 수신에 동의한 사용자가 작성한 게시글 목록을 조회합니다.
-                    
-                    - 관리자만 접근할 수 있습니다.
-                    - 무한스크롤 방식으로 조회합니다.
-                    - 첫 요청은 cursor 없이 호출하고, 이후 응답의 nextCursor 값을 다음 요청의 cursor로 전달합니다.
-                    - 정렬(sortType), 카테고리(category), 게시글 상태(postStatus), 키워드(keyword) 필터를 지원합니다.
-                    - keyword는 제목(title), 내용(content)을 기준으로 검색합니다.
-                    
-                    예)
-                    - 첫 요청:
-                      /posts/marketing-consent?sortType=LATEST&size=20
-                    - 다음 요청:
-                      /posts/marketing-consent?sortType=LATEST&cursor=120&size=20
-                    - 키워드 검색:
-                      /posts/marketing-consent?keyword=지갑&sortType=LATEST
-                    """
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "조회 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = MarketingConsentPostPageResponse.class),
-                            examples = @ExampleObject(
-                                    value = """
-                                            {
-                                              "isSuccess": true,
-                                              "code": "COMMON200",
-                                              "message": "성공",
-                                              "result": {
-                                                "postList": [
-                                                  {
-                                                    "id": 101,
-                                                    "title": "지갑을 습득했습니다",
-                                                    "summary": "강남역 근처에서 검정색 지갑을 주웠습니다.",
-                                                    "thumbnailImageUrl": "https://example.com/thumb.jpg",
-                                                    "address": "서울 강남구",
-                                                    "postStatus": "SEARCHING",
-                                                    "postType": "FOUND",
-                                                    "category": "WALLET",
-                                                    "favoriteCount": 12,
-                                                    "favoriteStatus": false,
-                                                    "viewCount": 104,
-                                                    "isNew": true,
-                                                    "isHot": false,
-                                                    "createdAt": "2026-04-01T12:30:00",
-                                                    "imageCount": 2
-                                                  },
-                                                  {
-                                                    "id": 99,
-                                                    "title": "휴대폰을 찾습니다",
-                                                    "summary": "버스 안에서 휴대폰을 잃어버렸습니다.",
-                                                    "thumbnailImageUrl": null,
-                                                    "address": "서울 서초구",
-                                                    "postStatus": "FOUND",
-                                                    "postType": "LOST",
-                                                    "category": "ELECTRONICS",
-                                                    "favoriteCount": 5,
-                                                    "favoriteStatus": true,
-                                                    "viewCount": 87,
-                                                    "isNew": false,
-                                                    "isHot": true,
-                                                    "createdAt": "2026-03-31T18:10:00",
-                                                    "imageCount": 1
-                                                  }
-                                                ],
-                                                "nextCursor": 99,
-                                                "hasNext": true
-                                              }
-                                            }
-                                            """
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 파라미터",
-                    content = @Content
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "인증이 필요합니다",
-                    content = @Content
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "403",
-                    description = "관리자만 접근할 수 있습니다",
-                    content = @Content
-            )
-    })
-    public ResponseEntity<ApiResponse<MarketingConsentPostPageResponse>> getMarketingConsentPosts(@RequestParam(required = false) Long cursor,
-                                                                                                  @RequestParam(defaultValue = "20") int size,
-                                                                                                  @RequestParam(defaultValue = "LATEST") SortType sortType,
-                                                                                                  @RequestParam(required = false) Category category,
-                                                                                                  @RequestParam(required = false) PostStatus postStatus,
-                                                                                                  @RequestParam(required = false) String keyword,
-                                                                                                  @AuthenticationPrincipal UserDetails userDetails) {
-        MarketingConsentPostPageResponse response = postQueryService.getMarketingConsentPosts(cursor, size, sortType, category, postStatus, keyword, userDetails);
-
-        return ResponseEntity.ok(ApiResponse.onSuccess(response));
-    }
 }
 
