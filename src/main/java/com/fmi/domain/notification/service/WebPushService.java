@@ -45,7 +45,9 @@ public class WebPushService {
             return;
         }
         try {
-            Security.addProvider(new BouncyCastleProvider());
+            if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+                Security.addProvider(new BouncyCastleProvider());
+            }
             pushService = new PushService()
                     .setPublicKey(vapidPublicKey)
                     .setPrivateKey(vapidPrivateKey)
