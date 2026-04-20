@@ -39,6 +39,7 @@ public class NotificationService {
     private final NotificationSettingsRepository notificationSettingsRepository;
     private final NotificationConverter notificationConverter;
     private final SseEmitterService sseEmitterService;
+    private final WebPushService webPushService;
     private final UserRepository userRepository;
     private final UserCategoryRepository userCategoryRepository;
     
@@ -351,6 +352,13 @@ public class NotificationService {
                         } catch (Exception e) {
                             log.warn("SSE 알림 전송 실패 (SSE 미연결 가능성): userId={}", user.getId(), e);
                         }
+                        // Web Push 발송
+                        try {
+                            String url = buildNotificationUrl(referenceType, referenceId);
+                            webPushService.sendPush(user, title, message, url, type.name());
+                        } catch (Exception e) {
+                            log.warn("Web Push 발송 실패: userId={}", user.getId(), e);
+                        }
                     }
                 });
             }
@@ -442,6 +450,21 @@ public class NotificationService {
     }
     
     /**
+     * 알림 딥링크 URL 생성
+     */
+    private String buildNotificationUrl(ReferenceType referenceType, Long referenceId) {
+        if (referenceType == null || referenceId == null) return "/";
+        return switch (referenceType) {
+            case POST -> "/posts/" + referenceId;
+            case COMMENT -> "/posts/" + referenceId;
+            case CHAT -> "/chat/" + referenceId;
+            case INQUIRY -> "/inquiry/" + referenceId;
+            case NOTICE -> "/notice/" + referenceId;
+            case REPORT -> "/report/" + referenceId;
+        };
+    }
+
+    /**
      * 알림 타입별 설정 확인
      */
     private boolean isNotificationEnabled(NotificationSettings settings, NotificationType type) {
@@ -488,10 +511,17 @@ public class NotificationService {
                     } catch (Exception e) {
                         log.warn("SSE 알림 갱신 전송 실패: userId={}", notification.getUser().getId(), e);
                     }
+                    // Web Push 발송
+                    try {
+                        String url = buildNotificationUrl(notification.getReferenceType(), notification.getReferenceId());
+                        webPushService.sendPush(notification.getUser(), notification.getTitle(), newMessage, url, notification.getType().name());
+                    } catch (Exception e) {
+                        log.warn("Web Push 갱신 발송 실패: userId={}", notification.getUser().getId(), e);
+                    }
                 }
             });
         }
     }
-    
+
 }
 

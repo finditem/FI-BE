@@ -97,7 +97,7 @@ public class CommentService {
                             "새로운 댓글이 생겼어요.",
                             dto.content(),
                             ReferenceType.COMMENT,
-                            comment.getId()
+                            comment.getPost().getId()
                     );
 
                     mentionedUserIds.add(mentionedUser.getId());
