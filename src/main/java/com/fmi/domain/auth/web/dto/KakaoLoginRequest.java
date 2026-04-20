@@ -2,6 +2,7 @@ package com.fmi.domain.auth.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,10 +20,11 @@ public class KakaoLoginRequest {
     private String code;
 
     @Schema(
-        description = "환경 타입 (선택사항: 'dev' 또는 'prod', 없으면 기본값 'prod' 사용)",
+        description = "환경 타입 (선택사항: 'dev', 'release', 'prod'. 없으면 기본값 'prod' 사용)",
         example = "dev",
-        allowableValues = {"dev", "prod"}
+        allowableValues = {"dev", "release", "prod"}
     )
+    @Pattern(regexp = "^(dev|release|prod)$", message = "environment는 dev, release, prod 중 하나여야 합니다")
     private String environment;
 
 }

@@ -29,14 +29,20 @@ public class KakaoOAuthService {
     private String restApiKey;
     @Value("${KAKAO_REST_API_KEY_DEV:}")
     private String restApiKeyDev;
+    @Value("${KAKAO_REST_API_KEY_RELEASE:}")
+    private String restApiKeyRelease;
     @Value("${KAKAO_CLIENT_SECRET:}")
     private String clientSecret; // 선택 항목
     @Value("${KAKAO_CLIENT_SECRET_DEV:}")
     private String clientSecretDev;
+    @Value("${KAKAO_CLIENT_SECRET_RELEASE:}")
+    private String clientSecretRelease;
     @Value("${KAKAO_REDIRECT_URI:}")
     private String redirectUri;
     @Value("${KAKAO_REDIRECT_URI_DEV:}")
     private String redirectUriDev;
+    @Value("${KAKAO_REDIRECT_URI_RELEASE:}")
+    private String redirectUriRelease;
     @Value("${KAKAO_ADMIN_KEY:}")
     private String adminKey;
 
@@ -53,17 +59,21 @@ public class KakaoOAuthService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        // environment에 따라 환경 변수에서 앱 설정 선택
-        boolean isDev = environment != null && environment.equalsIgnoreCase("dev");
+        boolean isDev = "dev".equalsIgnoreCase(environment);
+        boolean isRelease = "release".equalsIgnoreCase(environment);
 
         String finalRestApiKey;
         String finalRedirectUri;
         String finalClientSecret;
 
-        if (isDev && restApiKeyDev != null && !restApiKeyDev.isBlank()) {
+        if (isRelease && !restApiKeyRelease.isBlank()) {
+            finalRestApiKey = restApiKeyRelease;
+            finalRedirectUri = !redirectUriRelease.isBlank() ? redirectUriRelease : this.redirectUri;
+            finalClientSecret = !clientSecretRelease.isBlank() ? clientSecretRelease : this.clientSecret;
+        } else if (isDev && !restApiKeyDev.isBlank()) {
             finalRestApiKey = restApiKeyDev;
-            finalRedirectUri = (redirectUriDev != null && !redirectUriDev.isBlank()) ? redirectUriDev : this.redirectUri;
-            finalClientSecret = (clientSecretDev != null && !clientSecretDev.isBlank()) ? clientSecretDev : this.clientSecret;
+            finalRedirectUri = !redirectUriDev.isBlank() ? redirectUriDev : this.redirectUri;
+            finalClientSecret = !clientSecretDev.isBlank() ? clientSecretDev : this.clientSecret;
         } else {
             finalRestApiKey = this.restApiKey;
             finalRedirectUri = this.redirectUri;
