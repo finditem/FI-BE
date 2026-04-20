@@ -19,9 +19,9 @@ public class KakaoLoginRequest {
     private String code;
 
     @Schema(
-        description = "환경 타입 (선택사항: 'dev' 또는 'prod', 없으면 기본값 'prod' 사용)",
+        description = "환경 타입 (선택사항: 'dev', 'release', 'prod'. 없으면 기본값 'prod' 사용)",
         example = "dev",
-        allowableValues = {"dev", "prod"}
+        allowableValues = {"dev", "release", "prod"}
     )
     private String environment;
 
