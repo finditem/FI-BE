@@ -59,21 +59,21 @@ public class KakaoOAuthService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        boolean isDev = environment != null && environment.equalsIgnoreCase("dev");
-        boolean isRelease = environment != null && environment.equalsIgnoreCase("release");
+        boolean isDev = "dev".equalsIgnoreCase(environment);
+        boolean isRelease = "release".equalsIgnoreCase(environment);
 
         String finalRestApiKey;
         String finalRedirectUri;
         String finalClientSecret;
 
-        if (isRelease && restApiKeyRelease != null && !restApiKeyRelease.isBlank()) {
+        if (isRelease && !restApiKeyRelease.isBlank()) {
             finalRestApiKey = restApiKeyRelease;
-            finalRedirectUri = (redirectUriRelease != null && !redirectUriRelease.isBlank()) ? redirectUriRelease : this.redirectUri;
-            finalClientSecret = (clientSecretRelease != null && !clientSecretRelease.isBlank()) ? clientSecretRelease : this.clientSecret;
-        } else if (isDev && restApiKeyDev != null && !restApiKeyDev.isBlank()) {
+            finalRedirectUri = !redirectUriRelease.isBlank() ? redirectUriRelease : this.redirectUri;
+            finalClientSecret = !clientSecretRelease.isBlank() ? clientSecretRelease : this.clientSecret;
+        } else if (isDev && !restApiKeyDev.isBlank()) {
             finalRestApiKey = restApiKeyDev;
-            finalRedirectUri = (redirectUriDev != null && !redirectUriDev.isBlank()) ? redirectUriDev : this.redirectUri;
-            finalClientSecret = (clientSecretDev != null && !clientSecretDev.isBlank()) ? clientSecretDev : this.clientSecret;
+            finalRedirectUri = !redirectUriDev.isBlank() ? redirectUriDev : this.redirectUri;
+            finalClientSecret = !clientSecretDev.isBlank() ? clientSecretDev : this.clientSecret;
         } else {
             finalRestApiKey = this.restApiKey;
             finalRedirectUri = this.redirectUri;
