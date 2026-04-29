@@ -73,14 +73,15 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                                             @Param("keyword") String keyword,
                                             Pageable pageable);
 
-    // 사용자별 커서 기반 조회 - keyword 검색 (LIKE)
+    // 사용자별 커서 기반 조회 - keyword 검색 (상세사유 + 신고 타입 LIKE)
     @Query(value = """
             SELECT * FROM report r
             WHERE r.reporter_user_id = :reporterId
               AND (:status IS NULL OR r.status = :status)
               AND (:answered IS NULL OR r.answered = :answered)
               AND (:cursor IS NULL OR r.report_id < :cursor)
-              AND r.reason LIKE CONCAT('%', :keyword, '%')
+              AND (r.reason LIKE CONCAT('%', :keyword, '%')
+                   OR r.report_type LIKE CONCAT('%', :keyword, '%'))
             ORDER BY r.report_id DESC
             LIMIT :limit
             """,
