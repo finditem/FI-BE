@@ -17,13 +17,7 @@ public class ChatRoomConverter {
 
     public static ChatRoomResultDTO toChatRoomResultDTO(ChatRoom chatRoom, User user, Post post, Long unreadCount, String thumbnailUrl, boolean isBlocked) {
 
-        var opponentUser = opponentUserDTO.builder()
-                .opponentUserId(user.getId())
-                .nickname(user.getNickname())
-                .profileImageUrl(user.getProfile_img() == null ? null : user.getProfile_img())
-                .emailVerified(user.isEmail_verified())
-                .blocked(isBlocked)
-                .build();
+        var opponentUser = buildOpponentUserDTO(user, isBlocked);
 
         var postInfo = PostInfoDTO.builder()
                 .postId(post.getId())
@@ -46,13 +40,7 @@ public class ChatRoomConverter {
 
     public static ChatRoomResultDTO toChatRoomResultDTOFromSnapshot(ChatRoom chatRoom, User opponent, Long unreadCount, boolean isBlocked) {
 
-        var opponentUser = opponentUserDTO.builder()
-                .opponentUserId(opponent.getId())
-                .nickname(opponent.getNickname())
-                .profileImageUrl(opponent.getProfile_img())
-                .emailVerified(opponent.isEmail_verified())
-                .blocked(isBlocked)
-                .build();
+        var opponentUser = buildOpponentUserDTO(opponent, isBlocked);
 
         var postInfo = PostInfoDTO.builder()
                 .postId(chatRoom.getSourcePostId())
@@ -86,11 +74,7 @@ public class ChatRoomConverter {
 
     public static ChatRoomSummaryDTO toChatRoomSummaryDTO(ChatRoomParticipant participant, User contactUser, Map<Long, String> thumbnailMap) {
 
-        ContactUserDTO contactUserDTO = ContactUserDTO.builder()
-                .userId(contactUser.getId())
-                .nickname(contactUser.getNickname())
-                .profileImageUrl(contactUser.getProfile_img())
-                .build();
+        ContactUserDTO contactUserDTO = buildContactUserDTO(contactUser);
 
         ChatRoom room = participant.getChatRoom();
 
@@ -144,6 +128,49 @@ public class ChatRoomConverter {
         return message.getMessageType() == MessageType.IMAGE;
     }
 
+    private static ContactUserDTO buildContactUserDTO(User user) {
+        boolean withdrawn = user.getDeletedAt() != null;
+
+        if (withdrawn) {
+            return ContactUserDTO.builder()
+                    .userId(user.getId())
+                    .nickname(null)
+                    .profileImageUrl(null)
+                    .withdrawn(true)
+                    .build();
+        }
+
+        return ContactUserDTO.builder()
+                .userId(user.getId())
+                .nickname(user.getNickname())
+                .profileImageUrl(user.getProfile_img())
+                .withdrawn(false)
+                .build();
+    }
+
+    private static opponentUserDTO buildOpponentUserDTO(User user, boolean isBlocked) {
+        boolean withdrawn = user.getDeletedAt() != null;
+
+        if (withdrawn) {
+            return opponentUserDTO.builder()
+                    .opponentUserId(user.getId())
+                    .nickname(null)
+                    .profileImageUrl(null)
+                    .emailVerified(false)
+                    .blocked(false)
+                    .withdrawn(true)
+                    .build();
+        }
+
+        return opponentUserDTO.builder()
+                .opponentUserId(user.getId())
+                .nickname(user.getNickname())
+                .profileImageUrl(user.getProfile_img())
+                .emailVerified(user.isEmail_verified())
+                .blocked(isBlocked)
+                .withdrawn(false)
+                .build();
+    }
 
     private ChatRoomConverter() {
     }
