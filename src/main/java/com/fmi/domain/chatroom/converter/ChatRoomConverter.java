@@ -157,7 +157,7 @@ public class ChatRoomConverter {
                     .nickname(null)
                     .profileImageUrl(null)
                     .emailVerified(false)
-                    .blocked(false)
+                    .blocked(isBlocked)
                     .withdrawn(true)
                     .build();
         }
