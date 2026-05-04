@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -195,6 +196,87 @@ class ChatRoomServiceDetailTest {
 
         assertThat(result.getPostInfo().getTitle()).isEqualTo("삭제된 게시글");
         assertThat(result.getPostInfo().isDeleted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 상대가 탈퇴한 경우 withdrawn=true, 개인정보는 마스킹된다")
+    void getChatRoomDetail_opponentWithdrawn_returnsMaskedDto() {
+        User withdrawnOpponent = User.builder()
+                .id(2L)
+                .email("other@test.com")
+                .nickname("상대")
+                .profile_img("https://s3.example.com/p.jpg")
+                .email_verified(true)
+                .deletedAt(LocalDateTime.now().minusDays(1))
+                .build();
+
+        Post post = mock(Post.class);
+        given(post.getId()).willReturn(99L);
+        given(post.getTitle()).willReturn("제목");
+        given(post.getPostType()).willReturn(PostType.LOST);
+        given(post.getCategory()).willReturn(Category.WALLET);
+        given(post.getAddress()).willReturn("서울");
+        given(post.getPostStatus()).willReturn(PostStatus.SEARCHING);
+        given(post.isDeleted()).willReturn(false);
+
+        ChatRoom chatRoom = mock(ChatRoom.class);
+        given(chatRoom.getId()).willReturn(10L);
+        given(chatRoom.isSourcePostDeleted()).willReturn(false);
+        given(chatRoom.getPost()).willReturn(post);
+        given(chatRoom.getOtherParticipant(currentUser.getId())).willReturn(withdrawnOpponent);
+        given(chatRoom.getParticipant(currentUser.getId())).willReturn(participant);
+
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(postImageService.findThumbnailImageUrl(post)).willReturn(null);
+        given(blockService.isBlocked(currentUser.getId(), withdrawnOpponent.getId())).willReturn(false);
+
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        assertThat(result.getOpponentUser().isWithdrawn()).isTrue();
+        assertThat(result.getOpponentUser().getOpponentUserId()).isEqualTo(2L);
+        assertThat(result.getOpponentUser().getNickname()).isNull();
+        assertThat(result.getOpponentUser().getProfileImageUrl()).isNull();
+        assertThat(result.getOpponentUser().isEmailVerified()).isFalse();
+        assertThat(result.getOpponentUser().isBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 상대가 활성 상태면 withdrawn=false, 기존 정보 그대로 반환한다")
+    void getChatRoomDetail_opponentActive_returnsOriginalDto() {
+        User activeOpponent = User.builder()
+                .id(2L)
+                .email("other@test.com")
+                .nickname("상대")
+                .profile_img("https://s3.example.com/p.jpg")
+                .email_verified(true)
+                .build();
+
+        Post post = mock(Post.class);
+        given(post.getId()).willReturn(99L);
+        given(post.getTitle()).willReturn("제목");
+        given(post.getPostType()).willReturn(PostType.LOST);
+        given(post.getCategory()).willReturn(Category.WALLET);
+        given(post.getAddress()).willReturn("서울");
+        given(post.getPostStatus()).willReturn(PostStatus.SEARCHING);
+        given(post.isDeleted()).willReturn(false);
+
+        ChatRoom chatRoom = mock(ChatRoom.class);
+        given(chatRoom.getId()).willReturn(10L);
+        given(chatRoom.isSourcePostDeleted()).willReturn(false);
+        given(chatRoom.getPost()).willReturn(post);
+        given(chatRoom.getOtherParticipant(currentUser.getId())).willReturn(activeOpponent);
+        given(chatRoom.getParticipant(currentUser.getId())).willReturn(participant);
+
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(postImageService.findThumbnailImageUrl(post)).willReturn(null);
+        given(blockService.isBlocked(currentUser.getId(), activeOpponent.getId())).willReturn(false);
+
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        assertThat(result.getOpponentUser().isWithdrawn()).isFalse();
+        assertThat(result.getOpponentUser().getNickname()).isEqualTo("상대");
+        assertThat(result.getOpponentUser().getProfileImageUrl()).isEqualTo("https://s3.example.com/p.jpg");
+        assertThat(result.getOpponentUser().isEmailVerified()).isTrue();
     }
 
     @Test

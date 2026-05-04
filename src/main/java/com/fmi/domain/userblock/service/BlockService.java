@@ -115,13 +115,8 @@ public class BlockService {
     }
 
     public boolean isBlocked(Long blockerUserId, Long otherUserId) {
-        User blocker = userRepository.findActiveById(blockerUserId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        User other = userRepository.findActiveById(otherUserId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        // 양방향 중 하나라도 존재하면 차단된 것으로 간주
-        return blockedUserRepository.existsByBlockerAndBlocked(blocker, other)
-                || blockedUserRepository.existsByBlockerAndBlocked(other, blocker);
+        return blockedUserRepository.existsByBlocker_IdAndBlocked_Id(blockerUserId, otherUserId)
+                || blockedUserRepository.existsByBlocker_IdAndBlocked_Id(otherUserId, blockerUserId);
     }
 }
 

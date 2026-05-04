@@ -35,6 +35,7 @@ public class ChatRoomResponseDTO {
         private String profileImageUrl;
         private boolean emailVerified;
         private boolean blocked;
+        private boolean withdrawn;
     }
 
     @Builder
@@ -83,5 +84,6 @@ public class ChatRoomResponseDTO {
         private Long userId;
         private String nickname;
         private String profileImageUrl;
+        private boolean withdrawn;
     }
 }
