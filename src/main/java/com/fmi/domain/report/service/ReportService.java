@@ -160,9 +160,9 @@ public class ReportService {
             String lower = trimmed.toLowerCase();
             List<String> matchedTypes = Arrays.stream(ReportType.values())
                     .filter(t -> t.name().toLowerCase().contains(lower)
-                              || t.getDescription().contains(trimmed))
+                              || t.getDescription().toLowerCase().contains(lower))
                     .map(Enum::name)
-                    .collect(java.util.stream.Collectors.toList());
+                    .toList();
             if (matchedTypes.isEmpty()) {
                 matchedTypes = List.of("__NONE__");
             }
