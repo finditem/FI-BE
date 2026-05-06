@@ -100,7 +100,7 @@ public class ReportController {
             @RequestParam(required = false) ReportStatus status,
             @Parameter(description = "답변 여부 필터 (true=답변완료, false=미답변)")
             @RequestParam(required = false) Boolean answered,
-            @Parameter(description = "키워드 검색 (상세사유 또는 신고 타입 enum value, 예: SPAM)")
+            @Parameter(description = "키워드 검색 (상세사유 또는 신고 타입 — 한국어 설명/영문 enum 모두 가능, 예: SPAM / 홍보성 / 모욕)")
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size) {

@@ -73,7 +73,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                                             @Param("keyword") String keyword,
                                             Pageable pageable);
 
-    // 사용자별 커서 기반 조회 - keyword 검색 (상세사유 + 신고 타입 LIKE)
+    // 사용자별 커서 기반 조회 - keyword 검색 (상세사유 LIKE + 신고 타입 IN)
     @Query(value = """
             SELECT * FROM report r
             WHERE r.reporter_user_id = :reporterId
@@ -81,7 +81,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
               AND (:answered IS NULL OR r.answered = :answered)
               AND (:cursor IS NULL OR r.report_id < :cursor)
               AND (r.reason LIKE CONCAT('%', :keyword, '%')
-                   OR r.report_type LIKE CONCAT('%', :keyword, '%'))
+                   OR r.report_type IN (:reportTypes))
             ORDER BY r.report_id DESC
             LIMIT :limit
             """,
@@ -90,6 +90,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                                                   @Param("status") String status,
                                                   @Param("answered") Boolean answered,
                                                   @Param("keyword") String keyword,
+                                                  @Param("reportTypes") List<String> reportTypes,
                                                   @Param("cursor") Long cursor,
                                                   @Param("limit") int limit);
 
