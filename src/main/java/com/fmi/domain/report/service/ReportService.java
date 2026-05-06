@@ -16,6 +16,7 @@ import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.data.ReportAnswerImage;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
+import com.fmi.domain.report.data.enums.ReportType;
 import com.fmi.domain.report.event.ReportEvent;
 import com.fmi.domain.report.repository.ReportAnswerImageRepository;
 import com.fmi.domain.report.repository.ReportRepository;
@@ -37,6 +38,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -154,9 +156,19 @@ public class ReportService {
         List<Report> reports;
 
         if (keyword != null && !keyword.isBlank()) {
+            String trimmed = keyword.trim();
+            String lower = trimmed.toLowerCase();
+            List<String> matchedTypes = Arrays.stream(ReportType.values())
+                    .filter(t -> t.name().toLowerCase().contains(lower)
+                              || t.getDescription().contains(trimmed))
+                    .map(Enum::name)
+                    .collect(java.util.stream.Collectors.toList());
+            if (matchedTypes.isEmpty()) {
+                matchedTypes = List.of("__NONE__");
+            }
             reports = reportRepository.findByReporterWithKeywordCursor(
                     user.getId(), status != null ? status.name() : null,
-                    answered, keyword, cursor, fetchSize);
+                    answered, trimmed, matchedTypes, cursor, fetchSize);
         } else if (status != null && answered != null) {
             reports = reportRepository.findByReporterAndStatusAndAnsweredCursor(user, status, answered, cursor, limit);
         } else if (status != null) {
