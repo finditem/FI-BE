@@ -359,18 +359,18 @@ public class PostMapCustomImpl implements PostMapCustom {
         BooleanBuilder geoOrKeyword = new BooleanBuilder();
 
         geoOrKeyword.or(
-                post.latitude.isNotNull()
-                        .and(post.longitude.isNotNull())
-                        .and(post.latitude.between(minLat, maxLat))
+                post.latitude.between(minLat, maxLat)
                         .and(post.longitude.between(minLng, maxLng))
         );
 
-        if(keyword != null && !keyword.isBlank()) {
+        if (keyword != null && !keyword.isBlank()) {
             geoOrKeyword.or(post.address.containsIgnoreCase(keyword));
         }
 
         BooleanBuilder where = new BooleanBuilder();
         where.and(geoOrKeyword);
+        where.and(post.latitude.isNotNull());
+        where.and(post.longitude.isNotNull());
         where.and(post.deleted.isFalse());
         where.and(post.temporarySave.isFalse());
 
