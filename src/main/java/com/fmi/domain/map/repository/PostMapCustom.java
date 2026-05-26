@@ -44,6 +44,7 @@ public interface PostMapCustom {
                                                          PostType postType,
                                                          PostStatus postStatus,
                                                          Category category,
+                                                         String keyword,
                                                          Long userId,
                                                          Set<Long> excludedUserIds,
                                                          Set<Long> hotPostIds,
