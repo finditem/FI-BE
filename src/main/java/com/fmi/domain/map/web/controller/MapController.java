@@ -242,10 +242,11 @@ public class MapController {
                     - 로그인 사용자인 경우 차단 유저의 게시글은 제외됩니다.
                     - 첫 요청은 lastDistance, lastPostId 없이 호출합니다.
                     - 이후 응답의 nextDistance, nextPostId를 다음 요청에 전달합니다.
+                    - keyword가 있으면, 반경 밖이더라도 address에 keyword가 포함된 게시글을 함게 반환합니다. (예: "강남구"로 검색 시 좌표 반경 밖이라도 address에 "강남구"가 들어간 글은 결과에 포함)
                     
                     예)
                     - 첫 요청:
-                      /main/posts/search-location?latitude=37.5665&longitude=126.9780&level=5
+                      /main/posts/search-location?latitude=37.5665&longitude=126.9780&level=5&keyword=강남구
                     - 다음 요청:
                       /main/posts/search-location?latitude=37.5665&longitude=126.9780&level=5&lastDistance=152.4&lastPostId=12
                     """
