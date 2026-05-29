@@ -129,6 +129,7 @@ public class PostMapService {
                 request.postType(),
                 request.postStatus(),
                 request.category(),
+                request.keyword(),
                 Objects.nonNull(user) ? user.getId() : null,
                 excludedUserIds,
                 hotPostIds,

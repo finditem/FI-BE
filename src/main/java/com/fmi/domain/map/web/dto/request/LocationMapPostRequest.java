@@ -29,6 +29,9 @@ public record LocationMapPostRequest(
         PostStatus postStatus,
 
         @Schema(description = "카테고리 필터", example = "WALLET")
-        Category category
+        Category category,
+
+        @Schema(description = "검색 키워드", example = "강남구")
+        String keyword
         ) {
 }

@@ -325,6 +325,7 @@ public class PostMapCustomImpl implements PostMapCustom {
                                                                 PostType postType,
                                                                 PostStatus postStatus,
                                                                 Category category,
+                                                                String keyword,
                                                                 Long userId,
                                                                 Set<Long> excludedUserIds,
                                                                 Set<Long> hotPostIds,
@@ -355,13 +356,23 @@ public class PostMapCustomImpl implements PostMapCustom {
                 lng, lat
         );
 
+        BooleanBuilder geoOrKeyword = new BooleanBuilder();
+
+        geoOrKeyword.or(
+                post.latitude.between(minLat, maxLat)
+                        .and(post.longitude.between(minLng, maxLng))
+        );
+
+        if (keyword != null && !keyword.isBlank()) {
+            geoOrKeyword.or(post.address.containsIgnoreCase(keyword));
+        }
+
         BooleanBuilder where = new BooleanBuilder();
-        where.and(post.deleted.isFalse());
-        where.and(post.temporarySave.isFalse());
+        where.and(geoOrKeyword);
         where.and(post.latitude.isNotNull());
         where.and(post.longitude.isNotNull());
-        where.and(post.latitude.between(minLat, maxLat));
-        where.and(post.longitude.between(minLng, maxLng));
+        where.and(post.deleted.isFalse());
+        where.and(post.temporarySave.isFalse());
 
         if (postType != null) {
             where.and(post.postType.eq(postType));
