@@ -4,13 +4,14 @@ import com.fmi.domain.post.data.ImageType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.web.dto.response.image.PostImageResponse;
+import com.fmi.global.dto.UploadedImage;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
 public final class PostImageConverter {
-    public static List<PostImage> createPostImageList(List<String> images, Post post) {
+    public static List<PostImage> createPostImageList(List<UploadedImage> images, Post post) {
         if (Objects.isNull(images) || images.isEmpty()) {
             return List.of();
         }
@@ -22,8 +23,8 @@ public final class PostImageConverter {
                 }).toList();
     }
 
-    public static PostImage createPostImage(String url, ImageType imageType, Post post) {
-        return PostImage.create(url, imageType, post);
+    public static PostImage createPostImage(UploadedImage image, ImageType imageType, Post post) {
+        return PostImage.create(image.originalUrl(), image.thumbnailUrl(), imageType, post);
     }
 
     public static List<PostImageResponse> toResponseList(List<PostImage> imageList) {
@@ -36,13 +37,13 @@ public final class PostImageConverter {
         return new PostImageResponse(postImage.getId(), postImage.getImgUrl(), postImage.getImageType());
     }
 
-    public static List<PostImage> createAllNormal(List<String> images, Post post) {
+    public static List<PostImage> createAllNormal(List<UploadedImage> images, Post post) {
         if (Objects.isNull(images) || images.isEmpty()) {
             return List.of();
         }
 
         return images.stream()
-                .map(url -> PostImage.create(url, ImageType.NORMAL, post))
+                .map(image -> PostImage.create(image.originalUrl(), image.thumbnailUrl(), ImageType.NORMAL, post))
                 .toList();
     }
 
