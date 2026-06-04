@@ -117,7 +117,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postImage.post.id)),
-                        t -> Objects.requireNonNull(t.get(listThumbnailUrl))
+                        t -> Objects.requireNonNull(t.get(listThumbnailUrl)),
+                        (a, b) -> a
                 ));
 
         Map<Long, Long> favoriteCountMap = queryFactory

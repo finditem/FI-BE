@@ -151,7 +151,8 @@ public class PostImageService {
         return thumbnails.stream()
                 .collect(Collectors.toMap(
                         pi -> pi.getPost().getId(),   // key: postId
-                        PostImageService::resolveThumbnailUrl
+                        PostImageService::resolveThumbnailUrl,
+                        (a, b) -> a
                 ));
     }
 
@@ -178,7 +179,8 @@ public class PostImageService {
         return thumbnails.stream()
                 .collect(Collectors.toMap(
                         pi -> pi.getPost().getId(),
-                        PostImageService::resolveThumbnailUrl
+                        PostImageService::resolveThumbnailUrl,
+                        (a, b) -> a
                 ));
     }
 
