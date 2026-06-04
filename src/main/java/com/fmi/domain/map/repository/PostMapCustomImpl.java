@@ -7,6 +7,7 @@ import com.fmi.domain.post.data.*;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -180,8 +181,10 @@ public class PostMapCustomImpl implements PostMapCustom {
                 .map(Post::getId)
                 .toList();
 
+        // 목록 썸네일 우선, 없으면 원본 URL로 대체
+        Expression<String> listThumbnailUrl = postImage.thumbnailUrl.coalesce(postImage.imgUrl);
         Map<Long, String> thumbnailMap = jpaQueryFactory
-                .select(postImage.post.id, postImage.imgUrl)
+                .select(postImage.post.id, listThumbnailUrl)
                 .from(postImage)
                 .where(
                         postImage.post.id.in(postIdList),
@@ -191,7 +194,7 @@ public class PostMapCustomImpl implements PostMapCustom {
                 .stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postImage.post.id)),
-                        t -> Objects.requireNonNull(t.get(postImage.imgUrl)),
+                        t -> Objects.requireNonNull(t.get(listThumbnailUrl)),
                         (a, b) -> a
                 ));
 
@@ -304,7 +307,7 @@ public class PostMapCustomImpl implements PostMapCustom {
                         RecentFoundPostResponse.class,
                         p.id,
                         p.title,
-                        pi.imgUrl,
+                        pi.thumbnailUrl.coalesce(pi.imgUrl),
                         p.createdAt
                 ))
                 .from(p)
@@ -429,8 +432,10 @@ public class PostMapCustomImpl implements PostMapCustom {
                 .map(Post::getId)
                 .toList();
 
+        // 목록 썸네일 우선, 없으면 원본 URL로 대체
+        Expression<String> listThumbnailUrl = postImage.thumbnailUrl.coalesce(postImage.imgUrl);
         Map<Long, String> thumbnailMap = jpaQueryFactory
-                .select(postImage.post.id, postImage.imgUrl)
+                .select(postImage.post.id, listThumbnailUrl)
                 .from(postImage)
                 .where(
                         postImage.post.id.in(postIdList),
@@ -440,7 +445,7 @@ public class PostMapCustomImpl implements PostMapCustom {
                 .stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postImage.post.id)),
-                        t -> Objects.requireNonNull(t.get(postImage.imgUrl)),
+                        t -> Objects.requireNonNull(t.get(listThumbnailUrl)),
                         (a, b) -> a
                 ));
 

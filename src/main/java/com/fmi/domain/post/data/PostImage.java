@@ -17,6 +17,9 @@ public class PostImage {
     @Column(name = "img_url", nullable = false)
     private String imgUrl;
 
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "image_type", nullable = false)
     private ImageType imageType;
@@ -25,13 +28,14 @@ public class PostImage {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    private PostImage(String imgUrl, ImageType imageType, Post post) {
+    private PostImage(String imgUrl, String thumbnailUrl, ImageType imageType, Post post) {
         this.imgUrl = imgUrl;
+        this.thumbnailUrl = thumbnailUrl;
         this.imageType = imageType;
         this.post = post;
     }
 
-    public static PostImage create(String imgUrl, ImageType imageType, Post post) {
-        return new PostImage(imgUrl, imageType, post);
+    public static PostImage create(String imgUrl, String thumbnailUrl, ImageType imageType, Post post) {
+        return new PostImage(imgUrl, thumbnailUrl, imageType, post);
     }
 }

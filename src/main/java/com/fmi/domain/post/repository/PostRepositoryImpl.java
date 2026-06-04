@@ -8,6 +8,7 @@ import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
@@ -103,8 +104,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
         List<Long> postIdList = posts.stream().map(Post::getId).toList();
 
+        // 목록 썸네일 우선, 없으면 원본 URL로 대체
+        Expression<String> listThumbnailUrl = postImage.thumbnailUrl.coalesce(postImage.imgUrl);
         Map<Long, String> thumbnailMap = queryFactory
-                .select(postImage.post.id, postImage.id, postImage.imgUrl)
+                .select(postImage.post.id, listThumbnailUrl)
                 .from(postImage)
                 .where(
                         postImage.post.id.in(postIdList),
@@ -114,7 +117,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postImage.post.id)),
-                        t -> Objects.requireNonNull(t.get(postImage.imgUrl))
+                        t -> Objects.requireNonNull(t.get(listThumbnailUrl)),
+                        (a, b) -> a
                 ));
 
         Map<Long, Long> favoriteCountMap = queryFactory
@@ -345,8 +349,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
         List<Long> postIdList = posts.stream().map(Post::getId).toList();
 
+        // 목록 썸네일 우선, 없으면 원본 URL로 대체
+        Expression<String> listThumbnailUrl = postImage.thumbnailUrl.coalesce(postImage.imgUrl);
         Map<Long, String> thumbnailMap = queryFactory
-                .select(postImage.post.id, postImage.id, postImage.imgUrl)
+                .select(postImage.post.id, listThumbnailUrl)
                 .from(postImage)
                 .where(
                         postImage.post.id.in(postIdList),
@@ -356,7 +362,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postImage.post.id)),
-                        t -> Objects.requireNonNull(t.get(postImage.imgUrl)),
+                        t -> Objects.requireNonNull(t.get(listThumbnailUrl)),
                         (a, b) -> a
                 ));
 

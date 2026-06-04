@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -76,7 +77,7 @@ public class PostImageService {
     public void createPostImageAtS3AndDB(List<MultipartFile> imageList, Post post) {
         List<PostImage> postImageList = new ArrayList<>();
         if (Objects.nonNull(imageList)) {
-            postImageList = PostImageConverter.createPostImageList(s3Service.upload(imageList), post);
+            postImageList = PostImageConverter.createPostImageList(s3Service.uploadWithThumbnail(imageList), post);
         }
 
         postImageRepository.saveAll(postImageList);
@@ -85,7 +86,7 @@ public class PostImageService {
     public List<PostImage> createPostImageNormalAtS3AndDB(List<MultipartFile> imageList, Post post) {
         List<PostImage> postImageList = new ArrayList<>();
         if (Objects.nonNull(imageList)) {
-            postImageList = PostImageConverter.createAllNormal(s3Service.upload(imageList), post);
+            postImageList = PostImageConverter.createAllNormal(s3Service.uploadWithThumbnail(imageList), post);
         }
 
         return postImageRepository.saveAll(postImageList);
@@ -94,7 +95,7 @@ public class PostImageService {
     public void deleteAllImageByPost(Post post) {
         List<PostImage> postImageList = postImageRepository.findByPost(post);
 
-        List<String> urlList = postImageList.stream().map(PostImage::getImgUrl).toList();
+        List<String> urlList = collectAllUrls(postImageList);
         try {
             s3Service.delete(urlList);
         } catch (Exception e) {
@@ -105,7 +106,7 @@ public class PostImageService {
     }
 
     public void deleteImageAtS3(List<PostImage> imageList) {
-        List<String> imageUrlList = imageList.stream().map(PostImage::getImgUrl).toList();
+        List<String> imageUrlList = collectAllUrls(imageList);
         s3Service.delete(imageUrlList);
     }
 
@@ -126,7 +127,12 @@ public class PostImageService {
     @Transactional(readOnly = true)
     public String findThumbnailImageUrl(Post post) {
         PostImage thumbnail = findThumbnailImage(post);
-        return thumbnail != null ? thumbnail.getImgUrl() : null;
+        return thumbnail != null ? resolveThumbnailUrl(thumbnail) : null;
+    }
+
+    // 목록 썸네일 우선, 없으면 원본 URL로 대체
+    private static String resolveThumbnailUrl(PostImage image) {
+        return image.getThumbnailUrl() != null ? image.getThumbnailUrl() : image.getImgUrl();
     }
 
     @Transactional(readOnly = true)
@@ -145,7 +151,8 @@ public class PostImageService {
         return thumbnails.stream()
                 .collect(Collectors.toMap(
                         pi -> pi.getPost().getId(),   // key: postId
-                        PostImage::getImgUrl
+                        PostImageService::resolveThumbnailUrl,
+                        (a, b) -> a
                 ));
     }
 
@@ -172,7 +179,8 @@ public class PostImageService {
         return thumbnails.stream()
                 .collect(Collectors.toMap(
                         pi -> pi.getPost().getId(),
-                        PostImage::getImgUrl
+                        PostImageService::resolveThumbnailUrl,
+                        (a, b) -> a
                 ));
     }
 
@@ -205,11 +213,15 @@ public class PostImageService {
     }
 
     private void deleteFromS3(List<PostImage> images) {
-        List<String> urls = images.stream()
-                .map(PostImage::getImgUrl)
-                .toList();
+        s3Service.delete(collectAllUrls(images));
+    }
 
-        s3Service.delete(urls);
+    // 원본 + 썸네일 URL을 모두 모아 S3 삭제 대상으로 반환 (썸네일이 없는 기존 데이터 대비 null 제외)
+    private static List<String> collectAllUrls(List<PostImage> images) {
+        return images.stream()
+                .flatMap(pi -> Stream.of(pi.getImgUrl(), pi.getThumbnailUrl()))
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     private void deleteFromDatabase(List<PostImage> images) {
