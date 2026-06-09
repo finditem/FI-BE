@@ -104,7 +104,8 @@ public class SecurityConfig {
                 "http://127.0.0.1:*",
                 "https://finditem.kr",
                 "https://www.finditem.kr",
-                "https://finditem-release.vercel.app"
+                "https://finditem-release.vercel.app",
+                "https://release.finditem.kr"
                 ));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
