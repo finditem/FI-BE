@@ -146,7 +146,6 @@ jobs:
               echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}"
               echo "SLACK_WEBHOOK_INQUIRY_URL=${{ secrets.SLACK_WEBHOOK_INQUIRY_URL }}"
               echo "SLACK_WEBHOOK_REPORT_URL=${{ secrets.SLACK_WEBHOOK_REPORT_URL }}"
-              echo "JWT_COOKIE_DOMAIN=${{ secrets.JWT_COOKIE_DOMAIN }}"
               echo "SPRING_FLYWAY_BASELINE_ON_MIGRATE=true"
               echo "SPRING_FLYWAY_BASELINE_VERSION=1"
             } > .env
