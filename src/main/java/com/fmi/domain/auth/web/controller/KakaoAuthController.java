@@ -8,6 +8,7 @@ import com.fmi.domain.auth.service.KakaoOAuthService.KakaoUser;
 import com.fmi.domain.auth.service.SocialLoginService;
 import com.fmi.domain.auth.web.dto.KakaoLoginRequest;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.security.CookieFactory;
 import com.fmi.security.JwtTokenProvider;
 import com.fmi.security.RefreshTokenStore;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,17 +38,12 @@ public class KakaoAuthController {
     private final SocialLoginService socialLoginService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenStore refreshTokenStore;
+    private final CookieFactory cookieFactory;
 
     @Value("${jwt.cookie.name:refresh_token}")
     private String refreshCookieName;
     @Value("${jwt.cookie.access-token-name:access_token}")
     private String accessCookieName;
-    @Value("${jwt.cookie.secure:false}")
-    private boolean cookieSecure;
-    @Value("${jwt.cookie.same-site:Lax}")
-    private String cookieSameSite;
-    @Value("${jwt.cookie.domain:}")
-    private String cookieDomain;
 
     @PostMapping
     @Operation(summary = "카카오 로그인", 
@@ -118,7 +115,8 @@ public class KakaoAuthController {
                     )
             )
     })
-    public ResponseEntity<ApiResponse<LoginResponse>> loginWithKakao(@Valid @RequestBody KakaoLoginRequest req) {
+    public ResponseEntity<ApiResponse<LoginResponse>> loginWithKakao(@Valid @RequestBody KakaoLoginRequest req,
+                                                                     HttpServletRequest request) {
         // environment에 따라 환경 변수에서 자동 선택
         KakaoToken token = kakaoOAuthService.exchangeCodeForToken(req.getCode(), req.getEnvironment());
         String kakaoAccessToken = token.getAccess_token();
@@ -155,11 +153,11 @@ public class KakaoAuthController {
 
         // accessToken 쿠키 설정
         java.util.Date accessExp = jwtTokenProvider.getExpiration(accessToken);
-        ResponseCookie accessCookie = buildCookie(accessCookieName, accessToken,
+        ResponseCookie accessCookie = cookieFactory.build(request, accessCookieName, accessToken,
                 Duration.between(Instant.now(), accessExp.toInstant()));
 
         // refreshToken 쿠키 설정
-        ResponseCookie refreshCookie = buildCookie(refreshCookieName, refreshToken,
+        ResponseCookie refreshCookie = cookieFactory.build(request, refreshCookieName, refreshToken,
                 Duration.between(Instant.now(), refreshExp.toInstant()));
 
         // 응답 생성 및 반환
@@ -169,19 +167,6 @@ public class KakaoAuthController {
                 .header("Set-Cookie", accessCookie.toString())
                 .header("Set-Cookie", refreshCookie.toString())
                 .body(ApiResponse.onSuccess(new LoginResponse(localUser.getId(), false, termsAgreed)));
-    }
-
-    private ResponseCookie buildCookie(String name, String value, Duration maxAge) {
-        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(maxAge);
-        if (cookieDomain != null && !cookieDomain.isBlank()) {
-            builder.domain(cookieDomain);
-        }
-        return builder.build();
     }
 
     private static String sha256Hex(String value) {
