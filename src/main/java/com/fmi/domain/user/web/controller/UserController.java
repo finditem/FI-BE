@@ -19,12 +19,14 @@ import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.security.CookieFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +39,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -48,17 +49,12 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final CookieFactory cookieFactory;
 
     @Value("${jwt.cookie.name:refresh_token}")
     private String refreshCookieName;
     @Value("${jwt.cookie.access-token-name:access_token}")
     private String accessCookieName;
-    @Value("${jwt.cookie.secure:false}")
-    private boolean cookieSecure;
-    @Value("${jwt.cookie.same-site:Lax}")
-    private String cookieSameSite;
-    @Value("${jwt.cookie.domain:}")
-    private String cookieDomain;
 
     @PostMapping("/uploads/images")
     @Operation(summary = "이미지 업로드", description = "여러 장의 이미지를 S3에 업로드하고 URL을 반환합니다. (JPEG, PNG 형식만 지원)")
@@ -509,31 +505,19 @@ public class UserController {
     })
     public ResponseEntity<ApiResponse<Void>> deleteAccount(
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody AccountDeleteRequest request
+            @Valid @RequestBody AccountDeleteRequest request,
+            HttpServletRequest httpRequest
     ) {
         String email = userDetails.getUsername();
         userService.deleteAccount(email, request);
 
-        ResponseCookie removeAccess = buildExpiredCookie(accessCookieName);
-        ResponseCookie removeRefresh = buildExpiredCookie(refreshCookieName);
+        ResponseCookie removeAccess = cookieFactory.expire(httpRequest, accessCookieName);
+        ResponseCookie removeRefresh = cookieFactory.expire(httpRequest, refreshCookieName);
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", removeAccess.toString())
                 .header("Set-Cookie", removeRefresh.toString())
                 .body(ApiResponse.onSuccess(null));
-    }
-
-    private ResponseCookie buildExpiredCookie(String name) {
-        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, "")
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(Duration.ZERO);
-        if (cookieDomain != null && !cookieDomain.isBlank()) {
-            builder.domain(cookieDomain);
-        }
-        return builder.build();
     }
 }
 

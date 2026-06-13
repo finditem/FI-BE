@@ -7,6 +7,7 @@ import com.fmi.domain.auth.web.dto.LoginRequest;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.security.CookieFactory;
 import com.fmi.security.JwtTokenProvider;
 import com.fmi.security.RefreshTokenStore;
 import jakarta.validation.Valid;
@@ -34,17 +35,12 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenStore refreshTokenStore;
     private final SocialAccountsRepository socialAccountsRepository;
+    private final CookieFactory cookieFactory;
 
     @Value("${jwt.cookie.name:refresh_token}")
     private String refreshCookieName;
     @Value("${jwt.cookie.access-token-name:access_token}")
     private String accessCookieName;
-    @Value("${jwt.cookie.secure:false}")
-    private boolean cookieSecure;
-    @Value("${jwt.cookie.same-site:Lax}")
-    private String cookieSameSite;
-    @Value("${jwt.cookie.domain:}")
-    private String cookieDomain;
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입", description = "이메일/비밀번호/닉네임을 입력해 회원을 생성합니다. 비밀번호는 8~16자, 대/소문자·숫자·특수문자를 포함해야 합니다. 가입 성공 시 자동 로그인되어 토큰이 쿠키로 발급됩니다.")
@@ -89,9 +85,10 @@ public class AuthController {
                     )
             )
     })
-    public ResponseEntity<ApiResponse<LoginResponse>> signup(@Valid @RequestBody SignupRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> signup(@Valid @RequestBody SignupRequest request,
+                                                             HttpServletRequest httpRequest) {
         var user = authService.signup(request);
-        return buildTokenResponse(user, false);
+        return buildTokenResponse(httpRequest, user, false);
     }
 
     @PostMapping("/login")
@@ -115,9 +112,10 @@ public class AuthController {
                     )
             )
     })
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request,
+                                                            HttpServletRequest httpRequest) {
         var authResult = authService.authenticate(request.getEmail(), request.getPassword());
-        return buildTokenResponse(authResult.getUser(), authResult.isTemporaryPassword());
+        return buildTokenResponse(httpRequest, authResult.getUser(), authResult.isTemporaryPassword());
     }
 
     @GetMapping("/check-nickname")
@@ -222,8 +220,8 @@ public class AuthController {
         java.util.Date refreshExp = jwtTokenProvider.getExpiration(newRefresh);
         refreshTokenStore.issue(newJti, email, newHash, refreshExp.toInstant());
 
-        ResponseCookie accessCookie = buildCookie(accessCookieName, accessToken, jwtTokenProvider.getExpiration(accessToken));
-        ResponseCookie refreshCookie = buildCookie(refreshCookieName, newRefresh, refreshExp);
+        ResponseCookie accessCookie = buildCookie(request, accessCookieName, accessToken, jwtTokenProvider.getExpiration(accessToken));
+        ResponseCookie refreshCookie = buildCookie(request, refreshCookieName, newRefresh, refreshExp);
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", accessCookie.toString())
@@ -232,7 +230,7 @@ public class AuthController {
     }
 
     private ResponseEntity<ApiResponse<LoginResponse>> buildTokenResponse(
-            com.fmi.domain.auth.data.User user, boolean isTemporaryPassword) {
+            HttpServletRequest request, com.fmi.domain.auth.data.User user, boolean isTemporaryPassword) {
         var claims = new java.util.HashMap<String, Object>();
         claims.put("userId", user.getId());
         claims.put("role", user.getRole().name());
@@ -248,8 +246,8 @@ public class AuthController {
         java.util.Date refreshExp = jwtTokenProvider.getExpiration(refreshToken);
         refreshTokenStore.issue(jti, user.getEmail(), refreshHash, refreshExp.toInstant());
 
-        ResponseCookie accessCookie = buildCookie(accessCookieName, accessToken, jwtTokenProvider.getExpiration(accessToken));
-        ResponseCookie refreshCookie = buildCookie(refreshCookieName, refreshToken, refreshExp);
+        ResponseCookie accessCookie = buildCookie(request, accessCookieName, accessToken, jwtTokenProvider.getExpiration(accessToken));
+        ResponseCookie refreshCookie = buildCookie(request, refreshCookieName, refreshToken, refreshExp);
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", accessCookie.toString())
@@ -257,21 +255,9 @@ public class AuthController {
                 .body(ApiResponse.onSuccess(AuthConverter.toLoginResponse(user.getId(), isTemporaryPassword)));
     }
 
-    private ResponseCookie buildCookie(String name, String value, java.time.Duration maxAge) {
-        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(maxAge);
-        if (cookieDomain != null && !cookieDomain.isBlank()) {
-            builder.domain(cookieDomain);
-        }
-        return builder.build();
-    }
-
-    private ResponseCookie buildCookie(String name, String value, java.util.Date expiration) {
-        return buildCookie(name, value, java.time.Duration.between(java.time.Instant.now(), expiration.toInstant()));
+    private ResponseCookie buildCookie(HttpServletRequest request, String name, String value, java.util.Date expiration) {
+        return cookieFactory.build(request, name, value,
+                java.time.Duration.between(java.time.Instant.now(), expiration.toInstant()));
     }
 
     private static String sha256Hex(String value) {
@@ -302,10 +288,10 @@ public class AuthController {
         }
         
         // accessToken 쿠키 제거
-        ResponseCookie removeAccess = buildCookie(accessCookieName, "", java.time.Duration.ZERO);
+        ResponseCookie removeAccess = cookieFactory.expire(request, accessCookieName);
 
         // refreshToken 쿠키 제거
-        ResponseCookie removeRefresh = buildCookie(refreshCookieName, "", java.time.Duration.ZERO);
+        ResponseCookie removeRefresh = cookieFactory.expire(request, refreshCookieName);
         
         return ResponseEntity.ok()
                 .header("Set-Cookie", removeAccess.toString())
