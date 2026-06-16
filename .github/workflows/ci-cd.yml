@@ -136,6 +136,8 @@ jobs:
               echo "KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}"
               echo "KAKAO_REST_API_KEY_DEV=${{ secrets.KAKAO_REST_API_KEY_DEV }}"
               echo "KAKAO_REST_API_KEY_RELEASE=${{ secrets.KAKAO_REST_API_KEY_RELEASE }}"
+              echo "KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}"
+              echo "KAKAO_CLIENT_SECRET_DEV=${{ secrets.KAKAO_CLIENT_SECRET_DEV }}"
               echo "KAKAO_CLIENT_SECRET_RELEASE=${{ secrets.KAKAO_CLIENT_SECRET_RELEASE }}"
               echo "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}"
               echo "KAKAO_REDIRECT_URI_DEV=${{ secrets.KAKAO_REDIRECT_URI_DEV }}"
