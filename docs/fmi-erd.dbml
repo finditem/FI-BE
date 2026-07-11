@@ -1,0 +1,453 @@
+Project FMI {
+  database_type: 'MySQL'
+}
+
+Table users {
+  id bigint [pk, increment]
+  created_at datetime [not null]
+  deleted_at datetime
+  email varchar(255) [not null, unique]
+  email_verified boolean [not null, default: false]
+  marketing_consent boolean [not null]
+  nickname varchar(255) [not null, unique]
+  original_password varchar(255)
+  password varchar(255) [not null]
+  privacy_policy_agreed boolean [not null]
+  terms_of_service_agreed boolean [not null, default: false]
+  content_policy_agreed boolean [not null, default: false]
+  profile_img varchar(1000) [not null, default: '']
+  role varchar(20) [not null, note: 'ADMIN, USER']
+  temporary_password varchar(255)
+  temporary_password_expires_at datetime
+  updated_at datetime
+  withdrawal_other_reason text
+  withdrawal_reason varchar(200)
+}
+
+Table blocked_user {
+  blocked_id bigint [pk, increment]
+  created_at datetime [not null]
+  blocked_user_id bigint [not null]
+  blocker_user_id bigint [not null]
+
+  indexes {
+    (blocker_user_id, blocked_user_id) [unique, name: 'uk_blocker_blocked']
+  }
+}
+
+Table post {
+  id bigint [pk, increment]
+  address varchar(255) [not null]
+  category varchar(30) [note: 'BAG, CARD, ELECTRONICS, ETC, ID_CARD, JEWELRY, WALLET']
+  content varchar(500) [not null]
+  created_at datetime [not null]
+  date datetime
+  deleted_at datetime
+  is_deleted boolean [not null]
+  latitude double
+  longitude double
+  item_status varchar(20) [note: 'FOUND, SEARCHING']
+  post_type varchar(20) [note: 'FOUND, LOST']
+  radius int
+  temporary_save boolean [not null]
+  title varchar(50) [not null]
+  updated_at datetime
+  view_cnt bigint
+  user_id bigint [not null]
+}
+
+Table post_image {
+  id bigint [pk, increment]
+  image_type varchar(20) [not null, note: 'NORMAL, THUMBNAIL']
+  img_url varchar(255) [not null]
+  post_id bigint [not null]
+}
+
+Table post_favorite {
+  favorite_id bigint [pk, increment]
+  created_at datetime [not null]
+  is_favorite boolean [not null]
+  post_id bigint [not null]
+  user_id bigint [not null]
+
+  indexes {
+    (user_id, post_id) [unique]
+  }
+}
+
+Table comment {
+  comment_id bigint [pk, increment]
+  content varchar(255) [not null]
+  created_at datetime [not null]
+  deleted boolean [not null]
+  depth int [not null]
+  updated_at datetime
+  parent_id bigint
+  post_id bigint [not null]
+  user_id bigint [not null]
+}
+
+Table comment_image {
+  id bigint [pk, increment]
+  img_url varchar(255) [not null]
+  comment_id bigint [not null]
+}
+
+Table comment_like {
+  id bigint [pk, increment]
+  is_like boolean [not null]
+  comment_id bigint [not null]
+  user_id bigint [not null]
+
+  indexes {
+    (user_id, comment_id) [unique]
+  }
+}
+
+Table chat_room {
+  id bigint [pk, increment]
+  created_at datetime [not null]
+  post_id bigint
+  source_post_id bigint
+  source_title varchar(255)
+  source_address varchar(255)
+  source_post_type varchar(20) [note: 'LOST, FOUND']
+  source_post_status varchar(20) [note: 'SEARCHING, FOUND']
+  source_category varchar(30) [note: 'ELECTRONICS, WALLET, ID_CARD, JEWELRY, BAG, CARD, ETC']
+  source_thumbnail_url varchar(512)
+  source_post_deleted boolean [not null, default: false]
+}
+
+Table chat_message {
+  id bigint [pk, increment]
+  content varchar(255)
+  created_at datetime [not null]
+  message_type varchar(20) [note: 'IMAGE, TEXT']
+  readornot boolean [not null]
+  updated_at datetime
+  chat_room_id bigint [not null]
+  user_id bigint [not null]
+}
+
+Table chat_room_participant {
+  id bigint [pk, increment]
+  first_unread_at datetime
+  last_message_sent_at datetime
+  last_read_message_id bigint
+  last_reminded_at datetime
+  participant_state varchar(20) [note: 'ACTIVE, LEFT']
+  unread_count bigint
+  visible_from_message_id bigint
+  chat_room_id bigint
+  last_message_id bigint
+  user_id bigint
+}
+
+Table message_image {
+  id bigint [pk, increment]
+  image_url varchar(1000) [not null]
+  chat_message_id bigint
+}
+
+Table customer_inquiry {
+  id bigint [pk, increment]
+  answer_status varchar(20) [not null, note: 'ANSWERED, PENDING, RECEIVED']
+  answered boolean [not null, default: false]
+  content text [not null]
+  created_at datetime [not null]
+  email varchar(255)
+  inquiry_type varchar(30) [not null, note: 'ACCOUNT_LOGIN, BUG, ETC, SUGGESTION, USAGE']
+  ip varchar(45)
+  title varchar(200) [not null]
+  updated_at datetime
+  user_id bigint
+}
+
+Table inquiry_image {
+  id bigint [pk, increment]
+  img_url varchar(255) [not null]
+  inquiry_id bigint [not null]
+}
+
+Table inquiry_comment {
+  comment_id bigint [pk, increment]
+  content text [not null]
+  created_at datetime [not null]
+  email varchar(255)
+  updated_at datetime
+  inquiry_id bigint [not null]
+  parent_id bigint
+  user_id bigint
+}
+
+Table inquiry_comment_image {
+  id bigint [pk, increment]
+  img_url varchar(255) [not null]
+  comment_id bigint [not null]
+}
+
+Table notice {
+  id bigint [pk, increment]
+  category varchar(50) [note: 'EVENT, GENERAL, IMPORTANT, MAINTENANCE, UPDATE']
+  content text [not null]
+  created_at datetime [not null]
+  draft boolean [not null, default: false]
+  like_count int [not null, default: 0]
+  pinned boolean [not null, default: false]
+  title varchar(200) [not null]
+  updated_at datetime
+  view_cnt int [not null, default: 0]
+  author_id bigint
+}
+
+Table notice_image {
+  id bigint [pk, increment]
+  image_type varchar(20) [not null, note: 'NORMAL, THUMBNAIL']
+  img_url varchar(255) [not null]
+  notice_id bigint [not null]
+}
+
+Table notice_comment {
+  comment_id bigint [pk, increment]
+  content text [not null]
+  created_at datetime [not null]
+  deleted boolean [not null]
+  like_count int
+  updated_at datetime
+  notice_id bigint [not null]
+  parent_id bigint
+  user_id bigint [not null]
+}
+
+Table notice_comment_image {
+  id bigint [pk, increment]
+  img_url varchar(255) [not null]
+  comment_id bigint [not null]
+}
+
+Table notice_comment_like {
+  id bigint [pk, increment]
+  created_at datetime [not null]
+  comment_id bigint [not null]
+  user_id bigint [not null]
+
+  indexes {
+    (user_id, comment_id) [unique]
+  }
+}
+
+Table notice_like {
+  id bigint [pk, increment]
+  created_at datetime [not null]
+  notice_id bigint [not null]
+  user_id bigint [not null]
+
+  indexes {
+    (user_id, notice_id) [unique]
+  }
+}
+
+Table notification {
+  notification_id bigint [pk, increment]
+  created_at datetime [not null]
+  is_read boolean
+  message varchar(500)
+  reference_id bigint
+  reference_type varchar(50) [note: 'CHAT, COMMENT, INQUIRY, NOTICE, POST, REPORT']
+  room_id bigint
+  title varchar(200) [not null]
+  type varchar(50) [not null, note: 'CATEGORY, CHAT, CHAT_REMINDER, COMMENT, FAVORITE, INQUIRY_REPLY, NOTICE, REPORT_RESULT, SYSTEM']
+  user_id bigint [not null]
+}
+
+Table notification_settings {
+  settings_id bigint [pk, increment]
+  browser_notification_enabled boolean [default: true]
+  category_enabled boolean [default: true]
+  chat_enabled boolean [default: true]
+  comment_enabled boolean [default: true]
+  created_at datetime [not null]
+  favorite_enabled boolean [default: true]
+  inquiry_reply_enabled boolean [default: true]
+  notice_enabled boolean [default: true]
+  report_result_enabled boolean [default: true]
+  updated_at datetime
+  user_id bigint [not null, unique]
+}
+
+Table notification_category_keywords {
+  settings_id bigint [not null]
+  category varchar(30) [note: 'BAG, CARD, ELECTRONICS, ETC, ID_CARD, JEWELRY, WALLET']
+}
+
+Table push_subscriptions {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  endpoint text [not null]
+  p256dh varchar(255) [not null]
+  auth varchar(255) [not null]
+  created_at datetime [not null]
+
+  indexes {
+    user_id [name: 'idx_push_subscriptions_user_id']
+    (user_id, endpoint) [unique, name: 'uq_push_subscriptions_user_endpoint']
+  }
+}
+
+Table report {
+  report_id bigint [pk, increment]
+  admin_answer text
+  answered boolean [not null, default: false]
+  answered_at datetime
+  created_at datetime [not null]
+  reason text
+  report_type varchar(40) [not null, note: 'DUPLICATE, ETC, EXTORTION, FALSE_CLAIM, IRRELEVANT_CONTENT, OFFENSIVE_LANGUAGE, SPAM']
+  resolved_at datetime
+  status varchar(20) [not null, note: 'PENDING, RESOLVED, REVIEWED']
+  target_id bigint [not null, note: 'Polymorphic target id']
+  target_type varchar(50) [not null, note: 'CHAT, COMMENT, POST, USER']
+  updated_at datetime
+  admin_id bigint
+  reporter_user_id bigint [not null]
+}
+
+Table report_answer_image {
+  id bigint [pk, increment]
+  created_at datetime [not null]
+  image_url varchar(500) [not null]
+  report_id bigint [not null]
+}
+
+Table social_accounts {
+  social_id bigint [pk, increment]
+  created_at datetime [not null]
+  provider varchar(20) [not null, note: 'GOOGLE, KAKAO, NAVER']
+  provider_id varchar(255) [not null]
+  user bigint [not null]
+}
+
+Table user_category {
+  user_category_id bigint [pk, increment]
+  category varchar(50) [not null, note: 'BAG, CARD, ELECTRONICS, ETC, ID_CARD, JEWELRY, WALLET']
+  created_at datetime [not null]
+  user_id bigint [not null]
+
+  indexes {
+    (user_id, category) [unique, name: 'uk_user_category']
+  }
+}
+
+Table ip_blacklist {
+  id bigint [pk, increment]
+  created_at datetime [not null]
+  ip varchar(45) [not null, unique]
+  reason varchar(255)
+}
+
+Ref: blocked_user.blocked_user_id > users.id
+Ref: blocked_user.blocker_user_id > users.id
+
+Ref: post.user_id > users.id
+Ref: post_image.post_id > post.id
+Ref: post_favorite.post_id > post.id
+Ref: post_favorite.user_id > users.id
+
+Ref: comment.parent_id > comment.comment_id
+Ref: comment.post_id > post.id
+Ref: comment.user_id > users.id
+Ref: comment_image.comment_id > comment.comment_id
+Ref: comment_like.comment_id > comment.comment_id
+Ref: comment_like.user_id > users.id
+
+Ref: chat_room.post_id > post.id
+Ref: chat_message.chat_room_id > chat_room.id
+Ref: chat_message.user_id > users.id
+Ref: chat_room_participant.chat_room_id > chat_room.id
+Ref: chat_room_participant.last_message_id > chat_message.id
+Ref: chat_room_participant.user_id > users.id
+Ref: message_image.chat_message_id > chat_message.id
+
+Ref: customer_inquiry.user_id > users.id
+Ref: inquiry_image.inquiry_id > customer_inquiry.id
+Ref: inquiry_comment.inquiry_id > customer_inquiry.id
+Ref: inquiry_comment.parent_id > inquiry_comment.comment_id
+Ref: inquiry_comment.user_id > users.id
+Ref: inquiry_comment_image.comment_id > inquiry_comment.comment_id
+
+Ref: notice.author_id > users.id
+Ref: notice_image.notice_id > notice.id
+Ref: notice_comment.notice_id > notice.id
+Ref: notice_comment.parent_id > notice_comment.comment_id
+Ref: notice_comment.user_id > users.id
+Ref: notice_comment_image.comment_id > notice_comment.comment_id
+Ref: notice_comment_like.comment_id > notice_comment.comment_id
+Ref: notice_comment_like.user_id > users.id
+Ref: notice_like.notice_id > notice.id
+Ref: notice_like.user_id > users.id
+
+Ref: notification.user_id > users.id
+Ref: notification_settings.user_id > users.id
+Ref: notification_category_keywords.settings_id > notification_settings.settings_id
+Ref: push_subscriptions.user_id > users.id [delete: cascade]
+
+Ref: report.admin_id > users.id
+Ref: report.reporter_user_id > users.id
+Ref: report_answer_image.report_id > report.report_id
+
+Ref: social_accounts.user > users.id
+Ref: user_category.user_id > users.id
+
+TableGroup user_auth {
+  users
+  blocked_user
+  social_accounts
+  user_category
+  ip_blacklist
+}
+
+TableGroup post {
+  post
+  post_image
+  post_favorite
+}
+
+TableGroup comment {
+  comment
+  comment_image
+  comment_like
+}
+
+TableGroup chat {
+  chat_room
+  chat_message
+  chat_room_participant
+  message_image
+}
+
+TableGroup notice {
+  notice
+  notice_image
+  notice_comment
+  notice_comment_image
+  notice_comment_like
+  notice_like
+}
+
+TableGroup inquiry {
+  customer_inquiry
+  inquiry_image
+  inquiry_comment
+  inquiry_comment_image
+}
+
+TableGroup notification {
+  notification
+  notification_settings
+  notification_category_keywords
+  push_subscriptions
+}
+
+TableGroup report {
+  report
+  report_answer_image
+}
