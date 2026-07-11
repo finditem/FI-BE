@@ -36,10 +36,11 @@
 ## 주요 도메인
 
 - **Post** — 분실물/습득물 게시글 등록 및 조회
+- **Favorite** — 게시글 즐겨찾기
 - **User / Auth** — 회원가입/로그인, JWT 인증
 - **Map** — 지도 기반 위치 검색
 - **Chat** — 채팅방/채팅 메시지 (WebSocket)
-- **Comment / Like** — 게시글, 공지 댓글 및 좋아요
+- **Comment / Like** — 댓글(게시글/공지) 및 좋아요
 - **Notification** — 실시간 알림 (Web Push)
 - **Report / Admin** — 신고 처리, 관리자 기능
 - **Notice / Inquiry** — 공지사항, 문의
@@ -104,9 +105,11 @@
     </td>
     <td align="center">
       - 분실물/습득물 게시글<br/>
-      - 댓글<br/>
-      - 지도 기반 검색
-    </td>
+      - 게시글 검색/추천/즐겨찾기<br/>
+      - 댓글/대댓글/좋아요<br/>
+      - 지도 기반 게시글 조회<br/>
+      - 사용자 위치 기반 주변 검색
+</td>
   </tr>
 </table>
 
