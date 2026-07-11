@@ -98,7 +98,6 @@
       - Notice<br/>
       - Inquiry/Report<br/>
       - Admin<br/>
-      - Infra
     </td>
     <td align="center">
       - Post<br/>
