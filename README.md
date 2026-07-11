@@ -62,23 +62,18 @@
 ## 팀 구성
 
 <table>
-  <colgroup>
-    <col width="33%">
-    <col width="33%">
-    <col width="34%">
-  </colgroup>
   <tr>
-    <td align="center">
+    <td align="center" width="33%">
       <a href="https://github.com/Yoosejeong">
         <img src="https://github.com/Yoosejeong.png" width="120" height="120" style="border-radius:50%"/>
       </a>
     </td>
-    <td align="center">
+    <td align="center" width="33%">
       <a href="https://github.com/kkch1012">
         <img src="https://github.com/kkch1012.png" width="120" height="120" style="border-radius:50%"/>
       </a>
     </td>
-    <td align="center">
+    <td align="center" width="34%">
       <a href="https://github.com/hyeonjaez">
         <img src="https://github.com/hyeonjaez.png" width="120" height="120" style="border-radius:50%"/>
       </a>
