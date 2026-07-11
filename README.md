@@ -83,26 +83,29 @@
   </tr>
   <tr>
     <td align="center">
-      - Chat<br/>
+      - 채팅<br/>
       - 운영/모니터링 서버 구축<br/>
       - 로그 및 메트릭 수집<br/>
-      - CI/CD<br/>
-      - Slack 알림<br/>
+      - CI/CD 파이프라인 구축<br/>
+      - Slack 알림 연동<br/>
       - 환경별 인증 쿠키, 도메인 설정<br/>
-      - 공통 응답 구조
+      - 공통 응답 구조 설계
     </td>
     <td align="center">
-      - Auth<br/>
-      - User/MyPage<br/>
-      - Notification<br/>
-      - Notice<br/>
-      - Inquiry/Report<br/>
-      - Admin<br/>
+      - 회원가입/로그인<br/>
+      - 회원/마이페이지<br/>
+      - 알림<br/>
+      - 공지사항<br/>
+      - 문의/신고<br/>
+      - 관리자 기능<br/>
+      - DB 마이그레이션<br/>
+      - Zoho SMTP 전환<br/>
+      - PR 리뷰 리마인더 자동화
     </td>
     <td align="center">
-      - Post<br/>
-      - Comment<br/>
-      - Map
+      - 분실물/습득물 게시글<br/>
+      - 댓글<br/>
+      - 지도 기반 검색
     </td>
   </tr>
 </table>
