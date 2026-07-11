@@ -14,17 +14,18 @@
 
 ## 기술 스택
 
-| 분류 | 기술 |
-|---|---|
-| 언어 / 프레임워크 | Java 17, Spring Boot 3.5 |
-| ORM / DB | Spring Data JPA, QueryDSL, MySQL, Flyway |
-| 인증 | Spring Security, JWT, Redis |
-| 실시간 | WebSocket (채팅) |
-| 스토리지 | AWS S3 (이미지) |
-| 알림 | 이메일, Web Push (VAPID) |
-| 모니터링 | Actuator, Prometheus, Grafana Alloy, Logstash |
-| 인프라 | Docker |
-| 문서 | SpringDoc OpenAPI (Swagger) |
+| 분류 | 기술                                                     |
+|---|--------------------------------------------------------|
+| 언어 / 프레임워크 | Java 17, Spring Boot 3.5                               |
+| ORM / DB | Spring Data JPA, QueryDSL, MySQL, Flyway               |
+| 인증 | Spring Security, JWT, Redis                            |
+| 실시간 | WebSocket (채팅)                                         |
+| 스토리지 | AWS S3 (이미지)                                           |
+| 알림 | 이메일, Web Push (VAPID)                                  |
+| 모니터링 | Actuator, Prometheus, Grafana |
+| 로깅 | Grafana Alloy, Loki, Logstash 포맷(JSON) |
+| 인프라 / 배포 | AWS (EC2, RDS, ECR), Nginx, Docker, GitHub Actions     |
+| 문서 | SpringDoc OpenAPI (Swagger)                            |
 
 ## 아키텍처
 
@@ -53,7 +54,7 @@
 
 ## 개발 기간
 
-2025.08 ~ 현재
+2025.08 ~ 진행중
 
 ## 팀 구성
 
@@ -83,10 +84,11 @@
   <tr>
     <td align="center">
       - Chat<br/>
-      - 모니터링<br/>
+      - 운영/모니터링 서버 구축<br/>
+      - 로그 및 메트릭 수집<br/>
       - CI/CD<br/>
       - Slack 알림<br/>
-      - 쿠키/도메인<br/>
+      - 환경별 인증 쿠키, 도메인 설정<br/>
       - 공통 응답 구조
     </td>
     <td align="center">
