@@ -57,6 +57,8 @@ public class SecurityConfig {
                         .requestMatchers("/users/{userId}/page").permitAll()
                         .requestMatchers(HttpMethod.GET, "/users/{userId}/meta").permitAll()
                         .requestMatchers(HttpMethod.GET, "/posts/search/**", "/posts/*", "/posts/*/similar", "/posts/*/share").permitAll()
+                        // 댓글 목록/답글 조회 - 비회원도 조회 가능
+                        .requestMatchers(HttpMethod.GET, "/comments/posts/*", "/comments/*/replies").permitAll()
                         .requestMatchers(HttpMethod.GET, "/main/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/push/vapid-key").permitAll()
                         // 관리자 전용 API 보호
