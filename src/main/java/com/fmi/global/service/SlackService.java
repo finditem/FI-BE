@@ -8,6 +8,7 @@ import com.slack.api.model.Field;
 import com.slack.api.webhook.Payload;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ public class SlackService {
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    @Async("applicationTaskExecutor")
     public void sendInquiryNotification(InquiryEvent event) {
         try {
             Payload payload = Payload.builder()
@@ -53,6 +55,7 @@ public class SlackService {
         }
     }
 
+    @Async("applicationTaskExecutor")
     public void sendReportNotification(ReportEvent event) {
         try {
             Payload payload = Payload.builder()
