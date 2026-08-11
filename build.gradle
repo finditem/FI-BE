@@ -28,6 +28,7 @@ repositories {
 ext['kotlin.version'] = '2.1.0'
 ext['spring-framework.version'] = '6.2.11'
 ext['jackson.version'] = '2.19.2'
+ext['netty.version'] = '4.1.136.Final'
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -64,7 +65,7 @@ dependencies {
     // Web Push (VAPID)
     implementation 'nl.martijndwars:web-push:5.1.2'
     implementation 'org.bitbucket.b_c:jose4j:0.9.6'
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.84'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.85'
 
     // slack
     implementation 'com.slack.api:slack-api-client:1.46.0'
