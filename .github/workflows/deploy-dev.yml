@@ -1,0 +1,28 @@
+name: Deploy DEV
+
+on:
+  push:
+    branches:
+      - develop
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    uses: ./.github/workflows/deploy-common.yml
+    with:
+      profile: dev
+      service_name: fmi-dev
+      image_tag: dev
+    secrets: inherit
