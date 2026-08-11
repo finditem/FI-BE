@@ -15,7 +15,7 @@ services:
       - redis_data:/data
 
   fmi-prod:
-    image: ${ECR_IMAGE_URL}:latest
+    image: ${ECR_IMAGE_URL}:prod
     ports:
       - "127.0.0.1:8080:8080"
     container_name: fmi-prod
@@ -40,7 +40,7 @@ services:
         max-file: "3"
 
   fmi-dev:
-    image: ${ECR_IMAGE_URL}:latest
+    image: ${ECR_IMAGE_URL}:dev
     ports:
       - "127.0.0.1:8081:8080"
     container_name: fmi-dev
