@@ -1,0 +1,155 @@
+name: PR Review Reminder
+
+on:
+  workflow_dispatch:
+  pull_request_review:
+    types: [submitted]
+  schedule:
+    # 매일 오전 9시 (KST) = UTC 00:00
+    - cron: '0 0 * * *'
+
+permissions:
+  pull-requests: write
+  issues: write
+  actions: write
+
+jobs:
+  # 리뷰 승인 시 D-라벨 자동 제거
+  remove-label-on-approve:
+    if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
+    runs-on: ubuntu-latest
+    steps:
+      - name: D-라벨 제거
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+
+            const dLabels = ['D-0', 'D-1', 'D-3', 'D-5'];
+            for (const label of labels) {
+              if (dLabels.includes(label.name)) {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  name: label.name
+                });
+                console.log(`PR #${prNumber}에서 ${label.name} 라벨 제거`);
+              }
+            }
+
+  # 매일 오전 9시: D-라벨 부착 시점 기준 카운트다운
+  check-review-deadline:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: D-라벨 카운트다운 업데이트
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const dLabels = ['D-0', 'D-1', 'D-3', 'D-5'];
+
+            // D-라벨별 다음 단계 및 전환 기준일
+            const transitions = {
+              'D-5': { next: 'D-3', days: 2 },
+              'D-3': { next: 'D-1', days: 2 },
+              'D-1': { next: 'D-0', days: 1 }
+            };
+
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              sort: 'created',
+              direction: 'asc',
+              per_page: 100
+            });
+
+            for (const pr of prs) {
+              if (pr.draft) continue;
+
+              // 이미 승인된 리뷰가 있으면 스킵
+              const { data: reviews } = await github.rest.pulls.listReviews({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number
+              });
+              if (reviews.some(r => r.state === 'APPROVED')) continue;
+
+              // 현재 D-라벨 확인
+              const currentLabels = pr.labels.map(l => l.name);
+              const currentDLabel = currentLabels.find(l => dLabels.includes(l));
+
+              // D-라벨 없거나 이미 D-0이면 스킵
+              if (!currentDLabel || currentDLabel === 'D-0') continue;
+
+              // 라벨이 붙은 시점 조회
+              const { data: events } = await github.rest.issues.listEvents({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                per_page: 100
+              });
+
+              const labelEvent = events
+                .filter(e => e.event === 'labeled' && e.label.name === currentDLabel)
+                .pop();
+
+              if (!labelEvent) continue;
+
+              // 날짜 단위 비교 (KST 기준, UTC+9)
+              const toKSTDate = (d) => {
+                const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+                return new Date(kst.getFullYear(), kst.getMonth(), kst.getDate());
+              };
+              const labeledDay = toKSTDate(new Date(labelEvent.created_at));
+              const today = toKSTDate(new Date());
+              const diffDays = Math.round((today - labeledDay) / (1000 * 60 * 60 * 24));
+
+              const transition = transitions[currentDLabel];
+              if (!transition || diffDays < transition.days) continue;
+
+              // 기존 라벨 제거
+              try {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  name: currentDLabel
+                });
+              } catch (e) {
+                console.log(`라벨 제거 실패: ${e.message}`);
+              }
+
+              // 새 라벨 부착
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: [transition.next]
+              });
+
+              console.log(`PR #${pr.number}: ${currentDLabel} → ${transition.next} (${diffDays}일 경과)`);
+
+              // D-0 전환 시 review-gate를 workflow_dispatch로 새로 트리거
+              // (reRunWorkflow는 원래 페이로드를 사용하므로 D-0 라벨이 반영 안 됨)
+              if (transition.next === 'D-0') {
+                try {
+                  await github.rest.actions.createWorkflowDispatch({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    workflow_id: 'review-gate.yml',
+                    ref: pr.head.ref,
+                    inputs: { pr_number: String(pr.number) }
+                  });
+                  console.log(`PR #${pr.number}: review-gate dispatch 완료`);
+                } catch (e) {
+                  console.log(`PR #${pr.number}: review-gate dispatch 실패 — ${e.message}`);
+                }
+              }
+            }

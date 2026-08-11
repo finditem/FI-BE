@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8"/>
+    <title>WebSocket with JWT Test (Pure)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+    <style>
+        body{font-family:system-ui,sans-serif;padding:20px; max-width: 800px; margin: auto;}
+        .row{display:flex;flex-wrap: wrap; gap:8px;align-items:center;margin:8px 0; padding-bottom: 8px; border-bottom: 1px solid #eee;}
+        #log{border:1px solid #ddd;height:300px;overflow:auto;padding:8px;background:#fafafa; border-radius: 4px; font-size: 14px;}
+        #log .message-block { margin-bottom: 10px; padding: 5px; border-bottom: 1px solid #f0f0f0; }
+        #log .message-content { margin-top: 4px; }
+        #log .image-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+        #log img { max-width: 150px; border-radius: 4px; border: 1px solid #ccc; }
+        input,button{padding:8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px;}
+        button { background-color: #007bff; color: white; border-color: #007bff; cursor: pointer; }
+        button:disabled { background-color: #ccc; border-color: #ccc; cursor: not-allowed; }
+        h2, h3 { border-bottom: 2px solid #007bff; padding-bottom: 5px;}
+        .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+        .send-container { display: flex; gap: 8px; width: 100%; }
+        .send-container input[type="text"] { flex-grow: 1; }
+    </style>
+</head>
+<body>
+<h2>채팅 테스트 페이지 (순수 WebSocket + JWT)</h2>
+
+<h3>1. 인증 (JWT)</h3>
+<div class="row">
+    <input id="jwtToken" placeholder="로그인 후 발급받은 JWT 토큰을 여기에 붙여넣으세요" size="70" class="mono">
+</div>
+
+<h3>2. 웹소켓 연결 및 테스트</h3>
+<div class="row">
+    <input id="wsUrl" size="40" class="mono">
+    <button id="connect">CONNECT</button>
+    <button id="disconnect" disabled>DISCONNECT</button>
+</div>
+<div class="row">
+    <input id="roomId" placeholder="roomId (메시지 보낼 방)" size="8" class="mono" value="1">
+    <button id="subscribe" disabled>SUBSCRIBE (내 개인 메시지함)</button>
+</div>
+
+<h3>3. 메시지 전송</h3>
+<div class="row send-container">
+    <input id="msg" placeholder="메시지 입력" class="mono">
+    <input type="file" id="imageFiles" accept="image/*" multiple>
+    <button id="send" disabled>전송</button>
+</div>
+
+<h3>로그</h3>
+<div id="log" class="mono"></div>
+
+<script>
+    const $ = id => document.getElementById(id);
+    const log = (prefix, ...args)=>{
+        const d=document.createElement('div');
+        const content = args.map(arg => {
+            try { return typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg; } catch (e) { return arg; }
+        }).join(' ');
+        d.innerHTML = `<strong>[${prefix}]</strong> ${content}`;
+        $('log').appendChild(d);
+        $('log').scrollTop=$('log').scrollHeight;
+    };
+
+    let stompClient = null;
+    let subscription = null;
+
+    function defaultWsUrl() {
+      const scheme = location.protocol === 'https:' ? 'wss://' : 'ws://';
+      return scheme + location.host + '/ws';
+    }
+    $('wsUrl').value = defaultWsUrl();
+
+    $('connect').onclick = () => {
+        const jwtToken = $('jwtToken').value.trim();
+        if (!jwtToken) { return alert('JWT 토큰을 입력해주세요.'); }
+
+        stompClient = new StompJs.Client({
+            brokerURL: $('wsUrl').value.trim(),
+            connectHeaders: { Authorization: 'Bearer ' + jwtToken },
+            reconnectDelay: 5000,
+            debug: (str) => { log('DEBUG', str); },
+            onConnect: (frame) => {
+                log('CONNECTED', frame);
+                $('disconnect').disabled = false;
+                $('subscribe').disabled = false;
+                $('send').disabled = false;
+            },
+            onStompError: (frame) => { log('STOMP ERROR', frame.headers['message'], frame.body); },
+            onWebSocketClose: (event) => { log('WS CLOSED', event.code, event.reason); }
+        });
+        stompClient.activate();
+    };
+
+    $('disconnect').onclick = () => {
+        if (subscription) { subscription.unsubscribe(); subscription = null; }
+        if (stompClient) { stompClient.deactivate(); log('DISCONNECTED'); }
+        $('disconnect').disabled = true;
+        $('subscribe').disabled = true;
+        $('send').disabled = true;
+    };
+
+
+    $('subscribe').onclick = () => {
+        if (!stompClient || !stompClient.connected) { return alert('먼저 CONNECT 해주세요.'); }
+        if (subscription) {
+            log('이미 개인 메시지함을 구독 중입니다.');
+            return;
+        }
+
+        const privateDestination = '/user/queue/messages';
+
+        subscription = stompClient.subscribe(privateDestination, (message) => {
+            try {
+                const body = JSON.parse(message.body);
+                log('RECV (Private)', body);
+
+                const block = document.createElement('div');
+                block.className = 'message-block';
+                let senderInfo = `<strong>[From: ${body.senderId}]</strong>`;
+                let contentHtml = '';
+
+                if (body.content) {
+                    contentHtml += `<div class="message-content">${body.content.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
+                }
+
+                if (body.imageUrls && body.imageUrls.length > 0) {
+                    const imageContainer = document.createElement('div');
+                    imageContainer.className = 'image-container';
+                    body.imageUrls.forEach(imageUrl => {
+                        const img = document.createElement('img');
+                        img.src = imageUrl;
+                        imageContainer.appendChild(img);
+                    });
+                    contentHtml += imageContainer.outerHTML;
+                }
+                block.innerHTML = senderInfo + contentHtml;
+                $('log').appendChild(block);
+                $('log').scrollTop = $('log').scrollHeight;
+
+            } catch(e) {
+                log('RECV_ERROR', e);
+            }
+        });
+        log('SUBSCRIBED to private destination:', privateDestination);
+    };
+
+    $('send').onclick = () => {
+        // ✅ 1. 디버깅 로그 추가: 버튼 클릭 확인
+        log('SEND_CLICK', '전송 버튼 클릭됨');
+
+        const roomId = $('roomId').value.trim();
+        const content = $('msg').value.trim();
+        const imageFiles = $('imageFiles').files;
+
+        // ✅ 2. 디버깅 로그 추가: 연결 상태 확인
+        log('SEND_CHECK', `STOMP 연결 상태: ${stompClient ? stompClient.connected : 'null'}`);
+        if (!stompClient || !stompClient.connected) {
+            return alert('먼저 CONNECT 해주세요.');
+        }
+
+        // ✅ 3. 디버깅 로그 추가: 내용 확인
+        log('SEND_CHECK', `메시지 내용: "${content}", 파일 개수: ${imageFiles.length}`);
+        if (!content && imageFiles.length === 0) {
+            return alert('전송할 메시지나 이미지를 입력해주세요.');
+        }
+
+        if (imageFiles.length > 0) {
+            log('SEND_BRANCH', '이미지가 있으므로 HTTP로 전송합니다.');
+            sendAsMultipart(roomId, content, imageFiles);
+        } else {
+            log('SEND_BRANCH', '이미지가 없으므로 WebSocket으로 전송합니다.');
+            sendAsWebSocket(roomId, content);
+        }
+
+        $('msg').value = '';
+        $('imageFiles').value = '';
+    };
+
+    function sendAsMultipart(roomId, content, imageFiles) {
+        const jwtToken = $('jwtToken').value.trim();
+        const formData = new FormData();
+
+        formData.append('content', content);
+        for (let i = 0; i < imageFiles.length; i++) {
+            formData.append('images', imageFiles[i]);
+        }
+
+        const url = `/chats/${roomId}/images`;
+        log('SEND_HTTP', `Uploading to ${url} ...`);
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + jwtToken },
+            body: formData
+        })
+        .then(async (response) => {
+            if (!response.ok) {
+                let err; try { err = await response.json(); } catch {}
+                throw new Error(err?.message || `HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((data) => log('SEND_SUCCESS (HTTP)', data))
+        .catch((error) => {
+            log('SEND_ERROR (HTTP)', error.message);
+            alert('전송에 실패했습니다: ' + error.message);
+        });
+    }
+
+    function sendAsWebSocket(roomId, content) {
+        const destination = `/app/chats/${roomId}/send`;
+
+        const body = {
+            content: content,
+        };
+
+        stompClient.publish({
+            destination: destination,
+            body: JSON.stringify(body)
+        });
+        log('SEND_WEBSOCKET', { destination, body });
+    }
+</script>
+</body>
+</html>
+
+

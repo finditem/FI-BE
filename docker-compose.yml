@@ -1,25 +1,85 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: fmi-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: fmi
-      MYSQL_USER: fmi
-      MYSQL_PASSWORD: fmi
+  redis:
+    image: redis:7-alpine
+    container_name: fmi-redis
+    restart: unless-stopped
     ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    command: ["--default-authentication-plugin=mysql_native_password", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+      - "127.0.0.1:6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 10
+    volumes:
+      - redis_data:/data
+
+  fmi-prod:
+    image: ${ECR_IMAGE_URL}:prod
+    ports:
+      - "127.0.0.1:8080:8080"
+    container_name: fmi-prod
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  fmi-dev:
+    image: ${ECR_IMAGE_URL}:dev
+    ports:
+      - "127.0.0.1:8081:8080"
+    container_name: fmi-dev
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  alloy:
+    image: grafana/alloy:v1.15.0
+    container_name: alloy
+    restart: unless-stopped
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
+      - /var/run/docker.sock:/var/run/docker.sock:ro # 컨테이너 로그 접근 권한
+      - alloy_data:/var/lib/alloy/data
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
+    depends_on:
+      - fmi-prod
+      - fmi-dev
 
 volumes:
-  mysql_data:
-
-
-
+  redis_data:
+  alloy_data:

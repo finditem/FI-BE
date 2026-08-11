@@ -1,0 +1,137 @@
+name: Common Deploy
+
+on:
+  workflow_call:
+    inputs:
+      profile:
+        required: true
+        type: string
+
+      service_name:
+        required: true
+        type: string
+
+      image_tag:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Github Repository 파일 불러오기
+        uses: actions/checkout@v4
+
+      - name: application.yml 생성
+        run: |
+          cat <<'EOF' > src/main/resources/application.yml
+          ${{ secrets.APPLICATION_YML }}
+          EOF
+
+      - name: application-dev.yml 생성
+        if: inputs.profile == 'dev'
+        run: |
+          cat <<'EOF' > src/main/resources/application-dev.yml
+          ${{ secrets.APPLICATION_DEV }}
+          EOF
+
+      - name: application-prod.yml 생성
+        if: inputs.profile == 'prod'
+        run: |
+          cat <<'EOF' > src/main/resources/application-prod.yml
+          ${{ secrets.APPLICATION_PROD }}
+          EOF
+
+      - name: AWS 인증 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: ECR에 로그인
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Docker 이미지 빌드 및 ECR 푸시
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: fmi-backend
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          SHA_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$SHA_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            .
+
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$SHA_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          command_timeout: 25m
+
+          script: |
+            set -e
+
+            cd ~/FMI-BE
+
+            aws ecr get-login-password --region ap-northeast-2 \
+              | docker login \
+                --username AWS \
+                --password-stdin \
+                ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com
+
+            echo "Setting up environment variables..."
+
+            {
+              echo "ECR_IMAGE_URL=${{ secrets.ECR_IMAGE_URL }}"
+              echo "PROD_DB_URL=${{ secrets.PROD_DB_URL }}"
+              echo "DEV_DB_URL=${{ secrets.DEV_DB_URL }}"
+              echo "PROD_DB_USERNAME=${{ secrets.PROD_DB_USERNAME }}"
+              echo "DEV_DB_USERNAME=${{ secrets.DEV_DB_USERNAME }}"
+              echo "PROD_DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}"
+              echo "DEV_DB_PASSWORD=${{ secrets.DEV_DB_PASSWORD }}"
+              echo "DDL_AUTO=validate"
+              echo "REDIS_HOST=${{ secrets.REDIS_HOST }}"
+              echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}"
+              echo "PROD_JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}"
+              echo "DEV_JWT_SECRET=${{ secrets.DEV_JWT_SECRET }}"
+              echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}"
+              echo "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}"
+              echo "MAIL_HOST=${{ secrets.MAIL_HOST }}"
+              echo "MAIL_PORT=${{ secrets.MAIL_PORT }}"
+              echo "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}"
+              echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}"
+              echo "KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}"
+              echo "KAKAO_REST_API_KEY_DEV=${{ secrets.KAKAO_REST_API_KEY_DEV }}"
+              echo "KAKAO_REST_API_KEY_RELEASE=${{ secrets.KAKAO_REST_API_KEY_RELEASE }}"
+              echo "KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}"
+              echo "KAKAO_CLIENT_SECRET_DEV=${{ secrets.KAKAO_CLIENT_SECRET_DEV }}"
+              echo "KAKAO_CLIENT_SECRET_RELEASE=${{ secrets.KAKAO_CLIENT_SECRET_RELEASE }}"
+              echo "KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}"
+              echo "KAKAO_REDIRECT_URI_DEV=${{ secrets.KAKAO_REDIRECT_URI_DEV }}"
+              echo "KAKAO_REDIRECT_URI_RELEASE=${{ secrets.KAKAO_REDIRECT_URI_RELEASE }}"
+              echo "KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}"
+              echo "KAKAO_TEST_ACCOUNT_EMAILS=${{ secrets.KAKAO_TEST_ACCOUNT_EMAILS }}"
+              echo "VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}"
+              echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}"
+              echo "SLACK_WEBHOOK_INQUIRY_URL=${{ secrets.SLACK_WEBHOOK_INQUIRY_URL }}"
+              echo "SLACK_WEBHOOK_REPORT_URL=${{ secrets.SLACK_WEBHOOK_REPORT_URL }}"
+              echo "SPRING_FLYWAY_BASELINE_ON_MIGRATE=true"
+              echo "SPRING_FLYWAY_BASELINE_VERSION=1"
+            } > .env
+
+            chmod 600 .env
+
+            docker compose pull ${{ inputs.service_name }}
+            docker compose up -d --no-deps ${{ inputs.service_name }}
+
+            docker image prune -f

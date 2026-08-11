@@ -2,11 +2,12 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.5'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
 
 group = 'com.fmi'
 version = '0.0.1-SNAPSHOT'
-description = 'Demo project for Spring Boot'
+description = 'Find My Item 백엔드 (Spring Boot)'
 
 java {
 	toolchain {
@@ -24,8 +25,12 @@ repositories {
 	mavenCentral()
 }
 
+ext['kotlin.version'] = '2.1.0'
+ext['spring-framework.version'] = '6.2.11'
+ext['jackson.version'] = '2.19.2'
+ext['netty.version'] = '4.1.136.Final'
+
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -36,7 +41,49 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17'
+	// Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	// Email
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+	//s3
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.4.1'
+	implementation platform('software.amazon.awssdk:bom:2.27.21')
+	implementation 'software.amazon.awssdk:s3'
+	implementation "software.amazon.awssdk:apache-client"
+
+	// querydsl
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+    // Web Push (VAPID)
+    implementation 'nl.martijndwars:web-push:5.1.2'
+    implementation 'org.bitbucket.b_c:jose4j:0.9.6'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.85'
+
+    // slack
+    implementation 'com.slack.api:slack-api-client:1.46.0'
+    implementation platform("org.jetbrains.kotlin:kotlin-bom:2.1.0")
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
+    // Actuator & Prometheus
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // Log
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+
+    // Image thumbnail
+    implementation 'net.coobird:thumbnailator:0.4.20'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -44,4 +91,23 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+clean {
+    delete file('src/main/generated')
+}
+
+// Generate OpenAPI spec from running app (Method B)
+openApi {
+	// springdoc가 노출하는 런타임 스펙 엔드포인트 (YAML)
+	apiDocsUrl.set("http://localhost:8080/v3/api-docs.yaml")
+	// 산출물 위치/파일명
+	outputDir.set(file("$projectDir/docs"))
+	outputFileName.set("openapi.yaml")
+	// 앱 기동 대기 시간(초)
+	waitTimeInSeconds.set(60)
+}
+
+jar {
+    enabled = false
 }

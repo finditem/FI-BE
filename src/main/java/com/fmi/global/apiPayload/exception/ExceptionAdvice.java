@@ -10,7 +10,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -56,20 +59,55 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
             errors.merge(fieldName, errorMessage, (existingErrorMessage, newErrorMessage) -> existingErrorMessage + ", " + newErrorMessage);
         });
 
-        return handleExceptionInternalArgs(e, HttpHeaders.EMPTY, ErrorStatus.valueOf("_BAD_REQUEST"), request, errors);
+        return handleExceptionInternalArgs(e, HttpHeaders.EMPTY, ErrorStatus._BAD_REQUEST, request, errors);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Object> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException e, HttpServletRequest request) {
+        Throwable cause = e.getCause();
+        if (cause instanceof GeneralException generalException) {
+            ErrorReasonDTO errorReasonHttpStatus = generalException.getErrorReasonHttpStatus();
+            return handleExceptionInternal(e, errorReasonHttpStatus, null, request);
+        }
+        ErrorReasonDTO errorReason = ErrorStatus._BAD_REQUEST.getReasonHttpStatus();
+        return handleExceptionInternal(e, errorReason, null, request);
     }
 
     @ExceptionHandler
     public ResponseEntity<Object> exception(Exception e, WebRequest request) {
-        e.printStackTrace();
-
-        return handleExceptionInternalFalse(e, ErrorStatus._INTERNAL_SERVER_ERROR, HttpHeaders.EMPTY, ErrorStatus._INTERNAL_SERVER_ERROR.getHttpStatus(),request, e.getMessage());
+        log.error("Unhandled exception", e);
+        // 내부 상세 메시지는 노출하지 않음
+        return handleExceptionInternalFalse(e, ErrorStatus._INTERNAL_SERVER_ERROR, HttpHeaders.EMPTY, ErrorStatus._INTERNAL_SERVER_ERROR.getHttpStatus(),request, null);
     }
 
     @ExceptionHandler(value = GeneralException.class)
-    public ResponseEntity onThrowException(GeneralException generalException, HttpServletRequest request) {
+    public ResponseEntity<Object> onThrowException(GeneralException generalException, HttpServletRequest request) {
         ErrorReasonDTO errorReasonHttpStatus = generalException.getErrorReasonHttpStatus();
         return handleExceptionInternal(generalException,errorReasonHttpStatus,null,request);
+    }
+
+    @ExceptionHandler(value = UsernameNotFoundException.class)
+    public ResponseEntity<Object> handleUsernameNotFoundException(UsernameNotFoundException e, HttpServletRequest request) {
+        // GeneralException이 원인인 경우 해당 에러 정보 사용
+        if (e.getCause() instanceof com.fmi.global.apiPayload.exception.GeneralException) {
+            com.fmi.global.apiPayload.exception.GeneralException generalException = 
+                    (com.fmi.global.apiPayload.exception.GeneralException) e.getCause();
+            ErrorReasonDTO errorReasonHttpStatus = generalException.getErrorReasonHttpStatus();
+            return handleExceptionInternal(e, errorReasonHttpStatus, null, request);
+        }
+        // 일반 UsernameNotFoundException인 경우 _USER_NOT_FOUND 사용
+        ErrorReasonDTO errorReason = ErrorStatus._USER_NOT_FOUND.getReasonHttpStatus();
+        return handleExceptionInternal(e, errorReason, null, request);
+    }
+
+    @ExceptionHandler(value = DataIntegrityViolationException.class)
+    public ResponseEntity<Object> handleDataIntegrityViolation(DataIntegrityViolationException e, HttpServletRequest request) {
+        log.error("데이터베이스 제약 조건 위반 발생", e);
+        // 상세 에러 메시지는 로그에만 기록하고 클라이언트에는 일반 메시지만 전달
+        ErrorReasonDTO errorReason = ErrorStatus._BAD_REQUEST.getReasonHttpStatus();
+        return handleExceptionInternal(e, errorReason, null, request);
     }
 
     private ResponseEntity<Object> handleExceptionInternal(Exception e, ErrorReasonDTO reason,
@@ -103,18 +141,6 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
     private ResponseEntity<Object> handleExceptionInternalArgs(Exception e, HttpHeaders headers, ErrorStatus errorCommonStatus,
                                                                WebRequest request, Map<String, String> errorArgs) {
         ApiResponse<Object> body = ApiResponse.onFailure(errorCommonStatus.getCode(),errorCommonStatus.getMessage(),errorArgs);
-        return super.handleExceptionInternal(
-                e,
-                body,
-                headers,
-                errorCommonStatus.getHttpStatus(),
-                request
-        );
-    }
-
-    private ResponseEntity<Object> handleExceptionInternalConstraint(Exception e, ErrorStatus errorCommonStatus,
-                                                                     HttpHeaders headers, WebRequest request) {
-        ApiResponse<Object> body = ApiResponse.onFailure(errorCommonStatus.getCode(), errorCommonStatus.getMessage(), null);
         return super.handleExceptionInternal(
                 e,
                 body,

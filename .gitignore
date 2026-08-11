@@ -8,6 +8,11 @@ build/
 *.iml
 out/
 
+# yml 설정
+/src/main/resources/application.yml
+/src/main/resources/application.properties
+/src/main/resources/application-*.yml
+
 # Eclipse
 .project
 .classpath
@@ -24,9 +29,6 @@ Thumbs.db
 # Logs
 logs/
 *.log
-
-# Local data
-data/
 
 # Spring Boot
 *.pid
@@ -68,3 +70,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+## env
+.env

@@ -1,0 +1,110 @@
+name: Review Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+  pull_request_review:
+    types: [submitted]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR 번호 (D-0 전환 시 자동 호출용)'
+        required: true
+        type: string
+
+permissions:
+  pull-requests: read
+  actions: write
+
+jobs:
+  review-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 리뷰 승인 또는 D-0 라벨 확인
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // PR 번호 결정
+            let prNumber;
+            if (context.eventName === 'workflow_dispatch') {
+              prNumber = parseInt(context.payload.inputs.pr_number);
+            } else {
+              prNumber = context.payload.pull_request.number;
+            }
+
+            // 항상 API로 최신 라벨 조회 (재실행 시 payload는 옛날 라벨이므로)
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            const labels = pr.labels.map(l => l.name);
+
+            // D-0 라벨 확인
+            if (labels.includes('D-0')) {
+              console.log(`PR #${prNumber}: D-0 라벨 있음 — 머지 허용`);
+
+              // workflow_dispatch에서 호출된 경우, 실패한 pull_request 체크 재실행
+              if (context.eventName === 'workflow_dispatch') {
+                try {
+                  const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    workflow_id: 'review-gate.yml',
+                    head_sha: pr.head.sha,
+                    event: 'pull_request',
+                    status: 'failure'
+                  });
+                  for (const run of runs.workflow_runs) {
+                    await github.rest.actions.reRunWorkflow({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: run.id
+                    });
+                    console.log(`PR #${prNumber}: 실패한 review-gate (run ${run.id}) 재실행`);
+                  }
+                } catch (e) {
+                  console.log(`PR #${prNumber}: 재실행 실패 — ${e.message}`);
+                }
+              }
+              return;
+            }
+
+            // 승인된 리뷰 확인
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            const hasApproval = reviews.some(r => r.state === 'APPROVED');
+            if (hasApproval) {
+              console.log(`PR #${prNumber}: 승인된 리뷰 있음 — 머지 허용`);
+
+              // 이전 pull_request 이벤트의 실패 기록 재실행
+              if (context.eventName === 'pull_request_review') {
+                try {
+                  const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    workflow_id: 'review-gate.yml',
+                    head_sha: context.payload.pull_request.head.sha,
+                    event: 'pull_request',
+                    status: 'failure'
+                  });
+                  for (const run of runs.workflow_runs) {
+                    await github.rest.actions.reRunWorkflow({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: run.id
+                    });
+                    console.log(`PR #${prNumber}: 실패한 review-gate (run ${run.id}) 재실행`);
+                  }
+                } catch (e) {
+                  console.log(`PR #${prNumber}: 재실행 실패 — ${e.message}`);
+                }
+              }
+              return;
+            }
+
+            // 둘 다 없으면 실패
+            core.setFailed(`PR #${prNumber}: 리뷰 승인 또는 D-0 라벨이 필요합니다.`);

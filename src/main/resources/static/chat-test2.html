@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket STOMP Test Client (Cookie Auth)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
+        fieldset { border: 1px solid #ccc; padding: 10px; }
+        legend { font-weight: bold; }
+        textarea { width: 95%; height: 400px; font-size: 12px; margin-top: 10px; }
+        input { width: 90%; margin-bottom: 5px; }
+        button { margin-top: 5px; }
+        #log { background-color: #f4f4f4; }
+        .hint { font-size: 12px; color: #555; line-height: 1.4; margin-top: 6px; }
+        code { background: #eee; padding: 1px 4px; border-radius: 4px; }
+    </style>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<!-- 0. 로그인 (쿠키 심기) -->
+<fieldset>
+    <legend>0. 로그인 (쿠키 심기)</legend>
+
+    <label for="email">Email:</label>
+    <input type="text" id="email" placeholder="예: test@example.com">
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" placeholder="비밀번호">
+
+    <button id="loginBtn">Login (POST /auth/login)</button>
+
+    <div class="hint">
+        - 로그인 성공 시 서버가 <code>Set-Cookie</code>로 <code>access_token</code>/<code>refresh_token</code> 등을 내려주면 브라우저에 저장됩니다.<br>
+        - HttpOnly 쿠키는 JS로 읽을 수 없고, WebSocket 연결 시 브라우저가 자동으로 함께 전송합니다.<br>
+        - 확인: DevTools → Application → Cookies
+    </div>
+</fieldset>
+
+<!-- 1. 연결 및 구독 (이전 형식 유지) -->
+<fieldset>
+    <legend>1. 연결 및 구독 (User)</legend>
+
+    <label for="token">Auth Token (이전 형식 유지용 - 쿠키 인증에서는 사용 안 함):</label>
+    <input type="text" id="token" placeholder="(쿠키 인증이라 입력해도 사용하지 않음)">
+
+    <button id="connectBtn">Connect</button>
+    <button id="disconnectBtn" disabled>Disconnect</button>
+
+    <hr>
+    <p><b>구독된 개인 큐:</b></p>
+    <ul style="font-size: 14px;">
+        <li>/user/queue/notification (🔔 <b>알림: 새 채팅 / 리마인더</b>)</li>
+        <li>/user/queue/messages (메인 채팅)</li>
+        <li>/user/queue/list-updates (목록 갱신용)</li>
+        <li>/user/queue/read-receipts (읽음 확인용)</li>
+    </ul>
+
+    <div class="hint">
+        - 쿠키 인증이므로 <code>Authorization</code> 헤더를 넣지 않습니다.<br>
+        - CONNECT 성공 시 <code>frame.headers['user-name']</code> 값이 나오면 Principal이 잡힌 것입니다.
+    </div>
+</fieldset>
+
+<!-- 2. 로그 -->
+<fieldset>
+    <legend>2. 실시간 이벤트 로그 (Server ➡️ Client)</legend>
+    <textarea id="log" readonly></textarea>
+    <button id="clearBtn">로그 지우기</button>
+</fieldset>
+
+<!-- 3. 방 상태 -->
+<fieldset>
+    <legend>3. 방 상태 관리 (Client ➡️ Server)</legend>
+    <label for="roomId">Room ID:</label>
+    <input type="text" id="roomId" placeholder="예: 123">
+    <button id="enterBtn" disabled>방 입장 (Enter)</button>
+    <button id="leaveBtn" disabled>방 퇴장 (Leave)</button>
+    <button id="pingBtn" disabled>생존 신호 (Ping/TouchTTL)</button>
+</fieldset>
+
+<!-- 4. 메시지 전송 -->
+<fieldset>
+    <legend>4. 메시지 전송 (Client ➡️ Server)</legend>
+    <label for="messageRoomId">Room ID:</label>
+    <input type="text" id="messageRoomId" placeholder="보낼 방 ID (예: 123)">
+    <label for="messageContent">Content:</label>
+    <input type="text" id="messageContent" placeholder="보낼 메시지 (예: '안녕')">
+    <button id="sendBtn" disabled>메시지 전송 (Send)</button>
+</fieldset>
+
+<script>
+    // ====== 설정 ======
+    const LOGIN_URL = '/auth/login';
+    const BROKER_URL = 'ws://localhost:8080/ws';
+
+    let stompClient = null;
+
+    const loginBtn = document.getElementById('loginBtn');
+
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+
+    const enterBtn = document.getElementById('enterBtn');
+    const leaveBtn = document.getElementById('leaveBtn');
+    const pingBtn = document.getElementById('pingBtn');
+
+    const sendBtn = document.getElementById('sendBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const logArea = document.getElementById('log');
+
+    loginBtn.onclick = login;
+
+    connectBtn.onclick = connect;
+    disconnectBtn.onclick = disconnect;
+
+    enterBtn.onclick = enterRoom;
+    leaveBtn.onclick = leaveRoom;
+    pingBtn.onclick = pingRoom;
+    sendBtn.onclick = sendMessage;
+
+    clearBtn.onclick = () => logArea.value = "";
+
+    function log(message) {
+        logArea.value += `[${new Date().toLocaleTimeString()}] ${message}\n\n`;
+        logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    function setConnected(connected) {
+        connectBtn.disabled = connected;
+        disconnectBtn.disabled = !connected;
+        enterBtn.disabled = !connected;
+        leaveBtn.disabled = !connected;
+        pingBtn.disabled = !connected;
+        sendBtn.disabled = !connected;
+    }
+
+    function safeJsonParse(str) {
+        try { return { ok: true, data: JSON.parse(str) }; }
+        catch (e) { return { ok: false, data: null }; }
+    }
+
+    function formatNotification(body) {
+        const type = body?.type ?? "UNKNOWN";
+
+        if (type === "CHAT_REMINDER") {
+            return `⏰ [리마인더 도착]\n제목: ${body.title ?? "-"}\n내용: ${body.message ?? "-"}\n(RefId: ${body.referenceId ?? "-"})`;
+        }
+        if (type === "CHAT") {
+            return `💬 [새 메시지 알림]\n제목: ${body.title ?? "-"}\n내용: ${body.message ?? "-"}\n(RefId: ${body.referenceId ?? "-"})`;
+        }
+        return `🔔 [알림 도착]\ntype=${type}\n${JSON.stringify(body)}`;
+    }
+
+    // ====== 0) 로그인: 쿠키 심기 ======
+    async function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        if (!email || !password) {
+            alert('email/password를 입력하세요!');
+            return;
+        }
+
+        try {
+            const res = await fetch(LOGIN_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ email, password })
+            });
+
+            const text = await res.text().catch(() => '');
+            log(`login status = ${res.status}`);
+            if (text) log(`body = ${text}`);
+
+            if (!res.ok) {
+                log('❌ 로그인 실패');
+                return;
+            }
+
+            log('✅ 로그인 성공: 브라우저에 HttpOnly 쿠키가 저장됩니다.');
+            log('   이제 Connect를 누르면 WS Handshake에 쿠키가 자동 포함됩니다.');
+        } catch (e) {
+            log('❌ 로그인 요청 오류: ' + e);
+        }
+    }
+
+
+    // ====== 1) WS 연결 (쿠키 인증) ======
+    function connect() {
+        stompClient = new StompJs.Client({
+            brokerURL: BROKER_URL,
+            connectHeaders: {}, // 쿠키 인증이라 비움
+
+            heartbeatIncoming: 20000,
+            heartbeatOutgoing: 20000,
+            reconnectDelay: 5000,
+
+            debug: (str) => log(`[debug] ${str}`),
+
+            onConnect: (frame) => {
+                log(`✅ CONNECTED: user-name=${frame.headers['user-name'] ?? '(none)'}`);
+                setConnected(true);
+
+                // 1) 알림 (새 채팅/리마인더)
+                stompClient.subscribe('/user/queue/notification', (message) => {
+                    const parsed = safeJsonParse(message.body);
+                    if (!parsed.ok) {
+                        log(`🔔 [알림 도착]\n(JSON 아님)\n${message.body}`);
+                        return;
+                    }
+                    log(formatNotification(parsed.data));
+                });
+
+                // 2) 메인 메시지
+                stompClient.subscribe('/user/queue/messages', (message) => {
+                    log(`📩 [메시지 도착]\n${message.body}`);
+                });
+
+                // 3) 목록 갱신
+                stompClient.subscribe('/user/queue/list-updates', (message) => {
+                    log(`🔄 [목록 갱신]\n${message.body}`);
+                });
+
+                // 4) 읽음 확인
+                stompClient.subscribe('/user/queue/read-receipts', (message) => {
+                    log(`👀 [읽음 처리/확인]\n${message.body}`);
+                });
+            },
+
+            onDisconnect: () => {
+                log('🔌 DISCONNECTED');
+                setConnected(false);
+            },
+
+            onStompError: (frame) => {
+                log(`❌ STOMP ERROR: ${frame.headers['message'] ?? '(no message)'}`);
+                if (frame.body) log(frame.body);
+            },
+
+            onWebSocketError: (error) => {
+                log('❌ WS CONNECTION ERROR: ' + error);
+            },
+
+            onWebSocketClose: (evt) => {
+                log(`🔻 WS CLOSED: code=${evt.code}, reason=${evt.reason || '(none)'}`);
+            }
+        });
+
+        stompClient.activate();
+    }
+
+    function disconnect() {
+        if (stompClient) {
+            stompClient.deactivate();
+            stompClient = null;
+            setConnected(false);
+            log('🔌 DISCONNECT 요청 완료');
+        }
+    }
+
+    // ====== 3) 방 상태 ======
+    function enterRoom() {
+        const roomId = document.getElementById('roomId').value;
+        if (!roomId) { alert('Room ID를 입력하세요'); return; }
+
+        const destination = `/app/rooms/${roomId}/enter`;
+
+        // 서버가 payload를 강제하면 body: '{}' 넣으세요.
+        stompClient.publish({ destination /*, body: '{}' */ });
+
+        log(`➡️ [SEND] ${destination}`);
+    }
+
+    function leaveRoom() {
+        const roomId = document.getElementById('roomId').value;
+        if (!roomId) { alert('Room ID를 입력하세요'); return; }
+
+        const destination = `/app/rooms/${roomId}/leave`;
+        stompClient.publish({ destination /*, body: '{}' */ });
+
+        log(`➡️ [SEND] ${destination}`);
+    }
+
+    function pingRoom() {
+        const roomId = document.getElementById('roomId').value;
+        if (!roomId) { alert('Room ID를 입력하세요'); return; }
+
+        const destination = `/app/rooms/${roomId}/ping`;
+
+        // 이전에 "Payload must not be empty" 에러가 났으니, 안전하게 기본 body를 넣는 편이 좋습니다.
+        stompClient.publish({ destination, body: '{}' });
+
+        log(`➡️ [SEND] ${destination} (TTL 갱신)`);
+    }
+
+    // ====== 4) 메시지 전송 ======
+    function sendMessage() {
+        const roomId = document.getElementById('messageRoomId').value;
+        const content = document.getElementById('messageContent').value;
+
+        if (!roomId) { alert('Room ID를 입력하세요'); return; }
+        if (!content) { alert('Content를 입력하세요'); return; }
+
+        const destination = `/app/chats/${roomId}/send`;
+        const body = { content };
+
+        stompClient.publish({
+            destination,
+            body: JSON.stringify(body)
+        });
+
+        log(`➡️ [SEND] ${destination}\n${JSON.stringify(body)}`);
+    }
+</script>
+</body>
+</html>
