@@ -1,60 +1,28 @@
-name: Build & Deploy to EC2
+name: Common Deploy
 
 on:
-  push:
-    branches:
-      - develop
-  pull_request:
-    branches:
-      - develop
-  workflow_dispatch:  # 수동 실행도 가능
+  workflow_call:
+    inputs:
+      profile:
+        required: true
+        type: string
 
-permissions:
-  contents: read
+      service_name:
+        required: true
+        type: string
 
-concurrency:
-  group: deploy-ec2-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'pull_request' }}
+      image_tag:
+        required: true
+        type: string
 
 jobs:
-  ci:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Github Repository 파일 불러오기
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: gradlew 실행 권한 부여
-        run: chmod +x gradlew
-
-      - name: 빌드하기
-        run: ./gradlew clean build -x test
-
   deploy:
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/develop'
-    needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
     steps:
       - name: Github Repository 파일 불러오기
         uses: actions/checkout@v4
-
-      - name: gradlew 실행 권한 부여
-        run: chmod +x gradlew
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
 
       - name: application.yml 생성
         run: |
@@ -63,12 +31,14 @@ jobs:
           EOF
 
       - name: application-dev.yml 생성
+        if: inputs.profile == 'dev'
         run: |
           cat <<'EOF' > src/main/resources/application-dev.yml
           ${{ secrets.APPLICATION_DEV }}
           EOF
 
       - name: application-prod.yml 생성
+        if: inputs.profile == 'prod'
         run: |
           cat <<'EOF' > src/main/resources/application-prod.yml
           ${{ secrets.APPLICATION_PROD }}
@@ -88,15 +58,17 @@ jobs:
       - name: Docker 이미지 빌드 및 ECR 푸시
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: fmi-backend # ECR 레포지토리 이름
-          IMAGE_TAG: ${{ github.sha }}
+          ECR_REPOSITORY: fmi-backend
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          SHA_TAG: ${{ github.sha }}
         run: |
           docker build \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$SHA_TAG \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+            .
 
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$SHA_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -105,15 +77,20 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           command_timeout: 25m
+
           script: |
             set -e
+
             cd ~/FMI-BE
 
-            # AWS ECR 로그인 
-            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com
+            aws ecr get-login-password --region ap-northeast-2 \
+              | docker login \
+                --username AWS \
+                --password-stdin \
+                ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com
 
-            # 환경 변수 파일 생성/업데이트
             echo "Setting up environment variables..."
+
             {
               echo "ECR_IMAGE_URL=${{ secrets.ECR_IMAGE_URL }}"
               echo "PROD_DB_URL=${{ secrets.PROD_DB_URL }}"
@@ -152,14 +129,9 @@ jobs:
               echo "SPRING_FLYWAY_BASELINE_VERSION=1"
             } > .env
 
-            # 환경 변수 파일 권한 설정
             chmod 600 .env
 
-            # ECR에서 최신 이미지 가져오기
-            docker compose pull fmi-dev fmi-prod
+            docker compose pull ${{ inputs.service_name }}
+            docker compose up -d --no-deps ${{ inputs.service_name }}
 
-            # 컨테이너 실행 (변경사항 적용)
-            docker compose up -d --no-deps fmi-dev fmi-prod
-
-            # 안 쓰는 옛날 이미지 삭제 
             docker image prune -f
