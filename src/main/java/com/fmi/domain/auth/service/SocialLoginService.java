@@ -2,6 +2,7 @@ package com.fmi.domain.auth.service;
 
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.Enum.Provider;
+import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.SocialAccounts;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
@@ -36,6 +37,42 @@ public class SocialLoginService {
     private Set<String> testAccountEmails;
 
     public record KakaoLoginResult(User user) {}
+
+    public record AppleLoginResult(User user) {}
+
+    public AppleLoginResult upsertUserFromApple(String subject) {
+        Optional<SocialAccounts> existingAccount = socialAccountsRepository
+                .findByProviderAndProviderIdWithUser(Provider.APPLE, subject);
+        if (existingAccount.isPresent()) {
+            User existingUser = existingAccount.get().getUser();
+            log.info("기존 Apple 계정 찾음: providerId={}, userId={}", subject, existingUser.getId());
+            return new AppleLoginResult(reloadUser(existingUser));
+        }
+
+        User user = User.builder()
+                .email("apple_" + subject + "@apple.local")
+                .password(passwordEncoder.encode("{noop}-" + subject))
+                .nickname(nicknameGeneratorService.generateRandomNickname())
+                .profile_img("")
+                .role(Role.USER)
+                .email_verified(true)
+                .privacyPolicyAgreed(false)
+                .termsOfServiceAgreed(false)
+                .contentPolicyAgreed(false)
+                .marketingConsent(false)
+                .build();
+        User savedUser = userRepository.save(user);
+
+        SocialAccounts account = SocialAccounts.builder()
+                .user(savedUser)
+                .provider(Provider.APPLE)
+                .providerId(subject)
+                .build();
+        socialAccountsRepository.save(account);
+
+        log.info("새 Apple 계정 생성: providerId={}, userId={}", subject, savedUser.getId());
+        return new AppleLoginResult(reloadUser(savedUser));
+    }
 
     public KakaoLoginResult upsertUserFromKakao(Long kakaoId, String email, String nickname, String profileImageUrl) {
         String providerId = String.valueOf(kakaoId);
@@ -153,5 +190,4 @@ public class SocialLoginService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
     }
 }
-
 
