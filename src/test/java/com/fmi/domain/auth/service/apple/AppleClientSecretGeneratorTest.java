@@ -7,8 +7,11 @@ import org.junit.jupiter.api.Test;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class AppleClientSecretGeneratorTest {
 
@@ -47,5 +50,32 @@ class AppleClientSecretGeneratorTest {
             softly.assertThat(audience).containsExactly("https://appleid.apple.com");
             softly.assertThat(validitySeconds).isBetween(1L, 15_777_000L);
         });
+    }
+
+    @Test
+    void Base64로_인코딩한_p8_PEM_개인키로_Apple_client_secret을_생성한다() throws Exception {
+        // given
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
+        keyPairGenerator.initialize(256);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        String pem = "-----BEGIN PRIVATE KEY-----\n"
+                + Base64.getMimeEncoder(64, "\n".getBytes(StandardCharsets.US_ASCII))
+                .encodeToString(keyPair.getPrivate().getEncoded())
+                + "\n-----END PRIVATE KEY-----\n";
+        String privateKeyBase64 = Base64.getEncoder().encodeToString(pem.getBytes(StandardCharsets.US_ASCII));
+        AppleClientSecretGenerator generator = new AppleClientSecretGenerator(
+                "TEAM_ID",
+                "com.finditem.web",
+                "KEY_ID",
+                privateKeyBase64
+        );
+
+        // when
+        String clientSecret = generator.generate();
+
+        // then
+        JsonWebSignature jws = new JsonWebSignature();
+        jws.setCompactSerialization(clientSecret);
+        assertThat(jws.getAlgorithmHeaderValue()).isEqualTo("ES256");
     }
 }

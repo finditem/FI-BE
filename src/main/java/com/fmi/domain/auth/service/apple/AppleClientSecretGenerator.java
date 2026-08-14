@@ -9,6 +9,7 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.GeneralSecurityException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class AppleClientSecretGenerator {
@@ -49,8 +50,22 @@ public class AppleClientSecretGenerator {
     }
 
     private PrivateKey privateKey() throws GeneralSecurityException {
-        byte[] encoded = Base64.getDecoder().decode(privateKeyBase64);
+        byte[] encoded = decodePrivateKey();
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
         return KeyFactory.getInstance("EC").generatePrivate(keySpec);
+    }
+
+    private byte[] decodePrivateKey() {
+        byte[] decoded = Base64.getDecoder().decode(privateKeyBase64);
+        String pem = new String(decoded, StandardCharsets.US_ASCII);
+        if (!pem.contains("-----BEGIN PRIVATE KEY-----")) {
+            return decoded;
+        }
+
+        String derBase64 = pem
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+        return Base64.getDecoder().decode(derBase64);
     }
 }
