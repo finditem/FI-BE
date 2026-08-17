@@ -1,5 +1,6 @@
 package com.fmi.domain.auth.service;
 
+import com.fmi.config.AppleOAuthProperties;
 import com.fmi.domain.auth.service.apple.AppleClientSecretGenerator;
 import com.fmi.domain.auth.service.apple.AppleIdTokenVerifier;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -9,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.lang.JoseException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -30,27 +30,11 @@ public class AppleOAuthService {
 
     private final RestClient restClient;
 
-    @Value("${APPLE_TEAM_ID:}")
-    private String teamId;
-    @Value("${APPLE_CLIENT_ID:}")
-    private String clientId;
-    @Value("${APPLE_CLIENT_ID_DEV:}")
-    private String clientIdDev;
-    @Value("${APPLE_CLIENT_ID_RELEASE:}")
-    private String clientIdRelease;
-    @Value("${APPLE_KEY_ID:}")
-    private String keyId;
-    @Value("${APPLE_PRIVATE_KEY_BASE64:}")
-    private String privateKeyBase64;
-    @Value("${APPLE_REDIRECT_URI:}")
-    private String redirectUri;
-    @Value("${APPLE_REDIRECT_URI_DEV:}")
-    private String redirectUriDev;
-    @Value("${APPLE_REDIRECT_URI_RELEASE:}")
-    private String redirectUriRelease;
+    private final AppleOAuthProperties oauthProperties;
 
-    public AppleOAuthService(RestClient.Builder restClientBuilder) {
+    public AppleOAuthService(RestClient.Builder restClientBuilder, AppleOAuthProperties oauthProperties) {
         this.restClient = restClientBuilder.build();
+        this.oauthProperties = oauthProperties;
     }
 
     public String exchangeCodeForSubject(String code, String environment) {
@@ -89,7 +73,12 @@ public class AppleOAuthService {
         form.setAll(Map.of(
                 "grant_type", "authorization_code",
                 "client_id", config.clientId(),
-                "client_secret", new AppleClientSecretGenerator(teamId, config.clientId(), keyId, privateKeyBase64).generate(),
+                "client_secret", new AppleClientSecretGenerator(
+                        oauthProperties.teamId(),
+                        config.clientId(),
+                        oauthProperties.keyId(),
+                        oauthProperties.privateKeyBase64()
+                ).generate(),
                 "code", code,
                 "redirect_uri", config.redirectUri()
         ));
@@ -120,22 +109,10 @@ public class AppleOAuthService {
     }
 
     private AppleOAuthConfig selectOAuthConfig(String environment) {
-        boolean isDev = "dev".equalsIgnoreCase(environment);
-        boolean isRelease = "release".equalsIgnoreCase(environment);
-
-        if (isRelease && !clientIdRelease.isBlank()) {
-            return new AppleOAuthConfig(
-                    clientIdRelease,
-                    redirectUriRelease.isBlank() ? redirectUri : redirectUriRelease
-            );
-        }
-        if (isDev && !clientIdDev.isBlank()) {
-            return new AppleOAuthConfig(
-                    clientIdDev,
-                    redirectUriDev.isBlank() ? redirectUri : redirectUriDev
-            );
-        }
-        return new AppleOAuthConfig(clientId, redirectUri);
+        return new AppleOAuthConfig(
+                oauthProperties.clientId(),
+                oauthProperties.redirectUriFor(environment)
+        );
     }
 
     private record AppleOAuthConfig(String clientId, String redirectUri) {}

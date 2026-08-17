@@ -1,0 +1,130 @@
+spring:
+  application:
+    name: fmi
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+      globally_quoted_identifiers: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    baseline-on-migrate: true
+    baseline-version: 1
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      timeout: 2000
+      database: 0
+  mail:
+    host: ${MAIL_HOST:smtppro.zoho.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:support@finditem.kr}
+    password: ${MAIL_PASSWORD}
+    test-mode: false
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY:}
+        secret-key: ${AWS_SECRET_KEY:}
+      region:
+        static: ap-northeast-2
+        auto: false
+      s3:
+        bucket: fmi-project-s3-bucket
+
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: fmi
+      env: dev
+
+logging:
+  level:
+    org.hibernate.SQL: info
+    org.springframework.web: info
+
+cors:
+  allowed-origin-patterns:
+    - "http://localhost:*"
+    - "http://127.0.0.1:*"
+    - "https://finditem.kr"
+    - "https://www.finditem.kr"
+    - "https://finditem-release.vercel.app"
+    - "https://release.finditem.kr"
+    - "https://beta.finditem.kr"
+
+jwt:
+  secret: ${JWT_SECRET}
+  issuer: fmi
+  access-token-validity-ms: 900000
+  refresh-token-validity-ms: 1209600000
+  cookie:
+    name: refresh_token
+    secure: true
+    same-site: None
+    parent-domain: .finditem.kr
+
+slack:
+  webhook:
+    inquiry-url: ${SLACK_WEBHOOK_INQUIRY_URL:}
+    report-url: ${SLACK_WEBHOOK_REPORT_URL:}
+
+oauth:
+  kakao:
+    client-id: ${KAKAO_TEST_CLIENT_ID}
+    client-secret: ${KAKAO_TEST_CLIENT_SECRET:}
+    admin-key: ${KAKAO_ADMIN_KEY:}
+    redirect-uris:
+      dev: ${KAKAO_DEV_REDIRECT_URI}
+      release: ${KAKAO_RELEASE_REDIRECT_URI}
+  apple:
+    team-id: ${APPLE_TEAM_ID:}
+    client-id: ${APPLE_CLIENT_ID:}
+    key-id: ${APPLE_KEY_ID:}
+    private-key-base64: ${APPLE_PRIVATE_KEY_BASE64:}
+    redirect-uris:
+      dev: ${APPLE_DEV_REDIRECT_URI:}
+      release: ${APPLE_RELEASE_REDIRECT_URI}
