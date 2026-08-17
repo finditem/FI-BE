@@ -1,5 +1,7 @@
 package com.fmi.domain.auth.service.apple;
 
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
@@ -45,7 +47,7 @@ public class AppleClientSecretGenerator {
             jws.setKey(privateKey());
             return jws.getCompactSerialization();
         } catch (JoseException | GeneralSecurityException | IllegalArgumentException exception) {
-            throw new IllegalStateException("Apple client secret 생성에 실패했습니다.", exception);
+            throw new GeneralException(ErrorStatus._APPLE_CLIENT_SECRET_GENERATION_FAILED);
         }
     }
 

@@ -35,6 +35,7 @@ public enum ErrorStatus implements BaseErrorCode {
     _KAKAO_USERINFO_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH500-KAKAO_USERINFO_FAILED", "카카오 사용자 정보 조회에 실패했습니다."),
     _APPLE_CODE_INVALID(HttpStatus.BAD_REQUEST, "AUTH400-APPLE_CODE_INVALID", "Apple 인증 코드가 유효하지 않거나 이미 사용되었습니다. 다시 로그인해주세요."),
     _APPLE_TOKEN_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH500-APPLE_TOKEN_FAILED", "Apple 토큰 교환에 실패했습니다. 잠시 후 다시 시도해주세요."),
+    _APPLE_CLIENT_SECRET_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH500-APPLE_CLIENT_SECRET_GENERATION_FAILED", "Apple client secret 생성에 실패했습니다. 잠시 후 다시 시도해주세요."),
     _APPLE_ID_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH401-APPLE_ID_TOKEN_INVALID", "Apple ID token이 유효하지 않습니다."),
     _SOCIAL_ACCOUNT(HttpStatus.BAD_REQUEST, "AUTH400-SOCIAL_ACCOUNT", "소셜 로그인 계정입니다."),
 

@@ -1,5 +1,7 @@
 package com.fmi.domain.auth.service.apple;
 
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.assertj.core.api.SoftAssertions;
@@ -12,6 +14,7 @@ import java.util.Base64;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AppleClientSecretGeneratorTest {
 
@@ -50,6 +53,23 @@ class AppleClientSecretGeneratorTest {
             softly.assertThat(audience).containsExactly("https://appleid.apple.com");
             softly.assertThat(validitySeconds).isBetween(1L, 15_777_000L);
         });
+    }
+
+    @Test
+    void 유효하지_않은_개인키면_Apple_client_secret_생성_예외를_던진다() {
+        // given
+        AppleClientSecretGenerator generator = new AppleClientSecretGenerator(
+                "TEAM_ID",
+                "com.finditem.web",
+                "KEY_ID",
+                "invalid-private-key"
+        );
+
+        // when & then
+        assertThatThrownBy(generator::generate)
+                .isInstanceOf(GeneralException.class)
+                .extracting(exception -> ((GeneralException) exception).getCode())
+                .isEqualTo(ErrorStatus._APPLE_CLIENT_SECRET_GENERATION_FAILED);
     }
 
     @Test
