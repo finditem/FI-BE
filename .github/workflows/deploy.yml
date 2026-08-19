@@ -75,17 +75,21 @@ jobs:
 
       - name: EC2 배포
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           command_timeout: 25m
-          envs: TARGET
+          envs: TARGET,ECR_REGISTRY
           script: |
             set -e
             cd ~/FMI-BE
             chmod 600 ".env.$TARGET"
             docker compose --env-file ".env.$TARGET" config --quiet
+            aws ecr get-login-password --region ap-northeast-2 \
+              | docker login --username AWS --password-stdin "$ECR_REGISTRY"
             docker compose --env-file ".env.$TARGET" pull "fmi-$TARGET"
             docker compose --env-file ".env.$TARGET" up -d --no-deps "fmi-$TARGET"
             docker image prune -f
