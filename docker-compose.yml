@@ -26,7 +26,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
     env_file:
-      - .env.prod
+      - .env.${TARGET}
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s
@@ -51,7 +51,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=dev
     env_file:
-      - .env.dev
+      - .env.${TARGET}
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s
