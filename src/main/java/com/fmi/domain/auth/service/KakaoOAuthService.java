@@ -1,5 +1,6 @@
 package com.fmi.domain.auth.service;
 
+import com.fmi.config.KakaoOAuthProperties;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.AllArgsConstructor;
@@ -7,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,26 +25,7 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class KakaoOAuthService {
 
-    @Value("${KAKAO_REST_API_KEY:}")
-    private String restApiKey;
-    @Value("${KAKAO_REST_API_KEY_DEV:}")
-    private String restApiKeyDev;
-    @Value("${KAKAO_REST_API_KEY_RELEASE:}")
-    private String restApiKeyRelease;
-    @Value("${KAKAO_CLIENT_SECRET:}")
-    private String clientSecret; // 선택 항목
-    @Value("${KAKAO_CLIENT_SECRET_DEV:}")
-    private String clientSecretDev;
-    @Value("${KAKAO_CLIENT_SECRET_RELEASE:}")
-    private String clientSecretRelease;
-    @Value("${KAKAO_REDIRECT_URI:}")
-    private String redirectUri;
-    @Value("${KAKAO_REDIRECT_URI_DEV:}")
-    private String redirectUriDev;
-    @Value("${KAKAO_REDIRECT_URI_RELEASE:}")
-    private String redirectUriRelease;
-    @Value("${KAKAO_ADMIN_KEY:}")
-    private String adminKey;
+    private final KakaoOAuthProperties oauthProperties;
 
     private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String USERINFO_URL = "https://kapi.kakao.com/v2/user/me";
@@ -59,26 +40,9 @@ public class KakaoOAuthService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        boolean isDev = "dev".equalsIgnoreCase(environment);
-        boolean isRelease = "release".equalsIgnoreCase(environment);
-
-        String finalRestApiKey;
-        String finalRedirectUri;
-        String finalClientSecret;
-
-        if (isRelease && !restApiKeyRelease.isBlank()) {
-            finalRestApiKey = restApiKeyRelease;
-            finalRedirectUri = !redirectUriRelease.isBlank() ? redirectUriRelease : this.redirectUri;
-            finalClientSecret = !clientSecretRelease.isBlank() ? clientSecretRelease : this.clientSecret;
-        } else if (isDev && !restApiKeyDev.isBlank()) {
-            finalRestApiKey = restApiKeyDev;
-            finalRedirectUri = !redirectUriDev.isBlank() ? redirectUriDev : this.redirectUri;
-            finalClientSecret = !clientSecretDev.isBlank() ? clientSecretDev : this.clientSecret;
-        } else {
-            finalRestApiKey = this.restApiKey;
-            finalRedirectUri = this.redirectUri;
-            finalClientSecret = this.clientSecret;
-        }
+        String finalRestApiKey = oauthProperties.clientId();
+        String finalRedirectUri = oauthProperties.redirectUriFor(environment);
+        String finalClientSecret = oauthProperties.clientSecret();
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
@@ -167,7 +131,7 @@ public class KakaoOAuthService {
         RestTemplate rt = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.set("Authorization", "KakaoAK " + adminKey);
+        headers.set("Authorization", "KakaoAK " + oauthProperties.adminKey());
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("target_id_type", "user_id");
