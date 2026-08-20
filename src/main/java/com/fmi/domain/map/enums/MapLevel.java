@@ -2,12 +2,10 @@ package com.fmi.domain.map.enums;
 
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import java.util.Arrays;
 import lombok.Getter;
 
-import java.util.Arrays;
-
 public enum MapLevel {
-
     LEVEL_1(1, 100, 150),
     LEVEL_2(2, 200, 300),
     LEVEL_3(3, 300, 450),

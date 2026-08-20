@@ -3,14 +3,17 @@ package com.fmi.domain.user.data;
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.auth.data.User;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "user_category", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_user_category", columnNames = {"user_id", "category"})
-})
+@Table(
+        name = "user_category",
+        uniqueConstraints = {
+            @UniqueConstraint(
+                    name = "uk_user_category",
+                    columnNames = {"user_id", "category"})
+        })
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

@@ -1,12 +1,11 @@
 package com.fmi.domain.auth.service;
 
 import com.fmi.domain.auth.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -15,13 +14,9 @@ public class NicknameGeneratorService {
     private final UserRepository userRepository;
     private final SecureRandom random = new SecureRandom();
 
-    private static final List<String> ADJECTIVES = Arrays.asList(
-            "길찾는", "지도보는", "탐색하는", "이동중인", "확인중인", "대기중인"
-    );
+    private static final List<String> ADJECTIVES = Arrays.asList("길찾는", "지도보는", "탐색하는", "이동중인", "확인중인", "대기중인");
 
-    private static final List<String> ANIMALS = Arrays.asList(
-            "토끼", "판다", "오리", "펭귄", "사슴", "라쿤", "곰"
-    );
+    private static final List<String> ANIMALS = Arrays.asList("토끼", "판다", "오리", "펭귄", "사슴", "라쿤", "곰");
 
     public String generateRandomNickname() {
         String nickname;

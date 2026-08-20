@@ -1,5 +1,10 @@
 package com.fmi.domain.chatroom.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
@@ -14,7 +19,8 @@ import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
 import com.fmi.domain.userblock.service.BlockService;
-import com.fmi.domain.Enum.Category;
+import java.time.LocalDateTime;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,24 +31,30 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class ChatRoomServiceDetailTest {
 
-    @Mock private ChatRoomRepository chatRoomRepository;
-    @Mock private PostRepository postRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private ChatRoomParticipantRepository chatRoomParticipantRepository;
-    @Mock private ChatMessageRepository chatMessageRepository;
-    @Mock private PostImageService postImageService;
-    @Mock private BlockService blockService;
+    @Mock
+    private ChatRoomRepository chatRoomRepository;
+
+    @Mock
+    private PostRepository postRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ChatRoomParticipantRepository chatRoomParticipantRepository;
+
+    @Mock
+    private ChatMessageRepository chatMessageRepository;
+
+    @Mock
+    private PostImageService postImageService;
+
+    @Mock
+    private BlockService blockService;
 
     @InjectMocks
     private ChatRoomService chatRoomService;
@@ -56,10 +68,8 @@ class ChatRoomServiceDetailTest {
         currentUser = User.builder().id(1L).email("me@test.com").nickname("나").build();
         opponent = User.builder().id(2L).email("other@test.com").nickname("상대").build();
 
-        participant = ChatRoomParticipant.builder()
-                .user(currentUser)
-                .unreadCount(3L)
-                .build();
+        participant =
+                ChatRoomParticipant.builder().user(currentUser).unreadCount(3L).build();
     }
 
     @Test
@@ -228,7 +238,8 @@ class ChatRoomServiceDetailTest {
 
         given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
         given(postImageService.findThumbnailImageUrl(post)).willReturn(null);
-        given(blockService.isBlocked(currentUser.getId(), withdrawnOpponent.getId())).willReturn(false);
+        given(blockService.isBlocked(currentUser.getId(), withdrawnOpponent.getId()))
+                .willReturn(false);
 
         ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
@@ -269,7 +280,8 @@ class ChatRoomServiceDetailTest {
 
         given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
         given(postImageService.findThumbnailImageUrl(post)).willReturn(null);
-        given(blockService.isBlocked(currentUser.getId(), activeOpponent.getId())).willReturn(false);
+        given(blockService.isBlocked(currentUser.getId(), activeOpponent.getId()))
+                .willReturn(false);
 
         ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
 

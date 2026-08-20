@@ -1,5 +1,9 @@
 package com.fmi.domain.chatroom.data;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
@@ -7,10 +11,6 @@ import com.fmi.domain.post.data.PostType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 
 class ChatRoomEntityTest {
 
@@ -30,7 +30,8 @@ class ChatRoomEntityTest {
     @Test
     @DisplayName("initFromPost - source_* 필드가 게시글 값으로 채워진다")
     void initFromPost_copiesAllFields() {
-        ChatRoom chatRoom = ChatRoom.builder().createdAt(java.time.LocalDateTime.now()).build();
+        ChatRoom chatRoom =
+                ChatRoom.builder().createdAt(java.time.LocalDateTime.now()).build();
 
         chatRoom.initFromPost(post);
 
@@ -45,7 +46,8 @@ class ChatRoomEntityTest {
     @Test
     @DisplayName("initFromPost - source_post_deleted는 false를 유지한다")
     void initFromPost_doesNotMarkAsDeleted() {
-        ChatRoom chatRoom = ChatRoom.builder().createdAt(java.time.LocalDateTime.now()).build();
+        ChatRoom chatRoom =
+                ChatRoom.builder().createdAt(java.time.LocalDateTime.now()).build();
 
         chatRoom.initFromPost(post);
 
@@ -55,7 +57,8 @@ class ChatRoomEntityTest {
     @Test
     @DisplayName("initFromPost - source_thumbnail_url은 설정하지 않는다")
     void initFromPost_doesNotSetThumbnail() {
-        ChatRoom chatRoom = ChatRoom.builder().createdAt(java.time.LocalDateTime.now()).build();
+        ChatRoom chatRoom =
+                ChatRoom.builder().createdAt(java.time.LocalDateTime.now()).build();
 
         chatRoom.initFromPost(post);
 
@@ -65,7 +68,8 @@ class ChatRoomEntityTest {
     @Test
     @DisplayName("snapshotFromPost - source_* 필드와 썸네일이 채워지고 deleted=true가 된다")
     void snapshotFromPost_copiesAllFieldsAndMarksDeleted() {
-        ChatRoom chatRoom = ChatRoom.builder().createdAt(java.time.LocalDateTime.now()).build();
+        ChatRoom chatRoom =
+                ChatRoom.builder().createdAt(java.time.LocalDateTime.now()).build();
 
         chatRoom.snapshotFromPost(post, "https://s3.example.com/thumb.jpg");
 
@@ -82,7 +86,8 @@ class ChatRoomEntityTest {
     @Test
     @DisplayName("snapshotFromPost - 썸네일이 null이어도 정상 동작한다")
     void snapshotFromPost_nullThumbnail_doesNotThrow() {
-        ChatRoom chatRoom = ChatRoom.builder().createdAt(java.time.LocalDateTime.now()).build();
+        ChatRoom chatRoom =
+                ChatRoom.builder().createdAt(java.time.LocalDateTime.now()).build();
 
         chatRoom.snapshotFromPost(post, null);
 

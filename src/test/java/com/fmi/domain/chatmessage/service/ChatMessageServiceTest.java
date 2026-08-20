@@ -1,5 +1,11 @@
 package com.fmi.domain.chatmessage.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
+
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.data.ChatMessage;
@@ -13,6 +19,9 @@ import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.domain.userblock.service.BlockService;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,38 +33,38 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.times;
-
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class ChatMessageServiceTest {
 
     @Mock
     private SimpMessagingTemplate broker;
+
     @Mock
     private ChatMessageRepository chatMessageRepository;
+
     @Mock
     private ChatRoomRepository chatRoomRepository;
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private ChatRoomParticipantRepository chatRoomParticipantRepository;
+
     @Mock
     private ChatRoomPresenceService presenceService;
+
     @Mock
     private BlockService blockService;
+
     @Mock
     private ChatNotificationService chatNotificationService;
+
     @Mock
-    private ChatRoom mockRoom;;
+    private ChatRoom mockRoom;
+
+    ;
 
     private User sender;
     private User recipient;
@@ -67,14 +76,8 @@ class ChatMessageServiceTest {
 
     @BeforeEach
     void setUp() {
-        sender = User.builder()
-                .id(1L)
-                .email("sender@gmail.com")
-                .build();
-        recipient = User.builder()
-                .id(2L)
-                .email("recipient@gmail.com")
-                .build();
+        sender = User.builder().id(1L).email("sender@gmail.com").build();
+        recipient = User.builder().id(2L).email("recipient@gmail.com").build();
 
         newMessage = ChatMessage.builder()
                 .id(100L)
@@ -85,10 +88,8 @@ class ChatMessageServiceTest {
                 .chatRoom(mockRoom)
                 .build();
 
-        recipientPt = ChatRoomParticipant.builder()
-                .user(recipient)
-                .unreadCount(0L)
-                .build();
+        recipientPt =
+                ChatRoomParticipant.builder().user(recipient).unreadCount(0L).build();
         given(userRepository.getReferenceById(1L)).willReturn(sender);
     }
 
@@ -114,23 +115,19 @@ class ChatMessageServiceTest {
         // then
         assertThat(recipientPt.getUnreadCount()).isEqualTo(1);
 
-        then(broker).should(times(1)).convertAndSendToUser(
-                eq("2"),
-                eq("/queue/list-updates"),
-                any(ChatMessageResponseDTO.ListUpdateDTO.class)
-        );
-
+        then(broker)
+                .should(times(1))
+                .convertAndSendToUser(
+                        eq("2"), eq("/queue/list-updates"), any(ChatMessageResponseDTO.ListUpdateDTO.class));
     }
 
     @Test
     @DisplayName("방 안에 있는 유저에게 메시지 전송 시, unreadCount 0 유지 및 read-receipt 전송")
     void testSendMessage_When_Recipient_Is_Present() {
         // given
-        given(presenceService.isUserPresent(anyLong(), eq(2L)))
-                .willReturn(true);
+        given(presenceService.isUserPresent(anyLong(), eq(2L))).willReturn(true);
 
-        given(chatRoomParticipantRepository.findAllByChatRoom_Id(anyLong()))
-                .willReturn(List.of(recipientPt));
+        given(chatRoomParticipantRepository.findAllByChatRoom_Id(anyLong())).willReturn(List.of(recipientPt));
 
         given(chatMessageRepository.save(any(ChatMessage.class))).willReturn(newMessage);
 
@@ -148,18 +145,17 @@ class ChatMessageServiceTest {
         assertThat(recipientPt.getUnreadCount()).isEqualTo(0L);
 
         // read-receipt이 전송되었는지 확인
-        then(broker).should(times(1)).convertAndSendToUser(
-                eq("1"), // 메세지 보낸 사람에게
-                eq("/queue/read-receipts"), // 읽음 전송
-                any(ChatMessageResponseDTO.ReadReceiptDTO.class)
-        );
+        then(broker)
+                .should(times(1))
+                .convertAndSendToUser(
+                        eq("1"), // 메세지 보낸 사람에게
+                        eq("/queue/read-receipts"), // 읽음 전송
+                        any(ChatMessageResponseDTO.ReadReceiptDTO.class));
 
-        then(broker).should(times(1)).convertAndSendToUser(
-                eq("2"),
-                eq("/queue/list-updates"),
-                any(ChatMessageResponseDTO.ListUpdateDTO.class)
-        );
-
+        then(broker)
+                .should(times(1))
+                .convertAndSendToUser(
+                        eq("2"), eq("/queue/list-updates"), any(ChatMessageResponseDTO.ListUpdateDTO.class));
     }
 
     @Test
@@ -170,13 +166,10 @@ class ChatMessageServiceTest {
         Long roomId = 123L;
         Long userId = 2L;
 
-        ChatRoomParticipant recipientPt2 = ChatRoomParticipant.builder()
-                .user(recipient)
-                .unreadCount(3L)
-                .build();
+        ChatRoomParticipant recipientPt2 =
+                ChatRoomParticipant.builder().user(recipient).unreadCount(3L).build();
 
-        given(chatMessageRepository.findTopByChatRoom_IdOrderByIdDesc(roomId))
-                .willReturn(Optional.of(newMessage));
+        given(chatMessageRepository.findTopByChatRoom_IdOrderByIdDesc(roomId)).willReturn(Optional.of(newMessage));
 
         given(chatRoomParticipantRepository.findByChatRoom_IdAndUser_Id(roomId, userId))
                 .willReturn(Optional.of(recipientPt2));
@@ -190,6 +183,5 @@ class ChatMessageServiceTest {
         // then
         assertThat(recipientPt2.getUnreadCount()).isEqualTo(0L);
         assertThat(recipientPt2.getLastReadMessageId()).isEqualTo(100L);
-
     }
 }

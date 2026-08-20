@@ -8,10 +8,9 @@ import com.fmi.domain.noticecomment.response.NoticeCommentImageResponse;
 import com.fmi.domain.noticecomment.response.NoticeCommentResponse;
 import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
 import com.fmi.domain.user.web.dto.response.UserCommentResponse;
-import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.stereotype.Component;
 
 @Component
 public class NoticeCommentConverter {
@@ -27,9 +26,13 @@ public class NoticeCommentConverter {
                 .build();
     }
 
-    public NoticeCommentResponse toResponse(NoticeComment comment, boolean canEdit, boolean canDelete,
-                                             boolean isLike, long childCommentCount,
-                                             List<NoticeCommentImage> images) {
+    public NoticeCommentResponse toResponse(
+            NoticeComment comment,
+            boolean canEdit,
+            boolean canDelete,
+            boolean isLike,
+            long childCommentCount,
+            List<NoticeCommentImage> images) {
         User author = comment.getUser();
 
         UserCommentResponse authorResponse = author != null
@@ -38,8 +41,8 @@ public class NoticeCommentConverter {
 
         List<NoticeCommentImageResponse> imageList = images != null
                 ? images.stream()
-                    .map(img -> new NoticeCommentImageResponse(img.getId(), img.getImgUrl()))
-                    .toList()
+                        .map(img -> new NoticeCommentImageResponse(img.getId(), img.getImgUrl()))
+                        .toList()
                 : List.of();
 
         return NoticeCommentResponse.builder()

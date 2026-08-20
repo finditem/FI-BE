@@ -4,6 +4,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,8 +14,6 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -22,10 +21,10 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private final EmailTemplateService templateService;
-    
+
     @Value("${spring.mail.username:test@example.com}")
     private String fromEmail;
-    
+
     @Value("${spring.mail.test-mode:false}")
     private boolean testMode;
 
@@ -39,7 +38,7 @@ public class EmailService {
             log.info("실제 이메일은 발송되지 않았습니다 (테스트 모드)");
             return;
         }
-        
+
         // 실제 이메일 발송
         try {
             log.debug("[EMAIL SEND] from={}, to={}, subject={}", fromEmail, to, subject);
@@ -48,7 +47,7 @@ public class EmailService {
             message.setTo(to);
             message.setSubject(subject);
             message.setText(body);
-            
+
             mailSender.send(message);
             log.info("[EMAIL SEND REQUEST] to={} subject={} (SMTP 서버에 발송 요청 완료, 실제 수신 여부는 나중에 확인됨)", to, subject);
         } catch (Exception e) {
@@ -86,9 +85,9 @@ public class EmailService {
             log.warn("[EMAIL TEMPLATE] 템플릿 파일이 존재하지 않습니다: {}. 텍스트 이메일로 대체합니다.", templateName);
             log.warn("[EMAIL TEMPLATE] 예상 경로: src/main/resources/templates/emails/{}", templateName);
             // 템플릿이 없으면 기본 텍스트로 대체
-            String textBody = variables != null && variables.containsKey("code") 
-                ? "인증번호: " + variables.get("code")
-                : "이메일이 발송되었습니다.";
+            String textBody = variables != null && variables.containsKey("code")
+                    ? "인증번호: " + variables.get("code")
+                    : "이메일이 발송되었습니다.";
             if (testMode) {
                 log.info("[EMAIL TEST MODE] to={}, subject={}, body={}", to, subject, textBody);
                 log.info("실제 이메일은 발송되지 않았습니다 (테스트 모드)");
@@ -103,7 +102,7 @@ public class EmailService {
             log.info("[EMAIL TEST MODE - HTML] to={}, subject={}, template={}", to, subject, templateName);
             log.info("[EMAIL TEST MODE] variables={}", variables);
             log.info("실제 이메일은 발송되지 않았습니다 (테스트 모드)");
-            
+
             // 템플릿 로드 테스트 (변수 치환 확인용)
             try {
                 String htmlContent = templateService.loadTemplate(templateName, variables);
@@ -113,7 +112,6 @@ public class EmailService {
             }
             return;
         }
-
 
         try {
             // 템플릿 로드 및 변수 치환
@@ -129,17 +127,31 @@ public class EmailService {
             helper.setText(htmlContent, true); // true = HTML 형식
 
             mailSender.send(message);
-            log.info("[EMAIL SEND REQUEST - HTML] to={} subject={} template={} (SMTP 서버에 발송 요청 완료)", to, subject, templateName);
+            log.info(
+                    "[EMAIL SEND REQUEST - HTML] to={} subject={} template={} (SMTP 서버에 발송 요청 완료)",
+                    to,
+                    subject,
+                    templateName);
 
         } catch (MessagingException e) {
-            log.error("[EMAIL FAILED - HTML] from={}, to={}, template={}, error={}", fromEmail, to, templateName, e.getMessage(), e);
+            log.error(
+                    "[EMAIL FAILED - HTML] from={}, to={}, template={}, error={}",
+                    fromEmail,
+                    to,
+                    templateName,
+                    e.getMessage(),
+                    e);
             log.error("Tip: spring.mail.username/password 환경 변수를 확인하세요. 현재 fromEmail={}", fromEmail);
             throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
         } catch (Exception e) {
-            log.error(" [EMAIL FAILED - HTML] from={}, to={}, template={}, error={}", fromEmail, to, templateName, e.getMessage(), e);
+            log.error(
+                    " [EMAIL FAILED - HTML] from={}, to={}, template={}, error={}",
+                    fromEmail,
+                    to,
+                    templateName,
+                    e.getMessage(),
+                    e);
             throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
         }
     }
 }
-
-

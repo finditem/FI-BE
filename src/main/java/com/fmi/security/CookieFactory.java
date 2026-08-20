@@ -1,12 +1,11 @@
 package com.fmi.security;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.net.URI;
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
-
-import java.net.URI;
-import java.time.Duration;
 
 /**
  * 인증 쿠키를 생성/삭제
@@ -18,6 +17,7 @@ public class CookieFactory {
 
     @Value("${jwt.cookie.secure:false}")
     private boolean secure;
+
     @Value("${jwt.cookie.same-site:Lax}")
     private String sameSite;
     /** 서브도메인 간 공유시킬 부모 도메인(.finditem.kr). 비어 있으면 항상 host-only. */

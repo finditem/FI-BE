@@ -4,13 +4,12 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.commentlike.data.CommentLike;
 import io.lettuce.core.dynamic.annotation.Param;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> {
@@ -33,10 +32,7 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> 
                   and cl.user = :user
                   and cl.isLike = true
             """)
-    List<Long> findLikedCommentIds(
-            @Param("commentIds") List<Long> commentIds,
-            @Param("user") User user
-    );
+    List<Long> findLikedCommentIds(@Param("commentIds") List<Long> commentIds, @Param("user") User user);
 
     int countByComment_IdAndIsLikeTrue(Long commentId);
 
@@ -48,5 +44,4 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> 
                 where cl.comment.post.id in :postIds
             """)
     void deleteAllByPostIds(@Param("postIds") List<Long> postIds);
-
 }

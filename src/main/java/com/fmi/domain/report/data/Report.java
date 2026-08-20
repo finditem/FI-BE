@@ -5,9 +5,8 @@ import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.data.enums.ReportType;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "report")
@@ -103,4 +102,3 @@ public class Report {
         this.answeredAt = LocalDateTime.now();
     }
 }
-

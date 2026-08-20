@@ -4,9 +4,8 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "notification")
@@ -78,4 +77,3 @@ public class Notification {
         this.isRead = false;
     }
 }
-

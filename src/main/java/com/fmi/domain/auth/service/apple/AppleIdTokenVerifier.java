@@ -24,9 +24,7 @@ public class AppleIdTokenVerifier {
                 .setExpectedAudience(clientId)
                 .setVerificationKeyResolver(verificationKeyResolver)
                 .setJwsAlgorithmConstraints(
-                        AlgorithmConstraints.ConstraintType.PERMIT,
-                        AlgorithmIdentifiers.RSA_USING_SHA256
-                )
+                        AlgorithmConstraints.ConstraintType.PERMIT, AlgorithmIdentifiers.RSA_USING_SHA256)
                 .build();
     }
 

@@ -1,8 +1,7 @@
 package com.fmi.domain.user.response;
 
-import lombok.*;
-
 import java.util.List;
+import lombok.*;
 
 @Getter
 @Setter
@@ -12,4 +11,3 @@ import java.util.List;
 public class ImageUploadResponse {
     private List<String> imageUrls;
 }
-

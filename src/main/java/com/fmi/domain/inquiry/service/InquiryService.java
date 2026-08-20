@@ -24,6 +24,8 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import com.fmi.service.EmailService;
+import java.time.Duration;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,22 +33,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
-
-import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Duration;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class InquiryService {
-    
+
     private final InquiryRepository inquiryRepository;
     private final InquiryImageRepository inquiryImageRepository;
     private final InquiryConverter inquiryConverter;
@@ -71,7 +69,8 @@ public class InquiryService {
      * 1:1 개인 문의 생성 (이미지 첨부 지원)
      */
     @Transactional
-    public Long createInquiry(InquiryCreateRequestDTO request, UserDetails userDetails, String clientIp, List<MultipartFile> images) {
+    public Long createInquiry(
+            InquiryCreateRequestDTO request, UserDetails userDetails, String clientIp, List<MultipartFile> images) {
 
         User user = null;
         String resolvedEmail;
@@ -82,7 +81,8 @@ public class InquiryService {
         }
 
         if (userDetails != null) {
-            user = userRepository.findByEmail(userDetails.getUsername())
+            user = userRepository
+                    .findByEmail(userDetails.getUsername())
                     .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
             resolvedEmail = user.getEmail();
         } else {
@@ -93,16 +93,14 @@ public class InquiryService {
             checkGuestRateLimit(normalizedIp);
         }
 
-        Inquiry saved = inquiryRepository.save(
-                Inquiry.builder()
-                        .title(request.getTitle())
-                        .content(request.getContent())
-                        .inquiryType(request.getInquiryType() != null ? request.getInquiryType() : InquiryType.ETC)
-                        .user(user)
-                        .email(user == null ? resolvedEmail : null)
-                        .ip(normalizedIp)
-                        .build()
-        );
+        Inquiry saved = inquiryRepository.save(Inquiry.builder()
+                .title(request.getTitle())
+                .content(request.getContent())
+                .inquiryType(request.getInquiryType() != null ? request.getInquiryType() : InquiryType.ETC)
+                .user(user)
+                .email(user == null ? resolvedEmail : null)
+                .ip(normalizedIp)
+                .build());
 
         // 이미지 업로드 및 저장
         if (images != null && !images.isEmpty()) {
@@ -116,26 +114,32 @@ public class InquiryService {
 
         // 문의 접수 이메일 발송
         try {
-            String recipientEmail = saved.getEmail() != null ? saved.getEmail() :
-                                   (saved.getUser() != null ? saved.getUser().getEmail() : null);
+            String recipientEmail = saved.getEmail() != null
+                    ? saved.getEmail()
+                    : (saved.getUser() != null ? saved.getUser().getEmail() : null);
             if (recipientEmail != null) {
                 String inquiryDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                         .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
 
-                String recipientName = saved.getUser() != null && saved.getUser().getNickname() != null
-                        ? saved.getUser().getNickname() : recipientEmail;
+                String recipientName =
+                        saved.getUser() != null && saved.getUser().getNickname() != null
+                                ? saved.getUser().getNickname()
+                                : recipientEmail;
                 emailService.sendHtmlEmailAsync(
-                    recipientEmail,
-                    "문의가 접수되었습니다",
-                    "support-request-email.html",
-                    java.util.Map.of(
-                        "name", recipientName,
-                        "TITLE", saved.getTitle(),
-                        "DATE", inquiryDate,
-                        "CONTENT", saved.getContent() != null ? saved.getContent() : "",
-                        "INQUIRY_ID", String.valueOf(saved.getId())
-                    )
-                );
+                        recipientEmail,
+                        "문의가 접수되었습니다",
+                        "support-request-email.html",
+                        java.util.Map.of(
+                                "name",
+                                recipientName,
+                                "TITLE",
+                                saved.getTitle(),
+                                "DATE",
+                                inquiryDate,
+                                "CONTENT",
+                                saved.getContent() != null ? saved.getContent() : "",
+                                "INQUIRY_ID",
+                                String.valueOf(saved.getId())));
             }
         } catch (Exception e) {
             log.error("문의 접수 이메일 발송 실패: inquiryId={}", saved.getId(), e);
@@ -168,7 +172,8 @@ public class InquiryService {
     /**
      * 내 문의 내역 조회 (커서 기반)
      */
-    public CursorPageResponse<InquiryListDTO> getMyInquiriesCursor(User user, InquiryStatus status, Boolean answered, String keyword, Long cursor, int size) {
+    public CursorPageResponse<InquiryListDTO> getMyInquiriesCursor(
+            User user, InquiryStatus status, Boolean answered, String keyword, Long cursor, int size) {
         int fetchSize = size + 1;
         Pageable limit = PageRequest.of(0, fetchSize);
         List<Inquiry> inquiries;
@@ -177,12 +182,15 @@ public class InquiryService {
 
         if (trimmedKeyword != null) {
             if (status != null) {
-                inquiries = inquiryRepository.findByUserAndAnswerStatusAndKeywordCursor(user, status, trimmedKeyword, cursor, limit);
+                inquiries = inquiryRepository.findByUserAndAnswerStatusAndKeywordCursor(
+                        user, status, trimmedKeyword, cursor, limit);
             } else if (answered != null) {
                 if (answered) {
-                    inquiries = inquiryRepository.findByUserAndAnswerStatusAndKeywordCursor(user, InquiryStatus.ANSWERED, trimmedKeyword, cursor, limit);
+                    inquiries = inquiryRepository.findByUserAndAnswerStatusAndKeywordCursor(
+                            user, InquiryStatus.ANSWERED, trimmedKeyword, cursor, limit);
                 } else {
-                    inquiries = inquiryRepository.findByUserAndAnswerStatusNotAndKeywordCursor(user, InquiryStatus.ANSWERED, trimmedKeyword, cursor, limit);
+                    inquiries = inquiryRepository.findByUserAndAnswerStatusNotAndKeywordCursor(
+                            user, InquiryStatus.ANSWERED, trimmedKeyword, cursor, limit);
                 }
             } else {
                 inquiries = inquiryRepository.findByUserAndKeywordCursor(user, trimmedKeyword, cursor, limit);
@@ -192,9 +200,11 @@ public class InquiryService {
                 inquiries = inquiryRepository.findByUserAndAnswerStatusCursor(user, status, cursor, limit);
             } else if (answered != null) {
                 if (answered) {
-                    inquiries = inquiryRepository.findByUserAndAnswerStatusCursor(user, InquiryStatus.ANSWERED, cursor, limit);
+                    inquiries = inquiryRepository.findByUserAndAnswerStatusCursor(
+                            user, InquiryStatus.ANSWERED, cursor, limit);
                 } else {
-                    inquiries = inquiryRepository.findByUserAndAnswerStatusNotCursor(user, InquiryStatus.ANSWERED, cursor, limit);
+                    inquiries = inquiryRepository.findByUserAndAnswerStatusNotCursor(
+                            user, InquiryStatus.ANSWERED, cursor, limit);
                 }
             } else {
                 inquiries = inquiryRepository.findByUserCursor(user, cursor, limit);
@@ -205,9 +215,8 @@ public class InquiryService {
         List<Inquiry> content = hasNext ? inquiries.subList(0, size) : inquiries;
         Long nextCursor = hasNext ? content.get(content.size() - 1).getId() : null;
 
-        List<InquiryListDTO> responseList = content.stream()
-                .map(inquiryConverter::toListDTO)
-                .toList();
+        List<InquiryListDTO> responseList =
+                content.stream().map(inquiryConverter::toListDTO).toList();
 
         return new CursorPageResponse<>(responseList, nextCursor, hasNext);
     }
@@ -218,16 +227,18 @@ public class InquiryService {
      * - 관리자: 항상 접근 가능
      */
     public InquiryDetailDTO getInquiryDetail(Long inquiryId, UserDetails userDetails) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+        Inquiry inquiry = inquiryRepository
+                .findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
 
         if (userDetails == null) {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
 
-        User user = userRepository.findByEmail(userDetails.getUsername())
+        User user = userRepository
+                .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        
+
         // 권한 확인: 관리자는 모든 문의 조회 가능, 일반 사용자는 본인 문의만
         if (!isAdmin(userDetails)) {
             if (inquiry.getUser() != null) {
@@ -239,7 +250,7 @@ public class InquiryService {
                 throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
             }
         }
-        
+
         java.util.List<InquiryCommentResponse> comments =
                 inquiryCommentService.getCommentsForDetail(inquiry.getId(), userDetails);
         List<String> imageUrls = inquiryImageRepository.findByInquiryId(inquiry.getId()).stream()
@@ -247,13 +258,14 @@ public class InquiryService {
                 .toList();
         return inquiryConverter.toDetailDTO(inquiry, comments, imageUrls);
     }
-    
+
     /**
      * 비회원 문의 답변 (이메일 발송)
      */
     @Transactional
     public void replyToGuestInquiry(Long inquiryId, String content) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+        Inquiry inquiry = inquiryRepository
+                .findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
 
         if (inquiry.getUser() != null) {
@@ -271,17 +283,15 @@ public class InquiryService {
                     .format(java.time.LocalDateTime.now());
 
             emailService.sendHtmlEmailAsync(
-                inquiry.getEmail(),
-                "문의에 대한 답변이 도착했습니다",
-                "support-reply-email.html",
-                java.util.Map.of(
-                    "name", inquiry.getEmail(),
-                    "TITLE", inquiry.getTitle(),
-                    "DATE", replyDate,
-                    "CONTENT", content,
-                    "INQUIRY_ID", String.valueOf(inquiry.getId())
-                )
-            );
+                    inquiry.getEmail(),
+                    "문의에 대한 답변이 도착했습니다",
+                    "support-reply-email.html",
+                    java.util.Map.of(
+                            "name", inquiry.getEmail(),
+                            "TITLE", inquiry.getTitle(),
+                            "DATE", replyDate,
+                            "CONTENT", content,
+                            "INQUIRY_ID", String.valueOf(inquiry.getId())));
         } catch (Exception e) {
             log.error("비회원 문의 답변 이메일 발송 실패: inquiryId={}, email={}", inquiry.getId(), inquiry.getEmail(), e);
         }
@@ -292,7 +302,8 @@ public class InquiryService {
      */
     @Transactional
     public void updateStatus(Long inquiryId, InquiryStatus status) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+        Inquiry inquiry = inquiryRepository
+                .findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
 
         switch (status) {
@@ -318,11 +329,10 @@ public class InquiryService {
                     "문의 상태가 변경되었습니다",
                     statusMessage,
                     ReferenceType.INQUIRY,
-                    inquiry.getId()
-            );
+                    inquiry.getId());
         }
     }
-    
+
     /**
      * 상태에 따른 메시지 반환
      */
@@ -367,6 +377,4 @@ public class InquiryService {
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
     }
-
 }
-

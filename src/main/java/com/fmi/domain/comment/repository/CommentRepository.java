@@ -2,6 +2,9 @@ package com.fmi.domain.comment.repository;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.comment.data.Comment;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,10 +12,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
@@ -27,13 +26,17 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Slice<Comment> findByUserOrderByIdDesc(@Param("user") User user, Pageable pageable);
 
     @Query("SELECT c FROM Comment c JOIN FETCH c.post WHERE c.user = :user AND c.id < :cursor ORDER BY c.id DESC")
-    Slice<Comment> findByUserAndIdLessThanOrderByIdDesc(@Param("user") User user, @Param("cursor") Long cursor, Pageable pageable);
+    Slice<Comment> findByUserAndIdLessThanOrderByIdDesc(
+            @Param("user") User user, @Param("cursor") Long cursor, Pageable pageable);
 
-    @Query("SELECT c FROM Comment c JOIN FETCH c.post WHERE c.user = :user AND c.deleted = false ORDER BY c.createdAt DESC")
+    @Query(
+            "SELECT c FROM Comment c JOIN FETCH c.post WHERE c.user = :user AND c.deleted = false ORDER BY c.createdAt DESC")
     Slice<Comment> findByUserAndDeletedFalseOrderByCreatedAtDesc(@Param("user") User user, Pageable pageable);
 
-    @Query("SELECT c FROM Comment c JOIN FETCH c.post WHERE c.user = :user AND c.deleted = false AND c.createdAt < :cursor ORDER BY c.createdAt DESC")
-    Slice<Comment> findByUserAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
+    @Query(
+            "SELECT c FROM Comment c JOIN FETCH c.post WHERE c.user = :user AND c.deleted = false AND c.createdAt < :cursor ORDER BY c.createdAt DESC")
+    Slice<Comment> findByUserAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(
+            @Param("user") User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
 
     @Query("""
             SELECT c FROM Comment c JOIN FETCH c.post
@@ -45,12 +48,13 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
                    OR c.post.title LIKE CONCAT('%', :keyword, '%'))
             ORDER BY c.id DESC
             """)
-    Slice<Comment> searchMyCommentsLatest(@Param("user") User user,
-                                          @Param("cursor") Long cursor,
-                                          @Param("startDate") LocalDateTime startDate,
-                                          @Param("endDate") LocalDateTime endDate,
-                                          @Param("keyword") String keyword,
-                                          Pageable pageable);
+    Slice<Comment> searchMyCommentsLatest(
+            @Param("user") User user,
+            @Param("cursor") Long cursor,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("keyword") String keyword,
+            Pageable pageable);
 
     @Query("""
             SELECT c FROM Comment c JOIN FETCH c.post
@@ -62,12 +66,13 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
                    OR c.post.title LIKE CONCAT('%', :keyword, '%'))
             ORDER BY c.id ASC
             """)
-    Slice<Comment> searchMyCommentsOldest(@Param("user") User user,
-                                          @Param("cursor") Long cursor,
-                                          @Param("startDate") LocalDateTime startDate,
-                                          @Param("endDate") LocalDateTime endDate,
-                                          @Param("keyword") String keyword,
-                                          Pageable pageable);
+    Slice<Comment> searchMyCommentsOldest(
+            @Param("user") User user,
+            @Param("cursor") Long cursor,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("keyword") String keyword,
+            Pageable pageable);
 
     // 활동 내역용 - 날짜/키워드 필터 포함
     @Query("""
@@ -80,12 +85,13 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
               AND (:cursor IS NULL OR c.createdAt < :cursor)
             ORDER BY c.createdAt DESC
             """)
-    Slice<Comment> findUserActivityComments(@Param("user") User user,
-                                            @Param("startDate") LocalDateTime startDate,
-                                            @Param("endDate") LocalDateTime endDate,
-                                            @Param("keyword") String keyword,
-                                            @Param("cursor") LocalDateTime cursor,
-                                            Pageable pageable);
+    Slice<Comment> findUserActivityComments(
+            @Param("user") User user,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("keyword") String keyword,
+            @Param("cursor") LocalDateTime cursor,
+            Pageable pageable);
 
     long countByUser(User user);
 
@@ -93,8 +99,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Slice<Comment> findTopByPostIdOrderByIdDesc(@Param("postId") Long postId, Pageable pageable);
 
     @Query("select c from Comment c where c.post.id = :postId and c.id < :cursor order by c.id desc")
-    Slice<Comment> findByPostIdAndIdLessThanOrderByIdDesc(@Param("postId") Long postId, @Param("cursor") Long cursor, Pageable pageable);
-
+    Slice<Comment> findByPostIdAndIdLessThanOrderByIdDesc(
+            @Param("postId") Long postId, @Param("cursor") Long cursor, Pageable pageable);
 
     @Query("""
             select c
@@ -111,8 +117,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             @Param("postId") Long postId,
             @Param("excludedUserIds") Set<Long> excludedUserIds,
             @Param("excludedEmpty") boolean excludedEmpty,
-            Pageable pageable
-    );
+            Pageable pageable);
 
     @Query("""
             select count(c)
@@ -127,8 +132,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     long countParentComments(
             @Param("postId") Long postId,
             @Param("excludedUserIds") Set<Long> excludedUserIds,
-            @Param("excludedEmpty") boolean excludedEmpty
-    );
+            @Param("excludedEmpty") boolean excludedEmpty);
 
     @Query("""
             select c
@@ -140,11 +144,11 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
                   )
             order by c.id asc
             """)
-    List<Comment> findReplies(@Param("parentId") Long parentId,
-                              @Param("excludedUserIds") Set<Long> excludedUserIds,
-                              @Param("excludedEmpty") boolean excludedEmpty,
-                              Pageable pageable
-    );
+    List<Comment> findReplies(
+            @Param("parentId") Long parentId,
+            @Param("excludedUserIds") Set<Long> excludedUserIds,
+            @Param("excludedEmpty") boolean excludedEmpty,
+            Pageable pageable);
 
     @Query("""
             select count(c)
@@ -155,10 +159,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
                     or c.user.id not in :excludedUserIds
                   )
             """)
-    long countReplies(@Param("parentId") Long parentId,
-                      @Param("excludedUserIds") Set<Long> excludedUserIds,
-                      @Param("excludedEmpty") boolean excludedEmpty
-    );
+    long countReplies(
+            @Param("parentId") Long parentId,
+            @Param("excludedUserIds") Set<Long> excludedUserIds,
+            @Param("excludedEmpty") boolean excludedEmpty);
 
     @Query("""
                 select c
@@ -167,9 +171,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
                   and c.id < :cursor
                 order by c.id desc
             """)
-    List<Comment> findRepliesWithCursor(@Param("parentId") Long parentId,
-                                        @Param("cursor") Long cursor,
-                                        Pageable pageable);
+    List<Comment> findRepliesWithCursor(
+            @Param("parentId") Long parentId, @Param("cursor") Long cursor, Pageable pageable);
 
     @Query("""
                 select c.parent.id, count(c)
@@ -188,7 +191,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             """)
     List<Object[]> countCommentsGroupByPostId(@Param("postIds") List<Long> postIds);
 
-
     @Query("""
             select count(c)
                     from Comment c
@@ -200,7 +202,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from Comment c where c.post.id = :postId")
     void deleteAllByPostId(@Param("postId") Long postId);
-
 
     @Modifying
     @Query("""

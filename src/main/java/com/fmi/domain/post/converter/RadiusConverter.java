@@ -3,7 +3,6 @@ package com.fmi.domain.post.converter;
 import com.fmi.domain.post.data.Radius;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-
 import java.util.Objects;
 
 @Converter(autoApply = true)

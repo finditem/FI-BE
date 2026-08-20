@@ -1,14 +1,13 @@
 package com.fmi.domain.notification.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Slf4j
 @Service
@@ -22,8 +21,11 @@ public class SseEmitterService {
 
         // 유저의 emitter 리스트에 추가 (다중 기기 지원)
         emitters.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>()).add(emitter);
-        log.info("SSE 연결 등록: userId={}, 해당 유저 연결 수={}, 전체 유저 수={}",
-                userId, emitters.get(userId).size(), emitters.size());
+        log.info(
+                "SSE 연결 등록: userId={}, 해당 유저 연결 수={}, 전체 유저 수={}",
+                userId,
+                emitters.get(userId).size(),
+                emitters.size());
 
         // 연결 완료 시 제거
         emitter.onCompletion(() -> {
@@ -45,9 +47,7 @@ public class SseEmitterService {
 
         // 연결 확인용 초기 메시지 전송
         try {
-            emitter.send(SseEmitter.event()
-                    .name("connect")
-                    .data("SSE 연결 성공"));
+            emitter.send(SseEmitter.event().name("connect").data("SSE 연결 성공"));
         } catch (IOException e) {
             log.error("SSE 초기 메시지 전송 실패: userId={}", userId, e);
             removeEmitter(userId, emitter);
@@ -68,9 +68,7 @@ public class SseEmitterService {
         List<SseEmitter> deadEmitters = new java.util.ArrayList<>();
         for (SseEmitter emitter : userEmitters) {
             try {
-                emitter.send(SseEmitter.event()
-                        .name("notification")
-                        .data(data));
+                emitter.send(SseEmitter.event().name("notification").data(data));
             } catch (IOException e) {
                 log.error("SSE 알림 전송 실패: userId={}", userId, e);
                 deadEmitters.add(emitter);
@@ -84,8 +82,11 @@ public class SseEmitterService {
         }
 
         if (!deadEmitters.isEmpty()) {
-            log.info("SSE 알림 전송: userId={}, 성공={}, 실패={}",
-                    userId, userEmitters.size() - deadEmitters.size(), deadEmitters.size());
+            log.info(
+                    "SSE 알림 전송: userId={}, 성공={}, 실패={}",
+                    userId,
+                    userEmitters.size() - deadEmitters.size(),
+                    deadEmitters.size());
         } else {
             log.info("SSE 알림 전송 성공: userId={}, 연결 수={}", userId, userEmitters.size());
         }
@@ -110,9 +111,7 @@ public class SseEmitterService {
         }
         for (Object notification : unreadNotifications) {
             try {
-                latestEmitter.send(SseEmitter.event()
-                        .name("notification")
-                        .data(notification));
+                latestEmitter.send(SseEmitter.event().name("notification").data(notification));
             } catch (IOException e) {
                 log.error("SSE 미읽은 알림 전송 실패: userId={}", userId, e);
                 removeEmitter(userId, latestEmitter);

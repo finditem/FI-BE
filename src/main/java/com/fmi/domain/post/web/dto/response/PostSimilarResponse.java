@@ -1,7 +1,6 @@
 package com.fmi.domain.post.web.dto.response;
 
 import com.fmi.domain.Enum.Category;
-
 import java.time.LocalDateTime;
 
 public record PostSimilarResponse(
@@ -13,6 +12,4 @@ public record PostSimilarResponse(
         boolean favoriteStatus,
         Long viewCount,
         LocalDateTime createdAt,
-        Category category
-) {
-}
+        Category category) {}

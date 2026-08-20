@@ -10,9 +10,8 @@ import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.web.dto.response.UserCommentResponse;
 import com.fmi.domain.user.web.dto.response.UserPostResponse;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
+import org.springframework.stereotype.Component;
 
 @Component
 public class UserConverter {
@@ -36,9 +35,7 @@ public class UserConverter {
      * 이미지 업로드 결과 → ImageUploadResponse 변환
      */
     public static ImageUploadResponse toImageUploadResponse(List<String> imageUrls) {
-        return ImageUploadResponse.builder()
-                .imageUrls(imageUrls)
-                .build();
+        return ImageUploadResponse.builder().imageUrls(imageUrls).build();
     }
 
     public static UserCommentSummaryResponse toUserCommentSummaryResponse(
@@ -59,8 +56,7 @@ public class UserConverter {
             User user,
             List<PostBriefResponse> posts,
             List<UserCommentSummaryResponse> comments,
-            List<PostBriefResponse> favorites
-    ) {
+            List<PostBriefResponse> favorites) {
         return UserOtherPageResponse.builder()
                 .userId(user.getId())
                 .nickname(user.getNickname())
@@ -77,8 +73,7 @@ public class UserConverter {
             List<UserCommentSummaryResponse> comments,
             List<PostBriefResponse> favorites,
             Long nextCursor,
-            boolean hasNext
-    ) {
+            boolean hasNext) {
         return UserOtherPageResponse.builder()
                 .userId(user.getId())
                 .nickname(user.getNickname())
@@ -92,21 +87,10 @@ public class UserConverter {
     }
 
     public static UserPostResponse toUserPostResponse(User user, long postCount, long chattingCount) {
-        return new UserPostResponse(
-                user.getId(),
-                user.getNickname(),
-                user.getProfile_img(),
-                postCount,
-                chattingCount
-        );
+        return new UserPostResponse(user.getId(), user.getNickname(), user.getProfile_img(), postCount, chattingCount);
     }
 
     public static UserCommentResponse toUserCommentResponse(User user) {
-        return new UserCommentResponse(
-                user.getId(),
-                user.getNickname(),
-                user.getProfile_img()
-        );
+        return new UserCommentResponse(user.getId(), user.getNickname(), user.getProfile_img());
     }
 }
-

@@ -24,13 +24,6 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
 import com.fmi.utils.IpUtil;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.text.Normalizer;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -38,6 +31,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -54,7 +53,6 @@ public class PostQueryService {
     private final CommentQueryService commentQueryService;
     private final BlockService blockService;
     private final HotPostService hotPostService;
-
 
     // 게시글 단일 조회
     @Transactional
@@ -74,8 +72,8 @@ public class PostQueryService {
                 throw new GeneralException(ErrorStatus._POST_ACCESS_DENIED);
             }
 
-            PostFavorite favorite = postFavoriteRepository.findByUserAndPost(user, post)
-                    .orElse(null);
+            PostFavorite favorite =
+                    postFavoriteRepository.findByUserAndPost(user, post).orElse(null);
 
             isFavorite = Objects.nonNull(favorite) && favorite.isFavorite();
 
@@ -107,7 +105,6 @@ public class PostQueryService {
         long userPostCount = postRepository.countByUserAndTemporarySaveFalseAndDeletedFalse(user);
         long chatRoomCount = chatRoomParticipantRepository.countActiveChatRoomsByUser(user);
 
-
         return PostConverter.toGetResponse(
                 post,
                 isFavorite,
@@ -117,8 +114,7 @@ public class PostQueryService {
                 favoriteCount,
                 isMine,
                 imageList,
-                UserConverter.toUserPostResponse(user, userPostCount, chatRoomCount)
-        );
+                UserConverter.toUserPostResponse(user, userPostCount, chatRoomCount));
     }
 
     private boolean canIncreaseViewCount(Long postId, Long userId) {
@@ -133,14 +129,12 @@ public class PostQueryService {
     }
 
     private boolean isFirstToday(Long postId, String sic, String value) {
-        String today = LocalDate.now(ZoneId.of("Asia/Seoul"))
-                .format(DateTimeFormatter.BASIC_ISO_DATE);
+        String today = LocalDate.now(ZoneId.of("Asia/Seoul")).format(DateTimeFormatter.BASIC_ISO_DATE);
         long ttlSeconds = secondsUntilMidnightSeoul();
 
         String redisKey = "post:view:" + postId + ":" + today + ":sic:" + sic + ":value:" + value;
 
-        Boolean first = stringRedisTemplate.opsForValue()
-                .setIfAbsent(redisKey, "1", Duration.ofSeconds(ttlSeconds));
+        Boolean first = stringRedisTemplate.opsForValue().setIfAbsent(redisKey, "1", Duration.ofSeconds(ttlSeconds));
 
         return Boolean.TRUE.equals(first);
     }
@@ -153,33 +147,23 @@ public class PostQueryService {
     }
 
     @Transactional(readOnly = true)
-    public PostPageResponse getPostListByFilterOrSort(PostType postType,
-                                                      PostStatus postStatus,
-                                                      Category category,
-                                                      String address,
-                                                      SortType sortType,
-                                                      Long cursor,
-                                                      int size,
-                                                      UserDetails userDetails) {
+    public PostPageResponse getPostListByFilterOrSort(
+            PostType postType,
+            PostStatus postStatus,
+            Category category,
+            String address,
+            SortType sortType,
+            Long cursor,
+            int size,
+            UserDetails userDetails) {
 
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
         Long userId = (Objects.isNull(user) ? null : user.getId());
 
-        Set<Long> hotIds = hotPostService.resolveHotPostIdsForUser(
-                postType, postStatus, category, address, userId, 5
-        );
-
+        Set<Long> hotIds = hotPostService.resolveHotPostIdsForUser(postType, postStatus, category, address, userId, 5);
 
         return postRepository.searchPostsByFiltersAndSort(
-                postType,
-                postStatus,
-                category,
-                address,
-                sortType,
-                cursor,
-                size,
-                userId,
-                hotIds);
+                postType, postStatus, category, address, sortType, cursor, size, userId, hotIds);
     }
 
     @Transactional(readOnly = true)
@@ -201,7 +185,8 @@ public class PostQueryService {
             fetched = fetched.subList(0, size);
         }
 
-        Long nextCursor = fetched.isEmpty() ? null : fetched.get(fetched.size() - 1).getId();
+        Long nextCursor =
+                fetched.isEmpty() ? null : fetched.get(fetched.size() - 1).getId();
 
         Map<Long, Long> favoriteCountMap = postFavoriteService.getFavoriteCountMap(fetched);
         Map<Long, Boolean> myFavoriteMap = postFavoriteService.getIsFavoriteMap(user, fetched);
@@ -214,8 +199,7 @@ public class PostQueryService {
                         myFavoriteMap.getOrDefault(post.getId(), false),
                         thumbnailMap.getOrDefault(post.getId(), null),
                         favoriteCountMap.getOrDefault(post.getId(), 0L),
-                        postImageCountMap.getOrDefault(post.getId(), 0)
-                ))
+                        postImageCountMap.getOrDefault(post.getId(), 0)))
                 .toList();
 
         return new PostPageResponse(responseList, postCount, nextCursor, hasNext);
@@ -235,7 +219,8 @@ public class PostQueryService {
 
     @Transactional(readOnly = true)
     public Post findById(Long postId) {
-        return postRepository.findByIdAndDeletedFalse(postId)
+        return postRepository
+                .findByIdAndDeletedFalse(postId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
     }
 
@@ -251,41 +236,43 @@ public class PostQueryService {
         Map<Long, Integer> postImageCountMap = postImageService.countImageByPostList(postList);
 
         return postList.stream()
-                .map(post ->
-                        PostConverter.toPostBriefResponse(
-                                post,
-                                favoriteMap.getOrDefault(post.getId(), false),
-                                thumbNailUrlMap.getOrDefault(post.getId(), ""),
-                                favoriteCountMap.getOrDefault(post.getId(), 0L),
-                                postImageCountMap.getOrDefault(post.getId(), 0)
-                        )).toList();
+                .map(post -> PostConverter.toPostBriefResponse(
+                        post,
+                        favoriteMap.getOrDefault(post.getId(), false),
+                        thumbNailUrlMap.getOrDefault(post.getId(), ""),
+                        favoriteCountMap.getOrDefault(post.getId(), 0L),
+                        postImageCountMap.getOrDefault(post.getId(), 0)))
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public PostShareResponse getSharePost(Long postId) {
         Post post = findById(postId);
 
-        String thumbnailImageUrl = Optional.ofNullable(
-                        postImageService.findThumbnailImage(post)
-                ).map(PostImage::getImgUrl)
+        String thumbnailImageUrl = Optional.ofNullable(postImageService.findThumbnailImage(post))
+                .map(PostImage::getImgUrl)
                 .orElse(null);
 
         Long likeCount = postFavoriteService.countByPostAndIsFavoriteTrue(post);
         Long commentCount = commentQueryService.countByPost(post);
 
-
         return PostConverter.toShareResponse(post, thumbnailImageUrl, likeCount, commentCount);
     }
 
-
     @Transactional(readOnly = true)
-    public PostPageResponse getFavoritePost(UserDetails userDetails, PostType postType,
-                                            Category category, String address,
-                                            String keyword, SortType sortType,
-                                            Long cursor, int size) {
+    public PostPageResponse getFavoritePost(
+            UserDetails userDetails,
+            PostType postType,
+            Category category,
+            String address,
+            String keyword,
+            SortType sortType,
+            Long cursor,
+            int size) {
         User user = userQueryService.findUser(userDetails.getUsername());
 
-        return postRepository.searchMyFavorites(user.getId(), postType, category, address, keyword, sortType, cursor, size);
+        return postRepository.searchMyFavorites(
+                user.getId(), postType, category, address, keyword, sortType, cursor, size);
     }
 
     @Transactional(readOnly = true)
@@ -302,23 +289,20 @@ public class PostQueryService {
             User user = userQueryService.findUser(userDetails.getUsername());
             isFavoriteByPostId = postFavoriteService.getIsFavoriteMap(user, postList);
         } else {
-            isFavoriteByPostId = postList.stream()
-                    .collect(java.util.stream.Collectors.toMap(Post::getId, p -> false));
+            isFavoriteByPostId = postList.stream().collect(java.util.stream.Collectors.toMap(Post::getId, p -> false));
         }
 
         return postList.stream()
                 .map(p -> new PostSimilarResponse(
-                                p.getId(),
-                                p.getTitle(),
-                                thumbnailUrlByPostList.getOrDefault(p.getId(), null),
-                                p.getAddress(),
-                                favoriteCountMap.getOrDefault(p.getId(), 0L),
-                                isFavoriteByPostId.getOrDefault(p.getId(), false),
-                                p.getViewCount(),
-                                p.getCreatedAt(),
-                                p.getCategory()
-                        )
-                )
+                        p.getId(),
+                        p.getTitle(),
+                        thumbnailUrlByPostList.getOrDefault(p.getId(), null),
+                        p.getAddress(),
+                        favoriteCountMap.getOrDefault(p.getId(), 0L),
+                        isFavoriteByPostId.getOrDefault(p.getId(), false),
+                        p.getViewCount(),
+                        p.getCreatedAt(),
+                        p.getCategory()))
                 .toList();
     }
 }

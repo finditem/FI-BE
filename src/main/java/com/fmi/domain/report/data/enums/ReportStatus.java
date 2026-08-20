@@ -14,4 +14,3 @@ public enum ReportStatus {
         this.description = description;
     }
 }
-

@@ -3,14 +3,13 @@ package com.fmi.domain.post.repository;
 import com.fmi.domain.post.data.QPostImage;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
@@ -35,7 +34,6 @@ public class PostImageRepositoryImpl implements PostImageRepositoryCustom {
         return tuples.stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postImage.post.id)),
-                        t -> Objects.requireNonNull(t.get(postImage.id.count())).intValue()
-                ));
+                        t -> Objects.requireNonNull(t.get(postImage.id.count())).intValue()));
     }
 }

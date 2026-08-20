@@ -5,7 +5,6 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.web.dto.response.image.PostImageResponse;
 import com.fmi.global.dto.UploadedImage;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -20,7 +19,8 @@ public final class PostImageConverter {
                 .mapToObj(i -> {
                     ImageType imageType = (i == 0) ? ImageType.THUMBNAIL : ImageType.NORMAL;
                     return createPostImage(images.get(i), imageType, post);
-                }).toList();
+                })
+                .toList();
     }
 
     public static PostImage createPostImage(UploadedImage image, ImageType imageType, Post post) {
@@ -28,9 +28,7 @@ public final class PostImageConverter {
     }
 
     public static List<PostImageResponse> toResponseList(List<PostImage> imageList) {
-        return imageList.stream()
-                .map(PostImageConverter::toResponse)
-                .toList();
+        return imageList.stream().map(PostImageConverter::toResponse).toList();
     }
 
     public static PostImageResponse toResponse(PostImage postImage) {
@@ -47,8 +45,5 @@ public final class PostImageConverter {
                 .toList();
     }
 
-    private PostImageConverter() {
-    }
-
-
+    private PostImageConverter() {}
 }

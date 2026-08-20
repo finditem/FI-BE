@@ -8,12 +8,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PushSubscribeRequest {
 
-    @NotBlank(message = "endpoint는 필수입니다")
-    private String endpoint;
+    @NotBlank(message = "endpoint는 필수입니다") private String endpoint;
 
-    @NotBlank(message = "p256dh는 필수입니다")
-    private String p256dh;
+    @NotBlank(message = "p256dh는 필수입니다") private String p256dh;
 
-    @NotBlank(message = "auth는 필수입니다")
-    private String auth;
+    @NotBlank(message = "auth는 필수입니다") private String auth;
 }

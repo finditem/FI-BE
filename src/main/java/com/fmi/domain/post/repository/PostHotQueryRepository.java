@@ -1,5 +1,7 @@
 package com.fmi.domain.post.repository;
 
+import static com.fmi.domain.post.data.QPost.post;
+
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.comment.data.QComment;
 import com.fmi.domain.post.data.PostStatus;
@@ -9,26 +11,20 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static com.fmi.domain.post.data.QPost.post;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
 public class PostHotQueryRepository {
     private final JPAQueryFactory queryFactory;
 
-    public List<Long> findHotPostIds(PostType postType,
-                                     PostStatus postStatus,
-                                     Category category,
-                                     String address,
-                                     int limit) {
+    public List<Long> findHotPostIds(
+            PostType postType, PostStatus postStatus, Category category, String address, int limit) {
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
         QComment comment = QComment.comment;
 
@@ -37,8 +33,7 @@ public class PostHotQueryRepository {
                 addressStartsWith(address),
                 equalsPostType(postType),
                 equalsPostStatus(postStatus),
-                equalsCategory(category)
-        );
+                equalsCategory(category));
 
         NumberExpression<Long> commentCount = comment.id.count();
         NumberExpression<Long> favoriteCount = postFavorite.favorite_id.count();
@@ -46,14 +41,10 @@ public class PostHotQueryRepository {
         return queryFactory
                 .select(post.id)
                 .from(post)
-                .leftJoin(comment).on(
-                        comment.post.eq(post),
-                        comment.deleted.isFalse()
-                )
-                .leftJoin(postFavorite).on(
-                        postFavorite.post.eq(post),
-                        postFavorite.isFavorite.isTrue()
-                )
+                .leftJoin(comment)
+                .on(comment.post.eq(post), comment.deleted.isFalse())
+                .leftJoin(postFavorite)
+                .on(postFavorite.post.eq(post), postFavorite.isFavorite.isTrue())
                 .where(where)
                 .groupBy(post.id)
                 .orderBy(
@@ -61,8 +52,7 @@ public class PostHotQueryRepository {
                         post.viewCount.desc(),
                         favoriteCount.desc(),
                         post.createdAt.desc(),
-                        post.id.desc()
-                )
+                        post.id.desc())
                 .limit(limit)
                 .fetch();
     }
@@ -70,16 +60,9 @@ public class PostHotQueryRepository {
     public Map<Long, Long> findAuthorIdsByPostIds(List<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) return Map.of();
 
-        return queryFactory
-                .select(post.id, post.user.id)
-                .from(post)
-                .where(post.id.in(postIds))
-                .fetch()
-                .stream()
+        return queryFactory.select(post.id, post.user.id).from(post).where(post.id.in(postIds)).fetch().stream()
                 .collect(Collectors.toMap(
-                        t -> Objects.requireNonNull(t.get(post.id)),
-                        t -> Objects.requireNonNull(t.get(post.user.id))
-                ));
+                        t -> Objects.requireNonNull(t.get(post.id)), t -> Objects.requireNonNull(t.get(post.user.id))));
     }
 
     private BooleanExpression addressStartsWith(String address) {

@@ -6,7 +6,5 @@ import lombok.Data;
 
 @Data
 public class EmailSendRequest {
-    @Email @NotBlank
-    private String email;
+    @Email @NotBlank private String email;
 }
-

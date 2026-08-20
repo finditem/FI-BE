@@ -21,6 +21,8 @@ import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,9 +33,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,21 +49,24 @@ public class NoticeCommentService {
     private final NotificationService notificationService;
 
     @Transactional
-    public NoticeCommentResponse createComment(Long noticeId, CreateNoticeCommentDto dto,
-                                                List<MultipartFile> images, UserDetails userDetails) {
+    public NoticeCommentResponse createComment(
+            Long noticeId, CreateNoticeCommentDto dto, List<MultipartFile> images, UserDetails userDetails) {
         if (userDetails == null) {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
 
-        Notice notice = noticeRepository.findById(noticeId)
+        Notice notice = noticeRepository
+                .findById(noticeId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
 
-        User user = userRepository.findByEmail(userDetails.getUsername())
+        User user = userRepository
+                .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         NoticeComment parent = null;
         if (dto.getParentId() != null) {
-            parent = noticeCommentRepository.findById(dto.getParentId())
+            parent = noticeCommentRepository
+                    .findById(dto.getParentId())
                     .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
             if (!parent.getNotice().getNoticeId().equals(noticeId)) {
                 throw new GeneralException(ErrorStatus._BAD_REQUEST);
@@ -85,20 +87,20 @@ public class NoticeCommentService {
                     "새로운 댓글이 생겼어요.",
                     dto.getContent(),
                     ReferenceType.NOTICE,
-                    notice.getNoticeId()
-            );
+                    notice.getNoticeId());
         }
 
         // 대댓글인 경우 부모 댓글 작성자에게 알림 (본인 대댓글 제외)
-        if (parent != null && parent.getUser() != null && !parent.getUser().getId().equals(user.getId())) {
+        if (parent != null
+                && parent.getUser() != null
+                && !parent.getUser().getId().equals(user.getId())) {
             notificationService.createNotification(
                     parent.getUser(),
                     NotificationType.COMMENT,
                     "새로운 댓글이 생겼어요.",
                     dto.getContent(),
                     ReferenceType.NOTICE,
-                    notice.getNoticeId()
-            );
+                    notice.getNoticeId());
         }
 
         return toResponse(saved, userDetails, savedImages);
@@ -113,14 +115,16 @@ public class NoticeCommentService {
         if (cursor == null) {
             comments = noticeCommentRepository.findTopByNoticeIdOrderByIdDesc(noticeId, Pageable.ofSize(size));
         } else {
-            comments = noticeCommentRepository.findByNoticeIdAndIdLessThanOrderByIdDesc(noticeId, cursor, Pageable.ofSize(size));
+            comments = noticeCommentRepository.findByNoticeIdAndIdLessThanOrderByIdDesc(
+                    noticeId, cursor, Pageable.ofSize(size));
         }
 
         Long nextCursor = comments.hasNext()
                 ? comments.getContent().get(comments.getContent().size() - 1).getId()
                 : null;
 
-        List<NoticeComment> commentList = comments.getContent().stream().limit(size).toList();
+        List<NoticeComment> commentList =
+                comments.getContent().stream().limit(size).toList();
 
         // 이미지 일괄 조회 (N+1 방지)
         List<Long> commentIds = commentList.stream().map(NoticeComment::getId).toList();
@@ -144,7 +148,8 @@ public class NoticeCommentService {
                     boolean isLike = likedCommentIds.contains(comment.getId());
                     long childCount = childCountMap.getOrDefault(comment.getId(), 0L);
                     List<NoticeCommentImage> imgs = finalImageMap.getOrDefault(comment.getId(), List.of());
-                    return noticeCommentConverter.toResponse(comment, isOwner, isOwner || isAdmin, isLike, childCount, imgs);
+                    return noticeCommentConverter.toResponse(
+                            comment, isOwner, isOwner || isAdmin, isLike, childCount, imgs);
                 })
                 .toList();
 
@@ -154,7 +159,8 @@ public class NoticeCommentService {
     private static final int REPLY_PAGE_SIZE = 10;
 
     public NoticeCommentPageResponse getReplies(Long parentId, int page, UserDetails userDetails) {
-        NoticeComment parent = noticeCommentRepository.findById(parentId)
+        NoticeComment parent = noticeCommentRepository
+                .findById(parentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(page, REPLY_PAGE_SIZE);
@@ -186,7 +192,8 @@ public class NoticeCommentService {
                     boolean isLike = likedCommentIds.contains(reply.getId());
                     long childCount = childCountMap.getOrDefault(reply.getId(), 0L);
                     List<NoticeCommentImage> imgs = finalImageMap.getOrDefault(reply.getId(), List.of());
-                    return noticeCommentConverter.toResponse(reply, isOwner, isOwner || isAdmin, isLike, childCount, imgs);
+                    return noticeCommentConverter.toResponse(
+                            reply, isOwner, isOwner || isAdmin, isLike, childCount, imgs);
                 })
                 .toList();
 
@@ -194,13 +201,14 @@ public class NoticeCommentService {
     }
 
     @Transactional
-    public NoticeCommentResponse updateComment(Long commentId, CreateNoticeCommentDto dto,
-                                                List<MultipartFile> images, UserDetails userDetails) {
+    public NoticeCommentResponse updateComment(
+            Long commentId, CreateNoticeCommentDto dto, List<MultipartFile> images, UserDetails userDetails) {
         if (userDetails == null) {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
 
-        NoticeComment comment = noticeCommentRepository.findById(commentId)
+        NoticeComment comment = noticeCommentRepository
+                .findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         if (!comment.getUser().getEmail().equals(userDetails.getUsername())) {
@@ -212,7 +220,8 @@ public class NoticeCommentService {
         // 기존 이미지 삭제 후 새 이미지 업로드
         List<NoticeCommentImage> existingImages = noticeCommentImageRepository.findByComment_Id(commentId);
         if (!existingImages.isEmpty()) {
-            List<String> oldUrls = existingImages.stream().map(NoticeCommentImage::getImgUrl).toList();
+            List<String> oldUrls =
+                    existingImages.stream().map(NoticeCommentImage::getImgUrl).toList();
             s3Service.delete(oldUrls);
             noticeCommentImageRepository.deleteAllByCommentId(commentId);
         }
@@ -228,7 +237,8 @@ public class NoticeCommentService {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
 
-        NoticeComment comment = noticeCommentRepository.findById(commentId)
+        NoticeComment comment = noticeCommentRepository
+                .findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         boolean isOwner = comment.getUser().getEmail().equals(userDetails.getUsername());
@@ -255,30 +265,30 @@ public class NoticeCommentService {
 
     @Transactional
     public void addCommentLike(Long commentId, String email) {
-        NoticeComment comment = noticeCommentRepository.findById(commentId)
+        NoticeComment comment = noticeCommentRepository
+                .findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         if (noticeCommentLikeRepository.findByUserAndComment(user, comment).isPresent()) {
             return;
         }
 
-        noticeCommentLikeRepository.save(NoticeCommentLike.builder()
-                .user(user)
-                .comment(comment)
-                .build());
+        noticeCommentLikeRepository.save(
+                NoticeCommentLike.builder().user(user).comment(comment).build());
         noticeCommentRepository.incrementLikeCount(commentId);
     }
 
     @Transactional
     public void removeCommentLike(Long commentId, String email) {
-        NoticeComment comment = noticeCommentRepository.findById(commentId)
+        NoticeComment comment = noticeCommentRepository
+                .findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         noticeCommentLikeRepository.findByUserAndComment(user, comment).ifPresent(like -> {
             noticeCommentLikeRepository.delete(like);
@@ -286,8 +296,8 @@ public class NoticeCommentService {
         });
     }
 
-    private NoticeCommentResponse toResponse(NoticeComment comment, UserDetails userDetails,
-                                              List<NoticeCommentImage> images) {
+    private NoticeCommentResponse toResponse(
+            NoticeComment comment, UserDetails userDetails, List<NoticeCommentImage> images) {
         boolean isOwner = isOwner(comment, userDetails);
         boolean isAdmin = isAdmin(userDetails);
         long childCount = noticeCommentRepository.countByParentId(comment.getId());
@@ -321,15 +331,20 @@ public class NoticeCommentService {
 
     private boolean checkIsLike(Long commentId, UserDetails userDetails) {
         if (userDetails == null) return false;
-        return userRepository.findByEmail(userDetails.getUsername())
-                .map(user -> noticeCommentLikeRepository.findByUserAndComment(user,
-                        noticeCommentRepository.findById(commentId).orElse(null)).isPresent())
+        return userRepository
+                .findByEmail(userDetails.getUsername())
+                .map(user -> noticeCommentLikeRepository
+                        .findByUserAndComment(
+                                user,
+                                noticeCommentRepository.findById(commentId).orElse(null))
+                        .isPresent())
                 .orElse(false);
     }
 
     private Set<Long> buildLikedCommentIds(List<Long> commentIds, UserDetails userDetails) {
         if (userDetails == null || commentIds.isEmpty()) return Set.of();
-        return userRepository.findByEmail(userDetails.getUsername())
+        return userRepository
+                .findByEmail(userDetails.getUsername())
                 .map(user -> noticeCommentLikeRepository.findByUserIdAndCommentIdIn(user.getId(), commentIds))
                 .orElse(Set.of());
     }
@@ -337,9 +352,6 @@ public class NoticeCommentService {
     private Map<Long, Long> buildChildCountMap(List<Long> parentIds) {
         if (parentIds.isEmpty()) return Map.of();
         return noticeCommentRepository.countByParentIds(parentIds).stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (Long) row[1]
-                ));
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
 }

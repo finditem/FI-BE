@@ -20,6 +20,9 @@ import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
@@ -27,11 +30,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 
 @Slf4j
 @Service
@@ -47,13 +45,15 @@ public class CommentService {
     private final CommentLikeService commentLikeService;
 
     @Transactional
-    public CommentCreateResponse createCommentByPost(CommentCreateRequest request, UserDetails userDetails, Long postId, List<MultipartFile> images) {
+    public CommentCreateResponse createCommentByPost(
+            CommentCreateRequest request, UserDetails userDetails, Long postId, List<MultipartFile> images) {
         User user = userQueryService.findUser(userDetails.getUsername());
         Post post = postQueryService.findById(postId);
 
         Comment comment;
         if (Objects.nonNull(request.parentId())) {
-            Comment parentComment = commentRepository.findById(request.parentId())
+            Comment parentComment = commentRepository
+                    .findById(request.parentId())
                     .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_PARENT_NOT_FOUND));
 
             if (!Objects.equals(parentComment.getPost().getId(), post.getId())) {
@@ -67,7 +67,8 @@ public class CommentService {
 
         Comment saveComment = commentRepository.save(comment);
 
-        List<CommentImageResponse> commentImageList = commentImageService.createCommentImageAtS3AndDB(images, saveComment);
+        List<CommentImageResponse> commentImageList =
+                commentImageService.createCommentImageAtS3AndDB(images, saveComment);
 
         boolean isReply = (saveComment.getParent() != null);
         Set<Long> mentionedUserIds = handleMentions(saveComment, request);
@@ -78,8 +79,8 @@ public class CommentService {
             notifyPostOwner(post, user, request, mentionedUserIds);
         }
 
-
-        return CommentConverter.toCommentCreateResponse(comment, 0, true, UserConverter.toUserCommentResponse(user), commentImageList);
+        return CommentConverter.toCommentCreateResponse(
+                comment, 0, true, UserConverter.toUserCommentResponse(user), commentImageList);
     }
 
     private Set<Long> handleMentions(Comment comment, CommentCreateRequest dto) {
@@ -88,8 +89,8 @@ public class CommentService {
 
         for (String nickname : mentionedNicknames) {
             userRepository.findByNickname(nickname).ifPresent(mentionedUser -> {
-//                log.info("멘션 대상 찾음: {}", mentionedUser.getNickname());
-                if (!mentionedUser.getId().equals(comment.getUser().getId())) {//자신 거르기
+                //                log.info("멘션 대상 찾음: {}", mentionedUser.getNickname());
+                if (!mentionedUser.getId().equals(comment.getUser().getId())) { // 자신 거르기
 
                     notificationService.createNotification(
                             mentionedUser,
@@ -97,14 +98,11 @@ public class CommentService {
                             "새로운 댓글이 생겼어요.",
                             dto.content(),
                             ReferenceType.COMMENT,
-                            comment.getPost().getId()
-                    );
+                            comment.getPost().getId());
 
                     mentionedUserIds.add(mentionedUser.getId());
 
-                    log.info("COMMENT(멘션) 알림 전송: to={}, commentId={}",
-                            mentionedUser.getNickname(),
-                            comment.getId());
+                    log.info("COMMENT(멘션) 알림 전송: to={}, commentId={}", mentionedUser.getNickname(), comment.getId());
                 }
             });
         }
@@ -129,7 +127,6 @@ public class CommentService {
         return new ArrayList<>(mentions);
     }
 
-
     private void notifyPostOwner(Post post, User commenter, CommentCreateRequest dto, Set<Long> mentionedUserIds) {
 
         Long postOwnerId = post.getUser().getId();
@@ -145,11 +142,11 @@ public class CommentService {
                 "새로운 댓글이 생겼어요.",
                 dto.content(),
                 ReferenceType.POST,
-                post.getId()
-        );
+                post.getId());
     }
 
-    private void notifyReply(Comment parentComment, User replier, CommentCreateRequest dto, Post post, Set<Long> mentionedUserIds) {
+    private void notifyReply(
+            Comment parentComment, User replier, CommentCreateRequest dto, Post post, Set<Long> mentionedUserIds) {
 
         Long parentOwnerId = parentComment.getUser().getId();
 
@@ -164,14 +161,15 @@ public class CommentService {
                 "새로운 댓글이 생겼어요.",
                 dto.content(),
                 ReferenceType.POST,
-                post.getId()
-        );
+                post.getId());
     }
 
     @Transactional
-    public CommentCreateResponse updateComment(CommentUpdateRequest request, UserDetails userDetails, Long commentId, List<MultipartFile> addImageList) {
+    public CommentCreateResponse updateComment(
+            CommentUpdateRequest request, UserDetails userDetails, Long commentId, List<MultipartFile> addImageList) {
         User user = userQueryService.findUser(userDetails.getUsername());
-        Comment comment = commentRepository.findById(commentId)
+        Comment comment = commentRepository
+                .findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         if (comment.isDeleted()) {
@@ -190,27 +188,23 @@ public class CommentService {
 
         int likeCount = commentLikeService.getLikeCount(comment.getId());
 
-
         return CommentConverter.toCommentCreateResponse(
-                comment,
-                likeCount,
-                true,
-                UserConverter.toUserCommentResponse(user),
-                imageList);
+                comment, likeCount, true, UserConverter.toUserCommentResponse(user), imageList);
     }
 
     @Transactional
     public CommentDeleteResponse deleteComment(Long commentId, UserDetails userDetails) {
         User user = userQueryService.findUser(userDetails.getUsername());
-        Comment comment = commentRepository.findById(commentId)
+        Comment comment = commentRepository
+                .findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         if (comment.isDeleted()) {
             throw new GeneralException(ErrorStatus._COMMENT_ALREADY_DELETED);
         }
 
-        if (!Objects.equals(user.getId(), comment.getUser().getId()) &&
-                userDetails.getAuthorities().stream()
+        if (!Objects.equals(user.getId(), comment.getUser().getId())
+                && userDetails.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .noneMatch(authority -> authority.equals("ROLE_ADMIN"))) {
             throw new GeneralException(ErrorStatus._COMMENT_ACCESS_DENIED);
@@ -245,6 +239,4 @@ public class CommentService {
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
     }
-
 }
-

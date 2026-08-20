@@ -13,15 +13,14 @@ import com.fmi.domain.post.service.HotPostService;
 import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.service.UserQueryService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -40,17 +39,11 @@ public class PostMapService {
 
         Set<Long> excludedUserIds = getExcludedUserIds(user);
 
-        return postRepository.findPostMarker(
-                request.latitude(),
-                request.longitude(),
-                mapLevel,
-                excludedUserIds
-        );
+        return postRepository.findPostMarker(request.latitude(), request.longitude(), mapLevel, excludedUserIds);
     }
 
     @Transactional(readOnly = true)
-    public List<RecentFoundPostResponse> getRecentFoundPosts(RecentFoundPostRequest request,
-                                                             UserDetails userDetails) {
+    public List<RecentFoundPostResponse> getRecentFoundPosts(RecentFoundPostRequest request, UserDetails userDetails) {
         MapLevel mapLevel = MapLevel.from(request.level());
 
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
@@ -58,19 +51,12 @@ public class PostMapService {
         Set<Long> excludedUserIds = getExcludedUserIds(user);
 
         return postRepository.findRecentFoundPostList(
-                request.latitude(),
-                request.longitude(),
-                mapLevel,
-                excludedUserIds
-        );
+                request.latitude(), request.longitude(), mapLevel, excludedUserIds);
     }
 
     @Transactional(readOnly = true)
-    public MapPostPageResponse getPostMap(Long postId,
-                                          MapPostRequest request,
-                                          Double lastDistance,
-                                          Long lastPostId,
-                                          UserDetails userDetails) {
+    public MapPostPageResponse getPostMap(
+            Long postId, MapPostRequest request, Double lastDistance, Long lastPostId, UserDetails userDetails) {
         MapLevel mapLevel = MapLevel.from(request.level());
 
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
@@ -84,8 +70,7 @@ public class PostMapService {
                 request.category(),
                 post.getAddress(),
                 user != null ? user.getId() : null,
-                20
-        );
+                20);
 
         return postRepository.findMapPosts(
                 post.getLatitude(),
@@ -99,15 +84,12 @@ public class PostMapService {
                 excludedUserIds,
                 hotPostIds,
                 lastDistance,
-                lastPostId
-        );
+                lastPostId);
     }
 
     @Transactional(readOnly = true)
-    public LocationMapPostPageResponse searchPostsByLocation(LocationMapPostRequest request,
-                                                             Double lastDistance,
-                                                             Long lastPostId,
-                                                             UserDetails userDetails) {
+    public LocationMapPostPageResponse searchPostsByLocation(
+            LocationMapPostRequest request, Double lastDistance, Long lastPostId, UserDetails userDetails) {
         MapLevel mapLevel = MapLevel.from(request.level());
 
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
@@ -119,8 +101,7 @@ public class PostMapService {
                 request.category(),
                 null,
                 user != null ? user.getId() : null,
-                20
-        );
+                20);
 
         return postRepository.searchMapPostsByLocation(
                 request.latitude(),
@@ -134,8 +115,7 @@ public class PostMapService {
                 excludedUserIds,
                 hotPostIds,
                 lastDistance,
-                lastPostId
-        );
+                lastPostId);
     }
 
     private Set<Long> getExcludedUserIds(User user) {
@@ -145,5 +125,4 @@ public class PostMapService {
         excluded.addAll(blockedUserRepository.findBlockerIdsByBlockedId(user.getId()));
         return excluded;
     }
-
 }

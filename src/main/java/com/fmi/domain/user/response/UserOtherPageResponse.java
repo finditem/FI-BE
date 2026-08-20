@@ -1,12 +1,11 @@
 package com.fmi.domain.user.response;
 
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Getter
 @Builder
@@ -23,4 +22,3 @@ public class UserOtherPageResponse {
     private Long nextCursor;
     private boolean hasNext;
 }
-

@@ -1,5 +1,8 @@
 package com.fmi.security;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -7,10 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.time.Duration;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class CookieFactoryTest {
 

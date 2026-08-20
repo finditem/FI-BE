@@ -1,5 +1,8 @@
 package com.fmi.domain.Enum;
 
 public enum Provider {
-    KAKAO, GOOGLE, NAVER, APPLE
+    KAKAO,
+    GOOGLE,
+    NAVER,
+    APPLE
 }

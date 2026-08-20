@@ -2,10 +2,9 @@ package com.fmi.domain.user.web.dto.response;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.user.data.UserCategory;
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Value;
-
-import java.time.LocalDateTime;
 
 @Value
 @Builder
@@ -23,4 +22,3 @@ public class UserCategoryResponse {
                 .build();
     }
 }
-

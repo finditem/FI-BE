@@ -4,9 +4,8 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "customer_inquiry")
@@ -40,14 +39,14 @@ public class Inquiry {
     private InquiryStatus answerStatus = InquiryStatus.RECEIVED;
 
     @Column(length = 255)
-    private String email;  // 비회원 문의 시 이메일
+    private String email; // 비회원 문의 시 이메일
 
     @Column(nullable = false)
     @Builder.Default
     private Boolean answered = false;
 
     @Column(length = 45)
-    private String ip;  // 비회원 문의 시 IP
+    private String ip; // 비회원 문의 시 IP
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -82,4 +81,3 @@ public class Inquiry {
         this.answered = answered;
     }
 }
-

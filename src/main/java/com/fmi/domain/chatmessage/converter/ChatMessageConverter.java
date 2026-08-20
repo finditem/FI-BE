@@ -1,15 +1,14 @@
 package com.fmi.domain.chatmessage.converter;
 
+import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.MessageImageResponseDTO;
+import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.MessageResponseDTO;
+
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.data.MessageImage;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO;
-
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.MessageImageResponseDTO;
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.MessageResponseDTO;
 
 public class ChatMessageConverter {
 
@@ -47,6 +46,5 @@ public class ChatMessageConverter {
                 .imageUrls(message.getMessageType() == MessageType.IMAGE ? imageUrls : null)
                 .createdAt(message.getCreatedAt())
                 .build();
-
     }
 }

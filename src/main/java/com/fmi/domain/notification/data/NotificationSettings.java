@@ -3,11 +3,10 @@ package com.fmi.domain.notification.data;
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.auth.data.User;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.Set;
+import lombok.*;
 
 @Entity
 @Table(name = "notification_settings")
@@ -92,10 +91,15 @@ public class NotificationSettings {
     }
 
     // 설정 업데이트
-    public void updateSettings(Boolean commentEnabled, Boolean chatEnabled,
-                               Boolean inquiryReplyEnabled, Boolean reportResultEnabled,
-                               Boolean favoriteEnabled, Boolean noticeEnabled,
-                               Boolean categoryEnabled, Boolean browserNotificationEnabled) {
+    public void updateSettings(
+            Boolean commentEnabled,
+            Boolean chatEnabled,
+            Boolean inquiryReplyEnabled,
+            Boolean reportResultEnabled,
+            Boolean favoriteEnabled,
+            Boolean noticeEnabled,
+            Boolean categoryEnabled,
+            Boolean browserNotificationEnabled) {
         if (commentEnabled != null) this.commentEnabled = commentEnabled;
         if (chatEnabled != null) this.chatEnabled = chatEnabled;
         if (inquiryReplyEnabled != null) this.inquiryReplyEnabled = inquiryReplyEnabled;
@@ -106,4 +110,3 @@ public class NotificationSettings {
         if (browserNotificationEnabled != null) this.browserNotificationEnabled = browserNotificationEnabled;
     }
 }
-

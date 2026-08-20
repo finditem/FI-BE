@@ -5,10 +5,8 @@ import com.fmi.domain.notice.data.NoticeImage;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.domain.post.data.ImageType;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
-import java.util.Set;
+import org.springframework.stereotype.Component;
 
 @Component
 public class NoticeConverter {
@@ -55,9 +53,7 @@ public class NoticeConverter {
     }
 
     public NoticeResponseDTO toResponseDTO(Notice notice, List<NoticeImage> images, int commentCount, boolean isHot) {
-        List<String> imageUrls = images.stream()
-                .map(NoticeImage::getImgUrl)
-                .toList();
+        List<String> imageUrls = images.stream().map(NoticeImage::getImgUrl).toList();
 
         String thumbnailUrl = images.stream()
                 .filter(img -> img.getImageType() == ImageType.THUMBNAIL)

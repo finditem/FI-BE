@@ -18,4 +18,3 @@ public enum WithdrawalReason {
         this.description = description;
     }
 }
-

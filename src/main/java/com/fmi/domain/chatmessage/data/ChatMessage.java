@@ -4,14 +4,13 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -32,14 +31,14 @@ public class ChatMessage {
     @Column(name = "content")
     private String content;
 
-    //@Column(name = "readornot", nullable = false)
+    // @Column(name = "readornot", nullable = false)
     private boolean readornot;
 
     @Enumerated(EnumType.STRING)
     private MessageType messageType;
 
-    @ManyToOne(fetch= FetchType.LAZY)
-    @JoinColumn(name="chatRoom_id", nullable=false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chatRoom_id", nullable = false)
     private ChatRoom chatRoom;
 
     @OneToMany(mappedBy = "chatMessage", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -56,5 +55,4 @@ public class ChatMessage {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
 }

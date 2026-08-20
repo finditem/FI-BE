@@ -1,11 +1,19 @@
 package com.fmi.domain.auth.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.SocialAccounts;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.auth.repository.UserRepository;
+import java.util.Optional;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,16 +22,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SocialLoginServiceTest {
@@ -51,7 +49,8 @@ class SocialLoginServiceTest {
             savedUser.setId(1L);
             return savedUser;
         });
-        when(socialAccountsRepository.save(any(SocialAccounts.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(socialAccountsRepository.save(any(SocialAccounts.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(userRepository.findById(1L)).thenAnswer(invocation -> Optional.ofNullable(savedUser));
     }
 
@@ -90,7 +89,8 @@ class SocialLoginServiceTest {
     void 같은_subject로_재로그인하면_기존_사용자를_반환한다() {
         // given
         String subject = "apple-subject";
-        User existingUser = User.builder().id(1L).email("apple_apple-subject@apple.local").build();
+        User existingUser =
+                User.builder().id(1L).email("apple_apple-subject@apple.local").build();
         SocialAccounts existingAccount = SocialAccounts.builder()
                 .user(existingUser)
                 .provider(Provider.APPLE)

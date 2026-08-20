@@ -5,14 +5,13 @@ import com.fmi.domain.chatmessage.service.ChatNotificationService;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @Transactional
@@ -43,19 +42,15 @@ public class ChatReminderService {
         for (ChatRoomParticipant pt : targets) {
             try {
                 User receiver = pt.getUser();
-                Long postId = pt.getChatRoom().isSourcePostDeleted() || pt.getChatRoom().getPost() == null
+                Long postId = pt.getChatRoom().isSourcePostDeleted()
+                                || pt.getChatRoom().getPost() == null
                         ? pt.getChatRoom().getSourcePostId()
                         : pt.getChatRoom().getPost().getId();
                 Long roomId = pt.getChatRoom().getId();
                 String content = pt.getLastMessage().getContent();
 
                 chatNotificationService.saveOrUpdateChatNotification(
-                        receiver,
-                        postId,
-                        roomId,
-                        content,
-                        NotificationType.CHAT_REMINDER
-                );
+                        receiver, postId, roomId, content, NotificationType.CHAT_REMINDER);
 
                 pt.markReminded();
                 count++;

@@ -3,11 +3,10 @@ package com.fmi.domain.post.data;
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.auth.data.User;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.function.Consumer;
+import lombok.*;
 
 @Entity
 @Getter
@@ -74,7 +73,18 @@ public class Post {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    private Post(String title, String address, double latitude, double longitude, PostType postType, Category category, String content, boolean temporarySave, LocalDateTime date, Radius radius, User user) {
+    private Post(
+            String title,
+            String address,
+            double latitude,
+            double longitude,
+            PostType postType,
+            Category category,
+            String content,
+            boolean temporarySave,
+            LocalDateTime date,
+            Radius radius,
+            User user) {
         this.title = title;
         this.address = address;
         this.latitude = latitude;
@@ -91,8 +101,20 @@ public class Post {
         this.viewCount = 0;
     }
 
-    public static Post create(String title, String address, double latitude, double longitude, PostType postType, Category category, String content, boolean temporarySave, LocalDateTime date, Radius radius, User user) {
-        return new Post(title, address, latitude, longitude, postType, category, content, temporarySave, date, radius, user);
+    public static Post create(
+            String title,
+            String address,
+            double latitude,
+            double longitude,
+            PostType postType,
+            Category category,
+            String content,
+            boolean temporarySave,
+            LocalDateTime date,
+            Radius radius,
+            User user) {
+        return new Post(
+                title, address, latitude, longitude, postType, category, content, temporarySave, date, radius, user);
     }
 
     public static Post createTemporary(User user) {
@@ -109,15 +131,16 @@ public class Post {
         return post;
     }
 
-    public void updateTemporary(PostType postType,
-                                Category category,
-                                Radius radius,
-                                LocalDateTime date,
-                                String title,
-                                String address,
-                                String content,
-                                Double latitude,
-                                Double longitude) {
+    public void updateTemporary(
+            PostType postType,
+            Category category,
+            Radius radius,
+            LocalDateTime date,
+            String title,
+            String address,
+            String content,
+            Double latitude,
+            Double longitude) {
 
         applyIfNotNull(postType, this::setPostType);
         applyIfNotNull(category, this::setCategory);
@@ -149,17 +172,18 @@ public class Post {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void update(PostType postType,
-                       String title,
-                       PostStatus postStatus,
-                       LocalDateTime date,
-                       String address,
-                       Double latitude,
-                       Double longitude,
-                       String content,
-                       Boolean temporarySave,
-                       Radius radius,
-                       Category category) {
+    public void update(
+            PostType postType,
+            String title,
+            PostStatus postStatus,
+            LocalDateTime date,
+            String address,
+            Double latitude,
+            Double longitude,
+            String content,
+            Boolean temporarySave,
+            Radius radius,
+            Category category) {
 
         applyIfNotNull(postType, this::setPostType);
         applyIfNotNull(title, this::setTitle);
@@ -197,6 +221,4 @@ public class Post {
     private void applyIfNotBlank(String value, Consumer<String> setter) {
         if (Objects.nonNull(value) && !value.isBlank()) setter.accept(value);
     }
-
-
 }

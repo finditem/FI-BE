@@ -1,5 +1,8 @@
 package com.fmi.domain.post.service;
 
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.notification.service.NotificationService;
@@ -7,6 +10,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.service.UserQueryService;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,21 +21,29 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.List;
-
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class PostServiceDeleteTest {
 
-    @Mock private PostRepository postRepository;
-    @Mock private NotificationService notificationService;
-    @Mock private PostFavoriteRepository postFavoriteRepository;
-    @Mock private UserQueryService userQueryService;
-    @Mock private PostImageService postImageService;
-    @Mock private PostQueryService postQueryService;
-    @Mock private ChatRoomRepository chatRoomRepository;
+    @Mock
+    private PostRepository postRepository;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private PostFavoriteRepository postFavoriteRepository;
+
+    @Mock
+    private UserQueryService userQueryService;
+
+    @Mock
+    private PostImageService postImageService;
+
+    @Mock
+    private PostQueryService postQueryService;
+
+    @Mock
+    private ChatRoomRepository chatRoomRepository;
 
     @InjectMocks
     private PostService postService;

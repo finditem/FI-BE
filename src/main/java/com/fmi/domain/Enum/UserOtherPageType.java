@@ -2,9 +2,8 @@ package com.fmi.domain.Enum;
 
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import lombok.Getter;
-
 import java.util.Arrays;
+import lombok.Getter;
 
 @Getter
 public enum UserOtherPageType {
@@ -24,8 +23,8 @@ public enum UserOtherPageType {
         }
         String normalized = value.trim().toLowerCase();
         return Arrays.stream(values())
-                .filter(type -> type.paramValue.equals(normalized)
-                        || type.name().equalsIgnoreCase(normalized))
+                .filter(type ->
+                        type.paramValue.equals(normalized) || type.name().equalsIgnoreCase(normalized))
                 .findFirst()
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_PAGE_TYPE_INVALID));
     }

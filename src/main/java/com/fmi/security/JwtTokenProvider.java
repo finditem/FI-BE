@@ -4,14 +4,13 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
+import javax.crypto.SecretKey;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Component
 public class JwtTokenProvider {
@@ -25,8 +24,7 @@ public class JwtTokenProvider {
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.issuer}") String issuer,
             @Value("${jwt.access-token-validity-ms}") long accessTokenValidityMs,
-            @Value("${jwt.refresh-token-validity-ms}") long refreshTokenValidityMs
-    ) {
+            @Value("${jwt.refresh-token-validity-ms}") long refreshTokenValidityMs) {
         byte[] keyBytes;
         // allow base64 or raw string
         try {
@@ -115,5 +113,3 @@ public class JwtTokenProvider {
         return getAllClaims(token).get("userId", Long.class);
     }
 }
-
-

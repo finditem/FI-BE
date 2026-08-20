@@ -1,13 +1,13 @@
 package com.fmi.security;
-import org.springframework.context.annotation.Primary;
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
 
 @Component
 @Primary
@@ -95,5 +95,3 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
         return hash.equals(hashedToken);
     }
 }
-
-

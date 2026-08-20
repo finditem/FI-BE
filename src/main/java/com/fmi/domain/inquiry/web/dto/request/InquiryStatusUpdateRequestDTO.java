@@ -6,6 +6,5 @@ import lombok.Data;
 
 @Data
 public class InquiryStatusUpdateRequestDTO {
-    @NotNull
-    private InquiryStatus status; // RECEIVED, PENDING, ANSWERED
+    @NotNull private InquiryStatus status; // RECEIVED, PENDING, ANSWERED
 }

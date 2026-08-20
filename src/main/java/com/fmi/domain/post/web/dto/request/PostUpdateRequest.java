@@ -7,7 +7,6 @@ import com.fmi.domain.post.data.Radius;
 import com.fmi.domain.post.web.dto.validation.ValidThumbnailKeep;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,22 +14,19 @@ import java.util.List;
 public record PostUpdateRequest(
         PostType postType,
 
-        @Size(min = 1, max = 50, message = "제목은 최대 50자까지 입력 가능합니다.")
-        String title,
+        @Size(min = 1, max = 50, message = "제목은 최대 50자까지 입력 가능합니다.") String title,
 
         PostStatus postStatus,
 
         LocalDateTime date,
 
-        @Size(min = 1)
-        String address,
+        @Size(min = 1) String address,
 
         Double latitude,
 
         Double longitude,
 
-        @Size(min = 1, max = 500, message = "본문은 최대 500자까지 입력 가능합니다.")
-        String content,
+        @Size(min = 1, max = 500, message = "본문은 최대 500자까지 입력 가능합니다.") String content,
 
         Boolean temporarySave,
 
@@ -40,5 +36,4 @@ public record PostUpdateRequest(
 
         List<@Positive(message = "이미지 ID는 양수여야 합니다.") Long> keepImageIdList,
 
-        Long thumbnailImageId) {
-}
+        Long thumbnailImageId) {}

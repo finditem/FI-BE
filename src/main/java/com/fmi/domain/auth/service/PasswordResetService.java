@@ -1,17 +1,16 @@
 package com.fmi.domain.auth.service;
 
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.domain.auth.repository.UserRepository;
-import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.service.EmailService;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -31,40 +30,34 @@ public class PasswordResetService {
      */
     @Transactional
     public void issueTemporaryPassword(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
         if (socialAccountsRepository.findByUser(user).isPresent()) {
             throw new GeneralException(ErrorStatus._SOCIAL_ACCOUNT);
         }
-        
+
         String tempPassword = generateTempPassword();
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);  // 1시간 후 만료
-        
+        LocalDateTime expiresAt = LocalDateTime.now().plusHours(1); // 1시간 후 만료
+
         // 원래 비밀번호 보관 (임시 비밀번호가 없는 경우에만)
         if (user.getOriginalPassword() == null) {
             user.setOriginalPassword(user.getPassword());
         }
-        
+
         // 임시 비밀번호 저장
         user.setTemporaryPassword(passwordEncoder.encode(tempPassword));
         user.setTemporaryPasswordExpiresAt(expiresAt);
-        
+
         // password 필드에 임시 비밀번호 설정 (로그인 가능하게 하기 위해)
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setUpdatedAt(LocalDateTime.now());
-        
+
         userRepository.save(user);
-        
+
         // HTML 템플릿 사용
         emailService.sendHtmlEmail(
-            email,
-            "임시 비밀번호 발급",
-            "password-reset-email.html",
-            java.util.Map.of(
-                "PASSWORD", tempPassword
-            )
-        );
+                email, "임시 비밀번호 발급", "password-reset-email.html", java.util.Map.of("PASSWORD", tempPassword));
     }
 
     private String generateTempPassword() {
@@ -77,5 +70,3 @@ public class PasswordResetService {
         return sb.toString();
     }
 }
-
-

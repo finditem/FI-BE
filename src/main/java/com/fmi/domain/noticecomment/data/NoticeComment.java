@@ -3,11 +3,10 @@ package com.fmi.domain.noticecomment.data;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notice.data.Notice;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.*;
 
 @Entity
 @Table(name = "notice_comment")
@@ -84,5 +83,4 @@ public class NoticeComment {
     public int getDepth() {
         return parent == null ? 0 : 1;
     }
-
 }

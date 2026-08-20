@@ -3,12 +3,11 @@ package com.fmi.domain.admin.dto;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -19,19 +18,25 @@ public class AdminInquiryResponse {
 
     @Schema(description = "문의 ID", example = "1")
     private Long inquiryId;
+
     @Schema(description = "제목", example = "계정 관련 문의")
     private String title;
+
     @Schema(description = "문의 타입", example = "ACCOUNT")
     private InquiryType inquiryType;
+
     @Schema(description = "처리 상태", example = "ANSWERED")
     private InquiryStatus status;
+
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;
 
     @Schema(description = "사용자 ID", example = "1")
     private Long userId;
+
     @Schema(description = "사용자 닉네임", example = "홍길동")
     private String nickname;
+
     @Schema(description = "사용자 이메일 (회원: 유저 이메일, 비회원: 문의 시 입력한 이메일)", example = "user@example.com")
     private String email;
 
@@ -44,4 +49,3 @@ public class AdminInquiryResponse {
     @Schema(description = "답변 여부", example = "false")
     private boolean answered;
 }
-

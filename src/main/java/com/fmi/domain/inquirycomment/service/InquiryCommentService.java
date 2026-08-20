@@ -19,6 +19,9 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import com.fmi.service.EmailService;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -28,10 +31,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -51,9 +50,10 @@ public class InquiryCommentService {
      * 댓글 작성
      */
     @Transactional
-    public InquiryCommentResponse createComment(CreateInquiryCommentDto dto, List<MultipartFile> images,
-                                                 UserDetails userDetails, Long inquiryId) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+    public InquiryCommentResponse createComment(
+            CreateInquiryCommentDto dto, List<MultipartFile> images, UserDetails userDetails, Long inquiryId) {
+        Inquiry inquiry = inquiryRepository
+                .findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
 
         if (userDetails == null) {
@@ -64,12 +64,14 @@ public class InquiryCommentService {
             throw new GeneralException(ErrorStatus._INQUIRY_ACCESS_DENIED);
         }
 
-        User user = userRepository.findByEmail(userDetails.getUsername())
+        User user = userRepository
+                .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         InquiryComment parent = null;
         if (dto.getParentId() != null) {
-            parent = inquiryCommentRepository.findById(dto.getParentId())
+            parent = inquiryCommentRepository
+                    .findById(dto.getParentId())
                     .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
             if (!parent.getInquiry().getId().equals(inquiryId)) {
                 throw new GeneralException(ErrorStatus._BAD_REQUEST);
@@ -96,20 +98,20 @@ public class InquiryCommentService {
             try {
                 String replyDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                         .format(java.time.LocalDateTime.now());
-                String nickname = inquiry.getUser().getNickname() != null ? inquiry.getUser().getNickname() : "회원";
+                String nickname = inquiry.getUser().getNickname() != null
+                        ? inquiry.getUser().getNickname()
+                        : "회원";
 
                 emailService.sendHtmlEmailAsync(
-                    inquiry.getUser().getEmail(),
-                    "문의에 대한 답변이 도착했습니다",
-                    "support-reply-email.html",
-                    java.util.Map.of(
-                        "name", nickname,
-                        "TITLE", inquiry.getTitle(),
-                        "DATE", replyDate,
-                        "CONTENT", savedComment.getContent(),
-                        "INQUIRY_ID", String.valueOf(inquiry.getId())
-                    )
-                );
+                        inquiry.getUser().getEmail(),
+                        "문의에 대한 답변이 도착했습니다",
+                        "support-reply-email.html",
+                        java.util.Map.of(
+                                "name", nickname,
+                                "TITLE", inquiry.getTitle(),
+                                "DATE", replyDate,
+                                "CONTENT", savedComment.getContent(),
+                                "INQUIRY_ID", String.valueOf(inquiry.getId())));
             } catch (Exception e) {
                 log.warn("문의 답변 이메일 발송 실패: inquiryId={}", inquiry.getId(), e);
             }
@@ -123,7 +125,8 @@ public class InquiryCommentService {
      */
     @Transactional(readOnly = true)
     public InquiryCommentSliceResponse getComments(Long inquiryId, Long cursor, int size, UserDetails userDetails) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+        Inquiry inquiry = inquiryRepository
+                .findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
 
         if (userDetails == null) {
@@ -138,7 +141,8 @@ public class InquiryCommentService {
         if (cursor == null) {
             comments = inquiryCommentRepository.findTopByInquiryIdOrderByIdDesc(inquiryId, Pageable.ofSize(size));
         } else {
-            comments = inquiryCommentRepository.findByInquiryIdAndIdLessThanOrderByIdDesc(inquiryId, cursor, Pageable.ofSize(size));
+            comments = inquiryCommentRepository.findByInquiryIdAndIdLessThanOrderByIdDesc(
+                    inquiryId, cursor, Pageable.ofSize(size));
         }
 
         Long nextCursor = comments.hasNext()
@@ -168,9 +172,10 @@ public class InquiryCommentService {
      * 댓글 수정
      */
     @Transactional
-    public InquiryCommentResponse updateComment(CreateInquiryCommentDto dto, List<MultipartFile> images,
-                                                 UserDetails userDetails, Long commentId) {
-        InquiryComment comment = inquiryCommentRepository.findById(commentId)
+    public InquiryCommentResponse updateComment(
+            CreateInquiryCommentDto dto, List<MultipartFile> images, UserDetails userDetails, Long commentId) {
+        InquiryComment comment = inquiryCommentRepository
+                .findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         if (userDetails == null) {
@@ -186,7 +191,8 @@ public class InquiryCommentService {
         // 기존 이미지 삭제 후 새 이미지 업로드
         List<InquiryCommentImage> existingImages = inquiryCommentImageRepository.findByComment_Id(commentId);
         if (!existingImages.isEmpty()) {
-            List<String> oldUrls = existingImages.stream().map(InquiryCommentImage::getImgUrl).toList();
+            List<String> oldUrls =
+                    existingImages.stream().map(InquiryCommentImage::getImgUrl).toList();
             s3Service.delete(oldUrls);
             inquiryCommentImageRepository.deleteAllByCommentId(commentId);
         }
@@ -201,7 +207,8 @@ public class InquiryCommentService {
      */
     @Transactional
     public InquiryCommentResponse deleteComment(UserDetails userDetails, Long commentId) {
-        InquiryComment comment = inquiryCommentRepository.findById(commentId)
+        InquiryComment comment = inquiryCommentRepository
+                .findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
 
         boolean isOwner = false;
@@ -282,7 +289,8 @@ public class InquiryCommentService {
         return false;
     }
 
-    private InquiryCommentResponse toResponse(InquiryComment comment, UserDetails userDetails, List<InquiryCommentImage> images) {
+    private InquiryCommentResponse toResponse(
+            InquiryComment comment, UserDetails userDetails, List<InquiryCommentImage> images) {
         boolean canEdit = isOwner(comment, userDetails);
         boolean canDelete = isOwner(comment, userDetails) || isAdmin(userDetails);
         boolean admin = isCommentByAdmin(comment);
@@ -315,8 +323,7 @@ public class InquiryCommentService {
                         "문의하신 내용에 답변이 생겼어요.",
                         comment.getContent(),
                         ReferenceType.INQUIRY,
-                        inquiry.getId()
-                );
+                        inquiry.getId());
             }
         } else if (parent == null && inquiry.getUser() != null && comment.getUser() != null) {
             if (!inquiry.getUser().getId().equals(comment.getUser().getId())) {
@@ -326,8 +333,7 @@ public class InquiryCommentService {
                         "문의하신 내용에 답변이 생겼어요.",
                         comment.getContent(),
                         ReferenceType.INQUIRY,
-                        inquiry.getId()
-                );
+                        inquiry.getId());
             }
         }
     }

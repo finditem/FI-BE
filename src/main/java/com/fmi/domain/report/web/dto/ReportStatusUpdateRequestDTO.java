@@ -7,10 +7,6 @@ import lombok.Data;
 
 @Data
 public class ReportStatusUpdateRequestDTO {
-    @NotNull
-    @Schema(
-            description = "신고 상태 (PENDING=대기, REVIEWED=처리중, RESOLVED=처리완료)",
-            example = "RESOLVED"
-    )
+    @NotNull @Schema(description = "신고 상태 (PENDING=대기, REVIEWED=처리중, RESOLVED=처리완료)", example = "RESOLVED")
     private ReportStatus status;
 }

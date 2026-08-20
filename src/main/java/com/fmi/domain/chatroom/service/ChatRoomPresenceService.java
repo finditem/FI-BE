@@ -1,10 +1,9 @@
 package com.fmi.domain.chatroom.service;
 
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -16,9 +15,17 @@ public class ChatRoomPresenceService {
     private static final String SESS_KEY = "presence:sess:";
     private static final Duration TTL = Duration.ofSeconds(45);
 
-    private String roomKey(Long roomId) { return ROOM_KEY + roomId; }
-    private String userKey(Long userId) { return USER_KEY + userId; }
-    private String sessKey(String sessionId){ return SESS_KEY + sessionId; }
+    private String roomKey(Long roomId) {
+        return ROOM_KEY + roomId;
+    }
+
+    private String userKey(Long userId) {
+        return USER_KEY + userId;
+    }
+
+    private String sessKey(String sessionId) {
+        return SESS_KEY + sessionId;
+    }
 
     /**
      * 방 입장 (Client가 /app/rooms/{roomId}/enter 호출)
@@ -82,5 +89,4 @@ public class ChatRoomPresenceService {
         redis.expire(sessKey(sessionId), TTL);
         redis.expire(sessKey(sessionId) + ":rooms", TTL);
     }
-
 }

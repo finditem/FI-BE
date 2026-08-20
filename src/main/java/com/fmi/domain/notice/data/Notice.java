@@ -3,9 +3,8 @@ package com.fmi.domain.notice.data;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notice.data.enums.NoticeCategory;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "notice")
@@ -91,4 +90,3 @@ public class Notice {
         this.updatedAt = LocalDateTime.now();
     }
 }
-

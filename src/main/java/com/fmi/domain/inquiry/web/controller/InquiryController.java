@@ -4,10 +4,10 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.service.InquiryService;
-import com.fmi.domain.notification.data.enums.NotificationType;
-import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
+import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -34,11 +34,11 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @Tag(name = "Inquiry", description = "문의 API")
 public class InquiryController {
-    
+
     private final InquiryService inquiryService;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
-    
+
     /**
      * 1:1 개인 문의 작성
      * POST /api/inquiries
@@ -46,27 +46,27 @@ public class InquiryController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "1:1 개인 문의 작성", description = "비회원도 가능하며, 비회원인 경우 email 필수입니다. 이미지 첨부 가능합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 작성 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "INQUIRY400-GUEST_EMAIL_REQUIRED: 비회원 문의는 이메일이 필수입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY400-GUEST_EMAIL_REQUIRED\", \"message\": \"비회원 문의는 이메일이 필수입니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "403",
-                    description = "INQUIRY403-IP_BLOCKED: 차단된 IP입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY403-IP_BLOCKED\", \"message\": \"차단된 IP입니다.\"}"
-                            )
-                    )
-            )
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 작성 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "INQUIRY400-GUEST_EMAIL_REQUIRED: 비회원 문의는 이메일이 필수입니다",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        "{\"isSuccess\": false, \"code\": \"INQUIRY400-GUEST_EMAIL_REQUIRED\", \"message\": \"비회원 문의는 이메일이 필수입니다.\"}"))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "INQUIRY403-IP_BLOCKED: 차단된 IP입니다",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        "{\"isSuccess\": false, \"code\": \"INQUIRY403-IP_BLOCKED\", \"message\": \"차단된 IP입니다.\"}")))
     })
     public ApiResponse<Long> createInquiry(
             @Valid @RequestPart("inquiry") com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO request,
@@ -77,7 +77,7 @@ public class InquiryController {
         Long inquiryId = inquiryService.createInquiry(request, userDetails, clientIp, images);
         return ApiResponse.onSuccess(inquiryId);
     }
-    
+
     /**
      * 내 문의 내역 조회
      * GET /api/inquiries/me?cursor=10&size=10
@@ -86,22 +86,24 @@ public class InquiryController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "내 문의 내역 조회", description = "커서 기반 페이지네이션으로 본인의 1:1 개인 문의를 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 문의 내역 조회 성공")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 문의 내역 조회 성공")
     })
     public ApiResponse<CursorPageResponse<InquiryListDTO>> getMyInquiries(
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "문의 상태 필터 (RECEIVED=접수 대기, PENDING=처리 중, ANSWERED=답변 완료)")
-            @RequestParam(required = false) InquiryStatus status,
-            @Parameter(description = "답변 여부 필터 (true=답변완료, false=미답변)")
-            @RequestParam(required = false) Boolean answered,
-            @Parameter(description = "검색 키워드 (제목, 내용)")
-            @RequestParam(required = false) String keyword,
+                    @RequestParam(required = false)
+                    InquiryStatus status,
+            @Parameter(description = "답변 여부 필터 (true=답변완료, false=미답변)") @RequestParam(required = false)
+                    Boolean answered,
+            @Parameter(description = "검색 키워드 (제목, 내용)") @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size) {
 
-        User user = userRepository.findByEmail(userDetails.getUsername())
+        User user = userRepository
+                .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        CursorPageResponse<InquiryListDTO> inquiries = inquiryService.getMyInquiriesCursor(user, status, answered, keyword, cursor, size);
+        CursorPageResponse<InquiryListDTO> inquiries =
+                inquiryService.getMyInquiriesCursor(user, status, answered, keyword, cursor, size);
         return ApiResponse.onSuccess(inquiries);
     }
 
@@ -113,40 +115,39 @@ public class InquiryController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "문의 상세 조회", description = "본인의 1:1 개인 문의만 조회 가능합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 상세 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "403",
-                    description = "INQUIRY403-ACCESS_DENIED: 해당 문의를 조회할 권한이 없습니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY403-ACCESS_DENIED\", \"message\": \"해당 문의를 조회할 권한이 없습니다.\"}"
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    value = "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}"
-                            )
-                    )
-            )
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 상세 조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "INQUIRY403-ACCESS_DENIED: 해당 문의를 조회할 권한이 없습니다",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        "{\"isSuccess\": false, \"code\": \"INQUIRY403-ACCESS_DENIED\", \"message\": \"해당 문의를 조회할 권한이 없습니다.\"}"))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}")))
     })
     public ApiResponse<InquiryDetailDTO> getInquiryDetail(
-            @PathVariable Long inquiryId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @PathVariable Long inquiryId, @AuthenticationPrincipal UserDetails userDetails) {
 
         InquiryDetailDTO inquiry = inquiryService.getInquiryDetail(inquiryId, userDetails);
 
         // 문의 조회 시 관련 알림 자동 읽음처리
         if (userDetails != null) {
-            userRepository.findByEmail(userDetails.getUsername()).ifPresent(user ->
-                    notificationService.markNotificationsAsReadByReference(user, inquiryId,
-                            List.of(NotificationType.COMMENT, NotificationType.INQUIRY_REPLY))
-            );
+            userRepository
+                    .findByEmail(userDetails.getUsername())
+                    .ifPresent(user -> notificationService.markNotificationsAsReadByReference(
+                            user, inquiryId, List.of(NotificationType.COMMENT, NotificationType.INQUIRY_REPLY)));
         }
 
         return ApiResponse.onSuccess(inquiry);
@@ -178,4 +179,3 @@ public class InquiryController {
         return ip != null ? ip : "unknown";
     }
 }
-

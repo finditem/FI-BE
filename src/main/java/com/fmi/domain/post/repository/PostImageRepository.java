@@ -4,13 +4,12 @@ import com.fmi.domain.post.data.ImageType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import io.lettuce.core.dynamic.annotation.Param;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface PostImageRepository extends JpaRepository<PostImage, Long>, PostImageRepositoryCustom {
@@ -46,8 +45,7 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long>, Pos
                 where pi.post.id = :postId
                 and pi.id not in :keepIds
             """)
-    List<PostImage> findImagesToDelete(@Param("postId") Long postId,
-                                       @Param("keepIds") List<Long> keepIds);
+    List<PostImage> findImagesToDelete(@Param("postId") Long postId, @Param("keepIds") List<Long> keepIds);
 
     void deleteAllByPost_Id(Long postId);
 

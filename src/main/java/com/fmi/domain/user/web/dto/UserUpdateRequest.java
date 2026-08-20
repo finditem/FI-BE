@@ -10,8 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserUpdateRequest {
 
-    @Size(min = 2, max = 15, message = "닉네임은 2~15자 사이여야 합니다")
-    private String nickname;
+    @Size(min = 2, max = 15, message = "닉네임은 2~15자 사이여야 합니다") private String nickname;
 
     private Boolean deleteProfileImage;
 
