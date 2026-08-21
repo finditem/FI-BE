@@ -11,4 +11,3 @@ public class EmailVerifyResponse {
     @Schema(description = "이메일 인증 여부", example = "true")
     private boolean verified;
 }
-

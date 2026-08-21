@@ -1,8 +1,18 @@
 package com.fmi.domain.auth.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.fmi.config.AppleOAuthProperties;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.util.Base64;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,28 +25,21 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.util.Base64;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 class AppleOAuthServiceTest {
 
     @Mock
     private RestClient.Builder restClientBuilder;
+
     @Mock
     private RestClient restClient;
+
     @Mock
     private RestClient.RequestBodyUriSpec requestBodyUriSpec;
+
     @Mock
     private RestClient.RequestBodySpec requestBodySpec;
+
     @Mock
     private RestClient.ResponseSpec responseSpec;
 
@@ -56,9 +59,7 @@ class AppleOAuthServiceTest {
                 Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded()),
                 Map.of(
                         "dev", "https://dev.finditem.kr/auth/apple/callback",
-                        "release", "https://release.finditem.kr/auth/apple/callback"
-                )
-        );
+                        "release", "https://release.finditem.kr/auth/apple/callback"));
         appleOAuthService = new AppleOAuthService(restClientBuilder, properties);
     }
 
@@ -107,7 +108,8 @@ class AppleOAuthServiceTest {
     private void Apple_token_교환이_400으로_실패한다() {
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri("https://appleid.apple.com/auth/token")).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.contentType(MediaType.APPLICATION_FORM_URLENCODED)).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(MultiValueMap.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(AppleOAuthService.AppleToken.class))

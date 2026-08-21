@@ -1,9 +1,8 @@
 package com.fmi.domain.report.data;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "report_answer_image")

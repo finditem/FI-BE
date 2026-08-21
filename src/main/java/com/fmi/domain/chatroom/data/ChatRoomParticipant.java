@@ -4,12 +4,11 @@ import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatroom.data.enums.ParticipantState;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter

@@ -3,14 +3,13 @@ package com.fmi.domain.noticecommentlike.data;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.noticecomment.data.NoticeComment;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "notice_comment_like", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "comment_id"})
-})
+@Table(
+        name = "notice_comment_like",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "comment_id"})})
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

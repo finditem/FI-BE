@@ -10,15 +10,6 @@ import com.fmi.security.JwtTokenProvider;
 import com.fmi.security.RefreshTokenStore;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -27,6 +18,14 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth/apple")
@@ -41,14 +40,13 @@ public class AppleAuthController {
 
     @Value("${jwt.cookie.name:refresh_token}")
     private String refreshCookieName;
+
     @Value("${jwt.cookie.access-token-name:access_token}")
     private String accessCookieName;
 
     @PostMapping
     public ResponseEntity<ApiResponse<LoginResponse>> loginWithApple(
-            @Valid @RequestBody AppleLoginRequest request,
-            HttpServletRequest httpServletRequest
-    ) {
+            @Valid @RequestBody AppleLoginRequest request, HttpServletRequest httpServletRequest) {
         String subject = appleOAuthService.exchangeCodeForSubject(request.getCode(), request.getEnvironment());
         var localUser = socialLoginService.upsertUserFromApple(subject).user();
         boolean termsAgreed = localUser.isPrivacyPolicyAgreed() && localUser.isTermsOfServiceAgreed();
@@ -70,14 +68,12 @@ public class AppleAuthController {
                 httpServletRequest,
                 accessCookieName,
                 accessToken,
-                Duration.between(Instant.now(), accessExpiration.toInstant())
-        );
+                Duration.between(Instant.now(), accessExpiration.toInstant()));
         ResponseCookie refreshCookie = cookieFactory.build(
                 httpServletRequest,
                 refreshCookieName,
                 refreshToken,
-                Duration.between(Instant.now(), refreshExpiration.toInstant())
-        );
+                Duration.between(Instant.now(), refreshExpiration.toInstant()));
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", accessCookie.toString())
@@ -87,9 +83,8 @@ public class AppleAuthController {
 
     private static String sha256Hex(String value) {
         try {
-            return java.util.HexFormat.of().formatHex(
-                    MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))
-            );
+            return java.util.HexFormat.of()
+                    .formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 not available", exception);
         }

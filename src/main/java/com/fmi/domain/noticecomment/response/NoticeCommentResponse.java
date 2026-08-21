@@ -1,10 +1,9 @@
 package com.fmi.domain.noticecomment.response;
 
 import com.fmi.domain.user.web.dto.response.UserCommentResponse;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.*;
 
 @Getter
 @Setter

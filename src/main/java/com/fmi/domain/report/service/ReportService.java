@@ -28,6 +28,8 @@ import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.EmailService;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -38,15 +40,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.List;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ReportService {
-    
+
     private final ReportRepository reportRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
@@ -64,7 +63,8 @@ public class ReportService {
      */
     @Transactional
     public Long createReport(ReportCreateRequestDTO request, UserDetails userDetails) {
-        User user = userRepository.findByEmail(userDetails.getUsername())
+        User user = userRepository
+                .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         // 관리자 신고 차단
@@ -73,15 +73,15 @@ public class ReportService {
         }
 
         // 중복 신고 확인
-        reportRepository.findByReporterAndTargetTypeAndTargetId(
-                user, request.getTargetType(), request.getTargetId())
+        reportRepository
+                .findByReporterAndTargetTypeAndTargetId(user, request.getTargetType(), request.getTargetId())
                 .ifPresent(report -> {
                     throw new GeneralException(ErrorStatus._REPORT_ALREADY_EXISTS);
                 });
-        
+
         // 신고 대상 존재 여부 확인
         validateTargetExists(request.getTargetType(), request.getTargetId(), user);
-        
+
         // 신고 생성
         Report report = Report.builder()
                 .reporter(user)
@@ -90,7 +90,7 @@ public class ReportService {
                 .reportType(request.getReportType())
                 .reason(request.getReason())
                 .build();
-        
+
         Report saved = reportRepository.save(report);
 
         // 채팅 신고면 상대방 차단
@@ -105,26 +105,24 @@ public class ReportService {
             String reportDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
                     .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
             String reportContent = saved.getReason() != null ? saved.getReason() : "";
-            
+
             emailService.sendHtmlEmailAsync(
-                user.getEmail(),
-                "신고가 접수되었습니다",
-                "report-received-email.html",
-                java.util.Map.of(
-                    "NAME", nickname,
-                    "TITLE", targetTitle,
-                    "USER", user.getEmail(),
-                    "DATE", reportDate,
-                    "CONTENT", reportContent
-                )
-            );
+                    user.getEmail(),
+                    "신고가 접수되었습니다",
+                    "report-received-email.html",
+                    java.util.Map.of(
+                            "NAME", nickname,
+                            "TITLE", targetTitle,
+                            "USER", user.getEmail(),
+                            "DATE", reportDate,
+                            "CONTENT", reportContent));
         } catch (Exception e) {
             log.error("신고 접수 이메일 발송 실패: reportId={}", saved.getReportId(), e);
         }
-        
+
         return saved.getReportId();
     }
-    
+
     /**
      * 내 신고 내역 조회
      */
@@ -146,11 +144,12 @@ public class ReportService {
             return reportConverter.toListDTO(report, targetTitle);
         });
     }
-    
+
     /**
      * 내 신고 내역 조회 (커서 기반)
      */
-    public CursorPageResponse<ReportListDTO> getMyReportsCursor(User user, ReportStatus status, Boolean answered, String keyword, Long cursor, int size) {
+    public CursorPageResponse<ReportListDTO> getMyReportsCursor(
+            User user, ReportStatus status, Boolean answered, String keyword, Long cursor, int size) {
         int fetchSize = size + 1;
         Pageable limit = PageRequest.of(0, fetchSize);
         List<Report> reports;
@@ -160,15 +159,20 @@ public class ReportService {
             String lower = trimmed.toLowerCase();
             List<String> matchedTypes = Arrays.stream(ReportType.values())
                     .filter(t -> t.name().toLowerCase().contains(lower)
-                              || t.getDescription().toLowerCase().contains(lower))
+                            || t.getDescription().toLowerCase().contains(lower))
                     .map(Enum::name)
                     .toList();
             if (matchedTypes.isEmpty()) {
                 matchedTypes = List.of("__NONE__");
             }
             reports = reportRepository.findByReporterWithKeywordCursor(
-                    user.getId(), status != null ? status.name() : null,
-                    answered, trimmed, matchedTypes, cursor, fetchSize);
+                    user.getId(),
+                    status != null ? status.name() : null,
+                    answered,
+                    trimmed,
+                    matchedTypes,
+                    cursor,
+                    fetchSize);
         } else if (status != null && answered != null) {
             reports = reportRepository.findByReporterAndStatusAndAnsweredCursor(user, status, answered, cursor, limit);
         } else if (status != null) {
@@ -197,7 +201,8 @@ public class ReportService {
      * 내 신고 상세 조회
      */
     public ReportDetailDTO getMyReportDetail(User user, Long reportId) {
-        Report report = reportRepository.findById(reportId)
+        Report report = reportRepository
+                .findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
 
         if (!report.getReporter().getId().equals(user.getId())) {
@@ -214,19 +219,21 @@ public class ReportService {
     private void validateTargetExists(ReportTargetType targetType, Long targetId, User reporter) {
         switch (targetType) {
             case POST:
-                postRepository.findById(targetId)
-                        .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
+                postRepository.findById(targetId).orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
                 break;
             case COMMENT:
-                commentRepository.findById(targetId)
+                commentRepository
+                        .findById(targetId)
                         .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
                 break;
             case USER:
-                userRepository.findActiveById(targetId)
+                userRepository
+                        .findActiveById(targetId)
                         .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
                 break;
             case CHAT:
-                ChatRoom room = chatRoomRepository.findById(targetId)
+                ChatRoom room = chatRoomRepository
+                        .findById(targetId)
                         .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
                 if (!room.isParticipant(reporter)) {
                     throw new GeneralException(ErrorStatus._CHATROOM_ACCESS_DENIED);
@@ -234,7 +241,7 @@ public class ReportService {
                 break;
         }
     }
-    
+
     /**
      * 신고 대상 제목 가져오기
      */
@@ -242,19 +249,26 @@ public class ReportService {
         try {
             switch (targetType) {
                 case POST:
-                    return postRepository.findById(targetId)
-                            .map(Post::getTitle)
-                            .orElse("삭제된 게시글");
+                    return postRepository.findById(targetId).map(Post::getTitle).orElse("삭제된 게시글");
                 case COMMENT:
-                    return commentRepository.findById(targetId)
-                            .map(comment -> comment.getContent().substring(0, Math.min(50, comment.getContent().length())) + "...")
+                    return commentRepository
+                            .findById(targetId)
+                            .map(comment -> comment.getContent()
+                                            .substring(
+                                                    0,
+                                                    Math.min(
+                                                            50,
+                                                            comment.getContent().length()))
+                                    + "...")
                             .orElse("삭제된 댓글");
                 case USER:
-                    return userRepository.findActiveById(targetId)
+                    return userRepository
+                            .findActiveById(targetId)
                             .map(u -> u.getNickname() + " 사용자")
                             .orElse("삭제된 사용자");
                 case CHAT:
-                    return chatRoomRepository.findById(targetId)
+                    return chatRoomRepository
+                            .findById(targetId)
                             .map(room -> "채팅방: " + room.getId())
                             .orElse("삭제된 채팅방");
                 default:
@@ -270,7 +284,8 @@ public class ReportService {
      */
     @Transactional
     public void updateStatus(Long reportId, ReportStatus status) {
-        Report report = reportRepository.findById(reportId)
+        Report report = reportRepository
+                .findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
 
         switch (status) {
@@ -294,8 +309,7 @@ public class ReportService {
                     "신고에 대한 답변이 등록되었습니다.",
                     "",
                     ReferenceType.REPORT,
-                    report.getReportId()
-            );
+                    report.getReportId());
         }
     }
 
@@ -304,17 +318,18 @@ public class ReportService {
      */
     @Transactional
     public void answerReport(Long reportId, String adminAnswer, List<String> imageUrls, UserDetails userDetails) {
-        Report report = reportRepository.findById(reportId)
+        Report report = reportRepository
+                .findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
 
-        User adminUser = userRepository.findByEmail(userDetails.getUsername())
+        User adminUser = userRepository
+                .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         report.answer(adminAnswer, adminUser);
 
         // 기존 답변 이미지 삭제 후 새로 저장
-        reportAnswerImageRepository.deleteAll(
-                reportAnswerImageRepository.findByReportReportId(reportId));
+        reportAnswerImageRepository.deleteAll(reportAnswerImageRepository.findByReportReportId(reportId));
 
         if (imageUrls != null && !imageUrls.isEmpty()) {
             List<ReportAnswerImage> images = imageUrls.stream()
@@ -332,8 +347,7 @@ public class ReportService {
                     "신고에 대한 답변이 등록되었습니다",
                     adminAnswer,
                     ReferenceType.REPORT,
-                    report.getReportId()
-            );
+                    report.getReportId());
 
             try {
                 String targetTitle = getTargetTitle(report.getTargetType(), report.getTargetId());
@@ -342,18 +356,16 @@ public class ReportService {
                         .format(report.getCreatedAt() != null ? report.getCreatedAt() : java.time.LocalDateTime.now());
 
                 emailService.sendHtmlEmailAsync(
-                    reporter.getEmail(),
-                    "신고 답변 안내",
-                    "report-result-email.html",
-                    java.util.Map.of(
-                        "name", reporterNickname,
-                        "TITLE", targetTitle,
-                        "USER", reporter.getEmail(),
-                        "RESULT", "답변 완료",
-                        "DATE", reportDate,
-                        "CONTENT", adminAnswer
-                    )
-                );
+                        reporter.getEmail(),
+                        "신고 답변 안내",
+                        "report-result-email.html",
+                        java.util.Map.of(
+                                "name", reporterNickname,
+                                "TITLE", targetTitle,
+                                "USER", reporter.getEmail(),
+                                "RESULT", "답변 완료",
+                                "DATE", reportDate,
+                                "CONTENT", adminAnswer));
             } catch (Exception e) {
                 log.error("신고 답변 이메일 발송 실패: reportId={}", report.getReportId(), e);
             }
@@ -364,18 +376,17 @@ public class ReportService {
             User targetUser = findTargetUser(report.getTargetType(), report.getTargetId());
             if (targetUser != null) {
                 String targetNickname = targetUser.getNickname() != null ? targetUser.getNickname() : "회원";
-                String categoryName = report.getTargetType() != null ? report.getTargetType().getDescription() : "";
+                String categoryName =
+                        report.getTargetType() != null ? report.getTargetType().getDescription() : "";
                 emailService.sendHtmlEmailAsync(
-                    targetUser.getEmail(),
-                    "신고 처리 결과 안내",
-                    "report-notification-email.html",
-                    java.util.Map.of(
-                        "name", targetNickname,
-                        "CATEGORY", categoryName,
-                        "USER", targetUser.getEmail(),
-                        "NICKNAME", targetNickname
-                    )
-                );
+                        targetUser.getEmail(),
+                        "신고 처리 결과 안내",
+                        "report-notification-email.html",
+                        java.util.Map.of(
+                                "name", targetNickname,
+                                "CATEGORY", categoryName,
+                                "USER", targetUser.getEmail(),
+                                "NICKNAME", targetNickname));
             }
         } catch (Exception e) {
             log.error("피신고자 이메일 발송 실패: reportId={}", report.getReportId(), e);
@@ -388,7 +399,10 @@ public class ReportService {
                 case POST:
                     return postRepository.findById(targetId).map(Post::getUser).orElse(null);
                 case COMMENT:
-                    return commentRepository.findById(targetId).map(c -> c.getUser()).orElse(null);
+                    return commentRepository
+                            .findById(targetId)
+                            .map(c -> c.getUser())
+                            .orElse(null);
                 case USER:
                     return userRepository.findActiveById(targetId).orElse(null);
                 default:
@@ -408,7 +422,8 @@ public class ReportService {
             return;
         }
 
-        ChatRoom room = chatRoomRepository.findById(request.getTargetId())
+        ChatRoom room = chatRoomRepository
+                .findById(request.getTargetId())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
 
         User targetUser = room.getOtherParticipant(reporter.getId());
@@ -416,4 +431,3 @@ public class ReportService {
         blockService.block(reporter.getId(), targetUser.getId());
     }
 }
-

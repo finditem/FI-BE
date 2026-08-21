@@ -1,5 +1,10 @@
 package com.fmi.domain.chatroom.converter;
 
+import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomSummaryDTO;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.data.ChatRoom;
@@ -7,16 +12,10 @@ import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.Map;
-
-import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomSummaryDTO;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 
 class ChatRoomConverterSummaryTest {
 
@@ -25,11 +24,8 @@ class ChatRoomConverterSummaryTest {
 
     @BeforeEach
     void setUp() {
-        contactUser = User.builder()
-                .id(2L)
-                .nickname("상대방")
-                .email("other@test.com")
-                .build();
+        contactUser =
+                User.builder().id(2L).nickname("상대방").email("other@test.com").build();
     }
 
     @Test
@@ -143,7 +139,8 @@ class ChatRoomConverterSummaryTest {
         given(participant.getUnreadCount()).willReturn(0L);
         given(participant.getLastMessageSentAt()).willReturn(null);
 
-        ChatRoomSummaryDTO result = ChatRoomConverter.toChatRoomSummaryDTO(participant, contactUser, Map.of(99L, "thumb.jpg"));
+        ChatRoomSummaryDTO result =
+                ChatRoomConverter.toChatRoomSummaryDTO(participant, contactUser, Map.of(99L, "thumb.jpg"));
 
         assertThat(result.getPostInfo().getPostStatus()).isEqualTo(PostStatus.FOUND);
     }

@@ -1,7 +1,6 @@
 package com.fmi.domain.comment.web.dto.response;
 
 import com.fmi.domain.user.web.dto.response.UserCommentResponse;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,6 +12,4 @@ public record CommentCreateResponse(
         boolean canEdit,
         boolean canDelete,
         UserCommentResponse authorResponse,
-        List<CommentImageResponse> commentImageResponseList
-) {
-}
+        List<CommentImageResponse> commentImageResponseList) {}

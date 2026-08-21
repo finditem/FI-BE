@@ -7,5 +7,4 @@ public record CommentPageResponse(
         boolean hasNext,
         Integer nextPage,
         long totalCommentCount,
-        long remainingCount) {
-}
+        long remainingCount) {}

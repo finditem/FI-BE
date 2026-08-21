@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class NotificationConverter {
-    
+
     public NotificationListDTO toListDTO(Notification notification) {
         return NotificationListDTO.builder()
                 .notificationId(notification.getNotificationId())
@@ -22,7 +22,7 @@ public class NotificationConverter {
                 .createdAt(notification.getCreatedAt())
                 .build();
     }
-    
+
     public NotificationSettingsDTO toSettingsDTO(NotificationSettings settings, com.fmi.domain.auth.data.User user) {
         return NotificationSettingsDTO.builder()
                 .commentEnabled(settings.getCommentEnabled())
@@ -40,4 +40,3 @@ public class NotificationConverter {
                 .build();
     }
 }
-

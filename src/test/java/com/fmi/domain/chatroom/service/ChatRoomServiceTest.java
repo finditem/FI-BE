@@ -1,5 +1,9 @@
 package com.fmi.domain.chatroom.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
@@ -12,6 +16,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
 import com.fmi.domain.userblock.service.BlockService;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,23 +27,30 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class ChatRoomServiceTest {
 
-    @Mock private ChatRoomRepository chatRoomRepository;
-    @Mock private PostRepository postRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private ChatRoomParticipantRepository chatRoomParticipantRepository;
-    @Mock private ChatMessageRepository chatMessageRepository;
-    @Mock private PostImageService postImageService;
-    @Mock private BlockService blockService;
+    @Mock
+    private ChatRoomRepository chatRoomRepository;
+
+    @Mock
+    private PostRepository postRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ChatRoomParticipantRepository chatRoomParticipantRepository;
+
+    @Mock
+    private ChatMessageRepository chatMessageRepository;
+
+    @Mock
+    private PostImageService postImageService;
+
+    @Mock
+    private BlockService blockService;
 
     @InjectMocks
     private ChatRoomService chatRoomService;
@@ -62,10 +74,8 @@ class ChatRoomServiceTest {
         given(chatRoom.getPost()).willReturn(post);
         given(chatRoom.getOtherParticipant(currentUser.getId())).willReturn(opponent);
 
-        participant = ChatRoomParticipant.builder()
-                .user(currentUser)
-                .unreadCount(0L)
-                .build();
+        participant =
+                ChatRoomParticipant.builder().user(currentUser).unreadCount(0L).build();
         given(chatRoom.getParticipant(currentUser.getId())).willReturn(participant);
 
         given(postImageService.findThumbnailImageUrl(post)).willReturn(null);

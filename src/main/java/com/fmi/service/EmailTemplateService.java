@@ -1,13 +1,12 @@
 package com.fmi.service;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 /**
  * 이메일 템플릿 로드 및 변수 치환 서비스

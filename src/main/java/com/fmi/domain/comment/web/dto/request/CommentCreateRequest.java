@@ -4,12 +4,4 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record CommentCreateRequest(
-        @NotNull
-        Long postId,
-
-        @NotBlank
-        String content,
-
-        Long parentId
-) {
-}
+        @NotNull Long postId, @NotBlank String content, Long parentId) {}

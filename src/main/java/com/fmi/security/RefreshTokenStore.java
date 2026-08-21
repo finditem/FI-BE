@@ -14,8 +14,13 @@ public interface RefreshTokenStore {
             this.expiresAt = expiresAt;
         }
 
-        public String getUserEmail() { return userEmail; }
-        public Instant getExpiresAt() { return expiresAt; }
+        public String getUserEmail() {
+            return userEmail;
+        }
+
+        public Instant getExpiresAt() {
+            return expiresAt;
+        }
     }
 
     String issue(String jti, String userEmail, String hashedToken, Instant expiresAt);
@@ -28,5 +33,3 @@ public interface RefreshTokenStore {
 
     boolean validate(String jti, String hashedToken, String userEmail);
 }
-
-

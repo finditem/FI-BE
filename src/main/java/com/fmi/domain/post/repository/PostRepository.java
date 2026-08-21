@@ -3,6 +3,9 @@ package com.fmi.domain.post.repository;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.map.repository.PostMapCustom;
 import com.fmi.domain.post.data.Post;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,10 +13,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryCustom, PostMapCustom {
@@ -24,20 +23,20 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     @Query("update Post p set p.viewCount = p.viewCount + 1 where p.id = :postId and p.deleted = false")
     void increaseViewCount(@Param("postId") Long postId);
 
-//    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.images WHERE p.user = :user AND p.temporarySave = true")
-//    Optional<Post> findByUserAndTemporarySaveTrue(@Param("user") User user);
+    //    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.images WHERE p.user = :user AND p.temporarySave = true")
+    //    Optional<Post> findByUserAndTemporarySaveTrue(@Param("user") User user);
 
-//    Page<Post> findByTemporarySaveFalse(Pageable pageable);
+    //    Page<Post> findByTemporarySaveFalse(Pageable pageable);
 
-//    Slice<Post> findByTemporarySaveFalseAndPostType(Type postType, Pageable pageable);
+    //    Slice<Post> findByTemporarySaveFalseAndPostType(Type postType, Pageable pageable);
 
     // 2. 두 번째 페이지부터용 (마지막으로 본 ID보다 작은 데이터들 조회)
-//    Slice<Post> findByTemporarySaveFalseAndPostTypeAndIdLessThan(Type postType, Long id, Pageable pageable);
+    //    Slice<Post> findByTemporarySaveFalseAndPostTypeAndIdLessThan(Type postType, Long id, Pageable pageable);
 
-//    Optional<Post> deleteByUserAndTemporarySaveTrue(User user);
+    //    Optional<Post> deleteByUserAndTemporarySaveTrue(User user);
 
-//    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.images WHERE p.user.email = :email AND p.temporarySave = true")
-//    Optional<Post> findByUserEmailAndTemporarySaveTrue(@Param("email") String email);
+    //    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.images WHERE p.user.email = :email AND p.temporarySave = true")
+    //    Optional<Post> findByUserEmailAndTemporarySaveTrue(@Param("email") String email);
 
     // 특정 사용자의 게시글 조회 (익명화 처리용)
     @Query("SELECT p FROM Post p WHERE p.user = :user AND p.deleted = false")
@@ -48,23 +47,27 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 
     Slice<Post> findByUserAndTemporarySaveFalseAndDeletedFalseOrderByIdDesc(User user, Pageable pageable);
 
-    Slice<Post> findByUserAndTemporarySaveFalseAndDeletedFalseAndIdLessThanOrderByIdDesc(User user, Long cursor, Pageable pageable);
+    Slice<Post> findByUserAndTemporarySaveFalseAndDeletedFalseAndIdLessThanOrderByIdDesc(
+            User user, Long cursor, Pageable pageable);
 
     long countByUserAndDeletedFalse(User user);
 
+    //    @Modifying
+    //    @Query(value = """
+    //                UPDATE Post p SET p.viewCnt = p.viewCnt + :#{#counts[p.id]}
+    //                WHERE p.id IN :#{#counts.keySet()}
+    //            """)
+    //    void batchIncrementViewCounts(@Param("counts") Map<Long, Long> counts);
 
-//    @Modifying
-//    @Query(value = """
-//                UPDATE Post p SET p.viewCnt = p.viewCnt + :#{#counts[p.id]}
-//                WHERE p.id IN :#{#counts.keySet()}
-//            """)
-//    void batchIncrementViewCounts(@Param("counts") Map<Long, Long> counts);
+    @Query(
+            "SELECT p FROM Post p WHERE p.user = :user AND p.temporarySave = false AND p.deleted = false AND p.createdAt < :cursor ORDER BY p.createdAt DESC")
+    Slice<Post> findByUserAndTemporarySaveFalseAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(
+            @Param("user") User user, @Param("cursor") LocalDateTime cursor, Pageable pageable);
 
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.temporarySave = false AND p.deleted = false AND p.createdAt < :cursor ORDER BY p.createdAt DESC")
-    Slice<Post> findByUserAndTemporarySaveFalseAndDeletedFalseAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") User user, @Param("cursor") LocalDateTime cursor, Pageable pageable);
-
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.temporarySave = false AND p.deleted = false ORDER BY p.createdAt DESC")
-    Slice<Post> findByUserAndTemporarySaveFalseAndDeletedFalseOrderByCreatedAtDesc(@Param("user") User user, Pageable pageable);
+    @Query(
+            "SELECT p FROM Post p WHERE p.user = :user AND p.temporarySave = false AND p.deleted = false ORDER BY p.createdAt DESC")
+    Slice<Post> findByUserAndTemporarySaveFalseAndDeletedFalseOrderByCreatedAtDesc(
+            @Param("user") User user, Pageable pageable);
 
     Long countByUserAndTemporarySaveFalseAndDeletedFalse(User user);
 
@@ -87,7 +90,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     void deleteExpiredDeletedPosts(@Param("threshold") LocalDateTime threshold);
 
     @Modifying
-    @Query("UPDATE Post p SET p.deleted = true, p.deletedAt = :now, p.updatedAt = :now WHERE p.user = :user AND p.deleted = false")
+    @Query(
+            "UPDATE Post p SET p.deleted = true, p.deletedAt = :now, p.updatedAt = :now WHERE p.user = :user AND p.deleted = false")
     void softDeleteAllByUser(@Param("user") User user, @Param("now") LocalDateTime now);
 
     // 활동 내역용 - 날짜/키워드 필터 포함
@@ -101,12 +105,13 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
               AND (:cursor IS NULL OR p.createdAt < :cursor)
             ORDER BY p.createdAt DESC
             """)
-    Slice<Post> findUserActivities(@Param("user") User user,
-                                    @Param("startDate") java.time.LocalDateTime startDate,
-                                    @Param("endDate") java.time.LocalDateTime endDate,
-                                    @Param("keyword") String keyword,
-                                    @Param("cursor") java.time.LocalDateTime cursor,
-                                    Pageable pageable);
+    Slice<Post> findUserActivities(
+            @Param("user") User user,
+            @Param("startDate") java.time.LocalDateTime startDate,
+            @Param("endDate") java.time.LocalDateTime endDate,
+            @Param("keyword") String keyword,
+            @Param("cursor") java.time.LocalDateTime cursor,
+            Pageable pageable);
 
     // 콘텐츠 활용 동의 유저 게시글 - 최신순
     @Query(value = """
@@ -123,13 +128,14 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             ORDER BY p.id DESC
             LIMIT :limit
             """, nativeQuery = true)
-    List<Post> findContentPolicyPostsByLatest(@Param("category") String category,
-                                              @Param("postStatus") String postStatus,
-                                              @Param("keyword") String keyword,
-                                              @Param("startDate") LocalDateTime startDate,
-                                              @Param("endDate") LocalDateTime endDate,
-                                              @Param("cursor") Long cursor,
-                                              @Param("limit") int limit);
+    List<Post> findContentPolicyPostsByLatest(
+            @Param("category") String category,
+            @Param("postStatus") String postStatus,
+            @Param("keyword") String keyword,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("cursor") Long cursor,
+            @Param("limit") int limit);
 
     // 콘텐츠 활용 동의 유저 게시글 - 오래된순
     @Query(value = """
@@ -146,13 +152,14 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             ORDER BY p.id ASC
             LIMIT :limit
             """, nativeQuery = true)
-    List<Post> findContentPolicyPostsByOldest(@Param("category") String category,
-                                              @Param("postStatus") String postStatus,
-                                              @Param("keyword") String keyword,
-                                              @Param("startDate") LocalDateTime startDate,
-                                              @Param("endDate") LocalDateTime endDate,
-                                              @Param("cursor") Long cursor,
-                                              @Param("limit") int limit);
+    List<Post> findContentPolicyPostsByOldest(
+            @Param("category") String category,
+            @Param("postStatus") String postStatus,
+            @Param("keyword") String keyword,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("cursor") Long cursor,
+            @Param("limit") int limit);
 
     // 콘텐츠 활용 동의 유저 게시글 - 조회수 많은순
     @Query(value = """
@@ -169,14 +176,15 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             ORDER BY p.view_count DESC, p.id DESC
             LIMIT :limit
             """, nativeQuery = true)
-    List<Post> findContentPolicyPostsByMostViewed(@Param("category") String category,
-                                                   @Param("postStatus") String postStatus,
-                                                   @Param("keyword") String keyword,
-                                                   @Param("startDate") LocalDateTime startDate,
-                                                   @Param("endDate") LocalDateTime endDate,
-                                                   @Param("cursorViewCount") Long cursorViewCount,
-                                                   @Param("cursorId") Long cursorId,
-                                                   @Param("limit") int limit);
+    List<Post> findContentPolicyPostsByMostViewed(
+            @Param("category") String category,
+            @Param("postStatus") String postStatus,
+            @Param("keyword") String keyword,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("cursorViewCount") Long cursorViewCount,
+            @Param("cursorId") Long cursorId,
+            @Param("limit") int limit);
 
     // 콘텐츠 활용 동의 유저 게시글 - 즐겨찾기 많은순
     @Query(value = """
@@ -196,13 +204,13 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             ORDER BY fav_count DESC, p.id DESC
             LIMIT :limit
             """, nativeQuery = true)
-    List<Post> findContentPolicyPostsByMostFavorited(@Param("category") String category,
-                                                      @Param("postStatus") String postStatus,
-                                                      @Param("keyword") String keyword,
-                                                      @Param("startDate") LocalDateTime startDate,
-                                                      @Param("endDate") LocalDateTime endDate,
-                                                      @Param("cursorFavCount") Long cursorFavCount,
-                                                      @Param("cursorId") Long cursorId,
-                                                      @Param("limit") int limit);
-
+    List<Post> findContentPolicyPostsByMostFavorited(
+            @Param("category") String category,
+            @Param("postStatus") String postStatus,
+            @Param("keyword") String keyword,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("cursorFavCount") Long cursorFavCount,
+            @Param("cursorId") Long cursorId,
+            @Param("limit") int limit);
 }

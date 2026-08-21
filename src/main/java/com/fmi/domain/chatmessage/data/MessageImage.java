@@ -23,6 +23,7 @@ public class MessageImage {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_message_id")
     private ChatMessage chatMessage;
+
     void setChatMessage(ChatMessage chatMessage) {
         this.chatMessage = chatMessage;
     }

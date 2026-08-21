@@ -6,7 +6,6 @@ import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.data.Radius;
 import com.fmi.domain.post.web.dto.response.image.PostImageResponse;
 import com.fmi.domain.user.web.dto.response.UserPostResponse;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,5 +28,4 @@ public record PostGetResponse(
         LocalDateTime createdAt,
         boolean isMine,
         List<PostImageResponse> imageResponseList,
-        UserPostResponse postUserInformation) {
-}
+        UserPostResponse postUserInformation) {}

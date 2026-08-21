@@ -1,7 +1,6 @@
 package com.fmi.domain.comment.web.dto.response;
 
 import com.fmi.domain.user.web.dto.response.UserCommentResponse;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,6 +16,4 @@ public record CommentResponse(
         long likeCount,
         boolean isLike,
         boolean canEdit,
-        boolean canDelete
-) {
-}
+        boolean canDelete) {}

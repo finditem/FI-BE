@@ -5,15 +5,12 @@ import com.fmi.domain.comment.data.Comment;
 import jakarta.persistence.*;
 import lombok.*;
 
-
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "comment_id"})
-)
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "comment_id"}))
 public class CommentLike {
 
     @Id

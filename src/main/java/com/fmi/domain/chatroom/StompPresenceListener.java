@@ -18,5 +18,4 @@ public class StompPresenceListener {
     public void onDisconnect(SessionDisconnectEvent e) {
         presence.disconnect(e.getSessionId());
     }
-
 }

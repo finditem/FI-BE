@@ -1,9 +1,8 @@
 package com.fmi.domain.inquirycomment.response;
 
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.*;
 
 @Getter
 @Setter
@@ -19,8 +18,10 @@ public class InquiryCommentResponse {
     private String profileImg;
     private boolean isAdmin;
     private Long parentId;
+
     @Builder.Default
     private List<InquiryCommentResponse> replies = List.of();
+
     private List<String> imageList;
     private boolean canEdit;
     private boolean canDelete;

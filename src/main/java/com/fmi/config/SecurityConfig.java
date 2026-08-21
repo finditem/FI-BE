@@ -9,6 +9,9 @@ import com.fmi.security.JwtTokenProvider;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Arrays;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,11 +31,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import lombok.RequiredArgsConstructor;
-
-import java.io.IOException;
-import java.util.Arrays;
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -41,36 +39,58 @@ public class SecurityConfig {
     private final CorsProperties corsProperties;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenProvider tokenProvider, CustomUserDetailsService userDetailsService) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
+    public SecurityFilterChain filterChain(
+            HttpSecurity http, JwtTokenProvider tokenProvider, CustomUserDetailsService userDetailsService)
+            throws Exception {
+        http.csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
-                        .requestMatchers("/", "/actuator/health", "/actuator/info", "/actuator/prometheus", "/ws/**", "/error", "/health", "/api/health").permitAll()
-                        .requestMatchers("/auth/**", "/s3/**", "/chat-test.html", "/chat-test2.html", "/posts/filter").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                .authorizeHttpRequests(auth -> auth.dispatcherTypeMatchers(DispatcherType.ASYNC)
+                        .permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/actuator/health",
+                                "/actuator/info",
+                                "/actuator/prometheus",
+                                "/ws/**",
+                                "/error",
+                                "/health",
+                                "/api/health")
+                        .permitAll()
+                        .requestMatchers("/auth/**", "/s3/**", "/chat-test.html", "/chat-test2.html", "/posts/filter")
+                        .permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**")
+                        .permitAll()
                         // 공지사항 - 조회만 공개, 좋아요/댓글 작성은 인증 필요
-                        .requestMatchers(HttpMethod.GET, "/notices/**").permitAll()
-                        .requestMatchers("/inquiries").permitAll()
-                        .requestMatchers("/users/{userId}/page").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/users/{userId}/meta").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/posts/search/**", "/posts/*", "/posts/*/similar", "/posts/*/share").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/notices/**")
+                        .permitAll()
+                        .requestMatchers("/inquiries")
+                        .permitAll()
+                        .requestMatchers("/users/{userId}/page")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/users/{userId}/meta")
+                        .permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET, "/posts/search/**", "/posts/*", "/posts/*/similar", "/posts/*/share")
+                        .permitAll()
                         // 댓글 목록/답글 조회 - 비회원도 조회 가능
-                        .requestMatchers(HttpMethod.GET, "/comments/posts/*", "/comments/*/replies").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/main/posts/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/push/vapid-key").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/comments/posts/*", "/comments/*/replies")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/main/posts/**")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/push/vapid-key")
+                        .permitAll()
                         // 관리자 전용 API 보호
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(customAuthenticationEntryPoint())
-                )
+                        .requestMatchers("/admin/**")
+                        .hasRole("ADMIN")
+                        .anyRequest()
+                        .authenticated())
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint()))
                 .httpBasic(h -> h.disable());
 
-        http.addFilterBefore(new JwtAuthenticationFilter(tokenProvider, userDetailsService), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(
+                new JwtAuthenticationFilter(tokenProvider, userDetailsService),
+                UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -84,16 +104,16 @@ public class SecurityConfig {
             private final ObjectMapper objectMapper = new ObjectMapper();
 
             @Override
-            public void commence(HttpServletRequest request, HttpServletResponse response,
-                                 AuthenticationException authException) throws IOException {
+            public void commence(
+                    HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+                    throws IOException {
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
                 ApiResponse<Object> apiResponse = ApiResponse.onFailure(
                         ErrorStatus._UNAUTHORIZED.getReasonHttpStatus().getCode(),
                         ErrorStatus._UNAUTHORIZED.getReasonHttpStatus().getMessage(),
-                        null
-                );
+                        null);
 
                 objectMapper.writeValue(response.getWriter(), apiResponse);
             }
@@ -122,6 +142,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-
-
-

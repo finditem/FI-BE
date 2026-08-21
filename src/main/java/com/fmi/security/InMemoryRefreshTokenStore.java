@@ -1,11 +1,10 @@
 package com.fmi.security;
 
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.stereotype.Component;
 
 @Component
 public class InMemoryRefreshTokenStore implements RefreshTokenStore {
@@ -53,5 +52,3 @@ public class InMemoryRefreshTokenStore implements RefreshTokenStore {
         return e.hashedToken.equals(hashedToken);
     }
 }
-
-

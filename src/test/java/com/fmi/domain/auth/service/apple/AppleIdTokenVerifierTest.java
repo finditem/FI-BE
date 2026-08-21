@@ -1,5 +1,8 @@
 package com.fmi.domain.auth.service.apple;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -10,9 +13,6 @@ import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 
 class AppleIdTokenVerifierTest {
 
@@ -89,9 +89,7 @@ class AppleIdTokenVerifierTest {
 
     private AppleIdTokenVerifier 검증기(RsaJsonWebKey signingJwk) {
         return new AppleIdTokenVerifier(
-                "com.finditem.web",
-                new JwksVerificationKeyResolver(new JsonWebKeySet(signingJwk).getJsonWebKeys())
-        );
+                "com.finditem.web", new JwksVerificationKeyResolver(new JsonWebKeySet(signingJwk).getJsonWebKeys()));
     }
 
     private String 서명한_ID_token(RsaJsonWebKey signingJwk, String audience, String subject) throws Exception {

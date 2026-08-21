@@ -4,13 +4,12 @@ import com.fmi.domain.Enum.Category;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 public class ChatRoomResponseDTO {
 
@@ -18,7 +17,7 @@ public class ChatRoomResponseDTO {
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
-    public static class ChatRoomResultDTO{
+    public static class ChatRoomResultDTO {
         private Long roomId;
         private Long unreadCount;
         private opponentUserDTO opponentUser;

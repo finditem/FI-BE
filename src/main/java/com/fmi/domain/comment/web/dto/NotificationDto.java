@@ -1,8 +1,7 @@
 package com.fmi.domain.comment.web.dto;
 
-import lombok.*;
-
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Getter
 @Setter

@@ -30,5 +30,4 @@ public enum Radius {
     public int toJson() {
         return value;
     }
-
 }

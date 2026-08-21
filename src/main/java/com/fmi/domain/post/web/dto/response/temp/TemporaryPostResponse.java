@@ -4,7 +4,6 @@ import com.fmi.domain.Enum.Category;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.data.Radius;
 import com.fmi.domain.post.web.dto.response.image.PostImageResponse;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,6 +20,4 @@ public record TemporaryPostResponse(
         String content,
         List<PostImageResponse> images,
         LocalDateTime updatedAt,
-        LocalDateTime createdAt
-) {
-}
+        LocalDateTime createdAt) {}

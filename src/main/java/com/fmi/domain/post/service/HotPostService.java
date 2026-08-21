@@ -5,11 +5,10 @@ import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostHotQueryRepository;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -19,16 +18,14 @@ public class HotPostService {
 
     @Cacheable(
             cacheNames = "hotPostIds",
-            key = "T(java.util.Objects).toString(#postType)+'|'+#postStatus+'|'+#category+'|'+#address"
-    )
-    public List<Long> getHotPostIdCandidates(PostType postType, PostStatus postStatus,
-                                             Category category, String address, int candidateSize) {
+            key = "T(java.util.Objects).toString(#postType)+'|'+#postStatus+'|'+#category+'|'+#address")
+    public List<Long> getHotPostIdCandidates(
+            PostType postType, PostStatus postStatus, Category category, String address, int candidateSize) {
         return postHotQueryRepository.findHotPostIds(postType, postStatus, category, address, candidateSize);
     }
 
-    public Set<Long> resolveHotPostIdsForUser(PostType postType, PostStatus postStatus,
-                                              Category category, String address,
-                                              Long userId, int hotSize) {
+    public Set<Long> resolveHotPostIdsForUser(
+            PostType postType, PostStatus postStatus, Category category, String address, Long userId, int hotSize) {
 
         List<Long> candidates = getHotPostIdCandidates(postType, postStatus, category, address, 50);
 

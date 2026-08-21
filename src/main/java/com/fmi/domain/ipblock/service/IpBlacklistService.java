@@ -30,9 +30,6 @@ public class IpBlacklistService {
         if (ipBlacklistRepository.existsByIp(ip)) {
             throw new GeneralException(ErrorStatus._IP_ALREADY_BLOCKED);
         }
-        ipBlacklistRepository.save(IpBlacklist.builder()
-                .ip(ip)
-                .reason(reason)
-                .build());
+        ipBlacklistRepository.save(IpBlacklist.builder().ip(ip).reason(reason).build());
     }
 }

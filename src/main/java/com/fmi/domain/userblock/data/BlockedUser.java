@@ -2,14 +2,17 @@ package com.fmi.domain.userblock.data;
 
 import com.fmi.domain.auth.data.User;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "blocked_user", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_blocker_blocked", columnNames = {"blocker_user_id", "blocked_user_id"})
-})
+@Table(
+        name = "blocked_user",
+        uniqueConstraints = {
+            @UniqueConstraint(
+                    name = "uk_blocker_blocked",
+                    columnNames = {"blocker_user_id", "blocked_user_id"})
+        })
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,5 +40,3 @@ public class BlockedUser {
         createdAt = LocalDateTime.now();
     }
 }
-
-

@@ -6,10 +6,9 @@ import com.fmi.domain.inquirycomment.data.InquiryComment;
 import com.fmi.domain.inquirycomment.data.InquiryCommentImage;
 import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
 import com.fmi.domain.inquirycomment.web.dto.CreateInquiryCommentDto;
-import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.stereotype.Component;
 
 @Component
 public class InquiryCommentConverter {
@@ -17,7 +16,8 @@ public class InquiryCommentConverter {
     /**
      * DTO를 엔티티로 변환
      */
-    public InquiryComment toCommentEntity(CreateInquiryCommentDto dto, User user, Inquiry inquiry, InquiryComment parent, String email) {
+    public InquiryComment toCommentEntity(
+            CreateInquiryCommentDto dto, User user, Inquiry inquiry, InquiryComment parent, String email) {
         InquiryComment.InquiryCommentBuilder builder = InquiryComment.builder()
                 .inquiry(inquiry)
                 .user(user)
@@ -37,8 +37,12 @@ public class InquiryCommentConverter {
     /**
      * 엔티티를 Response로 변환
      */
-    public InquiryCommentResponse toCommentResponse(InquiryComment comment, boolean canEdit, boolean canDelete,
-                                                     boolean isAdmin, List<InquiryCommentImage> images) {
+    public InquiryCommentResponse toCommentResponse(
+            InquiryComment comment,
+            boolean canEdit,
+            boolean canDelete,
+            boolean isAdmin,
+            List<InquiryCommentImage> images) {
         User author = comment.getUser();
         Long authorId = author != null ? author.getId() : null;
         String authorName = author != null ? author.getNickname() : "비회원";

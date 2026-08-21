@@ -2,17 +2,16 @@ package com.fmi.domain.auth.service.apple;
 
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Base64;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.lang.JoseException;
-
-import java.security.KeyFactory;
-import java.security.PrivateKey;
-import java.security.GeneralSecurityException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 public class AppleClientSecretGenerator {
 
@@ -64,8 +63,7 @@ public class AppleClientSecretGenerator {
             return decoded;
         }
 
-        String derBase64 = pem
-                .replace("-----BEGIN PRIVATE KEY-----", "")
+        String derBase64 = pem.replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replaceAll("\\s", "");
         return Base64.getDecoder().decode(derBase64);

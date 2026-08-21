@@ -32,6 +32,3 @@ public class ChatController {
         private long timestamp;
     }
 }
-
-
-

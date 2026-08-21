@@ -1,21 +1,21 @@
 package com.fmi.domain.chatroom.converter;
 
+import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.*;
+
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.post.data.Post;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.*;
-
 public class ChatRoomConverter {
 
-    public static ChatRoomResultDTO toChatRoomResultDTO(ChatRoom chatRoom, User user, Post post, Long unreadCount, String thumbnailUrl, boolean isBlocked) {
+    public static ChatRoomResultDTO toChatRoomResultDTO(
+            ChatRoom chatRoom, User user, Post post, Long unreadCount, String thumbnailUrl, boolean isBlocked) {
 
         var opponentUser = buildOpponentUserDTO(user, isBlocked);
 
@@ -38,7 +38,8 @@ public class ChatRoomConverter {
                 .build();
     }
 
-    public static ChatRoomResultDTO toChatRoomResultDTOFromSnapshot(ChatRoom chatRoom, User opponent, Long unreadCount, boolean isBlocked) {
+    public static ChatRoomResultDTO toChatRoomResultDTOFromSnapshot(
+            ChatRoom chatRoom, User opponent, Long unreadCount, boolean isBlocked) {
 
         var opponentUser = buildOpponentUserDTO(opponent, isBlocked);
 
@@ -61,7 +62,8 @@ public class ChatRoomConverter {
                 .build();
     }
 
-    public static List<ChatRoomSummaryDTO> toChatRoomSummaryListDTO(List<ChatRoomParticipant> participants, User currentUser, Map<Long, String> thumbnailMap) {
+    public static List<ChatRoomSummaryDTO> toChatRoomSummaryListDTO(
+            List<ChatRoomParticipant> participants, User currentUser, Map<Long, String> thumbnailMap) {
         return participants.stream()
                 .map(pt -> {
                     User contactUser = pt.getChatRoom().getOtherParticipant(currentUser.getId());
@@ -71,8 +73,8 @@ public class ChatRoomConverter {
                 .collect(Collectors.toList());
     }
 
-
-    public static ChatRoomSummaryDTO toChatRoomSummaryDTO(ChatRoomParticipant participant, User contactUser, Map<Long, String> thumbnailMap) {
+    public static ChatRoomSummaryDTO toChatRoomSummaryDTO(
+            ChatRoomParticipant participant, User contactUser, Map<Long, String> thumbnailMap) {
 
         ContactUserDTO contactUserDTO = buildContactUserDTO(contactUser);
 
@@ -152,7 +154,8 @@ public class ChatRoomConverter {
         boolean withdrawn = user.getDeletedAt() != null;
 
         if (withdrawn) {
-            return opponentUserDTO.builder()
+            return opponentUserDTO
+                    .builder()
                     .opponentUserId(user.getId())
                     .nickname(null)
                     .profileImageUrl(null)
@@ -162,7 +165,8 @@ public class ChatRoomConverter {
                     .build();
         }
 
-        return opponentUserDTO.builder()
+        return opponentUserDTO
+                .builder()
                 .opponentUserId(user.getId())
                 .nickname(user.getNickname())
                 .profileImageUrl(user.getProfile_img())
@@ -172,6 +176,5 @@ public class ChatRoomConverter {
                 .build();
     }
 
-    private ChatRoomConverter() {
-    }
+    private ChatRoomConverter() {}
 }

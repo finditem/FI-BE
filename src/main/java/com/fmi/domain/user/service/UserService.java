@@ -2,15 +2,22 @@ package com.fmi.domain.user.service;
 
 import com.fmi.domain.Enum.ActivityType;
 import com.fmi.domain.Enum.Category;
+import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.auth.service.KakaoOAuthService;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.comment.service.CommentImageService;
 import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
 import com.fmi.domain.commentlike.service.CommentLikeService;
+import com.fmi.domain.inquiry.data.Inquiry;
+import com.fmi.domain.inquiry.repository.InquiryRepository;
+import com.fmi.domain.inquirycomment.data.InquiryComment;
+import com.fmi.domain.inquirycomment.repository.InquiryCommentRepository;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
@@ -21,56 +28,42 @@ import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
-import com.fmi.domain.user.converter.UserConverter;
-import com.fmi.domain.userblock.repository.BlockedUserRepository;
-import com.fmi.domain.inquiry.data.Inquiry;
-import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.repository.ReportRepository;
+import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.domain.user.response.ActivityResponse;
-import com.fmi.domain.user.response.ImageUploadResponse;
-import com.fmi.domain.user.response.MyCommentPageResponse;
-import com.fmi.domain.user.response.UserMetaResponse;
-import com.fmi.domain.user.response.MyPostPageResponse;
 import com.fmi.domain.user.response.DailyActivityResponse;
+import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyActivityPageResponse;
+import com.fmi.domain.user.response.MyCommentPageResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
+import com.fmi.domain.user.response.UserMetaResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.web.dto.AccountDeleteRequest;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
-import com.fmi.domain.Enum.Provider;
-import com.fmi.domain.auth.data.SocialAccounts;
-import com.fmi.domain.auth.repository.SocialAccountsRepository;
-import com.fmi.domain.auth.service.KakaoOAuthService;
+import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import com.fmi.security.RefreshTokenStore;
 import com.fmi.service.EmailService;
-
-import com.fmi.domain.inquirycomment.data.InquiryComment;
-import com.fmi.domain.inquirycomment.repository.InquiryCommentRepository;
 import com.fmi.service.UserQueryService;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Stream;
-
 
 @Slf4j
 @Service
@@ -98,14 +91,13 @@ public class UserService {
     private final SocialAccountsRepository socialAccountsRepository;
     private final KakaoOAuthService kakaoOAuthService;
 
-
     /**
      * 내 정보 조회
      */
     @Transactional(readOnly = true)
     public UserProfileResponse getMyProfile(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         boolean isSocialUser = socialAccountsRepository.existsByUser(user);
         return UserConverter.toUserProfileResponse(user, isSocialUser);
@@ -116,8 +108,8 @@ public class UserService {
      */
     @Transactional
     public void agreeTerms(String email, com.fmi.domain.user.web.dto.TermsAgreeRequest request) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         user.setPrivacyPolicyAgreed(request.isPrivacyPolicyAgreed());
         user.setTermsOfServiceAgreed(request.isTermsOfServiceAgreed());
@@ -131,8 +123,8 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public UserMetaResponse getUserMeta(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user =
+                userRepository.findById(userId).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         return new UserMetaResponse(user.getNickname());
     }
 
@@ -145,10 +137,11 @@ public class UserService {
      * - 미지정 또는 기본값: posts (게시글만 조회)
      */
     @Transactional(readOnly = true)
-    public UserOtherPageResponse getOtherUserPage(Long userId, UserOtherPageType type, UserDetails userDetails, Long cursor, int size) {
+    public UserOtherPageResponse getOtherUserPage(
+            Long userId, UserOtherPageType type, UserDetails userDetails, Long cursor, int size) {
 
-        User targetUser = userRepository.findById(userId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User targetUser =
+                userRepository.findById(userId).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         User me = userQueryService.findUserIfNullReturnNull(userDetails);
 
@@ -168,8 +161,10 @@ public class UserService {
         switch (resolvedType) {
             case POSTS -> {
                 Slice<Post> postSlice = (cursor == null)
-                        ? postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseOrderByIdDesc(targetUser, pageRequest)
-                        : postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseAndIdLessThanOrderByIdDesc(targetUser, cursor, pageRequest);
+                        ? postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseOrderByIdDesc(
+                                targetUser, pageRequest)
+                        : postRepository.findByUserAndTemporarySaveFalseAndDeletedFalseAndIdLessThanOrderByIdDesc(
+                                targetUser, cursor, pageRequest);
 
                 List<Post> postList = postSlice.getContent();
                 posts = postQueryService.getPostBriefResponseList(postList, me);
@@ -203,8 +198,7 @@ public class UserService {
                                 comment,
                                 likeCountMap.getOrDefault(comment.getId(), 0L),
                                 myLikeSet.contains(comment.getId()),
-                                imageMap.getOrDefault(comment.getId(), List.of())
-                        ))
+                                imageMap.getOrDefault(comment.getId(), List.of())))
                         .toList();
 
                 hasNext = commentSlice.hasNext();
@@ -216,7 +210,8 @@ public class UserService {
             case FAVORITES -> {
                 Slice<PostFavorite> favoriteSlice = (cursor == null)
                         ? postFavoriteRepository.findByUserAndIsFavoriteTrueOrderByIdDesc(targetUser, pageRequest)
-                        : postFavoriteRepository.findByUserAndIsFavoriteTrueAndIdLessThanOrderByIdDesc(targetUser, cursor, pageRequest);
+                        : postFavoriteRepository.findByUserAndIsFavoriteTrueAndIdLessThanOrderByIdDesc(
+                                targetUser, cursor, pageRequest);
 
                 List<Post> favoritePosts = favoriteSlice.getContent().stream()
                         .map(PostFavorite::getPost)
@@ -226,7 +221,10 @@ public class UserService {
 
                 hasNext = favoriteSlice.hasNext();
                 if (hasNext && !favoriteSlice.getContent().isEmpty()) {
-                    nextCursor = favoriteSlice.getContent().get(favoriteSlice.getContent().size() - 1).getFavorite_id();
+                    nextCursor = favoriteSlice
+                            .getContent()
+                            .get(favoriteSlice.getContent().size() - 1)
+                            .getFavorite_id();
                 }
             }
         }
@@ -247,9 +245,7 @@ public class UserService {
      */
     private List<PostBriefResponse> getFavoritePostsByUser(User targetUser, User me) {
         List<PostFavorite> favorites = postFavoriteRepository.findByUserAndIsFavoriteTrue(targetUser);
-        List<Post> postList = favorites.stream()
-                .map(PostFavorite::getPost)
-                .toList();
+        List<Post> postList = favorites.stream().map(PostFavorite::getPost).toList();
 
         return postQueryService.getPostBriefResponseList(postList, me);
     }
@@ -258,11 +254,16 @@ public class UserService {
      * 내가 쓴 댓글 목록 조회 (커서 기반 + 필터)
      */
     @Transactional(readOnly = true)
-    public MyCommentPageResponse getMyComments(String email, SortType sortType,
-                                               LocalDate startDate, LocalDate endDate,
-                                               String keyword, Long cursor, int size) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+    public MyCommentPageResponse getMyComments(
+            String email,
+            SortType sortType,
+            LocalDate startDate,
+            LocalDate endDate,
+            String keyword,
+            Long cursor,
+            int size) {
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
         LocalDateTime endDateTime = (endDate != null) ? endDate.plusDays(1).atStartOfDay() : null;
@@ -270,8 +271,10 @@ public class UserService {
 
         PageRequest pageRequest = PageRequest.of(0, size);
         Slice<Comment> commentSlice = (sortType == SortType.OLDEST)
-                ? commentRepository.searchMyCommentsOldest(user, cursor, startDateTime, endDateTime, trimmedKeyword, pageRequest)
-                : commentRepository.searchMyCommentsLatest(user, cursor, startDateTime, endDateTime, trimmedKeyword, pageRequest);
+                ? commentRepository.searchMyCommentsOldest(
+                        user, cursor, startDateTime, endDateTime, trimmedKeyword, pageRequest)
+                : commentRepository.searchMyCommentsLatest(
+                        user, cursor, startDateTime, endDateTime, trimmedKeyword, pageRequest);
 
         List<Comment> commentList = commentSlice.getContent();
         List<Long> commentIds = commentList.stream().map(Comment::getId).toList();
@@ -285,13 +288,11 @@ public class UserService {
                         comment,
                         likeCountMap.getOrDefault(comment.getId(), 0L),
                         myLikeSet.contains(comment.getId()),
-                        imageMap.getOrDefault(comment.getId(), List.of())
-                ))
+                        imageMap.getOrDefault(comment.getId(), List.of())))
                 .toList();
 
-        Long nextCursor = commentSlice.hasNext()
-                ? commentList.get(commentList.size() - 1).getId()
-                : null;
+        Long nextCursor =
+                commentSlice.hasNext() ? commentList.get(commentList.size() - 1).getId() : null;
         return new MyCommentPageResponse(comments, nextCursor, commentSlice.hasNext());
     }
 
@@ -299,36 +300,48 @@ public class UserService {
      * 내가 쓴 게시글 목록 조회 (커서 기반 + 필터)
      */
     @Transactional(readOnly = true)
-    public PostPageResponse getMyPosts(String email, PostType postType, PostStatus postStatus,
-                                       Category category, SortType sortType,
-                                       LocalDate startDate, LocalDate endDate, String keyword,
-                                       Long cursor, int size) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+    public PostPageResponse getMyPosts(
+            String email,
+            PostType postType,
+            PostStatus postStatus,
+            Category category,
+            SortType sortType,
+            LocalDate startDate,
+            LocalDate endDate,
+            String keyword,
+            Long cursor,
+            int size) {
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        return postRepository.searchMyPosts(user.getId(), postType, postStatus, category, sortType,
-                startDate, endDate, keyword, cursor, size);
+        return postRepository.searchMyPosts(
+                user.getId(), postType, postStatus, category, sortType, startDate, endDate, keyword, cursor, size);
     }
 
     /**
      * 내 활동 내역 통합 조회 (커서 기반, createdAt 내림차순, 날짜별 그룹화)
      */
     @Transactional(readOnly = true)
-    public MyActivityPageResponse getMyActivities(String email, ActivityType type,
-                                                  LocalDate startDate, LocalDate endDate,
-                                                  String keyword, String cursor, int size) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+    public MyActivityPageResponse getMyActivities(
+            String email,
+            ActivityType type,
+            LocalDate startDate,
+            LocalDate endDate,
+            String keyword,
+            String cursor,
+            int size) {
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         size = Math.max(1, Math.min(size, 50));
 
-        LocalDateTime cursorTime = (cursor != null)
-                ? LocalDateTime.parse(cursor, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                : null;
+        LocalDateTime cursorTime =
+                (cursor != null) ? LocalDateTime.parse(cursor, DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
 
         LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
         LocalDateTime endDateTime = (endDate != null) ? endDate.plusDays(1).atStartOfDay() : null;
-        String trimmedKeyword = (keyword != null && !keyword.isBlank()) ? keyword.trim().toLowerCase() : null;
+        String trimmedKeyword =
+                (keyword != null && !keyword.isBlank()) ? keyword.trim().toLowerCase() : null;
 
         PageRequest pageRequest = PageRequest.of(0, size);
 
@@ -339,24 +352,34 @@ public class UserService {
             Slice<Post> postSlice = postRepository.findUserActivities(
                     user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
             anySliceHasNext = anySliceHasNext || postSlice.hasNext();
-            postSlice.getContent().forEach(p -> allActivities.add(new ActivityResponse(
-                    "POST", p.getId(), p.getTitle(), truncate(p.getContent(), 100), p.getCreatedAt())));
+            postSlice
+                    .getContent()
+                    .forEach(p -> allActivities.add(new ActivityResponse(
+                            "POST", p.getId(), p.getTitle(), truncate(p.getContent(), 100), p.getCreatedAt())));
         }
 
         if (type == null || type == ActivityType.COMMENT) {
             Slice<Comment> commentSlice = commentRepository.findUserActivityComments(
                     user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
             anySliceHasNext = anySliceHasNext || commentSlice.hasNext();
-            commentSlice.getContent().forEach(c -> allActivities.add(new ActivityResponse(
-                    "COMMENT", c.getId(), c.getPost().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
+            commentSlice
+                    .getContent()
+                    .forEach(c -> allActivities.add(new ActivityResponse(
+                            "COMMENT",
+                            c.getId(),
+                            c.getPost().getTitle(),
+                            truncate(c.getContent(), 100),
+                            c.getCreatedAt())));
         }
 
         if (type == null || type == ActivityType.FAVORITE) {
             Slice<PostFavorite> favoriteSlice = postFavoriteRepository.findUserActivityFavorites(
                     user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
             anySliceHasNext = anySliceHasNext || favoriteSlice.hasNext();
-            favoriteSlice.getContent().forEach(f -> allActivities.add(new ActivityResponse(
-                    "FAVORITE", f.getFavorite_id(), f.getPost().getTitle(), null, f.getCreatedAt())));
+            favoriteSlice
+                    .getContent()
+                    .forEach(f -> allActivities.add(new ActivityResponse(
+                            "FAVORITE", f.getFavorite_id(), f.getPost().getTitle(), null, f.getCreatedAt())));
         }
 
         // 문의 등록 활동 (INQUIRY_RECEIVED)
@@ -364,8 +387,14 @@ public class UserService {
             Slice<Inquiry> inquirySlice = inquiryRepository.findUserActivityInquiries(
                     user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
             anySliceHasNext = anySliceHasNext || inquirySlice.hasNext();
-            inquirySlice.getContent().forEach(i -> allActivities.add(new ActivityResponse(
-                    "INQUIRY_RECEIVED", i.getId(), i.getTitle(), truncate(i.getContent(), 100), i.getCreatedAt())));
+            inquirySlice
+                    .getContent()
+                    .forEach(i -> allActivities.add(new ActivityResponse(
+                            "INQUIRY_RECEIVED",
+                            i.getId(),
+                            i.getTitle(),
+                            truncate(i.getContent(), 100),
+                            i.getCreatedAt())));
         }
 
         // 문의 답변 등록 활동 (INQUIRY_ANSWERED) - InquiryComment 기반
@@ -373,11 +402,20 @@ public class UserService {
             Slice<InquiryComment> commentSlice = inquiryCommentRepository.findUserActivityInquiryAnswers(
                     user, startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
             anySliceHasNext = anySliceHasNext || commentSlice.hasNext();
-            commentSlice.getContent().forEach(c -> allActivities.add(new ActivityResponse(
-                    "INQUIRY_ANSWERED", c.getId(), c.getInquiry().getTitle(), truncate(c.getContent(), 100), c.getCreatedAt())));
+            commentSlice
+                    .getContent()
+                    .forEach(c -> allActivities.add(new ActivityResponse(
+                            "INQUIRY_ANSWERED",
+                            c.getId(),
+                            c.getInquiry().getTitle(),
+                            truncate(c.getContent(), 100),
+                            c.getCreatedAt())));
         }
 
-        if (type == null || type == ActivityType.REPORT || type == ActivityType.REPORT_RECEIVED || type == ActivityType.REPORT_ANSWERED) {
+        if (type == null
+                || type == ActivityType.REPORT
+                || type == ActivityType.REPORT_RECEIVED
+                || type == ActivityType.REPORT_ANSWERED) {
             Slice<Report> reportSlice = reportRepository.findUserActivityReports(
                     user.getId(), startDateTime, endDateTime, trimmedKeyword, cursorTime, pageRequest);
             anySliceHasNext = anySliceHasNext || reportSlice.hasNext();
@@ -391,16 +429,18 @@ public class UserService {
                         boolean isAnswered = Boolean.TRUE.equals(r.getAnswered());
                         String activityType = isAnswered ? "REPORT_ANSWERED" : "REPORT_RECEIVED";
                         allActivities.add(new ActivityResponse(
-                                activityType, r.getReportId(), r.getTargetType().getDescription() + " 신고", truncate(r.getReason(), 100), r.getCreatedAt()));
+                                activityType,
+                                r.getReportId(),
+                                r.getTargetType().getDescription() + " 신고",
+                                truncate(r.getReason(), 100),
+                                r.getCreatedAt()));
                     });
         }
 
         allActivities.sort(Comparator.comparing(ActivityResponse::createdAt).reversed());
 
         boolean hasNext = anySliceHasNext || allActivities.size() > size;
-        List<ActivityResponse> result = allActivities.size() > size
-                ? allActivities.subList(0, size)
-                : allActivities;
+        List<ActivityResponse> result = allActivities.size() > size ? allActivities.subList(0, size) : allActivities;
 
         String nextCursorValue = (hasNext && !result.isEmpty())
                 ? result.get(result.size() - 1).createdAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
@@ -410,9 +450,9 @@ public class UserService {
                 .collect(java.util.stream.Collectors.groupingBy(
                         a -> a.createdAt().toLocalDate().toString(),
                         java.util.LinkedHashMap::new,
-                        java.util.stream.Collectors.toList()
-                ))
-                .entrySet().stream()
+                        java.util.stream.Collectors.toList()))
+                .entrySet()
+                .stream()
                 .map(e -> new DailyActivityResponse(e.getKey(), e.getValue()))
                 .toList();
 
@@ -439,10 +479,10 @@ public class UserService {
     /**
      * 내 정보 수정 (닉네임 + 프로필 이미지 통합, multipart/form-data)
      */
-    public UserProfileResponse updateMyProfile(String email, UserUpdateRequest request,
-                                               MultipartFile profileImage, boolean deleteProfileImage) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+    public UserProfileResponse updateMyProfile(
+            String email, UserUpdateRequest request, MultipartFile profileImage, boolean deleteProfileImage) {
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         // 닉네임 유효성 검사 및 중복 체크 (request가 존재하고 nickname 필드가 명시적으로 전송된 경우만)
         if (request != null && request.isNicknameProvided() && request.getNickname() != null) {
@@ -459,7 +499,9 @@ public class UserService {
 
         // 기존 프로필 이미지 S3 삭제 (새 이미지 업로드 또는 삭제 요청 시)
         boolean shouldDeleteOldImage = (profileImage != null && !profileImage.isEmpty()) || deleteProfileImage;
-        if (shouldDeleteOldImage && user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
+        if (shouldDeleteOldImage
+                && user.getProfile_img() != null
+                && !user.getProfile_img().isEmpty()) {
             if (s3Service.isValidS3Url(user.getProfile_img())) {
                 try {
                     s3Service.delete(List.of(user.getProfile_img()));
@@ -489,8 +531,8 @@ public class UserService {
      * 현재 비밀번호 검증
      */
     public boolean verifyPassword(String email, String currentPassword) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         boolean passwordMatches = false;
 
@@ -539,8 +581,8 @@ public class UserService {
      * 현재 비밀번호는 별도 엔드포인트에서 검증해야 하며, 이 메서드는 새 비밀번호만 받아서 변경합니다.
      */
     public void changePassword(String email, PasswordChangeRequest request) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         // 새 비밀번호와 확인 일치 여부
         if (!request.getNewPassword().equals(request.getNewPasswordConfirm())) {
@@ -552,9 +594,9 @@ public class UserService {
         user.setPassword(newPasswordHash);
 
         // 임시 비밀번호 관련 정보 제거
-        user.setOriginalPassword(null);  // originalPassword 제거
-        user.setTemporaryPassword(null);  // 임시 비밀번호 제거
-        user.setTemporaryPasswordExpiresAt(null);  // 만료 시간 제거
+        user.setOriginalPassword(null); // originalPassword 제거
+        user.setTemporaryPassword(null); // 임시 비밀번호 제거
+        user.setTemporaryPasswordExpiresAt(null); // 만료 시간 제거
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
@@ -569,8 +611,8 @@ public class UserService {
      */
     @Transactional
     public void deleteAccount(String email, AccountDeleteRequest request) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         // 프로필 이미지가 있다면 S3에서 삭제
         if (user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
@@ -592,16 +634,16 @@ public class UserService {
         }
 
         // 탈퇴 사유 설정 (콤마 구분 저장)
-        String reasons = request.getReasons().stream()
-                .map(Enum::name)
-                .collect(java.util.stream.Collectors.joining(","));
+        String reasons =
+                request.getReasons().stream().map(Enum::name).collect(java.util.stream.Collectors.joining(","));
         user.setWithdrawalReason(reasons);
         if (request.getReasons().contains(com.fmi.domain.Enum.WithdrawalReason.OTHER)) {
             user.setWithdrawalOtherReason(request.getOtherReason());
         }
 
         // 카카오 회원이면 카카오 연결 끊기
-        socialAccountsRepository.findByUser(user)
+        socialAccountsRepository
+                .findByUser(user)
                 .filter(sa -> sa.getProvider() == Provider.KAKAO)
                 .ifPresent(sa -> kakaoOAuthService.unlinkUser(sa.getProviderId()));
 
@@ -627,9 +669,7 @@ public class UserService {
                     java.util.Map.of(
                             "NAME", nickname,
                             "USER", userEmail,
-                            "DATE", deletionDate
-                    )
-            );
+                            "DATE", deletionDate));
         } catch (Exception e) {
             // 이메일 발송 실패해도 계정 삭제는 성공 처리
             log.warn("계정 삭제 이메일 발송 실패: {}", e.getMessage());
@@ -650,4 +690,3 @@ public class UserService {
         return UserConverter.toImageUploadResponse(imageUrls);
     }
 }
-

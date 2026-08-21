@@ -1,6 +1,5 @@
 package com.fmi.domain.comment.service;
 
-import com.fmi.domain.comment.converter.CommentConverter;
 import com.fmi.domain.comment.converter.CommentImageConverter;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.data.CommentImage;
@@ -9,15 +8,14 @@ import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +32,8 @@ public class CommentImageService {
         List<String> uploadImageUrl = s3Service.upload(imageList);
 
         List<CommentImage> commentImageList = uploadImageUrl.stream()
-                .map(imageUrl -> CommentImage.create(imageUrl, comment)).toList();
+                .map(imageUrl -> CommentImage.create(imageUrl, comment))
+                .toList();
 
         commentImageList = commentImageRepository.saveAll(commentImageList);
 
@@ -53,13 +52,7 @@ public class CommentImageService {
                 .collect(Collectors.groupingBy(
                         img -> img.getComment().getId(),
                         Collectors.mapping(
-                                img -> new CommentImageResponse(
-                                        img.getId(),
-                                        img.getImgUrl()
-                                ),
-                                Collectors.toList()
-                        )
-                ));
+                                img -> new CommentImageResponse(img.getId(), img.getImgUrl()), Collectors.toList())));
     }
 
     @Transactional(readOnly = true)
@@ -73,14 +66,14 @@ public class CommentImageService {
     public void deleteCommentImageAtS3AndDBByImageIdList(List<Long> imageIdList, Long commentId) {
         if (Objects.isNull(imageIdList) || imageIdList.isEmpty()) return;
 
-        List<CommentImage> commentImageList =
-                commentImageRepository.findByIdInAndComment_Id(imageIdList, commentId);
+        List<CommentImage> commentImageList = commentImageRepository.findByIdInAndComment_Id(imageIdList, commentId);
 
         if (commentImageList.size() != imageIdList.size()) {
             throw new GeneralException(ErrorStatus._COMMENT_ACCESS_DENIED);
         }
 
-        List<String> urlList = commentImageList.stream().map(CommentImage::getImgUrl).toList();
+        List<String> urlList =
+                commentImageList.stream().map(CommentImage::getImgUrl).toList();
 
         s3Service.delete(urlList);
 

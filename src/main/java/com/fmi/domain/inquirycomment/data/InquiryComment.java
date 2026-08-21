@@ -3,11 +3,10 @@ package com.fmi.domain.inquirycomment.data;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.inquiry.data.Inquiry;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.*;
 
 @Entity
 @Table(name = "inquiry_comment")
@@ -32,7 +31,7 @@ public class InquiryComment {
     private User user;
 
     @Column(length = 255)
-    private String email;  // 비회원 댓글 시 이메일
+    private String email; // 비회원 댓글 시 이메일
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;

@@ -1,9 +1,5 @@
 package com.fmi.domain.auth.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Service;
-
 import jakarta.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -11,6 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -18,10 +17,10 @@ public class NicknameValidationService {
 
     private static final int MIN_LENGTH = 2;
     private static final int MAX_LENGTH = 10;
-    
+
     // 한글, 영문, 숫자만 허용 (특수문자 제외)
     private static final Pattern VALID_PATTERN = Pattern.compile("^[가-힣a-zA-Z0-9]+$");
-    
+
     private final Set<String> bannedWords = new HashSet<>();
 
     @PostConstruct
@@ -32,8 +31,8 @@ public class NicknameValidationService {
     private void loadBannedWords() {
         try {
             ClassPathResource resource = new ClassPathResource("banned-words.txt");
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
+            try (BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     line = line.trim();
@@ -109,4 +108,3 @@ public class NicknameValidationService {
         }
     }
 }
-

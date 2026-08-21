@@ -14,11 +14,9 @@ public enum NotificationType {
     NOTICE("공지사항"),
     SYSTEM("시스템");
 
-
     private final String description;
 
     NotificationType(String description) {
         this.description = description;
     }
 }
-

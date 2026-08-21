@@ -2,17 +2,12 @@ package com.fmi.config;
 
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
 import java.util.Map;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "oauth.kakao")
 public record KakaoOAuthProperties(
-        String clientId,
-        String clientSecret,
-        String adminKey,
-        Map<String, String> redirectUris
-) {
+        String clientId, String clientSecret, String adminKey, Map<String, String> redirectUris) {
 
     public KakaoOAuthProperties {
         redirectUris = redirectUris == null ? Map.of() : Map.copyOf(redirectUris);

@@ -21,8 +21,10 @@ public interface InquiryCommentRepository extends JpaRepository<InquiryComment, 
     /**
      * 문의의 댓글 목록 조회 (커서 기반 무한스크롤 - cursor 이후)
      */
-    @Query("SELECT c FROM InquiryComment c WHERE c.inquiry.id = :inquiryId AND c.parent IS NULL AND c.id < :cursor ORDER BY c.id DESC")
-    Slice<InquiryComment> findByInquiryIdAndIdLessThanOrderByIdDesc(@Param("inquiryId") Long inquiryId, @Param("cursor") Long cursor, Pageable pageable);
+    @Query(
+            "SELECT c FROM InquiryComment c WHERE c.inquiry.id = :inquiryId AND c.parent IS NULL AND c.id < :cursor ORDER BY c.id DESC")
+    Slice<InquiryComment> findByInquiryIdAndIdLessThanOrderByIdDesc(
+            @Param("inquiryId") Long inquiryId, @Param("cursor") Long cursor, Pageable pageable);
 
     /**
      * 특정 댓글의 대댓글 목록 조회
@@ -52,10 +54,15 @@ public interface InquiryCommentRepository extends JpaRepository<InquiryComment, 
      * 특정 유저의 문의에 달린 답변 목록 조회 (활동 내역용, createdAt 내림차순)
      */
     @Query("SELECT c FROM InquiryComment c WHERE c.inquiry.user = :user AND c.parent IS NULL ORDER BY c.createdAt DESC")
-    Slice<InquiryComment> findByInquiryUserOrderByCreatedAtDesc(@Param("user") com.fmi.domain.auth.data.User user, Pageable pageable);
+    Slice<InquiryComment> findByInquiryUserOrderByCreatedAtDesc(
+            @Param("user") com.fmi.domain.auth.data.User user, Pageable pageable);
 
-    @Query("SELECT c FROM InquiryComment c WHERE c.inquiry.user = :user AND c.parent IS NULL AND c.createdAt < :cursor ORDER BY c.createdAt DESC")
-    Slice<InquiryComment> findByInquiryUserAndCreatedAtBeforeOrderByCreatedAtDesc(@Param("user") com.fmi.domain.auth.data.User user, @Param("cursor") java.time.LocalDateTime cursor, Pageable pageable);
+    @Query(
+            "SELECT c FROM InquiryComment c WHERE c.inquiry.user = :user AND c.parent IS NULL AND c.createdAt < :cursor ORDER BY c.createdAt DESC")
+    Slice<InquiryComment> findByInquiryUserAndCreatedAtBeforeOrderByCreatedAtDesc(
+            @Param("user") com.fmi.domain.auth.data.User user,
+            @Param("cursor") java.time.LocalDateTime cursor,
+            Pageable pageable);
 
     // 활동 내역용 - 날짜/키워드 필터 포함
     @Query("""
@@ -68,10 +75,11 @@ public interface InquiryCommentRepository extends JpaRepository<InquiryComment, 
               AND (:cursor IS NULL OR c.createdAt < :cursor)
             ORDER BY c.createdAt DESC
             """)
-    Slice<InquiryComment> findUserActivityInquiryAnswers(@Param("user") com.fmi.domain.auth.data.User user,
-                                                          @Param("startDate") java.time.LocalDateTime startDate,
-                                                          @Param("endDate") java.time.LocalDateTime endDate,
-                                                          @Param("keyword") String keyword,
-                                                          @Param("cursor") java.time.LocalDateTime cursor,
-                                                          Pageable pageable);
+    Slice<InquiryComment> findUserActivityInquiryAnswers(
+            @Param("user") com.fmi.domain.auth.data.User user,
+            @Param("startDate") java.time.LocalDateTime startDate,
+            @Param("endDate") java.time.LocalDateTime endDate,
+            @Param("keyword") String keyword,
+            @Param("cursor") java.time.LocalDateTime cursor,
+            Pageable pageable);
 }

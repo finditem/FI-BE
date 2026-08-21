@@ -1,5 +1,10 @@
 package com.fmi.domain.chatmessage.service;
 
+import static com.fmi.domain.chatmessage.converter.ChatMessageConverter.messageImageResponseDTO;
+import static com.fmi.domain.chatmessage.converter.ChatMessageConverter.messageResponseDTO;
+import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessageRequestDTO;
+import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.*;
+
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.converter.ChatMessageConverter;
@@ -18,6 +23,11 @@ import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -25,17 +35,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import static com.fmi.domain.chatmessage.converter.ChatMessageConverter.messageImageResponseDTO;
-import static com.fmi.domain.chatmessage.converter.ChatMessageConverter.messageResponseDTO;
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessageRequestDTO;
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.*;
 
 @Service
 @Transactional
@@ -54,8 +53,9 @@ public class ChatMessageService {
     private final ChatNotificationService chatNotificationService;
 
     public MessageResponseDTO sendMessage(Long roomId, Long senderId, SendMessageRequestDTO req) {
-        var room = chatRoomRepository.findById(roomId).orElseThrow(
-                () -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
+        var room = chatRoomRepository
+                .findById(roomId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
         var sender = userRepository.getReferenceById(senderId);
 
         if (!room.isParticipant(sender)) {
@@ -132,7 +132,8 @@ public class ChatMessageService {
         List<ChatRoomParticipant> allParticipants = chatRoomParticipantRepository.findAllByChatRoom_Id(roomId);
         User sender = newMessage.getUser();
         Long senderId = sender.getId();
-        Long postId = newMessage.getChatRoom().isSourcePostDeleted() || newMessage.getChatRoom().getPost() == null
+        Long postId = newMessage.getChatRoom().isSourcePostDeleted()
+                        || newMessage.getChatRoom().getPost() == null
                 ? newMessage.getChatRoom().getSourcePostId()
                 : newMessage.getChatRoom().getPost().getId();
 
@@ -147,7 +148,8 @@ public class ChatMessageService {
 
             // 수신자의 카운트만 증가
             if (!pt.getUser().getId().equals(senderId)) {
-                boolean isPresent = presenceService.isUserPresent(roomId, pt.getUser().getId());
+                boolean isPresent =
+                        presenceService.isUserPresent(roomId, pt.getUser().getId());
                 if (isPresent) {
                     // 방안에 있음 -> 즉시 읽음. DB unreadCount = 0
                     pt.readMessages(newMessage.getId());
@@ -160,7 +162,8 @@ public class ChatMessageService {
                 } else {
                     // 방 밖에 있음 -> 카운트 +1. DB unreadCount + 1
                     pt.onNewMessageArrived();
-                    chatNotificationService.saveOrUpdateChatNotification(pt.getUser(), postId, roomId, newMessage.getContent(), NotificationType.CHAT);
+                    chatNotificationService.saveOrUpdateChatNotification(
+                            pt.getUser(), postId, roomId, newMessage.getContent(), NotificationType.CHAT);
                 }
             }
             // 갱신된 정보로 DTO 생성
@@ -178,7 +181,8 @@ public class ChatMessageService {
 
     @Transactional(readOnly = true)
     public MessageSliceResponseDTO messageSlice(Long roomId, Long senderId, Long cursorId) {
-        ChatRoomParticipant me = chatRoomParticipantRepository.findByChatRoom_IdAndUser_Id(roomId, senderId)
+        ChatRoomParticipant me = chatRoomParticipantRepository
+                .findByChatRoom_IdAndUser_Id(roomId, senderId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._MESSAGE_NOT_ALLOWED));
 
         Long cutoff = me.getVisibleFromMessageId();
@@ -188,7 +192,7 @@ public class ChatMessageService {
 
         // 메인 메시지 조회 (이미지 조인 X)
         Slice<ChatMessage> messagesSlice;
-        if (cursorId== null) {
+        if (cursorId == null) {
             messagesSlice = chatMessageRepository.findByChatRoomIdOrderByIdDesc(roomId, cutoff, pageable);
         } else {
             messagesSlice = chatMessageRepository.findByRoomIdWithCursor(roomId, cursorId, cutoff, pageable);
@@ -212,7 +216,7 @@ public class ChatMessageService {
                     .collect(Collectors.groupingBy(
                             image -> image.getChatMessage().getId(), // 부모 메시지 ID로 그룹핑
                             Collectors.mapping(MessageImage::getImageUrl, Collectors.toList()) // URL을 List로
-                    ));
+                            ));
         }
 
         // DTO로 변환
@@ -238,19 +242,22 @@ public class ChatMessageService {
     }
 
     public void readMessages(Long roomId, Long userId) {
-        Long lastMessageId = chatMessageRepository.findTopByChatRoom_IdOrderByIdDesc(roomId)
+        Long lastMessageId = chatMessageRepository
+                .findTopByChatRoom_IdOrderByIdDesc(roomId)
                 .map(ChatMessage::getId)
                 .orElse(null);
         if (lastMessageId == null) {
             return;
         }
 
-        ChatRoomParticipant chatRoomParticipant = chatRoomParticipantRepository.findByChatRoom_IdAndUser_Id(roomId, userId)
+        ChatRoomParticipant chatRoomParticipant = chatRoomParticipantRepository
+                .findByChatRoom_IdAndUser_Id(roomId, userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._PARTICIPANT_NOT_FOUND));
 
         chatRoomParticipant.readMessages(lastMessageId);
 
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+        ChatRoom chatRoom = chatRoomRepository
+                .findById(roomId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
 
         User recipient = chatRoom.getOtherParticipant(userId);
@@ -262,6 +269,5 @@ public class ChatMessageService {
                 .build();
 
         broker.convertAndSendToUser(recipient.getId().toString(), "/queue/read-receipts", receiptDTO);
-
     }
 }

@@ -2,7 +2,6 @@ package com.fmi.domain.comment.converter;
 
 import com.fmi.domain.comment.data.CommentImage;
 import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
-
 import java.util.List;
 
 public final class CommentImageConverter {
@@ -12,10 +11,10 @@ public final class CommentImageConverter {
     }
 
     public static List<CommentImageResponse> toCommentImageResponseList(List<CommentImage> commentImageList) {
-        return commentImageList.stream().map(CommentImageConverter::toCommentImageResponse).toList();
+        return commentImageList.stream()
+                .map(CommentImageConverter::toCommentImageResponse)
+                .toList();
     }
 
-
-    private CommentImageConverter() {
-    }
+    private CommentImageConverter() {}
 }

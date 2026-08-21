@@ -12,15 +12,14 @@ import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.global.service.S3Service;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -46,9 +45,7 @@ public class PostCleanupScheduler {
             return;
         }
 
-        List<Long> postIdList = expiredPosts.stream()
-                .map(Post::getId).
-                toList();
+        List<Long> postIdList = expiredPosts.stream().map(Post::getId).toList();
 
         List<PostImage> postImageList = postImageRepository.findAllByPostIds(postIdList);
 
@@ -68,7 +65,6 @@ public class PostCleanupScheduler {
         allImageUrls.addAll(imageUrlList);
         allImageUrls.addAll(commentImageUrls);
 
-
         try {
             if (!allImageUrls.isEmpty()) {
                 s3Service.delete(allImageUrls);
@@ -86,6 +82,5 @@ public class PostCleanupScheduler {
         postRepository.deleteAllInBatch(expiredPosts);
 
         log.info("삭제 만료 게시글 정리 완료, postCount={}", postIdList.size());
-
     }
 }

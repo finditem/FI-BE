@@ -2,9 +2,8 @@ package com.fmi.domain.notification.repository;
 
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notification.data.PushSubscription;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PushSubscriptionRepository extends JpaRepository<PushSubscription, Long> {
 

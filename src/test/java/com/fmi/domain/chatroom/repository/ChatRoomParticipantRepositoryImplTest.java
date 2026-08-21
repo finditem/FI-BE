@@ -1,19 +1,18 @@
 package com.fmi.domain.chatroom.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.fmi.domain.chatroom.data.QChatRoom;
 import com.fmi.domain.post.data.QPost;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import jakarta.persistence.EntityManager;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.lang.reflect.Method;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class ChatRoomParticipantRepositoryImplTest {
@@ -29,8 +28,8 @@ class ChatRoomParticipantRepositoryImplTest {
     }
 
     private BooleanExpression invokeAddressEq(String address) throws Exception {
-        Method method = ChatRoomParticipantRepositoryImpl.class
-                .getDeclaredMethod("addressEq", String.class, QPost.class, QChatRoom.class);
+        Method method = ChatRoomParticipantRepositoryImpl.class.getDeclaredMethod(
+                "addressEq", String.class, QPost.class, QChatRoom.class);
         method.setAccessible(true);
         return (BooleanExpression) method.invoke(repository, address, QPost.post, QChatRoom.chatRoom);
     }

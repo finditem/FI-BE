@@ -1,10 +1,9 @@
 package com.fmi.domain.comment.response;
 
 import com.fmi.domain.comment.web.dto.response.CommentResponse;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.List;
 
 @Getter
 @AllArgsConstructor

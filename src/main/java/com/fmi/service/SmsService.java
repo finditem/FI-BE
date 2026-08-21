@@ -12,5 +12,3 @@ public class SmsService {
         log.info("[SMS] to={} message=\n{}", to, message);
     }
 }
-
-

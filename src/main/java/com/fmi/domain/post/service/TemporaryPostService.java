@@ -10,14 +10,13 @@ import com.fmi.domain.post.web.dto.response.temp.TemporaryPostResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
+import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -30,10 +29,12 @@ public class TemporaryPostService {
     public void create(TemporaryPostCreateRequest request, UserDetails userDetails, List<MultipartFile> newImageList) {
         User user = userQueryService.findUser(userDetails.getUsername());
 
-        Post post = postRepository.findByUserAndTemporarySaveTrueAndDeletedFalse(user)
+        Post post = postRepository
+                .findByUserAndTemporarySaveTrueAndDeletedFalse(user)
                 .orElseGet(() -> Post.createTemporary(user));
 
-        post.updateTemporary(request.postType(),
+        post.updateTemporary(
+                request.postType(),
                 request.category(),
                 request.radius(),
                 request.date(),
@@ -51,7 +52,6 @@ public class TemporaryPostService {
             postImageService.deleteImagesNotIn(savePost.getId(), request.keepImageIdList());
         }
 
-
         if (Objects.nonNull(newImageList) && !newImageList.isEmpty()) {
             postImageService.createPostImageNormalAtS3AndDB(newImageList, savePost);
         }
@@ -60,7 +60,9 @@ public class TemporaryPostService {
     @Transactional(readOnly = true)
     public TemporaryPostResponse getMyTemporaryPost(UserDetails userDetails) {
         User user = userQueryService.findUser(userDetails.getUsername());
-        Post post = postRepository.findByUserAndTemporarySaveTrueAndDeletedFalse(user).orElse(null);
+        Post post = postRepository
+                .findByUserAndTemporarySaveTrueAndDeletedFalse(user)
+                .orElse(null);
 
         if (Objects.isNull(post)) {
             return null;
@@ -69,11 +71,7 @@ public class TemporaryPostService {
         List<PostImage> imageList = postImageService.findAllByPost(post);
 
         List<PostImageResponse> images = imageList.stream()
-                .map(image -> new PostImageResponse(
-                        image.getId(),
-                        image.getImgUrl(),
-                        image.getImageType()
-                ))
+                .map(image -> new PostImageResponse(image.getId(), image.getImgUrl(), image.getImageType()))
                 .toList();
 
         return new TemporaryPostResponse(
@@ -89,19 +87,17 @@ public class TemporaryPostService {
                 post.getContent(),
                 images,
                 post.getUpdatedAt(),
-                post.getCreatedAt()
-        );
+                post.getCreatedAt());
     }
 
     @Transactional
     public void deleteTemporaryPost(UserDetails userDetails) {
         User user = userQueryService.findUser(userDetails.getUsername());
-        Post post = postRepository.findByUserAndTemporarySaveTrueAndDeletedFalse(user)
+        Post post = postRepository
+                .findByUserAndTemporarySaveTrueAndDeletedFalse(user)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._TEMP_POST_NOT_FOUND));
 
         postImageService.deleteAllImageByPost(post);
         postRepository.delete(post);
     }
-
-
 }

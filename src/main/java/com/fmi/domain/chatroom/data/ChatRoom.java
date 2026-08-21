@@ -8,14 +8,13 @@ import com.fmi.domain.post.data.PostType;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -88,7 +87,7 @@ public class ChatRoom {
         this.post = null;
     }
 
-    //나를 제외한 다른 참여자를 찾기
+    // 나를 제외한 다른 참여자를 찾기
     public User getOtherParticipant(Long userId) {
         return this.participants.stream()
                 .map(ChatRoomParticipant::getUser) // 실제 User 객체를 꺼냅니다.
@@ -104,16 +103,13 @@ public class ChatRoom {
         return this.participants.stream()
                 .filter(p -> p.getUser().getId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new
-                        GeneralException(ErrorStatus._CHATROOM_ACCESS_DENIED));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_ACCESS_DENIED));
     }
 
     /**
      * 사용자가 채팅방의 참여자인지 확인하는 메서드
      */
     public boolean isParticipant(User user) {
-        return this.participants.stream()
-                .anyMatch(p -> p.getUser().getId().equals(user.getId()));
+        return this.participants.stream().anyMatch(p -> p.getUser().getId().equals(user.getId()));
     }
-
 }

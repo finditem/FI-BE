@@ -3,12 +3,11 @@ package com.fmi.domain.comment.repository;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.data.CommentImage;
 import io.lettuce.core.dynamic.annotation.Param;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface CommentImageRepository extends JpaRepository<CommentImage, Long> {
@@ -47,5 +46,4 @@ public interface CommentImageRepository extends JpaRepository<CommentImage, Long
                 where ci.comment.post.id in :postIds
             """)
     void deleteAllByPostIds(@Param("postIds") List<Long> postIds);
-
 }

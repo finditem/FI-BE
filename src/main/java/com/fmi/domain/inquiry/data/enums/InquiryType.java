@@ -16,4 +16,3 @@ public enum InquiryType {
         this.description = description;
     }
 }
-

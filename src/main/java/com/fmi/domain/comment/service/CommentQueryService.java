@@ -14,19 +14,18 @@ import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -49,17 +48,10 @@ public class CommentQueryService {
         boolean excludedEmpty = (excludedUserIds == null || excludedUserIds.isEmpty());
 
         List<Comment> fetched = commentRepository.findParentComments(
-                postId,
-                excludedEmpty ? Set.of(0L) : excludedUserIds,
-                excludedEmpty,
-                pageable
-        );
+                postId, excludedEmpty ? Set.of(0L) : excludedUserIds, excludedEmpty, pageable);
 
         long totalCount = commentRepository.countParentComments(
-                postId,
-                excludedEmpty ? Set.of(0L) : excludedUserIds,
-                excludedEmpty
-        );
+                postId, excludedEmpty ? Set.of(0L) : excludedUserIds, excludedEmpty);
 
         boolean hasNext = totalCount > (long) (page + 1) * PARENT_PAGE_SIZE;
 
@@ -69,9 +61,7 @@ public class CommentQueryService {
 
         long remainingCount = Math.max(0, Math.min(PARENT_PAGE_SIZE, totalCount - shown));
 
-        List<Long> parentIds = fetched.stream()
-                .map(Comment::getId)
-                .toList();
+        List<Long> parentIds = fetched.stream().map(Comment::getId).toList();
 
         Map<Long, Long> replyCountMap = buildReplyCountMap(parentIds);
         Map<Long, List<CommentImageResponse>> imageMap = commentImageService.buildImageMap(parentIds);
@@ -81,7 +71,8 @@ public class CommentQueryService {
 
         List<CommentResponse> responses = fetched.stream()
                 .map(comment -> {
-                    boolean isAuthor = Objects.nonNull(user) && Objects.equals(comment.getUser().getId(), user.getId());
+                    boolean isAuthor = Objects.nonNull(user)
+                            && Objects.equals(comment.getUser().getId(), user.getId());
                     return CommentConverter.toCommentResponse(
                             comment,
                             UserConverter.toUserCommentResponse(comment.getUser()),
@@ -89,8 +80,7 @@ public class CommentQueryService {
                             replyCountMap.getOrDefault(comment.getId(), 0L),
                             likeCountMap.getOrDefault(comment.getId(), 0L),
                             myLikePostSet.contains(comment.getId()),
-                            isAuthor
-                    );
+                            isAuthor);
                 })
                 .toList();
 
@@ -101,7 +91,8 @@ public class CommentQueryService {
     public CommentPageResponse getReplies(Long parentId, int page, UserDetails userDetails) {
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
 
-        Comment parentComment = commentRepository.findById(parentId)
+        Comment parentComment = commentRepository
+                .findById(parentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_PARENT_NOT_FOUND));
 
         Set<Long> excludedUserIds = getExcludedUserIds(user);
@@ -110,17 +101,10 @@ public class CommentQueryService {
         Pageable pageable = PageRequest.of(page, CHILD_COMMENT_PAGE_SIZE);
 
         List<Comment> fetched = commentRepository.findReplies(
-                parentComment.getId(),
-                excludedEmpty ? Set.of(0L) : excludedUserIds,
-                excludedEmpty,
-                pageable
-        );
+                parentComment.getId(), excludedEmpty ? Set.of(0L) : excludedUserIds, excludedEmpty, pageable);
 
         long totalCount = commentRepository.countReplies(
-                parentComment.getId(),
-                excludedEmpty ? Set.of(0L) : excludedUserIds,
-                excludedEmpty
-        );
+                parentComment.getId(), excludedEmpty ? Set.of(0L) : excludedUserIds, excludedEmpty);
 
         boolean hasNext = totalCount > (long) (page + 1) * CHILD_COMMENT_PAGE_SIZE;
         Integer nextPage = hasNext ? page + 1 : null;
@@ -129,9 +113,7 @@ public class CommentQueryService {
 
         long remainingCount = Math.max(0, Math.min(CHILD_COMMENT_PAGE_SIZE, totalCount - shown));
 
-        List<Long> replyIds = fetched.stream()
-                .map(Comment::getId)
-                .toList();
+        List<Long> replyIds = fetched.stream().map(Comment::getId).toList();
 
         Map<Long, Long> replyCountMap = buildReplyCountMap(replyIds);
         Map<Long, List<CommentImageResponse>> imageMap = commentImageService.buildImageMap(replyIds);
@@ -141,7 +123,8 @@ public class CommentQueryService {
 
         List<CommentResponse> responses = fetched.stream()
                 .map(reply -> {
-                    boolean isAuthor = Objects.nonNull(user) && Objects.equals(reply.getUser().getId(), user.getId());
+                    boolean isAuthor = Objects.nonNull(user)
+                            && Objects.equals(reply.getUser().getId(), user.getId());
                     return CommentConverter.toCommentResponse(
                             reply,
                             UserConverter.toUserCommentResponse(reply.getUser()),
@@ -149,14 +132,12 @@ public class CommentQueryService {
                             (reply.getDepth() < 3) ? replyCountMap.getOrDefault(reply.getId(), 0L) : 0L,
                             likeCountMap.getOrDefault(reply.getId(), 0L),
                             myLikeSet.contains(reply.getId()),
-                            isAuthor
-                    );
+                            isAuthor);
                 })
                 .toList();
 
         return new CommentPageResponse(responses, hasNext, nextPage, totalCount, remainingCount);
     }
-
 
     private Set<Long> getExcludedUserIds(User user) {
         if (user == null) return Set.of();
@@ -170,10 +151,7 @@ public class CommentQueryService {
         if (parentIds.isEmpty()) return Map.of();
 
         return commentRepository.countRepliesByParentIds(parentIds).stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (Long) row[1]
-                ));
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
 
     public Long countByPost(Post post) {
@@ -186,11 +164,6 @@ public class CommentQueryService {
         List<Long> postIdList = postList.stream().map(Post::getId).toList();
 
         return commentRepository.countCommentsGroupByPostId(postIdList).stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (Long) row[1]
-                ));
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
-
-
 }

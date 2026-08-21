@@ -5,10 +5,9 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.Objects;
+import lombok.*;
 
 @Entity
 @Getter

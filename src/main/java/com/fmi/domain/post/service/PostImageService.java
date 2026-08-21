@@ -8,15 +8,14 @@ import com.fmi.domain.post.repository.PostImageRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -32,12 +31,16 @@ public class PostImageService {
         PostImage thumb = null;
 
         if (Objects.nonNull(thumbnailId)) {
-            thumb = postImageRepository.findByIdAndPost_Id(thumbnailId, post.getId()).orElse(null);
+            thumb = postImageRepository
+                    .findByIdAndPost_Id(thumbnailId, post.getId())
+                    .orElse(null);
 
-            if (Objects.nonNull(thumb) && Objects.nonNull(keepImageIdList) && !keepImageIdList.isEmpty() && !keepImageIdList.contains(thumbnailId)) {
+            if (Objects.nonNull(thumb)
+                    && Objects.nonNull(keepImageIdList)
+                    && !keepImageIdList.isEmpty()
+                    && !keepImageIdList.contains(thumbnailId)) {
                 thumb = null;
             }
-
         }
 
         List<PostImage> newlySaved = createPostImageNormalAtS3AndDB(imageList, post);
@@ -57,8 +60,8 @@ public class PostImageService {
         List<PostImage> remain = postImageRepository.findByPost(post);
 
         if (Objects.nonNull(keepImageIdList) && !keepImageIdList.isEmpty()) {
-            Map<Long, PostImage> remainMap = remain.stream()
-                    .collect(Collectors.toMap(PostImage::getId, i -> i, (a, b) -> a));
+            Map<Long, PostImage> remainMap =
+                    remain.stream().collect(Collectors.toMap(PostImage::getId, i -> i, (a, b) -> a));
 
             for (Long keepId : keepImageIdList) {
                 PostImage kept = remainMap.get(keepId);
@@ -121,7 +124,9 @@ public class PostImageService {
 
     @Transactional(readOnly = true)
     public PostImage findThumbnailImage(Post post) {
-        return postImageRepository.findByPost_IdAndImageType(post.getId(), ImageType.THUMBNAIL).orElse(null);
+        return postImageRepository
+                .findByPost_IdAndImageType(post.getId(), ImageType.THUMBNAIL)
+                .orElse(null);
     }
 
     @Transactional(readOnly = true)
@@ -141,19 +146,15 @@ public class PostImageService {
             return Collections.emptyMap();
         }
 
-        List<Long> postIds = postList.stream()
-                .map(Post::getId)
-                .toList();
+        List<Long> postIds = postList.stream().map(Post::getId).toList();
 
-        List<PostImage> thumbnails =
-                postImageRepository.findThumbnailImagesByPostIds(postIds);
+        List<PostImage> thumbnails = postImageRepository.findThumbnailImagesByPostIds(postIds);
 
         return thumbnails.stream()
                 .collect(Collectors.toMap(
-                        pi -> pi.getPost().getId(),   // key: postId
+                        pi -> pi.getPost().getId(), // key: postId
                         PostImageService::resolveThumbnailUrl,
-                        (a, b) -> a
-                ));
+                        (a, b) -> a));
     }
 
     @Transactional(readOnly = true)
@@ -162,9 +163,7 @@ public class PostImageService {
             return Collections.emptyMap();
         }
 
-        List<Long> postIds = postList.stream()
-                .map(Post::getId)
-                .toList();
+        List<Long> postIds = postList.stream().map(Post::getId).toList();
 
         return postImageRepository.countImagesGroupByPostId(postIds);
     }
@@ -173,15 +172,11 @@ public class PostImageService {
     public Map<Long, String> findThumbnailUrlMap(List<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) return Map.of();
 
-        List<PostImage> thumbnails =
-                postImageRepository.findByPostIdInAndImageType(postIds, ImageType.THUMBNAIL);
+        List<PostImage> thumbnails = postImageRepository.findByPostIdInAndImageType(postIds, ImageType.THUMBNAIL);
 
         return thumbnails.stream()
                 .collect(Collectors.toMap(
-                        pi -> pi.getPost().getId(),
-                        PostImageService::resolveThumbnailUrl,
-                        (a, b) -> a
-                ));
+                        pi -> pi.getPost().getId(), PostImageService::resolveThumbnailUrl, (a, b) -> a));
     }
 
     public void deleteImagesNotIn(Long postId, List<Long> keepImageIdList) {
@@ -191,8 +186,7 @@ public class PostImageService {
             return;
         }
 
-        List<PostImage> imagesToDelete =
-                postImageRepository.findImagesToDelete(postId, keepImageIdList);
+        List<PostImage> imagesToDelete = postImageRepository.findImagesToDelete(postId, keepImageIdList);
 
         if (imagesToDelete.isEmpty()) {
             return;
@@ -203,8 +197,7 @@ public class PostImageService {
     }
 
     public void deleteAllImages(Long postId) {
-        List<PostImage> images =
-                postImageRepository.findByPost_Id(postId);
+        List<PostImage> images = postImageRepository.findByPost_Id(postId);
 
         if (images.isEmpty()) return;
 
@@ -228,14 +221,14 @@ public class PostImageService {
         postImageRepository.deleteAll(images);
     }
 
-
     @Transactional
     public void applyThumbnailOnUpdate(Post post, Long thumbnailId, List<PostImage> newlySaved) {
 
         if (thumbnailId != null) {
             postImageRepository.resetThumbnailToNormal(post.getId());
 
-            PostImage thumb = postImageRepository.findByIdAndPost_Id(thumbnailId, post.getId())
+            PostImage thumb = postImageRepository
+                    .findByIdAndPost_Id(thumbnailId, post.getId())
                     .orElseThrow(() -> new GeneralException(ErrorStatus._POST_IMAGE_NOT_FOUND));
 
             thumb.setImageType(ImageType.THUMBNAIL);
@@ -244,7 +237,8 @@ public class PostImageService {
 
         if (newlySaved != null && !newlySaved.isEmpty()) {
             Long firstId = newlySaved.get(0).getId();
-            PostImage first = postImageRepository.findByIdAndPost_Id(firstId, post.getId())
+            PostImage first = postImageRepository
+                    .findByIdAndPost_Id(firstId, post.getId())
                     .orElseThrow(() -> new GeneralException(ErrorStatus._POST_IMAGE_NOT_FOUND));
 
             first.setImageType(ImageType.THUMBNAIL);
@@ -255,8 +249,8 @@ public class PostImageService {
             return;
         }
 
-        postImageRepository.findFirstByPost_IdOrderByIdAsc(post.getId())
+        postImageRepository
+                .findFirstByPost_IdOrderByIdAsc(post.getId())
                 .ifPresent(fallback -> fallback.setImageType(ImageType.THUMBNAIL));
-
     }
 }

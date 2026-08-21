@@ -3,7 +3,6 @@ package com.fmi.domain.post.web.dto.response;
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
-
 import java.time.LocalDateTime;
 
 public record PostBriefResponse(
@@ -21,5 +20,4 @@ public record PostBriefResponse(
         boolean isNew,
         boolean isHot,
         LocalDateTime createdAt,
-        Integer imageCount) {
-}
+        Integer imageCount) {}

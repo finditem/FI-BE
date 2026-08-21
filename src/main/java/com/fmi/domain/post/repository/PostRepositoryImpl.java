@@ -1,5 +1,7 @@
 package com.fmi.domain.post.repository;
 
+import static com.fmi.domain.post.data.QPostImage.postImage;
+
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.post.data.*;
@@ -13,15 +15,12 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.fmi.domain.post.data.QPostImage.postImage;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
@@ -31,15 +30,16 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     private final BlockedUserRepository blockedUserRepository;
 
     @Override
-    public PostPageResponse searchPostsByFiltersAndSort(PostType postType,
-                                                        PostStatus postStatus,
-                                                        Category category,
-                                                        String address,
-                                                        SortType sortType,
-                                                        Long cursor,
-                                                        int size,
-                                                        Long userId,
-                                                        Set<Long> hotPostsIds) {
+    public PostPageResponse searchPostsByFiltersAndSort(
+            PostType postType,
+            PostStatus postStatus,
+            Category category,
+            String address,
+            SortType sortType,
+            Long cursor,
+            int size,
+            Long userId,
+            Set<Long> hotPostsIds) {
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
@@ -49,21 +49,15 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 equalsPostType(post, postType),
                 equalsPostStatus(post, postStatus),
                 equalsCategory(post, category),
-                excludeBlockedUsers(post, userId)
-        );
+                excludeBlockedUsers(post, userId));
 
-        BooleanExpression pageWhere = Expressions.allOf(
-                baseWhere,
-                cursorCondition(post, sortType, cursor)
-        );
+        BooleanExpression pageWhere = Expressions.allOf(baseWhere, cursorCondition(post, sortType, cursor));
 
         Long postCount = queryFactory
                 .select(post.id.countDistinct())
                 .from(post)
-                .leftJoin(postFavorite).on(
-                        postFavorite.post.eq(post),
-                        postFavorite.isFavorite.isTrue()
-                )
+                .leftJoin(postFavorite)
+                .on(postFavorite.post.eq(post), postFavorite.isFavorite.isTrue())
                 .where(baseWhere)
                 .fetchOne();
 
@@ -71,12 +65,11 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
         List<Post> posts;
         if (Objects.equals(sortType, SortType.MOST_FAVORITED)) {
-            posts = queryFactory.select(post)
+            posts = queryFactory
+                    .select(post)
                     .from(post)
-                    .leftJoin(postFavorite).on(
-                            postFavorite.post.eq(post),
-                            postFavorite.isFavorite.isTrue()
-                    )
+                    .leftJoin(postFavorite)
+                    .on(postFavorite.post.eq(post), postFavorite.isFavorite.isTrue())
                     .where(pageWhere)
                     .groupBy(post.id)
                     .orderBy(postFavorite.favorite_id.count().desc(), post.id.desc())
@@ -96,7 +89,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
             posts = posts.subList(0, size);
         }
 
-        Long nextCursor = (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
+        Long nextCursor =
+                (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
 
         if (posts.isEmpty()) {
             return new PostPageResponse(List.of(), 0L, null, false);
@@ -109,46 +103,35 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         Map<Long, String> thumbnailMap = queryFactory
                 .select(postImage.post.id, listThumbnailUrl)
                 .from(postImage)
-                .where(
-                        postImage.post.id.in(postIdList),
-                        postImage.imageType.eq(ImageType.THUMBNAIL)
-                )
+                .where(postImage.post.id.in(postIdList), postImage.imageType.eq(ImageType.THUMBNAIL))
                 .fetch()
                 .stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postImage.post.id)),
                         t -> Objects.requireNonNull(t.get(listThumbnailUrl)),
-                        (a, b) -> a
-                ));
+                        (a, b) -> a));
 
         Map<Long, Long> favoriteCountMap = queryFactory
                 .select(postFavorite.post.id, postFavorite.favorite_id.count())
                 .from(postFavorite)
-                .where(
-                        postFavorite.post.id.in(postIdList),
-                        postFavorite.isFavorite.isTrue()
-                )
+                .where(postFavorite.post.id.in(postIdList), postFavorite.isFavorite.isTrue())
                 .groupBy(postFavorite.post.id)
                 .fetch()
                 .stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postFavorite.post.id)),
-                        t -> Objects.requireNonNull(t.get(postFavorite.favorite_id.count()))
-                ));
+                        t -> Objects.requireNonNull(t.get(postFavorite.favorite_id.count()))));
 
-
-        Set<Long> myFavoritePostIds = Objects.isNull(userId) ? Set.of() :
-                new HashSet<>(
-                        queryFactory
-                                .select(postFavorite.post.id)
-                                .from(postFavorite)
-                                .where(
-                                        postFavorite.user.id.eq(userId),
-                                        postFavorite.post.id.in(postIdList),
-                                        postFavorite.isFavorite.isTrue()
-                                )
-                                .fetch()
-                );
+        Set<Long> myFavoritePostIds = Objects.isNull(userId)
+                ? Set.of()
+                : new HashSet<>(queryFactory
+                        .select(postFavorite.post.id)
+                        .from(postFavorite)
+                        .where(
+                                postFavorite.user.id.eq(userId),
+                                postFavorite.post.id.in(postIdList),
+                                postFavorite.isFavorite.isTrue())
+                        .fetch());
 
         Map<Long, Integer> imageCountMap = queryFactory
                 .select(postImage.post.id, postImage.id.count())
@@ -159,9 +142,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postImage.post.id)),
-                        t -> Objects.requireNonNull(t.get(postImage.id.count())).intValue()
-                ));
-
+                        t -> Objects.requireNonNull(t.get(postImage.id.count())).intValue()));
 
         List<PostBriefResponse> postList = posts.stream()
                 .map(p -> {
@@ -170,7 +151,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
                     boolean isNew = p.isNew();
                     boolean isHot = hotPostsIds != null && hotPostsIds.contains(pid);
-
 
                     return new PostBriefResponse(
                             pid,
@@ -187,8 +167,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                             isNew,
                             isHot,
                             p.getCreatedAt(),
-                            imageCountMap.getOrDefault(pid, 0)
-                    );
+                            imageCountMap.getOrDefault(pid, 0));
                 })
                 .toList();
 
@@ -196,16 +175,17 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     }
 
     @Override
-    public PostPageResponse searchMyPosts(Long userId,
-                                          PostType postType,
-                                          PostStatus postStatus,
-                                          Category category,
-                                          SortType sortType,
-                                          LocalDate startDate,
-                                          LocalDate endDate,
-                                          String keyword,
-                                          Long cursor,
-                                          int size) {
+    public PostPageResponse searchMyPosts(
+            Long userId,
+            PostType postType,
+            PostStatus postStatus,
+            Category category,
+            SortType sortType,
+            LocalDate startDate,
+            LocalDate endDate,
+            String keyword,
+            Long cursor,
+            int size) {
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
@@ -225,22 +205,18 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         BooleanBuilder pageWhere = new BooleanBuilder(baseWhere);
         pageWhere.and(cursorCondition(post, sortType, cursor));
 
-        Long postCount = queryFactory
-                .select(post.id.count())
-                .from(post)
-                .where(baseWhere)
-                .fetchOne();
+        Long postCount =
+                queryFactory.select(post.id.count()).from(post).where(baseWhere).fetchOne();
 
         if (Objects.isNull(postCount)) postCount = 0L;
 
         List<Post> posts;
         if (Objects.equals(sortType, SortType.MOST_FAVORITED)) {
-            posts = queryFactory.select(post)
+            posts = queryFactory
+                    .select(post)
                     .from(post)
-                    .leftJoin(postFavorite).on(
-                            postFavorite.post.eq(post),
-                            postFavorite.isFavorite.isTrue()
-                    )
+                    .leftJoin(postFavorite)
+                    .on(postFavorite.post.eq(post), postFavorite.isFavorite.isTrue())
                     .where(pageWhere)
                     .groupBy(post.id)
                     .orderBy(postFavorite.favorite_id.count().desc(), post.id.desc())
@@ -260,7 +236,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
             posts = posts.subList(0, size);
         }
 
-        Long nextCursor = (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
+        Long nextCursor =
+                (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
 
         if (posts.isEmpty()) {
             return new PostPageResponse(List.of(), 0L, null, false);
@@ -270,14 +247,15 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     }
 
     @Override
-    public PostPageResponse searchMyFavorites(Long userId,
-                                              PostType postType,
-                                              Category category,
-                                              String address,
-                                              String keyword,
-                                              SortType sortType,
-                                              Long cursor,
-                                              int size) {
+    public PostPageResponse searchMyFavorites(
+            Long userId,
+            PostType postType,
+            Category category,
+            String address,
+            String keyword,
+            SortType sortType,
+            Long cursor,
+            int size) {
         QPost post = QPost.post;
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
 
@@ -308,20 +286,20 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         List<Post> posts;
         if (Objects.equals(sortType, SortType.MOST_FAVORITED)) {
             QPostFavorite favCount = new QPostFavorite("favCount");
-            posts = queryFactory.select(post)
+            posts = queryFactory
+                    .select(post)
                     .from(postFavorite)
                     .join(postFavorite.post, post)
-                    .leftJoin(favCount).on(
-                            favCount.post.eq(post),
-                            favCount.isFavorite.isTrue()
-                    )
+                    .leftJoin(favCount)
+                    .on(favCount.post.eq(post), favCount.isFavorite.isTrue())
                     .where(pageWhere)
                     .groupBy(post.id)
                     .orderBy(favCount.favorite_id.count().desc(), post.id.desc())
                     .limit(size + 1)
                     .fetch();
         } else {
-            posts = queryFactory.select(post)
+            posts = queryFactory
+                    .select(post)
                     .from(postFavorite)
                     .join(postFavorite.post, post)
                     .where(pageWhere)
@@ -335,7 +313,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
             posts = posts.subList(0, size);
         }
 
-        Long nextCursor = (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
+        Long nextCursor =
+                (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
 
         if (posts.isEmpty()) {
             return new PostPageResponse(List.of(), 0L, null, false);
@@ -344,8 +323,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         return buildPostPageResponse(posts, postCount, nextCursor, hasNext, userId);
     }
 
-    private PostPageResponse buildPostPageResponse(List<Post> posts, Long postCount,
-                                                   Long nextCursor, boolean hasNext, Long userId) {
+    private PostPageResponse buildPostPageResponse(
+            List<Post> posts, Long postCount, Long nextCursor, boolean hasNext, Long userId) {
         QPostFavorite postFavorite = QPostFavorite.postFavorite;
         List<Long> postIdList = posts.stream().map(Post::getId).toList();
 
@@ -354,45 +333,35 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         Map<Long, String> thumbnailMap = queryFactory
                 .select(postImage.post.id, listThumbnailUrl)
                 .from(postImage)
-                .where(
-                        postImage.post.id.in(postIdList),
-                        postImage.imageType.eq(ImageType.THUMBNAIL)
-                )
+                .where(postImage.post.id.in(postIdList), postImage.imageType.eq(ImageType.THUMBNAIL))
                 .fetch()
                 .stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postImage.post.id)),
                         t -> Objects.requireNonNull(t.get(listThumbnailUrl)),
-                        (a, b) -> a
-                ));
+                        (a, b) -> a));
 
         Map<Long, Long> favoriteCountMap = queryFactory
                 .select(postFavorite.post.id, postFavorite.favorite_id.count())
                 .from(postFavorite)
-                .where(
-                        postFavorite.post.id.in(postIdList),
-                        postFavorite.isFavorite.isTrue()
-                )
+                .where(postFavorite.post.id.in(postIdList), postFavorite.isFavorite.isTrue())
                 .groupBy(postFavorite.post.id)
                 .fetch()
                 .stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postFavorite.post.id)),
-                        t -> Objects.requireNonNull(t.get(postFavorite.favorite_id.count()))
-                ));
+                        t -> Objects.requireNonNull(t.get(postFavorite.favorite_id.count()))));
 
-        Set<Long> myFavoritePostIds = Objects.isNull(userId) ? Set.of() :
-                new HashSet<>(
-                        queryFactory
-                                .select(postFavorite.post.id)
-                                .from(postFavorite)
-                                .where(
-                                        postFavorite.user.id.eq(userId),
-                                        postFavorite.post.id.in(postIdList),
-                                        postFavorite.isFavorite.isTrue()
-                                )
-                                .fetch()
-                );
+        Set<Long> myFavoritePostIds = Objects.isNull(userId)
+                ? Set.of()
+                : new HashSet<>(queryFactory
+                        .select(postFavorite.post.id)
+                        .from(postFavorite)
+                        .where(
+                                postFavorite.user.id.eq(userId),
+                                postFavorite.post.id.in(postIdList),
+                                postFavorite.isFavorite.isTrue())
+                        .fetch());
 
         Map<Long, Integer> imageCountMap = queryFactory
                 .select(postImage.post.id, postImage.id.count())
@@ -403,8 +372,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .stream()
                 .collect(Collectors.toMap(
                         t -> Objects.requireNonNull(t.get(postImage.post.id)),
-                        t -> Objects.requireNonNull(t.get(postImage.id.count())).intValue()
-                ));
+                        t -> Objects.requireNonNull(t.get(postImage.id.count())).intValue()));
 
         List<PostBriefResponse> postList = posts.stream()
                 .map(p -> {
@@ -424,8 +392,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                             p.isNew(),
                             false,
                             p.getCreatedAt(),
-                            imageCountMap.getOrDefault(pid, 0)
-                    );
+                            imageCountMap.getOrDefault(pid, 0));
                 })
                 .toList();
 
@@ -465,17 +432,13 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
         if (!hasText(keyword)) return 0L;
 
-        BooleanBuilder where = new BooleanBuilder()
-                .and(buildKeywordCondition(post, keyword));
+        BooleanBuilder where = new BooleanBuilder().and(buildKeywordCondition(post, keyword));
 
         where.and(post.deleted.isFalse());
         where.and(post.temporarySave.isFalse());
 
-        Long count = queryFactory
-                .select(post.id.count())
-                .from(post)
-                .where(where)
-                .fetchOne();
+        Long count =
+                queryFactory.select(post.id.count()).from(post).where(where).fetchOne();
 
         return count == null ? 0L : count;
     }
@@ -487,22 +450,16 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         for (String token : tokens) {
             if (!hasText(token)) continue;
 
-            booleanBuilder.or(
-                    post.title.containsIgnoreCase(token)
-                            .or(post.content.containsIgnoreCase(token))
-            );
+            booleanBuilder.or(post.title.containsIgnoreCase(token).or(post.content.containsIgnoreCase(token)));
         }
         return booleanBuilder;
     }
-
 
     @Override
     public List<Post> findSimilarPosts(Long postId, int limit) {
         QPost post = QPost.post;
 
-        Post base = queryFactory.selectFrom(post)
-                .where(post.id.eq(postId))
-                .fetchOne();
+        Post base = queryFactory.selectFrom(post).where(post.id.eq(postId)).fetchOne();
 
         if (Objects.isNull(base)) {
             return List.of();
@@ -512,13 +469,12 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         LocalDateTime from = baseDate.minusDays(7);
         LocalDateTime to = baseDate.plusDays(7);
 
-        PostType oppositeType = Objects.equals(base.getPostType(), PostType.LOST)
-                ? PostType.FOUND
-                : PostType.LOST;
+        PostType oppositeType = Objects.equals(base.getPostType(), PostType.LOST) ? PostType.FOUND : PostType.LOST;
 
-        BooleanExpression dateCondition =
-                post.date.isNotNull().and(post.date.between(from, to))
-                        .or(post.date.isNull().and(post.createdAt.between(from, to)));
+        BooleanExpression dateCondition = post.date
+                .isNotNull()
+                .and(post.date.between(from, to))
+                .or(post.date.isNull().and(post.createdAt.between(from, to)));
 
         return queryFactory
                 .selectFrom(post)
@@ -530,8 +486,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         post.postType.eq(oppositeType),
                         post.postStatus.eq(PostStatus.SEARCHING),
                         post.address.eq(base.getAddress()),
-                        dateCondition
-                )
+                        dateCondition)
                 .orderBy(post.createdAt.desc(), post.id.desc())
                 .limit(limit)
                 .fetch();
@@ -539,7 +494,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private BooleanExpression dateRange(QPost post, LocalDate startDate, LocalDate endDate) {
         if (startDate != null && endDate != null) {
-            return post.createdAt.between(startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
+            return post.createdAt.between(
+                    startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
         } else if (startDate != null) {
             return post.createdAt.goe(startDate.atStartOfDay());
         } else if (endDate != null) {
@@ -574,27 +530,15 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private OrderSpecifier<?>[] orderBySortType(QPost post, SortType sortType) {
         return switch (sortType) {
-            case LATEST -> new OrderSpecifier[]{
-                    post.createdAt.desc(),
-                    post.id.desc()
-            };
+            case LATEST -> new OrderSpecifier[] {post.createdAt.desc(), post.id.desc()};
 
-            case OLDEST -> new OrderSpecifier[]{
-                    post.createdAt.asc(),
-                    post.id.asc()
-            };
+            case OLDEST -> new OrderSpecifier[] {post.createdAt.asc(), post.id.asc()};
 
-            case MOST_VIEWED -> new OrderSpecifier[]{
-                    post.viewCount.desc(),
-                    post.id.desc()
-            };
+            case MOST_VIEWED -> new OrderSpecifier[] {post.viewCount.desc(), post.id.desc()};
 
-            case MOST_FAVORITED -> new OrderSpecifier[]{
-                    post.id.desc()
-            };
+            case MOST_FAVORITED -> new OrderSpecifier[] {post.id.desc()};
         };
     }
-
 
     private BooleanExpression cursorCondition(QPost post, SortType sortType, Long cursor) {
         if (Objects.isNull(cursor)) {
@@ -630,5 +574,4 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
         return post.user.id.notIn(excludedUserIds);
     }
-
 }

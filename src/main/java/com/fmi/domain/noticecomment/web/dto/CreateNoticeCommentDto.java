@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateNoticeCommentDto {
-    @NotBlank
-    private String content;
+    @NotBlank private String content;
+
     private Long parentId;
 }

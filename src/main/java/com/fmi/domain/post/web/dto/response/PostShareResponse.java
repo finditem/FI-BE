@@ -10,6 +10,4 @@ public record PostShareResponse(
         Long likeCount,
         Long commentCount,
         Long viewCount,
-        PostType postType
-) {
-}
+        PostType postType) {}

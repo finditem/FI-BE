@@ -11,4 +11,3 @@ public class CheckResponse {
     @Schema(description = "사용 가능 여부 (true: 사용 가능, false: 중복)", example = "true")
     private boolean available;
 }
-

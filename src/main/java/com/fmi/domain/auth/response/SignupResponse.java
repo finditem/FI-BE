@@ -11,4 +11,3 @@ public class SignupResponse {
     @Schema(description = "사용자 ID", example = "1")
     private Long id;
 }
-

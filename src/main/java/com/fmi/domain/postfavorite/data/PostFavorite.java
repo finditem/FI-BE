@@ -3,20 +3,16 @@ package com.fmi.domain.postfavorite.data;
 import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(
-        name = "post_favorite",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "post_id"})
-)
+@Table(name = "post_favorite", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "post_id"}))
 public class PostFavorite {
 
     @Id

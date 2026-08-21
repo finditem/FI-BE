@@ -5,6 +5,7 @@ import com.fmi.domain.auth.service.apple.AppleClientSecretGenerator;
 import com.fmi.domain.auth.service.apple.AppleIdTokenVerifier;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import java.util.Map;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -18,8 +19,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -47,13 +46,16 @@ public class AppleOAuthService {
         MultiValueMap<String, String> form = authorizationCodeTokenRequest(code, config);
 
         try {
-            AppleToken token = restClient.post()
+            AppleToken token = restClient
+                    .post()
                     .uri(APPLE_TOKEN_URL)
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .body(form)
                     .retrieve()
                     .body(AppleToken.class);
-            if (token == null || token.getIdToken() == null || token.getIdToken().isBlank()) {
+            if (token == null
+                    || token.getIdToken() == null
+                    || token.getIdToken().isBlank()) {
                 throw new GeneralException(ErrorStatus._APPLE_TOKEN_FAILED);
             }
             return token.getIdToken();
@@ -73,32 +75,27 @@ public class AppleOAuthService {
         form.setAll(Map.of(
                 "grant_type", "authorization_code",
                 "client_id", config.clientId(),
-                "client_secret", new AppleClientSecretGenerator(
-                        oauthProperties.teamId(),
-                        config.clientId(),
-                        oauthProperties.keyId(),
-                        oauthProperties.privateKeyBase64()
-                ).generate(),
+                "client_secret",
+                        new AppleClientSecretGenerator(
+                                        oauthProperties.teamId(),
+                                        config.clientId(),
+                                        oauthProperties.keyId(),
+                                        oauthProperties.privateKeyBase64())
+                                .generate(),
                 "code", code,
-                "redirect_uri", config.redirectUri()
-        ));
+                "redirect_uri", config.redirectUri()));
         return form;
     }
 
     private String verifyAndGetSubject(String idToken, String selectedClientId) {
         try {
-            String jwks = restClient.get()
-                    .uri(APPLE_JWKS_URL)
-                    .retrieve()
-                    .body(String.class);
+            String jwks = restClient.get().uri(APPLE_JWKS_URL).retrieve().body(String.class);
             if (jwks == null || jwks.isBlank()) {
                 throw new GeneralException(ErrorStatus._APPLE_TOKEN_FAILED);
             }
             JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(jwks);
             AppleIdTokenVerifier verifier = new AppleIdTokenVerifier(
-                    selectedClientId,
-                    new JwksVerificationKeyResolver(jsonWebKeySet.getJsonWebKeys())
-            );
+                    selectedClientId, new JwksVerificationKeyResolver(jsonWebKeySet.getJsonWebKeys()));
             return verifier.verifyAndGetSubject(idToken);
         } catch (GeneralException exception) {
             throw exception;
@@ -109,10 +106,7 @@ public class AppleOAuthService {
     }
 
     private AppleOAuthConfig selectOAuthConfig(String environment) {
-        return new AppleOAuthConfig(
-                oauthProperties.clientId(),
-                oauthProperties.redirectUriFor(environment)
-        );
+        return new AppleOAuthConfig(oauthProperties.clientId(), oauthProperties.redirectUriFor(environment));
     }
 
     private record AppleOAuthConfig(String clientId, String redirectUri) {}

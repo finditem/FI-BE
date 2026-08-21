@@ -7,7 +7,5 @@ import lombok.Data;
 @Data
 public class PasswordResetRequest {
     @Schema(description = "가입 이메일", example = "user@example.com")
-    @Email
-    private String email;
+    @Email private String email;
 }
-
