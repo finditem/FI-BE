@@ -126,4 +126,19 @@
 - main, develop 브랜치에 직접 push 금지 — PR로만 머지
 - 작업 브랜치: `타입/이슈번호` 형식 (예: `feature/#1`)
 - 의존 이슈가 있을 경우 해당 브랜치에서 분기 (예: `feature/#2` → `feature/#1`)
-- 커밋 메시지: Conventional Commits (예: `feat: 기능 추가`)
+- 커밋 메시지: `type: 변경내용요약` 형식 (예: `feat: 기능 추가`)
+
+### Commitlint Git 훅 설정
+
+의존성을 설치한 뒤 아래 명령을 한 번 실행하면 commitlint가 git hook으로 등록되어 커밋할 때 마다 메시지 형식를 검증합니다.
+
+```bash
+npm ci
+git config --local core.hooksPath .githooks
+```
+
+허용 type: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `rename`, `perf`
+
+- scope는 사용하지 않습니다. 예: `feat(auth): 로그인 구현`은 허용하지 않습니다.
+- 커밋 메시지는 `type: 변경내용요약` 형식을 사용합니다.
+- 내용 자체를 검증하진 않습니다.

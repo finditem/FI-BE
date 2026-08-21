@@ -1,6 +1,9 @@
 # Gradle
 .gradle/
 build/
+
+# Node.js
+node_modules/
 !gradle/wrapper/gradle-wrapper.jar
 
 # IntelliJ / IDEA
