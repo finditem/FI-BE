@@ -1,4 +1,4 @@
-package com.fmi.domain.user.web.dto;
+package com.fmi.domain.auth.web.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

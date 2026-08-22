@@ -2,7 +2,6 @@ package com.fmi.domain.user.service;
 
 import com.fmi.domain.Enum.ActivityType;
 import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
@@ -20,7 +19,6 @@ import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostQueryService;
-import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.PostFavorite;
@@ -39,17 +37,11 @@ import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserMetaResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
-import com.fmi.domain.user.web.dto.AccountDeleteRequest;
-import com.fmi.domain.user.web.dto.PasswordChangeRequest;
-import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
-import com.fmi.external.oauth.kakao.KakaoOAuthClient;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
-import com.fmi.security.RefreshTokenStore;
-import com.fmi.service.EmailService;
 import com.fmi.service.UserQueryService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -60,7 +52,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -72,24 +63,19 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final S3Service s3Service;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
-    private final EmailService emailService;
     private final PostFavoriteRepository postFavoriteRepository;
     private final PostQueryService postQueryService;
     private final UserQueryService userQueryService;
     private final BlockedUserRepository blockedUserRepository;
-    private final RefreshTokenStore refreshTokenStore;
     private final InquiryRepository inquiryRepository;
     private final ReportRepository reportRepository;
     private final CommentLikeService commentLikeService;
     private final CommentImageService commentImageService;
-    private final PostService postService;
     private final InquiryCommentRepository inquiryCommentRepository;
     private final SocialAccountsRepository socialAccountsRepository;
-    private final KakaoOAuthClient kakaoOAuthService;
 
     /**
      * 내 정보 조회
@@ -525,157 +511,6 @@ public class UserService {
         User updatedUser = userRepository.save(user);
         boolean isSocialUser = socialAccountsRepository.findByUser(updatedUser).isPresent();
         return UserConverter.toUserProfileResponse(updatedUser, isSocialUser);
-    }
-
-    /**
-     * 현재 비밀번호 검증
-     */
-    public boolean verifyPassword(String email, String currentPassword) {
-        User user =
-                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
-        boolean passwordMatches = false;
-
-        // 임시 비밀번호가 활성화되어 있는지 확인
-        boolean hasActiveTemporaryPassword = user.getTemporaryPassword() != null
-                && user.getTemporaryPasswordExpiresAt() != null
-                && LocalDateTime.now().isBefore(user.getTemporaryPasswordExpiresAt());
-
-        // 임시 비밀번호가 활성화되어 있으면 임시 비밀번호와 원래 비밀번호 모두 확인
-        if (hasActiveTemporaryPassword) {
-            // 임시 비밀번호 확인
-            if (passwordEncoder.matches(currentPassword, user.getTemporaryPassword())) {
-                passwordMatches = true;
-            }
-            // 원래 비밀번호 확인
-            else if (user.getOriginalPassword() != null
-                    && passwordEncoder.matches(currentPassword, user.getOriginalPassword())) {
-                passwordMatches = true;
-            }
-            // password 필드 확인 (임시 비밀번호로 설정되어 있을 수 있음)
-            else if (passwordEncoder.matches(currentPassword, user.getPassword())) {
-                passwordMatches = true;
-            }
-        }
-        // 임시 비밀번호가 없으면 일반 비밀번호만 확인
-        else {
-            if (passwordEncoder.matches(currentPassword, user.getPassword())) {
-                passwordMatches = true;
-            }
-        }
-
-        return passwordMatches;
-    }
-
-    /**
-     * 현재 비밀번호 검증 (프론트엔드에서 별도로 검증할 때 사용)
-     */
-    public void verifyPasswordWithException(String email, PasswordVerifyRequest request) {
-        if (!verifyPassword(email, request.getCurrentPassword())) {
-            throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
-        }
-    }
-
-    /**
-     * 비밀번호 변경
-     * 현재 비밀번호는 별도 엔드포인트에서 검증해야 하며, 이 메서드는 새 비밀번호만 받아서 변경합니다.
-     */
-    public void changePassword(String email, PasswordChangeRequest request) {
-        User user =
-                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
-        // 새 비밀번호와 확인 일치 여부
-        if (!request.getNewPassword().equals(request.getNewPasswordConfirm())) {
-            throw new GeneralException(ErrorStatus._PASSWORD_CONFIRMATION_MISMATCH);
-        }
-
-        // 비밀번호 변경: 새 비밀번호로 설정
-        String newPasswordHash = passwordEncoder.encode(request.getNewPassword());
-        user.setPassword(newPasswordHash);
-
-        // 임시 비밀번호 관련 정보 제거
-        user.setOriginalPassword(null); // originalPassword 제거
-        user.setTemporaryPassword(null); // 임시 비밀번호 제거
-        user.setTemporaryPasswordExpiresAt(null); // 만료 시간 제거
-        user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
-
-        refreshTokenStore.revokeAllForUser(email);
-    }
-
-    /**
-     * 회원 탈퇴 (Soft Delete 방식)
-     * deletedAt을 설정하여 소프트 삭제합니다.
-     * 30일 후 스케줄러에 의해 하드 삭제됩니다.
-     * 프로필 이미지는 즉시 S3에서 삭제됩니다.
-     */
-    @Transactional
-    public void deleteAccount(String email, AccountDeleteRequest request) {
-        User user =
-                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
-        // 프로필 이미지가 있다면 S3에서 삭제
-        if (user.getProfile_img() != null && !user.getProfile_img().isEmpty()) {
-            if (s3Service.isValidS3Url(user.getProfile_img())) {
-                try {
-                    s3Service.delete(List.of(user.getProfile_img()));
-                } catch (Exception e) {
-                    log.warn("프로필 이미지 삭제 실패: {}", e.getMessage());
-                }
-            } else {
-                log.warn("유효하지 않은 프로필 이미지 URL, S3 삭제 생략: {}", user.getProfile_img());
-            }
-        }
-
-        // OTHER 선택 시 otherReason 필수 검증
-        if (request.getReasons().contains(com.fmi.domain.Enum.WithdrawalReason.OTHER)
-                && (request.getOtherReason() == null || request.getOtherReason().isBlank())) {
-            throw new GeneralException(ErrorStatus._BAD_REQUEST);
-        }
-
-        // 탈퇴 사유 설정 (콤마 구분 저장)
-        String reasons =
-                request.getReasons().stream().map(Enum::name).collect(java.util.stream.Collectors.joining(","));
-        user.setWithdrawalReason(reasons);
-        if (request.getReasons().contains(com.fmi.domain.Enum.WithdrawalReason.OTHER)) {
-            user.setWithdrawalOtherReason(request.getOtherReason());
-        }
-
-        // 카카오 회원이면 카카오 연결 끊기
-        socialAccountsRepository
-                .findByUser(user)
-                .filter(sa -> sa.getProvider() == Provider.KAKAO)
-                .ifPresent(sa -> kakaoOAuthService.unlinkUser(sa.getProviderId()));
-
-        // Soft Delete (deletedAt 설정)
-        user.setDeletedAt(LocalDateTime.now());
-        userRepository.save(user);
-
-        refreshTokenStore.revokeAllForUser(email);
-
-        postService.softDeleteAllByUser(user);
-
-        // 계정 삭제 이메일 발송
-        try {
-            String nickname = user.getNickname() != null ? user.getNickname() : "회원";
-            String userEmail = user.getEmail();
-            String deletionDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-                    .format(LocalDateTime.now());
-
-            emailService.sendHtmlEmailAsync(
-                    userEmail,
-                    "계정이 삭제되었습니다",
-                    "account-deletion-email.html",
-                    java.util.Map.of(
-                            "NAME", nickname,
-                            "USER", userEmail,
-                            "DATE", deletionDate));
-        } catch (Exception e) {
-            // 이메일 발송 실패해도 계정 삭제는 성공 처리
-            log.warn("계정 삭제 이메일 발송 실패: {}", e.getMessage());
-        }
-
-        log.info("사용자 탈퇴 완료: userId={}, email={}, reasons={}", user.getId(), email, request.getReasons());
     }
 
     /**
