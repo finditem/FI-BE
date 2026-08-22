@@ -1,6 +1,5 @@
 package com.fmi.domain.notice.web.controller;
 
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notice.data.enums.NoticeCategory;
 import com.fmi.domain.notice.data.enums.NoticeSortType;
 import com.fmi.domain.notice.service.NoticeService;
@@ -9,6 +8,7 @@ import com.fmi.domain.notice.web.dto.NoticeMetaResponse;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;

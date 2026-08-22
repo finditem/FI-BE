@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.data;
+package com.fmi.domain.user.data;
 
 import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.Enum.Role;

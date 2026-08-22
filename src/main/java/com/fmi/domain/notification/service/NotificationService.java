@@ -1,7 +1,5 @@
 package com.fmi.domain.notification.service;
 
-import com.fmi.domain.auth.data.User;
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notification.converter.NotificationConverter;
 import com.fmi.domain.notification.data.Notification;
 import com.fmi.domain.notification.data.NotificationSettings;
@@ -13,7 +11,9 @@ import com.fmi.domain.notification.web.dto.request.NotificationSettingsUpdateDTO
 import com.fmi.domain.notification.web.dto.response.NotificationListDTO;
 import com.fmi.domain.notification.web.dto.response.NotificationSettingsDTO;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserCategoryRepository;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

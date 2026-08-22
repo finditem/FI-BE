@@ -1,6 +1,6 @@
 package com.fmi.domain.auth.service;
 
-import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.user.repository.UserRepository;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;

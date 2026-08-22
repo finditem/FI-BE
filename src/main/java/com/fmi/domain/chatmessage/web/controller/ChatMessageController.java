@@ -2,9 +2,9 @@ package com.fmi.domain.chatmessage.web.controller;
 
 import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessageRequestDTO;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.service.ChatMessageService;
 import com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO;
+import com.fmi.domain.user.data.User;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
 import com.fmi.service.UserQueryService;

@@ -1,8 +1,8 @@
 package com.fmi.domain.postfavorite.repository;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.postfavorite.data.PostFavorite;
+import com.fmi.domain.user.data.User;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;

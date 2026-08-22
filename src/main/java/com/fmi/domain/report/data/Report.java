@@ -1,9 +1,9 @@
 package com.fmi.domain.report.data;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.data.enums.ReportType;
+import com.fmi.domain.user.data.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;

@@ -1,7 +1,7 @@
 package com.fmi.domain.comment.data;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.user.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.persistence.*;

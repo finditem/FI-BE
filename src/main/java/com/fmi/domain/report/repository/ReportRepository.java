@@ -1,9 +1,9 @@
 package com.fmi.domain.report.repository;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
+import com.fmi.domain.user.data.User;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;

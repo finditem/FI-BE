@@ -1,6 +1,6 @@
 package com.fmi.domain.userblock.repository;
 
-import com.fmi.domain.auth.data.User;
+import com.fmi.domain.user.data.User;
 import com.fmi.domain.userblock.data.BlockedUser;
 import java.util.List;
 import java.util.Optional;

@@ -1,7 +1,5 @@
 package com.fmi.domain.notice.service;
 
-import com.fmi.domain.auth.data.User;
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notice.converter.NoticeConverter;
 import com.fmi.domain.notice.data.Notice;
 import com.fmi.domain.notice.data.NoticeImage;
@@ -21,6 +19,8 @@ import com.fmi.domain.noticelike.data.NoticeLike;
 import com.fmi.domain.noticelike.repository.NoticeLikeRepository;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.ImageType;
+import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

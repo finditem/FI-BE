@@ -1,10 +1,10 @@
 package com.fmi.domain.chatroom.service;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.service.ChatNotificationService;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.user.data.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

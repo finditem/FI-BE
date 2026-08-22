@@ -1,7 +1,7 @@
 package com.fmi.domain.user.repository;
 
 import com.fmi.domain.Enum.Category;
-import com.fmi.domain.auth.data.User;
+import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.data.UserCategory;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;

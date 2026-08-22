@@ -235,7 +235,7 @@ public class AuthController {
     }
 
     private ResponseEntity<ApiResponse<LoginResponse>> buildTokenResponse(
-            HttpServletRequest request, com.fmi.domain.auth.data.User user, boolean isTemporaryPassword) {
+            HttpServletRequest request, com.fmi.domain.user.data.User user, boolean isTemporaryPassword) {
         var claims = new java.util.HashMap<String, Object>();
         claims.put("userId", user.getId());
         claims.put("role", user.getRole().name());

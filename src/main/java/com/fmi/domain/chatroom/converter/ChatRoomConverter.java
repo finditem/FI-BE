@@ -2,12 +2,12 @@ package com.fmi.domain.chatroom.converter;
 
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.*;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.user.data.User;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;

@@ -1,7 +1,7 @@
 package com.fmi.domain.report.web.controller;
 
-import com.fmi.domain.auth.data.User;
-import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.domain.userblock.web.dto.response.BlockedUserResponse;
 import com.fmi.global.apiPayload.ApiResponse;

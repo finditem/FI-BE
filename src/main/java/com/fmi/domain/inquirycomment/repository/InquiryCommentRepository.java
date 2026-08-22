@@ -55,12 +55,12 @@ public interface InquiryCommentRepository extends JpaRepository<InquiryComment, 
      */
     @Query("SELECT c FROM InquiryComment c WHERE c.inquiry.user = :user AND c.parent IS NULL ORDER BY c.createdAt DESC")
     Slice<InquiryComment> findByInquiryUserOrderByCreatedAtDesc(
-            @Param("user") com.fmi.domain.auth.data.User user, Pageable pageable);
+            @Param("user") com.fmi.domain.user.data.User user, Pageable pageable);
 
     @Query(
             "SELECT c FROM InquiryComment c WHERE c.inquiry.user = :user AND c.parent IS NULL AND c.createdAt < :cursor ORDER BY c.createdAt DESC")
     Slice<InquiryComment> findByInquiryUserAndCreatedAtBeforeOrderByCreatedAtDesc(
-            @Param("user") com.fmi.domain.auth.data.User user,
+            @Param("user") com.fmi.domain.user.data.User user,
             @Param("cursor") java.time.LocalDateTime cursor,
             Pageable pageable);
 
@@ -76,7 +76,7 @@ public interface InquiryCommentRepository extends JpaRepository<InquiryComment, 
             ORDER BY c.createdAt DESC
             """)
     Slice<InquiryComment> findUserActivityInquiryAnswers(
-            @Param("user") com.fmi.domain.auth.data.User user,
+            @Param("user") com.fmi.domain.user.data.User user,
             @Param("startDate") java.time.LocalDateTime startDate,
             @Param("endDate") java.time.LocalDateTime endDate,
             @Param("keyword") String keyword,

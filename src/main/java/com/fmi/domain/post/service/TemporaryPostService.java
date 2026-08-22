@@ -1,12 +1,12 @@
 package com.fmi.domain.post.service;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.web.dto.request.TemporaryPostCreateRequest;
 import com.fmi.domain.post.web.dto.response.image.PostImageResponse;
 import com.fmi.domain.post.web.dto.response.temp.TemporaryPostResponse;
+import com.fmi.domain.user.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;

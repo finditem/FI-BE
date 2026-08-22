@@ -50,11 +50,11 @@ class PostServiceDeleteTest {
 
     private Post post;
     private UserDetails userDetails;
-    private com.fmi.domain.auth.data.User author;
+    private com.fmi.domain.user.data.User author;
 
     @BeforeEach
     void setUp() {
-        author = com.fmi.domain.auth.data.User.builder()
+        author = com.fmi.domain.user.data.User.builder()
                 .id(1L)
                 .email("author@test.com")
                 .nickname("작성자")

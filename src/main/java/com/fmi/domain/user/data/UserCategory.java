@@ -1,7 +1,6 @@
 package com.fmi.domain.user.data;
 
 import com.fmi.domain.Enum.Category;
-import com.fmi.domain.auth.data.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;

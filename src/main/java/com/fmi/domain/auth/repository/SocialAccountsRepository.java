@@ -2,7 +2,7 @@ package com.fmi.domain.auth.repository;
 
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.auth.data.SocialAccounts;
-import com.fmi.domain.auth.data.User;
+import com.fmi.domain.user.data.User;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

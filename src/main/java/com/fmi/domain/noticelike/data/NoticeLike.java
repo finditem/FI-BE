@@ -1,7 +1,7 @@
 package com.fmi.domain.noticelike.data;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notice.data.Notice;
+import com.fmi.domain.user.data.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;

@@ -1,10 +1,10 @@
 package com.fmi.domain.report.converter;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
 import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
+import com.fmi.domain.user.data.User;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.stereotype.Component;

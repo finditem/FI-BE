@@ -1,8 +1,8 @@
 package com.fmi.domain.chatmessage.data;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatroom.data.ChatRoom;
+import com.fmi.domain.user.data.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
