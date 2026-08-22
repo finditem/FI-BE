@@ -1,0 +1,131 @@
+package com.fmi.domain.auth.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.fmi.domain.auth.data.User;
+import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.auth.web.dto.SignupRequest;
+import com.fmi.service.EmailService;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@ExtendWith(MockitoExtension.class)
+class AuthServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private NicknameValidationService nicknameValidationService;
+
+    @Mock
+    private EmailVerificationService emailVerificationService;
+
+    @Mock
+    private EmailService emailService;
+
+    @InjectMocks
+    private AuthService authService;
+
+    private final AtomicReference<User> savedUser = new AtomicReference<>();
+
+    @BeforeEach
+    void setUp() {
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.existsRecentlyDeletedByEmail(anyString(), any())).thenReturn(false);
+        when(emailVerificationService.isEmailVerified(anyString())).thenReturn(true);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            savedUser.set(user);
+            return user;
+        });
+    }
+
+    @Nested
+    @DisplayName("회원 가입")
+    class Signup {
+
+        @Nested
+        @DisplayName("이메일 인증 정보가 있으면")
+        class WithEmailVerificationFlag {
+
+            @Test
+            @DisplayName("인증 정보를 소비한 뒤 이메일 인증 사용자를 저장한다")
+            void 가입은_인증_flag를_소비한_뒤_이메일_인증_사용자를_저장한다() {
+                // given
+                SignupRequest request = signupRequest();
+
+                // when
+                User result = authService.signup(request);
+
+                // then
+                InOrder order = inOrder(emailVerificationService, userRepository);
+                order.verify(emailVerificationService).isEmailVerified(request.getEmail());
+                order.verify(emailVerificationService).consumeEmailVerification(request.getEmail());
+                order.verify(userRepository).save(any(User.class));
+                assertThat(result).isSameAs(savedUser.get());
+                assertThat(savedUser.get())
+                        .extracting(User::getEmail, User::getNickname, User::isEmail_verified)
+                        .containsExactly(request.getEmail(), request.getNickname(), true);
+                verify(emailService)
+                        .sendHtmlEmailAsync(
+                                eq(request.getEmail()), eq("회원가입을 환영합니다"), eq("welcome-email.html"), anyMap());
+            }
+        }
+
+        @Nested
+        @DisplayName("환영 메일 발송에 실패하면")
+        class WithWelcomeMailFailure {
+
+            @Test
+            @DisplayName("가입은 성공한다")
+            void 환영_메일_발송이_실패해도_가입은_성공한다() {
+                // given
+                SignupRequest request = signupRequest();
+                doThrow(new IllegalStateException("mail unavailable"))
+                        .when(emailService)
+                        .sendHtmlEmailAsync(anyString(), anyString(), anyString(), anyMap());
+
+                // when
+                User result = authService.signup(request);
+
+                // then
+                assertThat(result).isSameAs(savedUser.get());
+                verify(userRepository).save(any(User.class));
+            }
+        }
+    }
+
+    private SignupRequest signupRequest() {
+        SignupRequest request = new SignupRequest();
+        request.setEmail("member@finditem.kr");
+        request.setPassword("Password1!");
+        request.setNickname("찾아줘토끼1");
+        request.setPrivacyPolicyAgreed(true);
+        request.setTermsOfServiceAgreed(true);
+        request.setContentPolicyAgreed(false);
+        request.setMarketingConsent(false);
+        return request;
+    }
+}
