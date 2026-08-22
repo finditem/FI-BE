@@ -2,12 +2,14 @@ package com.fmi.domain.user.data;
 
 import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.Enum.Role;
+import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -121,5 +123,55 @@ public class User {
         temporaryPassword = null;
         temporaryPasswordExpiresAt = null;
         updatedAt = now;
+    }
+
+    public void agreeTerms(
+            boolean privacyPolicyAgreed,
+            boolean termsOfServiceAgreed,
+            boolean contentPolicyAgreed,
+            boolean marketingConsent) {
+        this.privacyPolicyAgreed = privacyPolicyAgreed;
+        this.termsOfServiceAgreed = termsOfServiceAgreed;
+        this.contentPolicyAgreed = contentPolicyAgreed;
+        this.marketingConsent = marketingConsent;
+    }
+
+    public void markEmailVerified() {
+        email_verified = true;
+    }
+
+    public void changeNickname(String nickname, LocalDateTime now) {
+        this.nickname = nickname;
+        updatedAt = now;
+    }
+
+    public void changeProfileImage(String profileImage, LocalDateTime now) {
+        profile_img = profileImage;
+        updatedAt = now;
+    }
+
+    public void removeProfileImage(LocalDateTime now) {
+        profile_img = null;
+        updatedAt = now;
+    }
+
+    public void recordProfileUpdate(LocalDateTime now) {
+        updatedAt = now;
+    }
+
+    public void withdraw(List<WithdrawalReason> reasons, String otherReason, LocalDateTime now) {
+        withdrawalReason = reasons.stream().map(Enum::name).collect(Collectors.joining(","));
+        withdrawalOtherReason = reasons.contains(WithdrawalReason.OTHER) ? otherReason : null;
+        deletedAt = now;
+    }
+
+    public void reactivateForSocialLogin() {
+        deletedAt = null;
+        privacyPolicyAgreed = false;
+        termsOfServiceAgreed = false;
+        contentPolicyAgreed = false;
+        marketingConsent = false;
+        withdrawalReason = null;
+        withdrawalOtherReason = null;
     }
 }

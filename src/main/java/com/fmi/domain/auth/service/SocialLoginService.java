@@ -98,13 +98,7 @@ public class SocialLoginService {
                 }
                 log.info(
                         "탈퇴 카카오 계정, User 재활성화 및 소셜 계정 재생성: providerId={}, userId={}", providerId, existingUser.getId());
-                existingUser.setDeletedAt(null);
-                existingUser.setPrivacyPolicyAgreed(false);
-                existingUser.setTermsOfServiceAgreed(false);
-                existingUser.setContentPolicyAgreed(false);
-                existingUser.setMarketingConsent(false);
-                existingUser.setWithdrawalReason(null);
-                existingUser.setWithdrawalOtherReason(null);
+                existingUser.reactivateForSocialLogin();
                 userRepository.save(existingUser);
                 socialAccountsRepository.delete(existingAccount.get());
                 socialAccountsRepository.flush();

@@ -1,5 +1,6 @@
 package com.fmi.domain.auth.service;
 
+import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -100,9 +101,7 @@ public class EmailVerificationService {
         redis.opsForValue().set(verifiedKey, "true", Duration.ofHours(24)); // 24시간 유효
 
         // 이미 존재하는 사용자의 경우 이메일 인증 상태 업데이트
-        userRepository.findByEmail(email).ifPresent(user -> {
-            user.setEmail_verified(true);
-        });
+        userRepository.findByEmail(email).ifPresent(User::markEmailVerified);
     }
 
     /**

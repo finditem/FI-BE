@@ -36,10 +36,11 @@
 - Modify: `src/main/java/com/fmi/domain/user/data/User.java`
 - Modify: `src/test/java/com/fmi/domain/user/data/UserTest.java`
 
-**Interfaces:** `markEmailVerified()`, `agreeTerms(...)`, `changeNickname(String, LocalDateTime)`, `changeProfileImage(String, LocalDateTime)`, `removeProfileImage(LocalDateTime)`, `withdraw(...)`, `reactivateForSocialLogin(LocalDateTime)`
+**Interfaces:** `markEmailVerified()`, `agreeTerms(...)`, `changeNickname(String, LocalDateTime)`, `changeProfileImage(String, LocalDateTime)`, `removeProfileImage(LocalDateTime)`, `recordProfileUpdate(LocalDateTime)`, `withdraw(...)`, `reactivateForSocialLogin()`
 
-- [ ] Add failing tests for each isolated state transition, implement the minimal domain method, and verify the focused test after every change.
-- [ ] Commit `refactor: User 계정 상태 전이 캡슐화`.
+- [x] Add failing tests for each isolated state transition, implement the minimal domain method, and verify the focused test after every change.
+- [x] Replace the matching setter calls in auth·user Services while preserving the existing external-effect order.
+- [x] Commit `refactor: User 계정 상태 전이 캡슐화`.
 
 ### Task 3: 인증 Service와 내부 비밀번호 협력자
 
