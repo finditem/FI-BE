@@ -1,8 +1,6 @@
-package com.fmi.domain.auth.service;
+package com.fmi.external.oauth.apple;
 
 import com.fmi.config.AppleOAuthProperties;
-import com.fmi.domain.auth.service.apple.AppleClientSecretGenerator;
-import com.fmi.domain.auth.service.apple.AppleIdTokenVerifier;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.util.Map;
@@ -22,7 +20,7 @@ import org.springframework.web.client.RestClientException;
 
 @Slf4j
 @Service
-public class AppleOAuthService {
+public class AppleOAuthClient {
 
     private static final String APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token";
     private static final String APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys";
@@ -31,7 +29,7 @@ public class AppleOAuthService {
 
     private final AppleOAuthProperties oauthProperties;
 
-    public AppleOAuthService(RestClient.Builder restClientBuilder, AppleOAuthProperties oauthProperties) {
+    public AppleOAuthClient(RestClient.Builder restClientBuilder, AppleOAuthProperties oauthProperties) {
         this.restClient = restClientBuilder.build();
         this.oauthProperties = oauthProperties;
     }

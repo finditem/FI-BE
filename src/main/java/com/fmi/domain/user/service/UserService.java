@@ -6,7 +6,6 @@ import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
-import com.fmi.domain.auth.service.KakaoOAuthService;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.comment.service.CommentImageService;
@@ -45,6 +44,7 @@ import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
+import com.fmi.external.oauth.kakao.KakaoOAuthClient;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
@@ -89,7 +89,7 @@ public class UserService {
     private final PostService postService;
     private final InquiryCommentRepository inquiryCommentRepository;
     private final SocialAccountsRepository socialAccountsRepository;
-    private final KakaoOAuthService kakaoOAuthService;
+    private final KakaoOAuthClient kakaoOAuthService;
 
     /**
      * 내 정보 조회

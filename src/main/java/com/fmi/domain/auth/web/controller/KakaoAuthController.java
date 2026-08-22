@@ -1,15 +1,15 @@
 package com.fmi.domain.auth.web.controller;
 
+import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.auth.response.LoginResponse;
-import com.fmi.domain.auth.service.KakaoOAuthService;
-import com.fmi.domain.auth.service.KakaoOAuthService.KakaoToken;
-import com.fmi.domain.auth.service.KakaoOAuthService.KakaoUser;
 import com.fmi.domain.auth.service.SocialLoginService;
+import com.fmi.domain.auth.service.TokenIssuer;
 import com.fmi.domain.auth.web.dto.KakaoLoginRequest;
+import com.fmi.external.oauth.kakao.KakaoOAuthClient;
+import com.fmi.external.oauth.kakao.KakaoOAuthClient.KakaoToken;
+import com.fmi.external.oauth.kakao.KakaoOAuthClient.KakaoUser;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.CookieFactory;
-import com.fmi.security.JwtTokenProvider;
-import com.fmi.security.RefreshTokenStore;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -17,9 +17,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
@@ -32,10 +29,9 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Auth")
 public class KakaoAuthController {
 
-    private final KakaoOAuthService kakaoOAuthService;
+    private final KakaoOAuthClient kakaoOAuthService;
     private final SocialLoginService socialLoginService;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final RefreshTokenStore refreshTokenStore;
+    private final TokenIssuer tokenIssuer;
     private final CookieFactory cookieFactory;
 
     @Value("${jwt.cookie.name:refresh_token}")
@@ -135,27 +131,24 @@ public class KakaoAuthController {
         var localUser = result.user();
         boolean termsAgreed = localUser.isPrivacyPolicyAgreed() && localUser.isTermsOfServiceAgreed();
 
-        var claims = new java.util.HashMap<String, Object>();
-        claims.put("userId", localUser.getId());
-        claims.put("role", localUser.getRole().name());
-        claims.put("provider", "KAKAO");
-        claims.put("purpose", "access");
-        String accessToken = jwtTokenProvider.createAccessToken(localUser.getEmail(), claims);
-
-        String jti = UUID.randomUUID().toString();
-        String refreshToken = jwtTokenProvider.createRefreshToken(localUser.getEmail(), jti);
-        String refreshHash = sha256Hex(refreshToken);
-        java.util.Date refreshExp = jwtTokenProvider.getExpiration(refreshToken);
-        refreshTokenStore.issue(jti, localUser.getEmail(), refreshHash, refreshExp.toInstant());
+        TokenIssuer.IssuedTokens issuedTokens = tokenIssuer.issue(localUser, false, Provider.KAKAO);
 
         // accessToken 쿠키 설정
-        java.util.Date accessExp = jwtTokenProvider.getExpiration(accessToken);
         ResponseCookie accessCookie = cookieFactory.build(
-                request, accessCookieName, accessToken, Duration.between(Instant.now(), accessExp.toInstant()));
+                request,
+                accessCookieName,
+                issuedTokens.accessToken(),
+                java.time.Duration.between(
+                        java.time.Instant.now(), issuedTokens.accessExpiration().toInstant()));
 
         // refreshToken 쿠키 설정
         ResponseCookie refreshCookie = cookieFactory.build(
-                request, refreshCookieName, refreshToken, Duration.between(Instant.now(), refreshExp.toInstant()));
+                request,
+                refreshCookieName,
+                issuedTokens.refreshToken(),
+                java.time.Duration.between(
+                        java.time.Instant.now(),
+                        issuedTokens.refreshExpiration().toInstant()));
 
         // 응답 생성 및 반환
         // accessToken과 refreshToken은 쿠키로 전송되므로 응답 body에는 포함하지 않습니다.
@@ -164,15 +157,5 @@ public class KakaoAuthController {
                 .header("Set-Cookie", accessCookie.toString())
                 .header("Set-Cookie", refreshCookie.toString())
                 .body(ApiResponse.onSuccess(new LoginResponse(localUser.getId(), false, termsAgreed)));
-    }
-
-    private static String sha256Hex(String value) {
-        try {
-            return java.util.HexFormat.of()
-                    .formatHex(java.security.MessageDigest.getInstance("SHA-256")
-                            .digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
-        } catch (java.security.NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
     }
 }

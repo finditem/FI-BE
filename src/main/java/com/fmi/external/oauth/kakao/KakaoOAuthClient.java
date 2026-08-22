@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.service;
+package com.fmi.external.oauth.kakao;
 
 import com.fmi.config.KakaoOAuthProperties;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -23,7 +23,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class KakaoOAuthService {
+public class KakaoOAuthClient {
 
     private final KakaoOAuthProperties oauthProperties;
 

@@ -1,15 +1,13 @@
 package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.auth.converter.AuthConverter;
-import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.auth.response.LoginResponse;
 import com.fmi.domain.auth.service.AuthService;
+import com.fmi.domain.auth.service.TokenIssuer;
 import com.fmi.domain.auth.web.dto.LoginRequest;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.CookieFactory;
-import com.fmi.security.JwtTokenProvider;
-import com.fmi.security.RefreshTokenStore;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -32,9 +30,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final RefreshTokenStore refreshTokenStore;
-    private final SocialAccountsRepository socialAccountsRepository;
+    private final TokenIssuer tokenIssuer;
     private final CookieFactory cookieFactory;
 
     @Value("${jwt.cookie.name:refresh_token}")
@@ -180,53 +176,19 @@ public class AuthController {
                     .body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "리프레시 토큰 없음", null));
         }
 
-        if (!jwtTokenProvider.validateToken(refreshJwt)) {
+        TokenIssuer.RefreshResult refreshResult = tokenIssuer.refresh(refreshJwt);
+        if (!refreshResult.isSuccess()) {
             return ResponseEntity.status(401)
-                    .body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "유효하지 않은 리프레시", null));
+                    .body(ApiResponse.onFailure(
+                            "AUTH401-INVALID_REFRESH", refreshFailureMessage(refreshResult.failure()), null));
         }
 
-        String email = jwtTokenProvider.getSubject(refreshJwt);
-        String jti = jwtTokenProvider.getJti(refreshJwt);
-        if (jti == null || jti.isEmpty()) {
-            return ResponseEntity.status(401)
-                    .body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "유효하지 않은 리프레시(jti 없음)", null));
-        }
-
-        String hash = sha256Hex(refreshJwt);
-        if (!refreshTokenStore.validate(jti, hash, email)) {
-            return ResponseEntity.status(401)
-                    .body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "유효하지 않은 리프레시(대조 실패)", null));
-        }
-
-        var userOpt = authService.findActiveUserByEmail(email);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.status(401)
-                    .body(ApiResponse.onFailure("AUTH401-INVALID_REFRESH", "유효하지 않은 리프레시(사용자 없음)", null));
-        }
-        var user = userOpt.get();
-
-        // RTR: 기존 리프레시 폐기, 새 토큰 발급
-        refreshTokenStore.revoke(jti);
-
-        var claims = new java.util.HashMap<String, Object>();
-        claims.put("userId", user.getId());
-        claims.put("role", user.getRole().name());
-        claims.put("purpose", "access");
-        socialAccountsRepository
-                .findByUser(user)
-                .ifPresent(
-                        account -> claims.put("provider", account.getProvider().name()));
-        String accessToken = jwtTokenProvider.createAccessToken(email, claims);
-
-        String newJti = java.util.UUID.randomUUID().toString();
-        String newRefresh = jwtTokenProvider.createRefreshToken(email, newJti);
-        String newHash = sha256Hex(newRefresh);
-        java.util.Date refreshExp = jwtTokenProvider.getExpiration(newRefresh);
-        refreshTokenStore.issue(newJti, email, newHash, refreshExp.toInstant());
+        TokenIssuer.IssuedTokens issuedTokens = refreshResult.issuedTokens();
 
         ResponseCookie accessCookie =
-                buildCookie(request, accessCookieName, accessToken, jwtTokenProvider.getExpiration(accessToken));
-        ResponseCookie refreshCookie = buildCookie(request, refreshCookieName, newRefresh, refreshExp);
+                buildCookie(request, accessCookieName, issuedTokens.accessToken(), issuedTokens.accessExpiration());
+        ResponseCookie refreshCookie =
+                buildCookie(request, refreshCookieName, issuedTokens.refreshToken(), issuedTokens.refreshExpiration());
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", accessCookie.toString())
@@ -236,24 +198,12 @@ public class AuthController {
 
     private ResponseEntity<ApiResponse<LoginResponse>> buildTokenResponse(
             HttpServletRequest request, com.fmi.domain.user.data.User user, boolean isTemporaryPassword) {
-        var claims = new java.util.HashMap<String, Object>();
-        claims.put("userId", user.getId());
-        claims.put("role", user.getRole().name());
-        claims.put("purpose", "access");
-        if (isTemporaryPassword) {
-            claims.put("isTemporaryPassword", true);
-        }
-        String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), claims);
-        String jti = java.util.UUID.randomUUID().toString();
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), jti);
-
-        String refreshHash = sha256Hex(refreshToken);
-        java.util.Date refreshExp = jwtTokenProvider.getExpiration(refreshToken);
-        refreshTokenStore.issue(jti, user.getEmail(), refreshHash, refreshExp.toInstant());
+        TokenIssuer.IssuedTokens issuedTokens = tokenIssuer.issue(user, isTemporaryPassword, null);
 
         ResponseCookie accessCookie =
-                buildCookie(request, accessCookieName, accessToken, jwtTokenProvider.getExpiration(accessToken));
-        ResponseCookie refreshCookie = buildCookie(request, refreshCookieName, refreshToken, refreshExp);
+                buildCookie(request, accessCookieName, issuedTokens.accessToken(), issuedTokens.accessExpiration());
+        ResponseCookie refreshCookie =
+                buildCookie(request, refreshCookieName, issuedTokens.refreshToken(), issuedTokens.refreshExpiration());
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", accessCookie.toString())
@@ -267,28 +217,13 @@ public class AuthController {
                 request, name, value, java.time.Duration.between(java.time.Instant.now(), expiration.toInstant()));
     }
 
-    private static String sha256Hex(String value) {
-        try {
-            return java.util.HexFormat.of()
-                    .formatHex(java.security.MessageDigest.getInstance("SHA-256")
-                            .digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
-        } catch (java.security.NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
-    }
-
     @PostMapping("/logout")
     @Operation(summary = "로그아웃", description = "쿠키의 refresh_token(jti)을 폐기하고 쿠키를 제거합니다.")
     @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그아웃 성공")})
     public ResponseEntity<ApiResponse<String>> logout(HttpServletRequest request) {
         String refreshJwt = getCookieValue(request, refreshCookieName);
         if (refreshJwt != null && !refreshJwt.isEmpty()) {
-            if (jwtTokenProvider.validateToken(refreshJwt)) {
-                String jti = jwtTokenProvider.getJti(refreshJwt);
-                if (jti != null && !jti.isEmpty()) {
-                    refreshTokenStore.revoke(jti);
-                }
-            }
+            tokenIssuer.revokeIfValid(refreshJwt);
         }
 
         // accessToken 쿠키 제거
@@ -311,5 +246,14 @@ public class AuthController {
             }
         }
         return null;
+    }
+
+    private static String refreshFailureMessage(TokenIssuer.RefreshFailure failure) {
+        return switch (failure) {
+            case INVALID_TOKEN -> "유효하지 않은 리프레시";
+            case MISSING_JTI -> "유효하지 않은 리프레시(jti 없음)";
+            case HASH_MISMATCH -> "유효하지 않은 리프레시(대조 실패)";
+            case USER_NOT_FOUND -> "유효하지 않은 리프레시(사용자 없음)";
+        };
     }
 }
