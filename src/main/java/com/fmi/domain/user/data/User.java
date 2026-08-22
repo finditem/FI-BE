@@ -89,4 +89,37 @@ public class User {
             this.email = email;
         }
     }
+
+    public void issueTemporaryPassword(String encodedPassword, LocalDateTime expiresAt, LocalDateTime now) {
+        if (originalPassword == null) {
+            originalPassword = password;
+        }
+        temporaryPassword = encodedPassword;
+        temporaryPasswordExpiresAt = expiresAt;
+        password = encodedPassword;
+        updatedAt = now;
+    }
+
+    public boolean restoreExpiredTemporaryPassword(LocalDateTime now) {
+        if (temporaryPasswordExpiresAt == null || now.isBefore(temporaryPasswordExpiresAt)) {
+            return false;
+        }
+
+        if (originalPassword != null) {
+            password = originalPassword;
+        }
+        originalPassword = null;
+        temporaryPassword = null;
+        temporaryPasswordExpiresAt = null;
+        updatedAt = now;
+        return true;
+    }
+
+    public void changePassword(String encodedPassword, LocalDateTime now) {
+        password = encodedPassword;
+        originalPassword = null;
+        temporaryPassword = null;
+        temporaryPasswordExpiresAt = null;
+        updatedAt = now;
+    }
 }
