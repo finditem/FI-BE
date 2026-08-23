@@ -73,8 +73,9 @@
 - Modify: `src/test/java/com/fmi/domain/auth/web/controller/AuthControllerTest.java`
 - Delete: `src/test/java/com/fmi/domain/auth/web/controller/AccountAuthControllerTest.java`
 
-- [ ] Add failing AuthController tests for the existing password verify, password change, and withdrawal routes.
-- [ ] Move the existing methods with unchanged mappings and response wrappers, run all auth controller tests, and commit `refactor: AuthController에 계정 인증 API 통합`.
+- [x] Add failing AuthController tests for the existing password verify, password change, and withdrawal routes.
+- [x] Move the existing methods with unchanged mappings and response wrappers, then run all auth controller tests.
+- [ ] Commit `refactor: AuthController에 계정 인증 API 통합`.
 
 ### Task 5: UserQueryService 의존 제거
 

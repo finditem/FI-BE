@@ -3,8 +3,13 @@ package com.fmi.domain.auth.web.controller;
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.response.LoginResponse;
 import com.fmi.domain.auth.service.AuthService;
+import com.fmi.domain.auth.service.PasswordService;
 import com.fmi.domain.auth.service.TokenIssuer;
+import com.fmi.domain.auth.service.WithdrawalService;
+import com.fmi.domain.auth.web.dto.AccountDeleteRequest;
 import com.fmi.domain.auth.web.dto.LoginRequest;
+import com.fmi.domain.auth.web.dto.PasswordChangeRequest;
+import com.fmi.domain.auth.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.CookieFactory;
@@ -21,16 +26,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
 @RequiredArgsConstructor
 @Tag(name = "Auth")
 public class AuthController {
 
     private final AuthService authService;
     private final TokenIssuer tokenIssuer;
+    private final PasswordService passwordService;
+    private final WithdrawalService withdrawalService;
     private final CookieFactory cookieFactory;
 
     @Value("${jwt.cookie.name:refresh_token}")
@@ -39,7 +47,7 @@ public class AuthController {
     @Value("${jwt.cookie.access-token-name:access_token}")
     private String accessCookieName;
 
-    @PostMapping("/signup")
+    @PostMapping("/auth/signup")
     @Operation(
             summary = "회원가입",
             description =
@@ -89,7 +97,7 @@ public class AuthController {
         return buildTokenResponse(httpRequest, user, false);
     }
 
-    @PostMapping("/login")
+    @PostMapping("/auth/login")
     @Operation(summary = "로그인", description = """
                    이메일과 비밀번호로 로그인합니다.
                    - 일반 비밀번호 또는 임시 비밀번호로 로그인 가능합니다.
@@ -115,7 +123,7 @@ public class AuthController {
         return buildTokenResponse(httpRequest, authResult.getUser(), authResult.isTemporaryPassword());
     }
 
-    @GetMapping("/check-nickname")
+    @GetMapping("/auth/check-nickname")
     @Operation(
             summary = "닉네임 유효성 및 중복 확인",
             description = "닉네임 길이(2-10자), 금칙어, 중복 여부를 확인합니다. 부적절하거나 중복이면 400과 에러 메시지를 반환합니다.")
@@ -154,7 +162,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.onSuccess(AuthConverter.toCheckResponse(true)));
     }
 
-    @PostMapping("/refresh")
+    @PostMapping("/auth/refresh")
     @Operation(summary = "토큰 리프레시", description = "쿠키의 refresh_token(JWT)으로 액세스 토큰을 갱신합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "토큰 리프레시 성공"),
@@ -217,7 +225,7 @@ public class AuthController {
                 request, name, value, java.time.Duration.between(java.time.Instant.now(), expiration.toInstant()));
     }
 
-    @PostMapping("/logout")
+    @PostMapping("/auth/logout")
     @Operation(summary = "로그아웃", description = "쿠키의 refresh_token(jti)을 폐기하고 쿠키를 제거합니다.")
     @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그아웃 성공")})
     public ResponseEntity<ApiResponse<String>> logout(HttpServletRequest request) {
@@ -236,6 +244,34 @@ public class AuthController {
                 .header("Set-Cookie", removeAccess.toString())
                 .header("Set-Cookie", removeRefresh.toString())
                 .body(ApiResponse.onSuccess("OK"));
+    }
+
+    @PostMapping("/users/me/password/verify")
+    public ApiResponse<Void> verifyPassword(
+            @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody PasswordVerifyRequest request) {
+        passwordService.verify(userDetails.getUsername(), request);
+        return ApiResponse.onSuccess(null);
+    }
+
+    @PatchMapping("/users/me/password")
+    public ApiResponse<Void> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody PasswordChangeRequest request) {
+        passwordService.change(userDetails.getUsername(), request.getNewPassword(), request.getNewPasswordConfirm());
+        return ApiResponse.onSuccess(null);
+    }
+
+    @DeleteMapping("/users/me")
+    public ResponseEntity<ApiResponse<Void>> deleteAccount(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody AccountDeleteRequest request,
+            HttpServletRequest httpRequest) {
+        withdrawalService.delete(userDetails.getUsername(), request);
+        ResponseCookie removeAccess = cookieFactory.expire(httpRequest, accessCookieName);
+        ResponseCookie removeRefresh = cookieFactory.expire(httpRequest, refreshCookieName);
+        return ResponseEntity.ok()
+                .header("Set-Cookie", removeAccess.toString())
+                .header("Set-Cookie", removeRefresh.toString())
+                .body(ApiResponse.onSuccess(null));
     }
 
     private static String getCookieValue(HttpServletRequest request, String name) {
