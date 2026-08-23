@@ -9,6 +9,7 @@ import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.auth.service.PasswordService;
 import com.fmi.domain.auth.service.WithdrawalService;
 import com.fmi.domain.auth.web.dto.AccountDeleteRequest;
+import com.fmi.domain.auth.web.dto.PasswordChangeRequest;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.CookieFactory;
 import java.util.List;
@@ -42,6 +43,28 @@ class AccountAuthControllerTest {
 
     @InjectMocks
     private AccountAuthController accountAuthController;
+
+    @Nested
+    @DisplayName("비밀번호 변경")
+    class ChangePassword {
+
+        @Test
+        @DisplayName("요청 값을 해체해 비밀번호 유스케이스에 전달한다")
+        void passesRequestValuesToPasswordService() {
+            // given
+            String email = "member@finditem.kr";
+            PasswordChangeRequest request = new PasswordChangeRequest();
+            request.setNewPassword("NewPassword1!");
+            request.setNewPasswordConfirm("NewPassword1!");
+            when(userDetails.getUsername()).thenReturn(email);
+
+            // when
+            accountAuthController.changePassword(userDetails, request);
+
+            // then
+            verify(passwordService).change(email, "NewPassword1!", "NewPassword1!");
+        }
+    }
 
     @Nested
     @DisplayName("회원 탈퇴")

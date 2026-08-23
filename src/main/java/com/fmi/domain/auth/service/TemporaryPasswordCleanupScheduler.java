@@ -42,9 +42,7 @@ public class TemporaryPasswordCleanupScheduler {
         for (User user : usersWithExpiredTempPassword) {
             try {
                 // 원래 비밀번호 복원
-                if (user.getOriginalPassword() != null) {
-                    user.setPassword(user.getOriginalPassword());
-                    user.setOriginalPassword(null);
+                if (user.restoreExpiredTemporaryPassword(now)) {
                     log.debug("사용자 ID {}의 만료된 임시 비밀번호를 정리하고 원래 비밀번호를 복원했습니다.", user.getId());
                 } else {
                     // originalPassword가 null인 경우 (비정상적인 상황이지만 임시 비밀번호는 정리)
@@ -52,11 +50,6 @@ public class TemporaryPasswordCleanupScheduler {
                             "사용자 ID {}의 만료된 임시 비밀번호를 정리하지만 원래 비밀번호가 없습니다. " + "사용자가 이미 비밀번호를 변경했거나 데이터 불일치가 있을 수 있습니다.",
                             user.getId());
                 }
-
-                // 임시 비밀번호 제거
-                user.setTemporaryPassword(null);
-                user.setTemporaryPasswordExpiresAt(null);
-                user.setUpdatedAt(LocalDateTime.now());
 
                 userRepository.save(user);
                 cleanedCount++;

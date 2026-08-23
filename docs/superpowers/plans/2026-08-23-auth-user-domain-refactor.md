@@ -45,13 +45,24 @@
 ### Task 3: 인증 Service와 내부 비밀번호 협력자
 
 **Files:**
-- Create: `src/main/java/com/fmi/domain/auth/service/internal/PasswordPolicy.java`
-- Create: `src/main/java/com/fmi/domain/auth/service/internal/PasswordCodec.java`
-- Modify: `AuthService`, `PasswordService`, `PasswordResetService`, `TemporaryPasswordCleanupScheduler`, `SocialLoginService`, `WithdrawalService`
-- Test: `src/test/java/com/fmi/domain/auth/service/*Test.java`
+- Modify: `PasswordService`, `TemporaryPasswordCleanupScheduler`, `PasswordResetController`
+- Delete: `src/main/java/com/fmi/domain/auth/service/PasswordResetService.java`
+- Create: `src/main/java/com/fmi/domain/auth/service/internal/PasswordGenerator.java`
+- Create: `src/main/java/com/fmi/domain/auth/service/internal/PasswordValidator.java`
+- Create: `src/main/java/com/fmi/config/TimeConfig.java`
+- Modify: `src/test/java/com/fmi/domain/auth/service/PasswordServiceTest.java`
+- Create: `src/test/java/com/fmi/domain/auth/service/internal/PasswordValidatorTest.java`
+- Delete: `src/test/java/com/fmi/domain/auth/service/PasswordResetServiceTest.java`
 
-- [ ] Add failing Service tests for policy validation and User domain-method usage.
-- [ ] Add only the repeated PasswordPolicy and PasswordCodec collaborators; replace direct User setters.
+- [ ] Add a failing Service test that proves one encoded temporary password is used for both login and temporary state.
+- [ ] Replace direct User setters with domain methods and absorb temporary-password issuance into `PasswordService`.
+- [ ] Validate password confirmation with `PasswordValidator`, while preserving the existing exception and validation policy.
+- [ ] Inject `Clock` into `PasswordService` to provide a deterministic state-change time in tests.
+- [ ] Keep `PasswordChangeRequest` at the web boundary, but pass decomposed password values to the Service and enforce the existing password-strength policy in `User.changePassword`.
+- [ ] At the temporary-password expiry instant, reject the temporary password and allow only the preserved original password without waiting for the cleanup scheduler.
+- [x] Consolidate the active/expired temporary-password credential decision in `PasswordValidator`, while `AuthService` and `PasswordService` retain their current result and exception contracts.
+- [x] Extract the existing temporary-password generation algorithm into `PasswordGenerator` without changing its length or character set.
+- [ ] Add `PasswordPolicy` or `PasswordCodec` only if a second password-policy or codec behavior is actually duplicated; otherwise keep the standard `PasswordEncoder` import.
 - [ ] Run the affected auth tests and commit `refactor: auth 비밀번호 유스케이스 책임 정리`.
 
 ### Task 4: AuthController 통합

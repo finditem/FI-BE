@@ -4,6 +4,8 @@ import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import java.time.LocalDateTime;
@@ -103,7 +105,7 @@ public class User {
     }
 
     public boolean restoreExpiredTemporaryPassword(LocalDateTime now) {
-        if (temporaryPasswordExpiresAt == null || now.isBefore(temporaryPasswordExpiresAt)) {
+        if (!hasExpiredTemporaryPassword(now)) {
             return false;
         }
 
@@ -117,12 +119,36 @@ public class User {
         return true;
     }
 
-    public void changePassword(String encodedPassword, LocalDateTime now) {
+    public boolean hasActiveTemporaryPassword(LocalDateTime now) {
+        return temporaryPassword != null
+                && temporaryPasswordExpiresAt != null
+                && now.isBefore(temporaryPasswordExpiresAt);
+    }
+
+    public boolean hasExpiredTemporaryPassword(LocalDateTime now) {
+        return temporaryPasswordExpiresAt != null && !now.isBefore(temporaryPasswordExpiresAt);
+    }
+
+    public void changePassword(String rawPassword, String encodedPassword, LocalDateTime now) {
+        validatePasswordPolicy(rawPassword);
         password = encodedPassword;
         originalPassword = null;
         temporaryPassword = null;
         temporaryPasswordExpiresAt = null;
         updatedAt = now;
+    }
+
+    private void validatePasswordPolicy(String rawPassword) {
+        String password = rawPassword == null ? "" : rawPassword;
+        boolean valid = password.length() >= 8
+                && password.length() <= 16
+                && password.matches(".*[A-Z].*")
+                && password.matches(".*[a-z].*")
+                && password.matches(".*[0-9].*")
+                && password.matches(".*[!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?].*");
+        if (!valid) {
+            throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
+        }
     }
 
     public void agreeTerms(

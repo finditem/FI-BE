@@ -1,8 +1,11 @@
 package com.fmi.domain.user.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fmi.domain.Enum.WithdrawalReason;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -72,6 +75,26 @@ class UserTest {
     }
 
     @Nested
+    @DisplayName("임시 비밀번호 상태")
+    class TemporaryPasswordStatus {
+
+        @Test
+        @DisplayName("만료 시각 전까지는 활성이고 만료 시각부터는 만료 상태다")
+        void distinguishesActiveAndExpiredStatesAtExpiry() {
+            // given
+            LocalDateTime issuedAt = LocalDateTime.of(2026, 8, 23, 12, 0);
+            LocalDateTime expiresAt = issuedAt.plusHours(1);
+            User user = User.builder().password("encoded-original-password").build();
+            user.issueTemporaryPassword("encoded-temporary-password", expiresAt, issuedAt);
+
+            // when & then
+            assertThat(user.hasActiveTemporaryPassword(expiresAt.minusNanos(1))).isTrue();
+            assertThat(user.hasActiveTemporaryPassword(expiresAt)).isFalse();
+            assertThat(user.hasExpiredTemporaryPassword(expiresAt)).isTrue();
+        }
+    }
+
+    @Nested
     @DisplayName("비밀번호를 변경할 때")
     class ChangePassword {
 
@@ -86,7 +109,7 @@ class UserTest {
             LocalDateTime changedAt = issuedAt.plusMinutes(10);
 
             // when
-            user.changePassword("encoded-new-password", changedAt);
+            user.changePassword("NewPassword1!", "encoded-new-password", changedAt);
 
             // then
             assertThat(user.getPassword()).isEqualTo("encoded-new-password");
@@ -94,6 +117,30 @@ class UserTest {
             assertThat(user.getTemporaryPassword()).isNull();
             assertThat(user.getTemporaryPasswordExpiresAt()).isNull();
             assertThat(user.getUpdatedAt()).isEqualTo(changedAt);
+        }
+
+        @Test
+        @DisplayName("비밀번호 정책을 만족하지 않으면 기존 약한 비밀번호 예외를 던진다")
+        void rejectsWeakPassword() {
+            // given
+            User user = User.builder().password("encoded-original-password").build();
+
+            // when & then
+            assertThatThrownBy(() -> user.changePassword("short", "encoded-new-password", LocalDateTime.now()))
+                    .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                            .isEqualTo(ErrorStatus._WEAK_PASSWORD));
+        }
+
+        @Test
+        @DisplayName("새 비밀번호가 없으면 약한 비밀번호 예외를 던진다")
+        void rejectsMissingPassword() {
+            // given
+            User user = User.builder().password("encoded-original-password").build();
+
+            // when & then
+            assertThatThrownBy(() -> user.changePassword(null, "encoded-new-password", LocalDateTime.now()))
+                    .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                            .isEqualTo(ErrorStatus._WEAK_PASSWORD));
         }
     }
 

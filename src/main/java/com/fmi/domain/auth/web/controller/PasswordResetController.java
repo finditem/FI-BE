@@ -1,6 +1,6 @@
 package com.fmi.domain.auth.web.controller;
 
-import com.fmi.domain.auth.service.PasswordResetService;
+import com.fmi.domain.auth.service.PasswordService;
 import com.fmi.domain.auth.web.dto.PasswordResetRequest;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Auth")
 public class PasswordResetController {
 
-    private final PasswordResetService resetService;
+    private final PasswordService passwordService;
 
     @PostMapping("/request")
     @Operation(summary = "임시 비밀번호 발급", description = """
@@ -65,7 +65,7 @@ public class PasswordResetController {
                                                         "{\"isSuccess\": false, \"code\": \"AUTH500-EMAIL_SEND_FAILED\", \"message\": \"이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.\"}")))
     })
     public ApiResponse<Void> request(@Valid @RequestBody PasswordResetRequest dto) {
-        resetService.issueTemporaryPassword(dto.getEmail());
+        passwordService.issueTemporaryPassword(dto.getEmail());
         return ApiResponse.onSuccess(null);
     }
 }

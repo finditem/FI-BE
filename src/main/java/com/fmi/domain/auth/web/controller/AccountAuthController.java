@@ -47,7 +47,7 @@ public class AccountAuthController {
     @PatchMapping("/password")
     public ApiResponse<Void> changePassword(
             @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody PasswordChangeRequest request) {
-        passwordService.change(userDetails.getUsername(), request);
+        passwordService.change(userDetails.getUsername(), request.getNewPassword(), request.getNewPasswordConfirm());
         return ApiResponse.onSuccess(null);
     }
 
