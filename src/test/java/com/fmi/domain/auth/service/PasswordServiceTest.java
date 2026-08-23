@@ -69,9 +69,9 @@ class PasswordServiceTest {
                 socialAccountsRepository,
                 passwordEncoder,
                 passwordValidator,
+                passwordGenerator,
                 refreshTokenStore,
                 emailService,
-                passwordGenerator,
                 clock);
     }
 
@@ -105,10 +105,8 @@ class PasswordServiceTest {
             assertThat(user.getOriginalPassword()).isEqualTo("original-password-hash");
             assertThat(user.getTemporaryPassword()).isEqualTo("temporary-password-hash");
             assertThat(user.getPassword()).isEqualTo("temporary-password-hash");
-            assertThat(user.getTemporaryPasswordExpiresAt())
-                    .isAfter(LocalDateTime.now().plusMinutes(59));
-            assertThat(user.getTemporaryPasswordExpiresAt())
-                    .isBefore(LocalDateTime.now().plusMinutes(61));
+            assertThat(user.getTemporaryPasswordExpiresAt()).isEqualTo(LocalDateTime.of(2026, 8, 23, 4, 0));
+            assertThat(user.getUpdatedAt()).isEqualTo(LocalDateTime.of(2026, 8, 23, 3, 0));
         }
 
         @Test

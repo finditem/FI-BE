@@ -2,6 +2,7 @@ package com.fmi.domain.auth.service;
 
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -14,11 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class TemporaryPasswordCleanupScheduler {
 
     private final UserRepository userRepository;
+    private final Clock clock;
 
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void cleanupExpiredTemporaryPasswords() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         List<User> usersWithExpiredTempPassword = userRepository.findUsersWithExpiredTemporaryPassword(now);
 
         for (User user : usersWithExpiredTempPassword) {

@@ -27,9 +27,9 @@ public class PasswordService {
     private final SocialAccountsRepository socialAccountsRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
+    private final PasswordGenerator passwordGenerator;
     private final RefreshTokenStore refreshTokenStore;
     private final EmailService emailService;
-    private final PasswordGenerator passwordGenerator;
     private final Clock clock;
 
     public void verify(String email, PasswordVerifyRequest request) {
@@ -65,7 +65,7 @@ public class PasswordService {
         }
 
         String temporaryPassword = passwordGenerator.generateTemporaryPassword();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         user.issueTemporaryPassword(passwordEncoder.encode(temporaryPassword), now.plusHours(1), now);
         userRepository.save(user);
         emailService.sendHtmlEmail(
