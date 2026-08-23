@@ -3,6 +3,7 @@ package com.fmi.domain.user.data;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.fmi.domain.Enum.Role;
 import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -91,6 +92,36 @@ class UserTest {
             assertThat(user.hasActiveTemporaryPassword(expiresAt.minusNanos(1))).isTrue();
             assertThat(user.hasActiveTemporaryPassword(expiresAt)).isFalse();
             assertThat(user.hasExpiredTemporaryPassword(expiresAt)).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("일반 회원을 생성할 때")
+    class CreateUser {
+
+        @Test
+        @DisplayName("비밀번호 정책을 만족하지 않으면 기존 약한 비밀번호 예외를 던진다")
+        void rejectsWeakPassword() {
+            assertThatThrownBy(() -> User.createUser(
+                            "member@finditem.kr", "찾아줘토끼", "short", "encoded-password", true, true, true, false, false))
+                    .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                            .isEqualTo(ErrorStatus._WEAK_PASSWORD));
+        }
+
+        @Test
+        @DisplayName("정책을 만족하면 일반 회원 상태를 만든다")
+        void createsUserWithRegistrationState() {
+            User user = User.createUser(
+                    "member@finditem.kr", "찾아줘토끼", "Password1!", "encoded-password", true, true, true, false, false);
+
+            assertThat(user)
+                    .extracting(
+                            User::getEmail, User::getNickname, User::getPassword, User::getRole, User::isEmail_verified)
+                    .containsExactly("member@finditem.kr", "찾아줘토끼", "encoded-password", Role.USER, true);
+            assertThat(user.isPrivacyPolicyAgreed()).isTrue();
+            assertThat(user.isTermsOfServiceAgreed()).isTrue();
+            assertThat(user.isContentPolicyAgreed()).isFalse();
+            assertThat(user.isMarketingConsent()).isFalse();
         }
     }
 

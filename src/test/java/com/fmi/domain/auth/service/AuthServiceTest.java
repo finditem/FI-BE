@@ -9,9 +9,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fmi.domain.admin.web.dto.AdminSignupRequest;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.user.data.User;
@@ -134,6 +136,54 @@ class AuthServiceTest {
                 // then
                 assertThat(result).isSameAs(savedUser.get());
                 verify(userRepository).save(any(User.class));
+            }
+        }
+
+        @Nested
+        @DisplayName("비밀번호 정책을 만족하지 않으면")
+        class WithWeakPassword {
+
+            @Test
+            @DisplayName("이메일 인증을 소비하지 않고 기존 약한 비밀번호 예외를 던진다")
+            void rejectsWeakPasswordBeforeConsumingEmailVerification() {
+                // given
+                SignupRequest request = signupRequest();
+                request.setPassword("short");
+
+                // when & then
+                assertThatThrownBy(() -> authService.signup(request))
+                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                                .isEqualTo(ErrorStatus._WEAK_PASSWORD));
+                verify(emailVerificationService, never()).isEmailVerified(request.getEmail());
+                verify(emailVerificationService, never()).consumeEmailVerification(request.getEmail());
+                verify(passwordEncoder).encode(request.getPassword());
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("관리자 회원 가입")
+    class AdminSignup {
+
+        @Nested
+        @DisplayName("비밀번호 정책을 만족하지 않으면")
+        class WithWeakPassword {
+
+            @Test
+            @DisplayName("저장 없이 기존 약한 비밀번호 예외를 던진다")
+            void rejectsWeakPasswordBeforeEncoding() {
+                // given
+                AdminSignupRequest request = new AdminSignupRequest();
+                request.setEmail("admin@finditem.kr");
+                request.setNickname("admin");
+                request.setPassword("short");
+
+                // when & then
+                assertThatThrownBy(() -> authService.adminSignup(request))
+                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                                .isEqualTo(ErrorStatus._WEAK_PASSWORD));
+                verify(passwordEncoder).encode(request.getPassword());
+                verify(userRepository, never()).save(any(User.class));
             }
         }
     }

@@ -1,7 +1,6 @@
 package com.fmi.domain.auth.service;
 
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
-import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.user.data.User;
@@ -44,17 +43,17 @@ public class AuthService {
             throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
         }
 
-        // 비밀번호 규칙: 8자 이상, 대문자/소문자/숫자/특수문자 포함
-        String pw = request.getPassword() == null ? "" : request.getPassword();
-        boolean valid = pw.length() >= 8
-                && pw.length() <= 16
-                && pw.matches(".*[A-Z].*")
-                && pw.matches(".*[a-z].*")
-                && pw.matches(".*[0-9].*")
-                && pw.matches(".*[!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?].*");
-        if (!valid) {
-            throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
-        }
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        User user = User.createUser(
+                request.getEmail(),
+                request.getNickname(),
+                request.getPassword(),
+                encodedPassword,
+                true,
+                Boolean.TRUE.equals(request.getPrivacyPolicyAgreed()),
+                Boolean.TRUE.equals(request.getTermsOfServiceAgreed()),
+                Boolean.TRUE.equals(request.getContentPolicyAgreed()),
+                Boolean.TRUE.equals(request.getMarketingConsent()));
 
         // 약관 동의 필드는 @NotNull로 값은 필수지만, true/false 모두 허용
         // (null 체크는 @NotNull에서 처리됨)
@@ -68,9 +67,6 @@ public class AuthService {
         // 인증 플래그 소비 (한 번만 사용되도록)
         emailVerificationService.consumeEmailVerification(request.getEmail());
 
-        User user = AuthConverter.toUserEntity(
-                request, passwordEncoder.encode(request.getPassword()), true // 백엔드에서 검증한 인증 여부 사용
-                );
         User savedUser = userRepository.save(user);
 
         // 회원가입 환영 이메일 발송 (비동기로 처리하거나 트랜잭션 외부에서 처리 권장)
@@ -113,20 +109,13 @@ public class AuthService {
             throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
         }
 
-        // 비밀번호 규칙: 8자 이상, 대문자/소문자/숫자/특수문자 포함
-        String pw = request.getPassword() == null ? "" : request.getPassword();
-        boolean valid = pw.length() >= 8
-                && pw.length() <= 16
-                && pw.matches(".*[A-Z].*")
-                && pw.matches(".*[a-z].*")
-                && pw.matches(".*[0-9].*")
-                && pw.matches(".*[!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?].*");
-        if (!valid) {
-            throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
-        }
-
-        // Role을 ADMIN으로 강제 설정
-        User user = AuthConverter.toAdminUserEntity(request, passwordEncoder.encode(request.getPassword()));
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        User user = User.createAdminUser(
+                request.getEmail(),
+                request.getNickname(),
+                request.getPassword(),
+                encodedPassword,
+                Boolean.TRUE.equals(request.getEmailVerified()));
         return userRepository.save(user).getId();
     }
 

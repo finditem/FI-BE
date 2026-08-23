@@ -94,6 +94,48 @@ public class User {
         }
     }
 
+    public static User createUser(
+            String email,
+            String nickname,
+            String rawPassword,
+            String encodedPassword,
+            boolean emailVerified,
+            boolean privacyPolicyAgreed,
+            boolean termsOfServiceAgreed,
+            boolean contentPolicyAgreed,
+            boolean marketingConsent) {
+        User user = User.builder()
+                .email(email)
+                .password(encodedPassword)
+                .nickname(nickname)
+                .role(Role.USER)
+                .privacyPolicyAgreed(privacyPolicyAgreed)
+                .termsOfServiceAgreed(termsOfServiceAgreed)
+                .contentPolicyAgreed(contentPolicyAgreed)
+                .marketingConsent(marketingConsent)
+                .email_verified(emailVerified)
+                .build();
+        user.validatePasswordPolicy(rawPassword);
+        return user;
+    }
+
+    public static User createAdminUser(
+            String email, String nickname, String rawPassword, String encodedPassword, boolean emailVerified) {
+        User user = User.builder()
+                .email(email)
+                .password(encodedPassword)
+                .nickname(nickname)
+                .role(Role.ADMIN)
+                .privacyPolicyAgreed(false)
+                .termsOfServiceAgreed(false)
+                .contentPolicyAgreed(false)
+                .marketingConsent(false)
+                .email_verified(emailVerified)
+                .build();
+        user.validatePasswordPolicy(rawPassword);
+        return user;
+    }
+
     public void issueTemporaryPassword(String encodedPassword, LocalDateTime expiresAt, LocalDateTime now) {
         if (originalPassword == null) {
             originalPassword = password;
