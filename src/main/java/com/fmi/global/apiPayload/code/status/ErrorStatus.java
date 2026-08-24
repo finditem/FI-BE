@@ -77,6 +77,12 @@ public enum ErrorStatus implements BaseErrorCode {
     _POST_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "POST_IMAGE-NOT_FOUND", "해당하는 게시글 이미지가 없습니다."),
 
     _TEMP_POST_NOT_FOUND(HttpStatus.NOT_FOUND, "TEMP-POST404-NOT_FOUND", "임시저장글이 존재하지 않습니다."),
+    _POST_UPDATE_RATE_LIMITED(
+            HttpStatus.TOO_MANY_REQUESTS, "POST429-UPDATE_RATE_LIMITED", "게시글 수정이 1분에 5번을 초과했습니다. 잠시 후 다시 시도해주세요."),
+
+    // 번역 관련 응답
+    _TRANSLATION_API_ERROR(
+            HttpStatus.INTERNAL_SERVER_ERROR, "TRANSLATION500-API_ERROR", "번역 요청에 실패했습니다. 잠시 후 다시 시도해주세요."),
 
     // 댓글 관련 응답
     _COMMENT_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT404_PARENT-NOT_FOUND", "존재하지 않는 부모 댓글입니다."),

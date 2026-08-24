@@ -1,5 +1,6 @@
 package com.fmi.global.apiPayload.exception;
 
+import com.fmi.domain.post.exception.RateLimitExceededException;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.ErrorReasonDTO;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -106,6 +107,15 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
         // 일반 UsernameNotFoundException인 경우 _USER_NOT_FOUND 사용
         ErrorReasonDTO errorReason = ErrorStatus._USER_NOT_FOUND.getReasonHttpStatus();
         return handleExceptionInternal(e, errorReason, null, request);
+    }
+
+    @ExceptionHandler(value = RateLimitExceededException.class)
+    public ResponseEntity<Object> handleRateLimitExceeded(RateLimitExceededException e, HttpServletRequest request) {
+        ErrorReasonDTO reason = e.getErrorCode().getReasonHttpStatus();
+        Map<String, Long> errorArgs = Map.of("retryAfterSeconds", e.getRetryAfterSeconds());
+        ApiResponse<Object> body = ApiResponse.onFailure(reason.getCode(), reason.getMessage(), errorArgs);
+        WebRequest webRequest = new ServletWebRequest(request);
+        return super.handleExceptionInternal(e, body, HttpHeaders.EMPTY, reason.getHttpStatus(), webRequest);
     }
 
     @ExceptionHandler(value = DataIntegrityViolationException.class)
