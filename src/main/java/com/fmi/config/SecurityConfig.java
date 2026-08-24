@@ -71,7 +71,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/users/{userId}/meta")
                         .permitAll()
                         .requestMatchers(
-                                HttpMethod.GET, "/posts/search/**", "/posts/*", "/posts/*/similar", "/posts/*/share")
+                                HttpMethod.GET,
+                                "/posts/search/**",
+                                "/posts/*",
+                                "/posts/*/translate",
+                                "/posts/*/similar",
+                                "/posts/*/share")
                         .permitAll()
                         // 댓글 목록/답글 조회 - 비회원도 조회 가능
                         .requestMatchers(HttpMethod.GET, "/comments/posts/*", "/comments/*/replies")
