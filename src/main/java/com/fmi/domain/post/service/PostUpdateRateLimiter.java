@@ -1,8 +1,9 @@
 package com.fmi.domain.post.service;
 
-import com.fmi.domain.post.exception.RateLimitExceededException;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -22,7 +23,7 @@ public class PostUpdateRateLimiter {
         String lockKey = lockKey(postId);
         Long lockTtl = stringRedisTemplate.getExpire(lockKey, TimeUnit.SECONDS);
         if (lockTtl != null && lockTtl > 0) {
-            throw new RateLimitExceededException(ErrorStatus._POST_UPDATE_RATE_LIMITED, lockTtl);
+            throw new GeneralException(ErrorStatus._POST_UPDATE_RATE_LIMITED, Map.of("retryAfterSeconds", lockTtl));
         }
 
         String countKey = countKey(postId);
@@ -34,7 +35,8 @@ public class PostUpdateRateLimiter {
         if (count != null && count > MAX_UPDATES_PER_WINDOW) {
             stringRedisTemplate.delete(countKey);
             stringRedisTemplate.opsForValue().set(lockKey, "1", LOCK_DURATION);
-            throw new RateLimitExceededException(ErrorStatus._POST_UPDATE_RATE_LIMITED, LOCK_DURATION.getSeconds());
+            throw new GeneralException(
+                    ErrorStatus._POST_UPDATE_RATE_LIMITED, Map.of("retryAfterSeconds", LOCK_DURATION.getSeconds()));
         }
     }
 

@@ -1,6 +1,5 @@
 package com.fmi.global.apiPayload.exception;
 
-import com.fmi.domain.post.exception.RateLimitExceededException;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.ErrorReasonDTO;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -69,7 +68,7 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
         Throwable cause = e.getCause();
         if (cause instanceof GeneralException generalException) {
             ErrorReasonDTO errorReasonHttpStatus = generalException.getErrorReasonHttpStatus();
-            return handleExceptionInternal(e, errorReasonHttpStatus, null, request);
+            return handleExceptionInternal(e, errorReasonHttpStatus, null, request, generalException.getErrorArgs());
         }
         ErrorReasonDTO errorReason = ErrorStatus._BAD_REQUEST.getReasonHttpStatus();
         return handleExceptionInternal(e, errorReason, null, request);
@@ -91,7 +90,8 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
     @ExceptionHandler(value = GeneralException.class)
     public ResponseEntity<Object> onThrowException(GeneralException generalException, HttpServletRequest request) {
         ErrorReasonDTO errorReasonHttpStatus = generalException.getErrorReasonHttpStatus();
-        return handleExceptionInternal(generalException, errorReasonHttpStatus, null, request);
+        return handleExceptionInternal(
+                generalException, errorReasonHttpStatus, null, request, generalException.getErrorArgs());
     }
 
     @ExceptionHandler(value = UsernameNotFoundException.class)
@@ -102,20 +102,11 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
             com.fmi.global.apiPayload.exception.GeneralException generalException =
                     (com.fmi.global.apiPayload.exception.GeneralException) e.getCause();
             ErrorReasonDTO errorReasonHttpStatus = generalException.getErrorReasonHttpStatus();
-            return handleExceptionInternal(e, errorReasonHttpStatus, null, request);
+            return handleExceptionInternal(e, errorReasonHttpStatus, null, request, generalException.getErrorArgs());
         }
         // 일반 UsernameNotFoundException인 경우 _USER_NOT_FOUND 사용
         ErrorReasonDTO errorReason = ErrorStatus._USER_NOT_FOUND.getReasonHttpStatus();
         return handleExceptionInternal(e, errorReason, null, request);
-    }
-
-    @ExceptionHandler(value = RateLimitExceededException.class)
-    public ResponseEntity<Object> handleRateLimitExceeded(RateLimitExceededException e, HttpServletRequest request) {
-        ErrorReasonDTO reason = e.getErrorCode().getReasonHttpStatus();
-        Map<String, Long> errorArgs = Map.of("retryAfterSeconds", e.getRetryAfterSeconds());
-        ApiResponse<Object> body = ApiResponse.onFailure(reason.getCode(), reason.getMessage(), errorArgs);
-        WebRequest webRequest = new ServletWebRequest(request);
-        return super.handleExceptionInternal(e, body, HttpHeaders.EMPTY, reason.getHttpStatus(), webRequest);
     }
 
     @ExceptionHandler(value = DataIntegrityViolationException.class)
@@ -130,7 +121,17 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
     private ResponseEntity<Object> handleExceptionInternal(
             Exception e, ErrorReasonDTO reason, HttpHeaders headers, HttpServletRequest request) {
 
-        ApiResponse<Object> body = ApiResponse.onFailure(reason.getCode(), reason.getMessage(), null);
+        return handleExceptionInternal(e, reason, headers, request, null);
+    }
+
+    private ResponseEntity<Object> handleExceptionInternal(
+            Exception e,
+            ErrorReasonDTO reason,
+            HttpHeaders headers,
+            HttpServletRequest request,
+            Map<String, Object> errorArgs) {
+
+        ApiResponse<Object> body = ApiResponse.onFailure(reason.getCode(), reason.getMessage(), errorArgs);
         //        e.printStackTrace();
 
         WebRequest webRequest = new ServletWebRequest(request);
