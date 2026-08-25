@@ -7,7 +7,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostTranslation;
 import com.fmi.domain.post.repository.PostTranslationRepository;
 import com.fmi.domain.post.web.dto.response.PostTranslationResponse;
-import com.fmi.external.translation.service.TranslationService;
+import com.fmi.external.translation.client.TranslationClient;
 import com.fmi.external.translation.util.TranslationTextNormalizer;
 import com.fmi.service.UserQueryService;
 import java.util.List;
@@ -25,7 +25,7 @@ public class PostTranslationService {
 
     private final PostTranslationRepository postTranslationRepository;
     private final PostQueryService postQueryService;
-    private final TranslationService translationService;
+    private final TranslationClient translationClient;
     private final UserQueryService userQueryService;
 
     @Transactional
@@ -64,8 +64,8 @@ public class PostTranslationService {
     }
 
     private PostTranslationResponse translateAndCache(Post post, LanguageCode targetLanguage) {
-        String translatedTitle = translationService.translateText(post.getTitle(), targetLanguage);
-        String translatedContent = translationService.translateText(post.getContent(), targetLanguage);
+        String translatedTitle = translationClient.translate(post.getTitle(), targetLanguage);
+        String translatedContent = translationClient.translate(post.getContent(), targetLanguage);
 
         PostTranslation saved = postTranslationRepository.save(
                 PostTranslation.create(post, targetLanguage, translatedTitle, translatedContent, contentHash(post)));

@@ -25,7 +25,7 @@ public class DeepLTranslationClient implements TranslationClient {
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
-    public String translate(String text, LanguageCode targetLang) {
+    public String doTranslate(String text, LanguageCode targetLang) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.set(HttpHeaders.AUTHORIZATION, "DeepL-Auth-Key " + deepLProperties.apiKey());
