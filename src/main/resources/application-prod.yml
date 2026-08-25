@@ -107,6 +107,11 @@ slack:
     inquiry-url: ${SLACK_WEBHOOK_INQUIRY_URL:}
     report-url: ${SLACK_WEBHOOK_REPORT_URL:}
 
+translation:
+  deepl:
+    api-key: ${DEEPL_API_KEY:}
+    base-url: ${DEEPL_BASE_URL:https://api-free.deepl.com/v2/translate}
+
 oauth:
   kakao:
     client-id: ${KAKAO_CLIENT_ID:}

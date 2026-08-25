@@ -42,6 +42,8 @@ public class PostService {
     private final PostImageService postImageService;
     private final PostQueryService postQueryService;
     private final ChatRoomRepository chatRoomRepository;
+    private final PostUpdateRateLimiter postUpdateRateLimiter;
+    private final PostTranslationService postTranslationService;
 
     // 게시글 생성
     @Transactional
@@ -68,6 +70,8 @@ public class PostService {
 
         checkPostAccessDenied(post, userDetails.getUsername());
 
+        postUpdateRateLimiter.checkAndRecord(postId);
+
         PostStatus previousStatus = post.getPostStatus();
 
         post.update(
@@ -82,6 +86,8 @@ public class PostService {
                 request.temporarySave(),
                 request.radius(),
                 request.category());
+
+        postTranslationService.invalidateStaleTranslations(post);
 
         postImageService.deleteImagesNotIn(post.getId(), request.keepImageIdList());
 
