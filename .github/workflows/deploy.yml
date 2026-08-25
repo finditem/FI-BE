@@ -62,7 +62,7 @@ jobs:
             printf 'ECR_IMAGE_URL=%s\n' "$ECR_IMAGE_URL"
             printf '%s\n' "$RUNTIME_CONFIG"
             printf '%s\n' "$RUNTIME_SECRET"
-          } > ".env.$TARGET"
+          } > "deploy/app/.env.$TARGET"
 
       - name: EC2에 배포 파일 전송
         uses: appleboy/scp-action@v1.0.0
@@ -70,7 +70,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: docker-compose.yml,.env.${{ env.TARGET }}
+          source: deploy/app/docker-compose.yml,deploy/app/alloy/config.alloy,deploy/app/.env.${{ env.TARGET }}
           target: ~/FMI-BE
 
       - name: EC2 배포
@@ -85,7 +85,7 @@ jobs:
           envs: TARGET,ECR_REGISTRY
           script: |
             set -e
-            cd ~/FMI-BE
+            cd ~/FMI-BE/deploy/app
             chmod 600 ".env.$TARGET"
             docker compose --env-file ".env.$TARGET" config --quiet
             aws ecr get-login-password --region ap-northeast-2 \
