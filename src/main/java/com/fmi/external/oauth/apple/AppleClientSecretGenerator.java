@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.service.apple;
+package com.fmi.external.oauth.apple;
 
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

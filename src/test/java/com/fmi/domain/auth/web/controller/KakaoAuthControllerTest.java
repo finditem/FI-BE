@@ -2,33 +2,29 @@ package com.fmi.domain.auth.web.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.response.LoginResponse;
-import com.fmi.domain.auth.service.KakaoOAuthService;
-import com.fmi.domain.auth.service.KakaoOAuthService.KakaoToken;
-import com.fmi.domain.auth.service.KakaoOAuthService.KakaoUser;
 import com.fmi.domain.auth.service.SocialLoginService;
+import com.fmi.domain.auth.service.TokenIssuer;
 import com.fmi.domain.auth.web.dto.KakaoLoginRequest;
 import com.fmi.domain.user.data.User;
+import com.fmi.external.oauth.kakao.KakaoOAuthClient;
+import com.fmi.external.oauth.kakao.KakaoOAuthClient.KakaoToken;
+import com.fmi.external.oauth.kakao.KakaoOAuthClient.KakaoUser;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.CookieFactory;
-import com.fmi.security.JwtTokenProvider;
-import com.fmi.security.RefreshTokenStore;
 import java.time.Instant;
 import java.util.Date;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -41,22 +37,16 @@ import org.springframework.test.util.ReflectionTestUtils;
 class KakaoAuthControllerTest {
 
     @Mock
-    private KakaoOAuthService kakaoOAuthService;
+    private KakaoOAuthClient kakaoOAuthService;
 
     @Mock
     private SocialLoginService socialLoginService;
 
     @Mock
-    private JwtTokenProvider jwtTokenProvider;
-
-    @Mock
-    private RefreshTokenStore refreshTokenStore;
+    private TokenIssuer tokenIssuer;
 
     @Mock
     private CookieFactory cookieFactory;
-
-    @Captor
-    private ArgumentCaptor<Map<String, Object>> claimsCaptor;
 
     @InjectMocks
     private KakaoAuthController kakaoAuthController;
@@ -103,11 +93,9 @@ class KakaoAuthControllerTest {
                 when(kakaoOAuthService.getUserInfo("kakao-access-token")).thenReturn(kakaoUser);
                 when(socialLoginService.upsertUserFromKakao(100L, email, "카카오토끼", "https://example.com/profile.png"))
                         .thenReturn(new SocialLoginService.KakaoLoginResult(localUser));
-                when(jwtTokenProvider.createAccessToken(eq(email), any())).thenReturn("access-token");
-                when(jwtTokenProvider.createRefreshToken(eq(email), anyString()))
-                        .thenReturn("refresh-token");
-                when(jwtTokenProvider.getExpiration("access-token")).thenReturn(accessExpiration);
-                when(jwtTokenProvider.getExpiration("refresh-token")).thenReturn(refreshExpiration);
+                when(tokenIssuer.issue(localUser, false, Provider.KAKAO))
+                        .thenReturn(new TokenIssuer.IssuedTokens(
+                                "access-token", accessExpiration, "refresh-token", refreshExpiration));
                 when(cookieFactory.build(eq(httpRequest), eq("access_token"), eq("access-token"), any()))
                         .thenReturn(ResponseCookie.from("access_token", "access-token")
                                 .build());
@@ -120,17 +108,11 @@ class KakaoAuthControllerTest {
                         kakaoAuthController.loginWithKakao(request, httpRequest);
 
                 // then
-                verify(jwtTokenProvider).createAccessToken(eq(email), claimsCaptor.capture());
-                verify(refreshTokenStore).issue(anyString(), eq(email), anyString(), eq(refreshExpiration.toInstant()));
+                verify(tokenIssuer).issue(localUser, false, Provider.KAKAO);
                 assertThat(response.getStatusCode().value()).isEqualTo(200);
                 assertThat(response.getHeaders().get("Set-Cookie"))
                         .containsExactly("access_token=access-token", "refresh_token=refresh-token");
                 assertThat(response.getBody().getResult()).isEqualTo(new LoginResponse(1L, false, true));
-                assertThat(claimsCaptor.getValue())
-                        .containsEntry("userId", 1L)
-                        .containsEntry("role", "USER")
-                        .containsEntry("provider", "KAKAO")
-                        .containsEntry("purpose", "access");
             }
         }
     }

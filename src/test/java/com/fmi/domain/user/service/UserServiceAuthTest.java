@@ -11,13 +11,13 @@ import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.auth.data.SocialAccounts;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
-import com.fmi.domain.auth.service.KakaoOAuthService;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.user.web.dto.AccountDeleteRequest;
 import com.fmi.domain.user.web.dto.PasswordChangeRequest;
 import com.fmi.domain.user.web.dto.TermsAgreeRequest;
+import com.fmi.external.oauth.kakao.KakaoOAuthClient;
 import com.fmi.global.service.S3Service;
 import com.fmi.security.RefreshTokenStore;
 import com.fmi.service.EmailService;
@@ -59,7 +59,7 @@ class UserServiceAuthTest {
     private SocialAccountsRepository socialAccountsRepository;
 
     @Mock
-    private KakaoOAuthService kakaoOAuthService;
+    private KakaoOAuthClient kakaoOAuthService;
 
     @InjectMocks
     private UserService userService;

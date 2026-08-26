@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.service.apple;
+package com.fmi.external.oauth.apple;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

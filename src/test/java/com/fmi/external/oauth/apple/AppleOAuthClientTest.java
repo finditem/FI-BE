@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.service;
+package com.fmi.external.oauth.apple;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -26,7 +26,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 @ExtendWith(MockitoExtension.class)
-class AppleOAuthServiceTest {
+class AppleOAuthClientTest {
 
     @Mock
     private RestClient.Builder restClientBuilder;
@@ -43,7 +43,7 @@ class AppleOAuthServiceTest {
     @Mock
     private RestClient.ResponseSpec responseSpec;
 
-    private AppleOAuthService appleOAuthService;
+    private AppleOAuthClient appleOAuthService;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -60,7 +60,7 @@ class AppleOAuthServiceTest {
                 Map.of(
                         "dev", "https://dev.finditem.kr/auth/apple/callback",
                         "release", "https://release.finditem.kr/auth/apple/callback"));
-        appleOAuthService = new AppleOAuthService(restClientBuilder, properties);
+        appleOAuthService = new AppleOAuthClient(restClientBuilder, properties);
     }
 
     @Test
@@ -112,7 +112,7 @@ class AppleOAuthServiceTest {
                 .thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(MultiValueMap.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.body(AppleOAuthService.AppleToken.class))
+        when(responseSpec.body(AppleOAuthClient.AppleToken.class))
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
     }
 }

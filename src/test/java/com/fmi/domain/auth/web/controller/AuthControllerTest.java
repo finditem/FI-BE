@@ -2,37 +2,29 @@ package com.fmi.domain.auth.web.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.Role;
-import com.fmi.domain.auth.data.SocialAccounts;
-import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.auth.response.LoginResponse;
 import com.fmi.domain.auth.service.AuthService;
+import com.fmi.domain.auth.service.TokenIssuer;
 import com.fmi.domain.auth.web.dto.LoginRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.CookieFactory;
-import com.fmi.security.JwtTokenProvider;
-import com.fmi.security.RefreshTokenStore;
 import jakarta.servlet.http.Cookie;
 import java.time.Instant;
 import java.util.Date;
-import java.util.Map;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InOrder;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,19 +40,10 @@ class AuthControllerTest {
     private AuthService authService;
 
     @Mock
-    private JwtTokenProvider jwtTokenProvider;
-
-    @Mock
-    private RefreshTokenStore refreshTokenStore;
-
-    @Mock
-    private SocialAccountsRepository socialAccountsRepository;
+    private TokenIssuer tokenIssuer;
 
     @Mock
     private CookieFactory cookieFactory;
-
-    @Captor
-    private ArgumentCaptor<Map<String, Object>> claimsCaptor;
 
     @InjectMocks
     private AuthController authController;
@@ -76,6 +59,29 @@ class AuthControllerTest {
     class Refresh {
 
         @Nested
+        @DisplayName("TokenIssuer가 갱신에 실패하면")
+        class WithRefreshFailure {
+
+            @ParameterizedTest
+            @EnumSource(TokenIssuer.RefreshFailure.class)
+            @DisplayName("기존 오류 메시지로 401 응답을 반환한다")
+            void returnsExistingFailureMessage(TokenIssuer.RefreshFailure failure) {
+                // given
+                String refreshToken = "refresh-token";
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                request.setCookies(new Cookie("refresh_token", refreshToken));
+                when(tokenIssuer.refresh(refreshToken)).thenReturn(new TokenIssuer.RefreshResult(null, failure));
+
+                // when
+                ResponseEntity<ApiResponse<LoginResponse>> response = authController.refresh(request);
+
+                // then
+                assertThat(response.getStatusCode().value()).isEqualTo(401);
+                assertThat(response.getBody().getMessage()).isEqualTo(refreshFailureMessage(failure));
+            }
+        }
+
+        @Nested
         @DisplayName("유효한 갱신 토큰 쿠키가 있으면")
         class WithValidRefreshCookie {
 
@@ -83,31 +89,19 @@ class AuthControllerTest {
             @DisplayName("기존 JTI를 폐기한 뒤 제공자 클레임과 두 쿠키를 발급한다")
             void 유효한_refresh는_기존_JTI를_폐기한_뒤_provider_claim과_두_쿠키를_발급한다() {
                 // given
-                String email = "member@finditem.kr";
                 String oldRefreshToken = "old-refresh-token";
-                String oldJti = "old-jti";
                 String newAccessToken = "new-access-token";
                 String newRefreshToken = "new-refresh-token";
-                User user = User.builder().id(1L).email(email).role(Role.USER).build();
-                SocialAccounts socialAccount =
-                        SocialAccounts.builder().provider(Provider.KAKAO).build();
                 MockHttpServletRequest request = new MockHttpServletRequest();
                 request.setCookies(new Cookie("refresh_token", oldRefreshToken));
                 Date accessExpiration = Date.from(Instant.now().plusSeconds(900));
                 Date refreshExpiration = Date.from(Instant.now().plusSeconds(1_200));
 
-                when(jwtTokenProvider.validateToken(oldRefreshToken)).thenReturn(true);
-                when(jwtTokenProvider.getSubject(oldRefreshToken)).thenReturn(email);
-                when(jwtTokenProvider.getJti(oldRefreshToken)).thenReturn(oldJti);
-                when(refreshTokenStore.validate(eq(oldJti), anyString(), eq(email)))
-                        .thenReturn(true);
-                when(authService.findActiveUserByEmail(email)).thenReturn(Optional.of(user));
-                when(socialAccountsRepository.findByUser(user)).thenReturn(Optional.of(socialAccount));
-                when(jwtTokenProvider.createAccessToken(eq(email), any())).thenReturn(newAccessToken);
-                when(jwtTokenProvider.createRefreshToken(eq(email), anyString()))
-                        .thenReturn(newRefreshToken);
-                when(jwtTokenProvider.getExpiration(newAccessToken)).thenReturn(accessExpiration);
-                when(jwtTokenProvider.getExpiration(newRefreshToken)).thenReturn(refreshExpiration);
+                when(tokenIssuer.refresh(oldRefreshToken))
+                        .thenReturn(new TokenIssuer.RefreshResult(
+                                new TokenIssuer.IssuedTokens(
+                                        newAccessToken, accessExpiration, newRefreshToken, refreshExpiration),
+                                null));
                 when(cookieFactory.build(eq(request), eq("access_token"), eq(newAccessToken), any()))
                         .thenReturn(ResponseCookie.from("access_token", newAccessToken)
                                 .build());
@@ -119,23 +113,11 @@ class AuthControllerTest {
                 ResponseEntity<ApiResponse<LoginResponse>> response = authController.refresh(request);
 
                 // then
-                InOrder refreshStoreOrder = inOrder(refreshTokenStore);
-                refreshStoreOrder.verify(refreshTokenStore).validate(eq(oldJti), anyString(), eq(email));
-                refreshStoreOrder.verify(refreshTokenStore).revoke(oldJti);
-                refreshStoreOrder
-                        .verify(refreshTokenStore)
-                        .issue(anyString(), eq(email), anyString(), eq(refreshExpiration.toInstant()));
-
-                org.mockito.Mockito.verify(jwtTokenProvider).createAccessToken(eq(email), claimsCaptor.capture());
+                verify(tokenIssuer).refresh(oldRefreshToken);
                 assertThat(response.getStatusCode().value()).isEqualTo(200);
                 assertThat(response.getHeaders().get("Set-Cookie"))
                         .containsExactly("access_token=" + newAccessToken, "refresh_token=" + newRefreshToken);
                 assertThat(response.getBody().getResult()).isEqualTo(new LoginResponse(null, false, true));
-                assertThat(claimsCaptor.getValue())
-                        .containsEntry("userId", 1L)
-                        .containsEntry("role", "USER")
-                        .containsEntry("purpose", "access")
-                        .containsEntry("provider", "KAKAO");
             }
         }
     }
@@ -172,7 +154,7 @@ class AuthControllerTest {
                                 "access_token=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
                                 "refresh_token=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
                 assertThat(response.getBody().getResult()).isEqualTo("OK");
-                verifyNoInteractions(jwtTokenProvider, refreshTokenStore);
+                verifyNoInteractions(tokenIssuer);
             }
         }
     }
@@ -202,11 +184,9 @@ class AuthControllerTest {
 
                 when(authService.authenticate(email, "temporary-password"))
                         .thenReturn(new AuthService.AuthenticateResult(user, true));
-                when(jwtTokenProvider.createAccessToken(eq(email), any())).thenReturn(accessToken);
-                when(jwtTokenProvider.createRefreshToken(eq(email), anyString()))
-                        .thenReturn(refreshToken);
-                when(jwtTokenProvider.getExpiration(accessToken)).thenReturn(accessExpiration);
-                when(jwtTokenProvider.getExpiration(refreshToken)).thenReturn(refreshExpiration);
+                when(tokenIssuer.issue(user, true, null))
+                        .thenReturn(new TokenIssuer.IssuedTokens(
+                                accessToken, accessExpiration, refreshToken, refreshExpiration));
                 when(cookieFactory.build(eq(httpRequest), eq("access_token"), eq(accessToken), any()))
                         .thenReturn(
                                 ResponseCookie.from("access_token", accessToken).build());
@@ -218,18 +198,21 @@ class AuthControllerTest {
                 ResponseEntity<ApiResponse<LoginResponse>> response = authController.login(request, httpRequest);
 
                 // then
-                org.mockito.Mockito.verify(jwtTokenProvider).createAccessToken(eq(email), claimsCaptor.capture());
+                verify(tokenIssuer).issue(user, true, null);
                 assertThat(response.getStatusCode().value()).isEqualTo(200);
                 assertThat(response.getHeaders().get("Set-Cookie"))
                         .containsExactly("access_token=" + accessToken, "refresh_token=" + refreshToken);
                 assertThat(response.getBody().getResult()).isEqualTo(new LoginResponse(1L, true, true));
-                assertThat(claimsCaptor.getValue())
-                        .containsEntry("userId", 1L)
-                        .containsEntry("role", "USER")
-                        .containsEntry("purpose", "access")
-                        .containsEntry("isTemporaryPassword", true)
-                        .doesNotContainKey("provider");
             }
         }
+    }
+
+    private static String refreshFailureMessage(TokenIssuer.RefreshFailure failure) {
+        return switch (failure) {
+            case INVALID_TOKEN -> "유효하지 않은 리프레시";
+            case MISSING_JTI -> "유효하지 않은 리프레시(jti 없음)";
+            case HASH_MISMATCH -> "유효하지 않은 리프레시(대조 실패)";
+            case USER_NOT_FOUND -> "유효하지 않은 리프레시(사용자 없음)";
+        };
     }
 }

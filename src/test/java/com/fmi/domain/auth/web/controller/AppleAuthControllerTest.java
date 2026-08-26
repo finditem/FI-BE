@@ -1,27 +1,25 @@
 package com.fmi.domain.auth.web.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.response.LoginResponse;
-import com.fmi.domain.auth.service.AppleOAuthService;
 import com.fmi.domain.auth.service.SocialLoginService;
+import com.fmi.domain.auth.service.TokenIssuer;
 import com.fmi.domain.auth.web.dto.AppleLoginRequest;
 import com.fmi.domain.user.data.User;
+import com.fmi.external.oauth.apple.AppleOAuthClient;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.CookieFactory;
-import com.fmi.security.JwtTokenProvider;
-import com.fmi.security.RefreshTokenStore;
 import java.time.Instant;
 import java.util.Date;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -34,16 +32,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 class AppleAuthControllerTest {
 
     @Mock
-    private AppleOAuthService appleOAuthService;
+    private AppleOAuthClient appleOAuthService;
 
     @Mock
     private SocialLoginService socialLoginService;
 
     @Mock
-    private JwtTokenProvider jwtTokenProvider;
-
-    @Mock
-    private RefreshTokenStore refreshTokenStore;
+    private TokenIssuer tokenIssuer;
 
     @Mock
     private CookieFactory cookieFactory;
@@ -66,13 +61,12 @@ class AppleAuthControllerTest {
         when(appleOAuthService.exchangeCodeForSubject("apple-code", "dev")).thenReturn("apple-subject");
         when(socialLoginService.upsertUserFromApple("apple-subject"))
                 .thenReturn(new SocialLoginService.AppleLoginResult(user));
-        when(jwtTokenProvider.createAccessToken(eq(user.getEmail()), any())).thenReturn("access-token");
-        when(jwtTokenProvider.createRefreshToken(eq(user.getEmail()), anyString()))
-                .thenReturn("refresh-token");
-        when(jwtTokenProvider.getExpiration("access-token"))
-                .thenReturn(Date.from(Instant.now().plusSeconds(900)));
-        when(jwtTokenProvider.getExpiration("refresh-token"))
-                .thenReturn(Date.from(Instant.now().plusSeconds(1_200)));
+        when(tokenIssuer.issue(user, false, Provider.APPLE))
+                .thenReturn(new TokenIssuer.IssuedTokens(
+                        "access-token",
+                        Date.from(Instant.now().plusSeconds(900)),
+                        "refresh-token",
+                        Date.from(Instant.now().plusSeconds(1_200))));
         when(cookieFactory.build(eq(httpRequest), eq("access_token"), eq("access-token"), any()))
                 .thenReturn(ResponseCookie.from("access_token", "access-token").build());
         when(cookieFactory.build(eq(httpRequest), eq("refresh_token"), eq("refresh-token"), any()))
@@ -83,8 +77,7 @@ class AppleAuthControllerTest {
         ResponseEntity<ApiResponse<LoginResponse>> response = appleAuthController.loginWithApple(request, httpRequest);
 
         // then
-        ArgumentCaptor<String> refreshJtiCaptor = ArgumentCaptor.forClass(String.class);
-        verify(refreshTokenStore).issue(refreshJtiCaptor.capture(), eq(user.getEmail()), anyString(), any());
+        verify(tokenIssuer).issue(user, false, Provider.APPLE);
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(response.getStatusCode().value()).isEqualTo(200);
             softly.assertThat(response.getHeaders().get("Set-Cookie"))
@@ -93,7 +86,6 @@ class AppleAuthControllerTest {
             softly.assertThat(response.getBody().getResult().isTemporaryPassword())
                     .isFalse();
             softly.assertThat(response.getBody().getResult().isTermsAgreed()).isFalse();
-            softly.assertThat(refreshJtiCaptor.getValue()).isNotBlank();
         });
     }
 }
