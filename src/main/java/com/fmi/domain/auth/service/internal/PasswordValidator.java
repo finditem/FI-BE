@@ -1,5 +1,6 @@
 package com.fmi.domain.auth.service.internal;
 
+import com.fmi.domain.user.data.PasswordPolicy;
 import com.fmi.domain.user.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -14,6 +15,10 @@ import org.springframework.stereotype.Component;
 public class PasswordValidator {
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
+
+    public void validateNewPassword(String rawPassword) {
+        PasswordPolicy.validate(rawPassword);
+    }
 
     public void validateConfirmation(String password, String confirmation) {
         if (!password.equals(confirmation)) {

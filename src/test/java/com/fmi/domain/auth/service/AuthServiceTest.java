@@ -13,8 +13,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fmi.domain.Enum.Role;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
+import com.fmi.domain.auth.service.internal.SignupValidator;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
@@ -38,6 +40,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("AuthService")
 class AuthServiceTest {
 
     @Mock
@@ -55,23 +58,25 @@ class AuthServiceTest {
     @Mock
     private EmailService emailService;
 
-    @Mock
-    private Clock clock;
+    private final Clock clock = Clock.fixed(Instant.parse("2026-08-23T03:00:00Z"), ZoneOffset.UTC);
 
     private final AtomicReference<User> savedUser = new AtomicReference<>();
     private PasswordValidator passwordValidator;
+    private SignupValidator signupValidator;
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
         passwordValidator = new PasswordValidator(passwordEncoder, clock);
+        signupValidator = new SignupValidator(userRepository, clock);
         authService = new AuthService(
                 userRepository,
                 passwordEncoder,
                 nicknameValidationService,
                 emailVerificationService,
                 emailService,
-                passwordValidator);
+                passwordValidator,
+                signupValidator);
         lenient().when(userRepository.existsByEmail(anyString())).thenReturn(false);
         lenient()
                 .when(userRepository.existsRecentlyDeletedByEmail(anyString(), any()))
@@ -86,16 +91,16 @@ class AuthServiceTest {
     }
 
     @Nested
-    @DisplayName("회원 가입")
-    class Signup {
+    @DisplayName("회원 가입할 때")
+    class DescribeSignup {
 
         @Nested
         @DisplayName("이메일 인증 정보가 있으면")
-        class WithEmailVerificationFlag {
+        class ContextWithEmailVerificationFlag {
 
             @Test
-            @DisplayName("인증 정보를 소비한 뒤 이메일 인증 사용자를 저장한다")
-            void 가입은_인증_flag를_소비한_뒤_이메일_인증_사용자를_저장한다() {
+            @DisplayName("인증 정보를 확인한 뒤 이메일 인증 사용자를 저장한다")
+            void itSavesVerifiedUserAfterConsumingVerification() {
                 // given
                 SignupRequest request = signupRequest();
 
@@ -119,11 +124,11 @@ class AuthServiceTest {
 
         @Nested
         @DisplayName("환영 메일 발송에 실패하면")
-        class WithWelcomeMailFailure {
+        class ContextWithWelcomeMailFailure {
 
             @Test
-            @DisplayName("가입은 성공한다")
-            void 환영_메일_발송이_실패해도_가입은_성공한다() {
+            @DisplayName("사용자를 저장한다")
+            void itSavesUser() {
                 // given
                 SignupRequest request = signupRequest();
                 doThrow(new IllegalStateException("mail unavailable"))
@@ -141,11 +146,11 @@ class AuthServiceTest {
 
         @Nested
         @DisplayName("비밀번호 정책을 만족하지 않으면")
-        class WithWeakPassword {
+        class ContextWithWeakPassword {
 
             @Test
-            @DisplayName("이메일 인증을 소비하지 않고 기존 약한 비밀번호 예외를 던진다")
-            void rejectsWeakPasswordBeforeConsumingEmailVerification() {
+            @DisplayName("인코딩과 이메일 인증 확인 없이 기존 약한 비밀번호 예외를 던진다")
+            void itThrowsWeakPasswordBeforeEncodingAndVerification() {
                 // given
                 SignupRequest request = signupRequest();
                 request.setPassword("short");
@@ -156,78 +161,109 @@ class AuthServiceTest {
                                 .isEqualTo(ErrorStatus._WEAK_PASSWORD));
                 verify(emailVerificationService, never()).isEmailVerified(request.getEmail());
                 verify(emailVerificationService, never()).consumeEmailVerification(request.getEmail());
-                verify(passwordEncoder).encode(request.getPassword());
-            }
-        }
-    }
-
-    @Nested
-    @DisplayName("관리자 회원 가입")
-    class AdminSignup {
-
-        @Nested
-        @DisplayName("비밀번호 정책을 만족하지 않으면")
-        class WithWeakPassword {
-
-            @Test
-            @DisplayName("저장 없이 기존 약한 비밀번호 예외를 던진다")
-            void rejectsWeakPasswordBeforeEncoding() {
-                // given
-                AdminSignupRequest request = new AdminSignupRequest();
-                request.setEmail("admin@finditem.kr");
-                request.setNickname("admin");
-                request.setPassword("short");
-
-                // when & then
-                assertThatThrownBy(() -> authService.adminSignup(request))
-                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
-                                .isEqualTo(ErrorStatus._WEAK_PASSWORD));
-                verify(passwordEncoder).encode(request.getPassword());
+                verify(passwordEncoder, never()).encode(request.getPassword());
                 verify(userRepository, never()).save(any(User.class));
             }
         }
     }
 
     @Nested
-    @DisplayName("로그인 인증")
-    class Authenticate {
+    @DisplayName("관리자 회원 가입할 때")
+    class DescribeAdminSignup {
 
-        @Test
-        @DisplayName("임시 비밀번호가 만료되면 원래 비밀번호로 로그인한다")
-        void authenticatesWithOriginalPasswordAfterTemporaryPasswordExpires() {
-            // given
-            String email = "member@finditem.kr";
-            User user = expiredTemporaryPasswordUser();
-            stubClock();
-            when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-            lenient()
-                    .when(passwordEncoder.matches("original-password", "original-password-hash"))
-                    .thenReturn(true);
+        @Nested
+        @DisplayName("유효한 가입 요청이면")
+        class ContextWithValidSignupRequest {
 
-            // when
-            AuthService.AuthenticateResult result = authService.authenticate(email, "original-password");
+            @Test
+            @DisplayName("관리자 상태의 사용자를 저장한다")
+            void itSavesAdminUser() {
+                // given
+                AdminSignupRequest request = adminSignupRequest();
 
-            // then
-            assertThat(result.getUser()).isSameAs(user);
-            assertThat(result.isTemporaryPassword()).isFalse();
+                // when
+                authService.adminSignup(request);
+
+                // then
+                assertThat(savedUser.get())
+                        .extracting(User::getEmail, User::getNickname, User::getPassword, User::getRole)
+                        .containsExactly(request.getEmail(), request.getNickname(), "encoded-password", Role.ADMIN);
+                assertThat(savedUser.get().isPrivacyPolicyAgreed()).isFalse();
+                assertThat(savedUser.get().isTermsOfServiceAgreed()).isFalse();
+                assertThat(savedUser.get().isContentPolicyAgreed()).isFalse();
+                assertThat(savedUser.get().isMarketingConsent()).isFalse();
+            }
         }
 
-        @Test
-        @DisplayName("임시 비밀번호가 만료되면 임시 비밀번호 로그인을 거절한다")
-        void rejectsTemporaryPasswordAfterExpiry() {
-            // given
-            String email = "member@finditem.kr";
-            User user = expiredTemporaryPasswordUser();
-            stubClock();
-            when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-            lenient()
-                    .when(passwordEncoder.matches("temporary-password", "temporary-password-hash"))
-                    .thenReturn(true);
+        @Nested
+        @DisplayName("비밀번호 정책을 만족하지 않으면")
+        class ContextWithWeakPassword {
 
-            // when & then
-            assertThatThrownBy(() -> authService.authenticate(email, "temporary-password"))
-                    .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
-                            .isEqualTo(ErrorStatus._INVALID_CREDENTIALS));
+            @Test
+            @DisplayName("인코딩과 저장 없이 기존 약한 비밀번호 예외를 던진다")
+            void itThrowsWeakPasswordBeforeEncodingAndSaving() {
+                // given
+                AdminSignupRequest request = adminSignupRequest();
+                request.setPassword("short");
+
+                // when & then
+                assertThatThrownBy(() -> authService.adminSignup(request))
+                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                                .isEqualTo(ErrorStatus._WEAK_PASSWORD));
+                verify(passwordEncoder, never()).encode(request.getPassword());
+                verify(userRepository, never()).save(any(User.class));
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("로그인을 인증할 때")
+    class DescribeAuthenticate {
+
+        @Nested
+        @DisplayName("임시 비밀번호가 만료되고 원래 비밀번호가 일치하면")
+        class ContextWithExpiredTemporaryPasswordAndMatchingOriginalPassword {
+
+            @Test
+            @DisplayName("일반 인증 결과를 반환한다")
+            void itReturnsStandardAuthentication() {
+                // given
+                String email = "member@finditem.kr";
+                User user = expiredTemporaryPasswordUser();
+                when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+                lenient()
+                        .when(passwordEncoder.matches("original-password", "original-password-hash"))
+                        .thenReturn(true);
+
+                // when
+                AuthService.AuthenticateResult result = authService.authenticate(email, "original-password");
+
+                // then
+                assertThat(result.getUser()).isSameAs(user);
+                assertThat(result.isTemporaryPassword()).isFalse();
+            }
+        }
+
+        @Nested
+        @DisplayName("임시 비밀번호가 만료된 상태에서 임시 비밀번호를 입력하면")
+        class ContextWithExpiredTemporaryPasswordAndTemporaryPassword {
+
+            @Test
+            @DisplayName("유효하지 않은 자격 증명 예외를 던진다")
+            void itThrowsInvalidCredentials() {
+                // given
+                String email = "member@finditem.kr";
+                User user = expiredTemporaryPasswordUser();
+                when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+                lenient()
+                        .when(passwordEncoder.matches("temporary-password", "temporary-password-hash"))
+                        .thenReturn(true);
+
+                // when & then
+                assertThatThrownBy(() -> authService.authenticate(email, "temporary-password"))
+                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                                .isEqualTo(ErrorStatus._INVALID_CREDENTIALS));
+            }
         }
     }
 
@@ -243,6 +279,15 @@ class AuthServiceTest {
         return request;
     }
 
+    private AdminSignupRequest adminSignupRequest() {
+        AdminSignupRequest request = new AdminSignupRequest();
+        request.setEmail("admin@finditem.kr");
+        request.setNickname("admin");
+        request.setPassword("Password1!");
+        request.setEmailVerified(true);
+        return request;
+    }
+
     private User expiredTemporaryPasswordUser() {
         return User.builder()
                 .password("temporary-password-hash")
@@ -250,10 +295,5 @@ class AuthServiceTest {
                 .temporaryPassword("temporary-password-hash")
                 .temporaryPasswordExpiresAt(LocalDateTime.of(2016, 8, 23, 3, 0))
                 .build();
-    }
-
-    private void stubClock() {
-        lenient().when(clock.instant()).thenReturn(Instant.parse("2026-08-23T03:00:00Z"));
-        lenient().when(clock.getZone()).thenReturn(ZoneOffset.UTC);
     }
 }

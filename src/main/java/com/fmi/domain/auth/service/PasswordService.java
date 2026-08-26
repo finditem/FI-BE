@@ -47,10 +47,11 @@ public class PasswordService {
         User user =
                 userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         passwordValidator.validateConfirmation(newPassword, newPasswordConfirm);
+        passwordValidator.validateNewPassword(newPassword);
 
         String encodedPassword = passwordEncoder.encode(newPassword);
         LocalDateTime changedAt = LocalDateTime.now(clock);
-        user.changePassword(newPassword, encodedPassword, changedAt);
+        user.changePassword(encodedPassword, changedAt);
         userRepository.save(user);
 
         refreshTokenStore.revokeAllForUser(email);

@@ -1,7 +1,9 @@
 package com.fmi.domain.auth.service;
 
+import com.fmi.domain.Enum.Role;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
+import com.fmi.domain.auth.service.internal.SignupValidator;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
@@ -29,31 +31,25 @@ public class AuthService {
     private final EmailVerificationService emailVerificationService;
     private final EmailService emailService;
     private final PasswordValidator passwordValidator;
+    private final SignupValidator signupValidator;
 
     @Transactional
     public User signup(SignupRequest request) {
-        // 활성 사용자 이메일 중복 체크
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new GeneralException(ErrorStatus._EMAIL_DUPLICATED);
-        }
-
-        // 일주일(7일) 이내 탈퇴한 이메일 재가입 방지
-        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
-        if (userRepository.existsRecentlyDeletedByEmail(request.getEmail(), oneWeekAgo)) {
-            throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
-        }
+        signupValidator.validate(request.getEmail());
+        passwordValidator.validateNewPassword(request.getPassword());
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-        User user = User.createUser(
-                request.getEmail(),
-                request.getNickname(),
-                request.getPassword(),
-                encodedPassword,
-                true,
-                Boolean.TRUE.equals(request.getPrivacyPolicyAgreed()),
-                Boolean.TRUE.equals(request.getTermsOfServiceAgreed()),
-                Boolean.TRUE.equals(request.getContentPolicyAgreed()),
-                Boolean.TRUE.equals(request.getMarketingConsent()));
+        User user = User.builder()
+                .email(request.getEmail())
+                .password(encodedPassword)
+                .nickname(request.getNickname())
+                .role(Role.USER)
+                .email_verified(true)
+                .privacyPolicyAgreed(Boolean.TRUE.equals(request.getPrivacyPolicyAgreed()))
+                .termsOfServiceAgreed(Boolean.TRUE.equals(request.getTermsOfServiceAgreed()))
+                .contentPolicyAgreed(Boolean.TRUE.equals(request.getContentPolicyAgreed()))
+                .marketingConsent(Boolean.TRUE.equals(request.getMarketingConsent()))
+                .build();
 
         // 약관 동의 필드는 @NotNull로 값은 필수지만, true/false 모두 허용
         // (null 체크는 @NotNull에서 처리됨)
@@ -98,24 +94,21 @@ public class AuthService {
      */
     @Transactional
     public Long adminSignup(AdminSignupRequest request) {
-        // 활성 사용자 이메일 중복 체크
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new GeneralException(ErrorStatus._EMAIL_DUPLICATED);
-        }
-
-        // 일주일(7일) 이내 탈퇴한 이메일 재가입 방지
-        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
-        if (userRepository.existsRecentlyDeletedByEmail(request.getEmail(), oneWeekAgo)) {
-            throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
-        }
+        signupValidator.validate(request.getEmail());
+        passwordValidator.validateNewPassword(request.getPassword());
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-        User user = User.createAdminUser(
-                request.getEmail(),
-                request.getNickname(),
-                request.getPassword(),
-                encodedPassword,
-                Boolean.TRUE.equals(request.getEmailVerified()));
+        User user = User.builder()
+                .email(request.getEmail())
+                .password(encodedPassword)
+                .nickname(request.getNickname())
+                .role(Role.ADMIN)
+                .email_verified(Boolean.TRUE.equals(request.getEmailVerified()))
+                .privacyPolicyAgreed(false)
+                .termsOfServiceAgreed(false)
+                .contentPolicyAgreed(false)
+                .marketingConsent(false)
+                .build();
         return userRepository.save(user).getId();
     }
 

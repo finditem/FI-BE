@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -36,61 +37,107 @@ class PasswordValidatorTest {
         passwordValidator = new PasswordValidator(passwordEncoder, clock);
     }
 
-    @Test
-    @DisplayName("새 비밀번호와 확인이 다르면 기존 불일치 예외를 던진다")
-    void throwsExistingMismatchException() {
-        // when & then
-        assertThatThrownBy(() -> passwordValidator.validateConfirmation("NewPassword1!", "DifferentPassword1!"))
-                .isInstanceOfSatisfying(GeneralException.class, exception -> org.assertj.core.api.Assertions.assertThat(
-                                exception.getCode())
-                        .isEqualTo(ErrorStatus._PASSWORD_CONFIRMATION_MISMATCH));
+    @Nested
+    @DisplayName("새 비밀번호를 검증할 때")
+    class DescribeValidateNewPassword {
+
+        @Nested
+        @DisplayName("정책에 맞지 않는 비밀번호면")
+        class ContextWithWeakPassword {
+
+            @Test
+            @DisplayName("약한 비밀번호 예외를 던진다")
+            void itThrowsWeakPassword() {
+                assertThatThrownBy(() -> passwordValidator.validateNewPassword("short"))
+                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                                .isEqualTo(ErrorStatus._WEAK_PASSWORD));
+            }
+        }
     }
 
-    @Test
-    @DisplayName("활성 임시 비밀번호가 일치하면 임시 인증 결과를 반환한다")
-    void returnsTemporaryResultForMatchingActiveTemporaryPassword() {
-        // given
-        User user = temporaryPasswordUser(LocalDateTime.of(2026, 8, 23, 4, 0));
-        when(passwordEncoder.matches("temporary-password", "temporary-password-hash"))
-                .thenReturn(true);
+    @Nested
+    @DisplayName("새 비밀번호 확인값을 검증할 때")
+    class DescribeValidateConfirmation {
 
-        // when
-        PasswordValidator.CurrentPasswordValidationResult result =
-                passwordValidator.validateCurrentPassword(user, "temporary-password");
+        @Nested
+        @DisplayName("새 비밀번호와 확인값이 다르면")
+        class ContextWithMismatchedConfirmation {
 
-        // then
-        assertThat(result).isEqualTo(PasswordValidator.CurrentPasswordValidationResult.TEMPORARY);
+            @Test
+            @DisplayName("비밀번호 확인 불일치 예외를 던진다")
+            void itThrowsPasswordConfirmationMismatch() {
+                assertThatThrownBy(() -> passwordValidator.validateConfirmation("NewPassword1!", "DifferentPassword1!"))
+                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                                .isEqualTo(ErrorStatus._PASSWORD_CONFIRMATION_MISMATCH));
+            }
+        }
     }
 
-    @Test
-    @DisplayName("만료된 임시 비밀번호 상태에서는 원래 비밀번호만 일반 인증 결과로 반환한다")
-    void returnsStandardResultForOriginalPasswordAfterExpiry() {
-        // given
-        User user = temporaryPasswordUser(LocalDateTime.of(2026, 8, 23, 3, 0));
-        when(passwordEncoder.matches("original-password", "original-password-hash"))
-                .thenReturn(true);
+    @Nested
+    @DisplayName("현재 비밀번호를 검증할 때")
+    class DescribeValidateCurrentPassword {
 
-        // when
-        PasswordValidator.CurrentPasswordValidationResult result =
-                passwordValidator.validateCurrentPassword(user, "original-password");
+        @Nested
+        @DisplayName("활성 임시 비밀번호가 일치하면")
+        class ContextWithMatchingActiveTemporaryPassword {
 
-        // then
-        assertThat(result).isEqualTo(PasswordValidator.CurrentPasswordValidationResult.STANDARD);
-    }
+            @Test
+            @DisplayName("임시 인증 결과를 반환한다")
+            void itReturnsTemporaryAuthentication() {
+                // given
+                User user = temporaryPasswordUser(LocalDateTime.of(2026, 8, 23, 4, 0));
+                when(passwordEncoder.matches("temporary-password", "temporary-password-hash"))
+                        .thenReturn(true);
 
-    @Test
-    @DisplayName("만료된 임시 비밀번호는 비교하지 않고 실패 결과를 반환한다")
-    void rejectsExpiredTemporaryPasswordWithoutMatchingIt() {
-        // given
-        User user = temporaryPasswordUser(LocalDateTime.of(2026, 8, 23, 3, 0));
+                // when
+                PasswordValidator.CurrentPasswordValidationResult result =
+                        passwordValidator.validateCurrentPassword(user, "temporary-password");
 
-        // when
-        PasswordValidator.CurrentPasswordValidationResult result =
-                passwordValidator.validateCurrentPassword(user, "temporary-password");
+                // then
+                assertThat(result).isEqualTo(PasswordValidator.CurrentPasswordValidationResult.TEMPORARY);
+            }
+        }
 
-        // then
-        assertThat(result).isEqualTo(PasswordValidator.CurrentPasswordValidationResult.FAILED);
-        verify(passwordEncoder, never()).matches("temporary-password", "temporary-password-hash");
+        @Nested
+        @DisplayName("임시 비밀번호가 만료되고 원래 비밀번호가 일치하면")
+        class ContextWithExpiredTemporaryPasswordAndMatchingOriginalPassword {
+
+            @Test
+            @DisplayName("일반 인증 결과를 반환한다")
+            void itReturnsStandardAuthentication() {
+                // given
+                User user = temporaryPasswordUser(LocalDateTime.of(2026, 8, 23, 3, 0));
+                when(passwordEncoder.matches("original-password", "original-password-hash"))
+                        .thenReturn(true);
+
+                // when
+                PasswordValidator.CurrentPasswordValidationResult result =
+                        passwordValidator.validateCurrentPassword(user, "original-password");
+
+                // then
+                assertThat(result).isEqualTo(PasswordValidator.CurrentPasswordValidationResult.STANDARD);
+            }
+        }
+
+        @Nested
+        @DisplayName("임시 비밀번호가 만료된 상태에서 임시 비밀번호를 입력하면")
+        class ContextWithExpiredTemporaryPasswordAndTemporaryPassword {
+
+            @Test
+            @DisplayName("임시 비밀번호 비교 없이 실패 결과를 반환한다")
+            void itReturnsFailedAuthenticationWithoutMatchingTemporaryPassword() {
+                // given
+                User user = temporaryPasswordUser(LocalDateTime.of(2026, 8, 23, 3, 0));
+
+                // when
+                PasswordValidator.CurrentPasswordValidationResult result =
+                        passwordValidator.validateCurrentPassword(user, "temporary-password");
+
+                // then
+                assertThat(result).isEqualTo(PasswordValidator.CurrentPasswordValidationResult.FAILED);
+                verify(passwordEncoder, never()).matches("temporary-password", "temporary-password-hash");
+            }
+        }
     }
 
     private User temporaryPasswordUser(LocalDateTime expiresAt) {

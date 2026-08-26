@@ -89,7 +89,7 @@ cors:
     - "http://127.0.0.1:*"
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: local-development-jwt-secret-key-must-be-32-bytes
   issuer: fmi
   access-token-validity-ms: 900000
   refresh-token-validity-ms: 1209600000
