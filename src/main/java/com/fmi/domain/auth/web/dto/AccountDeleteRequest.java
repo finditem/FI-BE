@@ -1,4 +1,4 @@
-package com.fmi.domain.user.web.dto;
+package com.fmi.domain.auth.web.dto;
 
 import com.fmi.domain.Enum.WithdrawalReason;
 import io.swagger.v3.oas.annotations.media.Schema;
