@@ -1,7 +1,7 @@
 package com.fmi.domain.post.service;
 
 import com.fmi.domain.Enum.LanguageCode;
-import com.fmi.domain.auth.data.User;
+import com.fmi.domain.user.data.User;
 import com.fmi.domain.post.converter.util.PostTranslationConverter;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostTranslation;
