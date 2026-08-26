@@ -1,12 +1,12 @@
 package com.fmi.domain.noticecomment.converter;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notice.data.Notice;
 import com.fmi.domain.noticecomment.data.NoticeComment;
 import com.fmi.domain.noticecomment.data.NoticeCommentImage;
 import com.fmi.domain.noticecomment.response.NoticeCommentImageResponse;
 import com.fmi.domain.noticecomment.response.NoticeCommentResponse;
 import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
+import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.web.dto.response.UserCommentResponse;
 import java.time.LocalDateTime;
 import java.util.List;

@@ -1,12 +1,12 @@
 package com.fmi.domain.notification.web.controller;
 
-import com.fmi.domain.auth.data.User;
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.notification.service.SseEmitterService;
 import com.fmi.domain.notification.web.dto.response.NotificationListDTO;
 import com.fmi.domain.notification.web.dto.response.NotificationSettingsDTO;
+import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;

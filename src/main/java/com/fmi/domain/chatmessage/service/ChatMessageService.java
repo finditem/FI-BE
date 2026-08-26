@@ -5,8 +5,6 @@ import static com.fmi.domain.chatmessage.converter.ChatMessageConverter.messageR
 import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessageRequestDTO;
 import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.*;
 
-import com.fmi.domain.auth.data.User;
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.chatmessage.converter.ChatMessageConverter;
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.data.MessageImage;
@@ -19,6 +17,8 @@ import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

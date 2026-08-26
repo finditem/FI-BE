@@ -23,7 +23,7 @@ public class NotificationConverter {
                 .build();
     }
 
-    public NotificationSettingsDTO toSettingsDTO(NotificationSettings settings, com.fmi.domain.auth.data.User user) {
+    public NotificationSettingsDTO toSettingsDTO(NotificationSettings settings, com.fmi.domain.user.data.User user) {
         return NotificationSettingsDTO.builder()
                 .commentEnabled(settings.getCommentEnabled())
                 .chatEnabled(settings.getChatEnabled())

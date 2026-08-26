@@ -1,9 +1,9 @@
 package com.fmi.domain.auth.converter;
 
 import com.fmi.domain.Enum.Role;
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.response.*;
 import com.fmi.domain.auth.web.dto.*;
+import com.fmi.domain.user.data.User;
 import org.springframework.stereotype.Component;
 
 @Component

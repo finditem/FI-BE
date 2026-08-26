@@ -6,12 +6,12 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 import com.fmi.domain.Enum.Category;
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.user.data.User;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

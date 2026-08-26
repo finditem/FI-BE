@@ -1,8 +1,8 @@
 package com.fmi.domain.commentlike.repository;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.commentlike.data.CommentLike;
+import com.fmi.domain.user.data.User;
 import io.lettuce.core.dynamic.annotation.Param;
 import java.util.List;
 import java.util.Optional;

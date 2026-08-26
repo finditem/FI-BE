@@ -2,7 +2,6 @@ package com.fmi.domain.post.service;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.comment.service.CommentQueryService;
 import com.fmi.domain.post.converter.util.PostConverter;
@@ -19,6 +18,7 @@ import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
 import com.fmi.domain.user.converter.UserConverter;
+import com.fmi.domain.user.data.User;
 import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

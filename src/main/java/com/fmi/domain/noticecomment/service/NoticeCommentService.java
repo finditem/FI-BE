@@ -1,7 +1,5 @@
 package com.fmi.domain.noticecomment.service;
 
-import com.fmi.domain.auth.data.User;
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notice.data.Notice;
 import com.fmi.domain.notice.repository.NoticeRepository;
 import com.fmi.domain.noticecomment.converter.NoticeCommentConverter;
@@ -18,6 +16,8 @@ import com.fmi.domain.noticecommentlike.repository.NoticeCommentLikeRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;

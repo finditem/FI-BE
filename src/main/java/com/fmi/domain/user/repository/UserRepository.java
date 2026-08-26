@@ -1,6 +1,6 @@
-package com.fmi.domain.auth.repository;
+package com.fmi.domain.user.repository;
 
-import com.fmi.domain.auth.data.User;
+import com.fmi.domain.user.data.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;

@@ -1,7 +1,5 @@
 package com.fmi.domain.comment.service;
 
-import com.fmi.domain.auth.data.User;
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.comment.converter.CommentConverter;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
@@ -17,6 +15,8 @@ import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.user.converter.UserConverter;
+import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;

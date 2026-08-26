@@ -1,10 +1,10 @@
 package com.fmi.domain.user.service;
 
 import com.fmi.domain.Enum.Category;
-import com.fmi.domain.auth.data.User;
-import com.fmi.domain.auth.repository.UserRepository;
+import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.data.UserCategory;
 import com.fmi.domain.user.repository.UserCategoryRepository;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.util.List;

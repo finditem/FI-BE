@@ -1,8 +1,8 @@
 package com.fmi.domain.inquiry.data;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
+import com.fmi.domain.user.data.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;

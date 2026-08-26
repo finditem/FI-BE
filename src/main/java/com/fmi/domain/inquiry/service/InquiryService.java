@@ -1,7 +1,5 @@
 package com.fmi.domain.inquiry.service;
 
-import com.fmi.domain.auth.data.User;
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
 import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.data.InquiryImage;
@@ -19,6 +17,8 @@ import com.fmi.domain.ipblock.service.IpBlacklistService;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

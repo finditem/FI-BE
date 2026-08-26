@@ -7,11 +7,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fmi.domain.Enum.Role;
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.auth.response.LoginResponse;
 import com.fmi.domain.auth.service.AppleOAuthService;
 import com.fmi.domain.auth.service.SocialLoginService;
 import com.fmi.domain.auth.web.dto.AppleLoginRequest;
+import com.fmi.domain.user.data.User;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.CookieFactory;
 import com.fmi.security.JwtTokenProvider;

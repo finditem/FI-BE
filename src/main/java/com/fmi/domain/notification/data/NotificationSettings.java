@@ -1,7 +1,7 @@
 package com.fmi.domain.notification.data;
 
 import com.fmi.domain.Enum.Category;
-import com.fmi.domain.auth.data.User;
+import com.fmi.domain.user.data.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.EnumSet;

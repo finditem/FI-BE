@@ -4,11 +4,11 @@ import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResult
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.MyChatListDTO;
 
 import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatmessage.service.ChatNotificationService;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.domain.chatroom.service.ChatRoomService;
 import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.user.data.User;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
 import com.fmi.service.UserQueryService;

@@ -2,7 +2,6 @@ package com.fmi.domain.post.web.controller;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.PostStatus;
@@ -14,6 +13,7 @@ import com.fmi.domain.post.service.TemporaryPostService;
 import com.fmi.domain.post.web.dto.request.*;
 import com.fmi.domain.post.web.dto.response.*;
 import com.fmi.domain.post.web.dto.response.temp.TemporaryPostResponse;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.utils.IpUtil;
 import io.swagger.v3.oas.annotations.Operation;

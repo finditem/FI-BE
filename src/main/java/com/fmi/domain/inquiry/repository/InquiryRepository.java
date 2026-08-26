@@ -1,9 +1,9 @@
 package com.fmi.domain.inquiry.repository;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
+import com.fmi.domain.user.data.User;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

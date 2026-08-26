@@ -1,7 +1,5 @@
 package com.fmi.domain.inquirycomment.service;
 
-import com.fmi.domain.auth.data.User;
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.inquirycomment.converter.InquiryCommentConverter;
@@ -15,6 +13,8 @@ import com.fmi.domain.inquirycomment.web.dto.CreateInquiryCommentDto;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;

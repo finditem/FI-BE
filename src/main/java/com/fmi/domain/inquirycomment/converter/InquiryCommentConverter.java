@@ -1,11 +1,11 @@
 package com.fmi.domain.inquirycomment.converter;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquirycomment.data.InquiryComment;
 import com.fmi.domain.inquirycomment.data.InquiryCommentImage;
 import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
 import com.fmi.domain.inquirycomment.web.dto.CreateInquiryCommentDto;
+import com.fmi.domain.user.data.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Component;

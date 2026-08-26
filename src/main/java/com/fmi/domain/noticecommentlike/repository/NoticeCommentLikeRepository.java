@@ -1,8 +1,8 @@
 package com.fmi.domain.noticecommentlike.repository;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.noticecomment.data.NoticeComment;
 import com.fmi.domain.noticecommentlike.data.NoticeCommentLike;
+import com.fmi.domain.user.data.User;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;

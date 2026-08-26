@@ -1,6 +1,5 @@
 package com.fmi.domain.map.service;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.map.enums.MapLevel;
 import com.fmi.domain.map.web.dto.request.LocationMapPostRequest;
 import com.fmi.domain.map.web.dto.request.MapPostRequest;
@@ -11,6 +10,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.HotPostService;
 import com.fmi.domain.post.service.PostQueryService;
+import com.fmi.domain.user.data.User;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.service.UserQueryService;
 import java.util.HashSet;

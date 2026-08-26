@@ -1,6 +1,5 @@
 package com.fmi.domain.post.service;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
@@ -18,6 +17,7 @@ import com.fmi.domain.post.web.dto.request.PostUpdateRequest;
 import com.fmi.domain.post.web.dto.response.PostCreateResponse;
 import com.fmi.domain.post.web.dto.response.PostUpdateResponse;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
+import com.fmi.domain.user.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;

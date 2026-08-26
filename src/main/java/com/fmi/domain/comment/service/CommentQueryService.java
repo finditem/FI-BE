@@ -1,6 +1,5 @@
 package com.fmi.domain.comment.service;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.comment.converter.CommentConverter;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
@@ -10,6 +9,7 @@ import com.fmi.domain.comment.web.dto.response.CommentResponse;
 import com.fmi.domain.commentlike.service.CommentLikeService;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.user.converter.UserConverter;
+import com.fmi.domain.user.data.User;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

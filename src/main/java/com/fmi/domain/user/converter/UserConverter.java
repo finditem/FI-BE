@@ -1,9 +1,9 @@
 package com.fmi.domain.user.converter;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
+import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;

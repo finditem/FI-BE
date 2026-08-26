@@ -1,9 +1,9 @@
 package com.fmi.domain.notification.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notification.data.PushSubscription;
 import com.fmi.domain.notification.repository.PushSubscriptionRepository;
+import com.fmi.domain.user.data.User;
 import jakarta.annotation.PostConstruct;
 import java.security.GeneralSecurityException;
 import java.security.Security;

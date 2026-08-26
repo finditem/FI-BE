@@ -1,8 +1,8 @@
 package com.fmi.domain.noticelike.repository;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notice.data.Notice;
 import com.fmi.domain.noticelike.data.NoticeLike;
+import com.fmi.domain.user.data.User;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

@@ -1,11 +1,11 @@
 package com.fmi.domain.notification.web.controller;
 
-import com.fmi.domain.auth.data.User;
-import com.fmi.domain.auth.repository.UserRepository;
 import com.fmi.domain.notification.data.PushSubscription;
 import com.fmi.domain.notification.repository.PushSubscriptionRepository;
 import com.fmi.domain.notification.service.WebPushService;
 import com.fmi.domain.notification.web.dto.request.PushSubscribeRequest;
+import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
