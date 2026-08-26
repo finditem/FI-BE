@@ -117,7 +117,6 @@ public class EmailVerificationService {
     /**
      * 회원가입 완료 후 인증 플래그 삭제 (한 번만 사용되도록)
      */
-    @Transactional
     public void consumeEmailVerification(String email) {
         String verifiedKey = "email:verified:" + email;
         redis.delete(verifiedKey);
