@@ -1,13 +1,18 @@
 package com.fmi.domain.auth.service;
 
-import com.fmi.domain.auth.web.dto.PasswordChangeRequest;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.service.internal.PasswordGenerator;
+import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.security.RefreshTokenStore;
+import com.fmi.service.EmailService;
+import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,44 +24,51 @@ import org.springframework.transaction.annotation.Transactional;
 public class PasswordService {
 
     private final UserRepository userRepository;
+    private final SocialAccountsRepository socialAccountsRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordValidator passwordValidator;
+    private final PasswordGenerator passwordGenerator;
     private final RefreshTokenStore refreshTokenStore;
+    private final EmailService emailService;
+    private final Clock clock;
 
     public void verify(String email, PasswordVerifyRequest request) {
-        if (!matches(email, request.getCurrentPassword())) {
+        User user =
+                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        PasswordValidator.CurrentPasswordValidationResult validationResult =
+                passwordValidator.validateCurrentPassword(user, request.getCurrentPassword());
+
+        if (validationResult == PasswordValidator.CurrentPasswordValidationResult.FAILED) {
             throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
         }
     }
 
-    public void change(String email, PasswordChangeRequest request) {
+    public void change(String email, String newPassword, String newPasswordConfirm) {
         User user =
                 userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        if (!request.getNewPassword().equals(request.getNewPasswordConfirm())) {
-            throw new GeneralException(ErrorStatus._PASSWORD_CONFIRMATION_MISMATCH);
-        }
+        passwordValidator.validateConfirmation(newPassword, newPasswordConfirm);
 
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        user.setOriginalPassword(null);
-        user.setTemporaryPassword(null);
-        user.setTemporaryPasswordExpiresAt(null);
-        user.setUpdatedAt(LocalDateTime.now());
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        LocalDateTime changedAt = LocalDateTime.now(clock);
+        user.changePassword(newPassword, encodedPassword, changedAt);
         userRepository.save(user);
+
         refreshTokenStore.revokeAllForUser(email);
     }
 
-    private boolean matches(String email, String password) {
+    public void issueTemporaryPassword(String email) {
         User user =
                 userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        boolean temporaryPasswordActive = user.getTemporaryPassword() != null
-                && user.getTemporaryPasswordExpiresAt() != null
-                && LocalDateTime.now().isBefore(user.getTemporaryPasswordExpiresAt());
 
-        if (!temporaryPasswordActive) {
-            return passwordEncoder.matches(password, user.getPassword());
+        if (socialAccountsRepository.findByUser(user).isPresent()) {
+            throw new GeneralException(ErrorStatus._SOCIAL_ACCOUNT);
         }
 
-        return passwordEncoder.matches(password, user.getTemporaryPassword())
-                || (user.getOriginalPassword() != null && passwordEncoder.matches(password, user.getOriginalPassword()))
-                || passwordEncoder.matches(password, user.getPassword());
+        String temporaryPassword = passwordGenerator.generateTemporaryPassword();
+        LocalDateTime now = LocalDateTime.now(clock);
+        user.issueTemporaryPassword(passwordEncoder.encode(temporaryPassword), now.plusHours(1), now);
+        userRepository.save(user);
+        emailService.sendHtmlEmail(
+                email, "임시 비밀번호 발급", "password-reset-email.html", Map.of("PASSWORD", temporaryPassword));
     }
 }

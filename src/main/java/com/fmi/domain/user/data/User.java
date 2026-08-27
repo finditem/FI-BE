@@ -2,12 +2,16 @@ package com.fmi.domain.user.data;
 
 import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.Enum.Role;
+import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -88,5 +92,154 @@ public class User {
         if (email != null) {
             this.email = email;
         }
+    }
+
+    public static User createUser(
+            String email,
+            String nickname,
+            String rawPassword,
+            String encodedPassword,
+            boolean emailVerified,
+            boolean privacyPolicyAgreed,
+            boolean termsOfServiceAgreed,
+            boolean contentPolicyAgreed,
+            boolean marketingConsent) {
+        User user = User.builder()
+                .email(email)
+                .password(encodedPassword)
+                .nickname(nickname)
+                .role(Role.USER)
+                .privacyPolicyAgreed(privacyPolicyAgreed)
+                .termsOfServiceAgreed(termsOfServiceAgreed)
+                .contentPolicyAgreed(contentPolicyAgreed)
+                .marketingConsent(marketingConsent)
+                .email_verified(emailVerified)
+                .build();
+        user.validatePasswordPolicy(rawPassword);
+        return user;
+    }
+
+    public static User createAdminUser(
+            String email, String nickname, String rawPassword, String encodedPassword, boolean emailVerified) {
+        User user = User.builder()
+                .email(email)
+                .password(encodedPassword)
+                .nickname(nickname)
+                .role(Role.ADMIN)
+                .privacyPolicyAgreed(false)
+                .termsOfServiceAgreed(false)
+                .contentPolicyAgreed(false)
+                .marketingConsent(false)
+                .email_verified(emailVerified)
+                .build();
+        user.validatePasswordPolicy(rawPassword);
+        return user;
+    }
+
+    public void issueTemporaryPassword(String encodedPassword, LocalDateTime expiresAt, LocalDateTime now) {
+        if (originalPassword == null) {
+            originalPassword = password;
+        }
+        temporaryPassword = encodedPassword;
+        temporaryPasswordExpiresAt = expiresAt;
+        password = encodedPassword;
+        updatedAt = now;
+    }
+
+    public boolean restoreExpiredTemporaryPassword(LocalDateTime now) {
+        if (!hasExpiredTemporaryPassword(now)) {
+            return false;
+        }
+
+        if (originalPassword != null) {
+            password = originalPassword;
+        }
+        originalPassword = null;
+        temporaryPassword = null;
+        temporaryPasswordExpiresAt = null;
+        updatedAt = now;
+        return true;
+    }
+
+    public boolean hasActiveTemporaryPassword(LocalDateTime now) {
+        return temporaryPassword != null
+                && temporaryPasswordExpiresAt != null
+                && now.isBefore(temporaryPasswordExpiresAt);
+    }
+
+    public boolean hasExpiredTemporaryPassword(LocalDateTime now) {
+        return temporaryPasswordExpiresAt != null && !now.isBefore(temporaryPasswordExpiresAt);
+    }
+
+    public void changePassword(String rawPassword, String encodedPassword, LocalDateTime now) {
+        validatePasswordPolicy(rawPassword);
+        password = encodedPassword;
+        originalPassword = null;
+        temporaryPassword = null;
+        temporaryPasswordExpiresAt = null;
+        updatedAt = now;
+    }
+
+    private void validatePasswordPolicy(String rawPassword) {
+        String password = rawPassword == null ? "" : rawPassword;
+        boolean valid = password.length() >= 8
+                && password.length() <= 16
+                && password.matches(".*[A-Z].*")
+                && password.matches(".*[a-z].*")
+                && password.matches(".*[0-9].*")
+                && password.matches(".*[!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?].*");
+        if (!valid) {
+            throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
+        }
+    }
+
+    public void agreeTerms(
+            boolean privacyPolicyAgreed,
+            boolean termsOfServiceAgreed,
+            boolean contentPolicyAgreed,
+            boolean marketingConsent) {
+        this.privacyPolicyAgreed = privacyPolicyAgreed;
+        this.termsOfServiceAgreed = termsOfServiceAgreed;
+        this.contentPolicyAgreed = contentPolicyAgreed;
+        this.marketingConsent = marketingConsent;
+    }
+
+    public void markEmailVerified() {
+        email_verified = true;
+    }
+
+    public void changeNickname(String nickname, LocalDateTime now) {
+        this.nickname = nickname;
+        updatedAt = now;
+    }
+
+    public void changeProfileImage(String profileImage, LocalDateTime now) {
+        profile_img = profileImage;
+        updatedAt = now;
+    }
+
+    public void removeProfileImage(LocalDateTime now) {
+        profile_img = null;
+        updatedAt = now;
+    }
+
+    public void recordProfileUpdate(LocalDateTime now) {
+        updatedAt = now;
+    }
+
+    public void withdraw(List<WithdrawalReason> reasons, String otherReason, LocalDateTime now) {
+        withdrawalReason = reasons.stream().map(Enum::name).collect(Collectors.joining(","));
+        withdrawalOtherReason = reasons.contains(WithdrawalReason.OTHER) ? otherReason : null;
+        deletedAt = now;
+    }
+
+    public void reactivateForSocialLogin() {
+        deletedAt = null;
+        privacyPolicyAgreed = false;
+        termsOfServiceAgreed = false;
+        contentPolicyAgreed = false;
+        marketingConsent = false;
+        withdrawalReason = null;
+        withdrawalOtherReason = null;
     }
 }

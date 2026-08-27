@@ -1,19 +1,31 @@
 package com.fmi.domain.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fmi.domain.admin.web.dto.AdminSignupRequest;
+import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.EmailService;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +33,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,18 +55,30 @@ class AuthServiceTest {
     @Mock
     private EmailService emailService;
 
-    @InjectMocks
-    private AuthService authService;
+    @Mock
+    private Clock clock;
 
     private final AtomicReference<User> savedUser = new AtomicReference<>();
+    private PasswordValidator passwordValidator;
+    private AuthService authService;
 
     @BeforeEach
     void setUp() {
-        when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(userRepository.existsRecentlyDeletedByEmail(anyString(), any())).thenReturn(false);
-        when(emailVerificationService.isEmailVerified(anyString())).thenReturn(true);
-        when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+        passwordValidator = new PasswordValidator(passwordEncoder, clock);
+        authService = new AuthService(
+                userRepository,
+                passwordEncoder,
+                nicknameValidationService,
+                emailVerificationService,
+                emailService,
+                passwordValidator);
+        lenient().when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        lenient()
+                .when(userRepository.existsRecentlyDeletedByEmail(anyString(), any()))
+                .thenReturn(false);
+        lenient().when(emailVerificationService.isEmailVerified(anyString())).thenReturn(true);
+        lenient().when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
+        lenient().when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
             savedUser.set(user);
             return user;
@@ -115,6 +138,97 @@ class AuthServiceTest {
                 verify(userRepository).save(any(User.class));
             }
         }
+
+        @Nested
+        @DisplayName("비밀번호 정책을 만족하지 않으면")
+        class WithWeakPassword {
+
+            @Test
+            @DisplayName("이메일 인증을 소비하지 않고 기존 약한 비밀번호 예외를 던진다")
+            void rejectsWeakPasswordBeforeConsumingEmailVerification() {
+                // given
+                SignupRequest request = signupRequest();
+                request.setPassword("short");
+
+                // when & then
+                assertThatThrownBy(() -> authService.signup(request))
+                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                                .isEqualTo(ErrorStatus._WEAK_PASSWORD));
+                verify(emailVerificationService, never()).isEmailVerified(request.getEmail());
+                verify(emailVerificationService, never()).consumeEmailVerification(request.getEmail());
+                verify(passwordEncoder).encode(request.getPassword());
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("관리자 회원 가입")
+    class AdminSignup {
+
+        @Nested
+        @DisplayName("비밀번호 정책을 만족하지 않으면")
+        class WithWeakPassword {
+
+            @Test
+            @DisplayName("저장 없이 기존 약한 비밀번호 예외를 던진다")
+            void rejectsWeakPasswordBeforeEncoding() {
+                // given
+                AdminSignupRequest request = new AdminSignupRequest();
+                request.setEmail("admin@finditem.kr");
+                request.setNickname("admin");
+                request.setPassword("short");
+
+                // when & then
+                assertThatThrownBy(() -> authService.adminSignup(request))
+                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                                .isEqualTo(ErrorStatus._WEAK_PASSWORD));
+                verify(passwordEncoder).encode(request.getPassword());
+                verify(userRepository, never()).save(any(User.class));
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("로그인 인증")
+    class Authenticate {
+
+        @Test
+        @DisplayName("임시 비밀번호가 만료되면 원래 비밀번호로 로그인한다")
+        void authenticatesWithOriginalPasswordAfterTemporaryPasswordExpires() {
+            // given
+            String email = "member@finditem.kr";
+            User user = expiredTemporaryPasswordUser();
+            stubClock();
+            when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+            lenient()
+                    .when(passwordEncoder.matches("original-password", "original-password-hash"))
+                    .thenReturn(true);
+
+            // when
+            AuthService.AuthenticateResult result = authService.authenticate(email, "original-password");
+
+            // then
+            assertThat(result.getUser()).isSameAs(user);
+            assertThat(result.isTemporaryPassword()).isFalse();
+        }
+
+        @Test
+        @DisplayName("임시 비밀번호가 만료되면 임시 비밀번호 로그인을 거절한다")
+        void rejectsTemporaryPasswordAfterExpiry() {
+            // given
+            String email = "member@finditem.kr";
+            User user = expiredTemporaryPasswordUser();
+            stubClock();
+            when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+            lenient()
+                    .when(passwordEncoder.matches("temporary-password", "temporary-password-hash"))
+                    .thenReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> authService.authenticate(email, "temporary-password"))
+                    .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                            .isEqualTo(ErrorStatus._INVALID_CREDENTIALS));
+        }
     }
 
     private SignupRequest signupRequest() {
@@ -127,5 +241,19 @@ class AuthServiceTest {
         request.setContentPolicyAgreed(false);
         request.setMarketingConsent(false);
         return request;
+    }
+
+    private User expiredTemporaryPasswordUser() {
+        return User.builder()
+                .password("temporary-password-hash")
+                .originalPassword("original-password-hash")
+                .temporaryPassword("temporary-password-hash")
+                .temporaryPasswordExpiresAt(LocalDateTime.of(2016, 8, 23, 3, 0))
+                .build();
+    }
+
+    private void stubClock() {
+        lenient().when(clock.instant()).thenReturn(Instant.parse("2026-08-23T03:00:00Z"));
+        lenient().when(clock.getZone()).thenReturn(ZoneOffset.UTC);
     }
 }

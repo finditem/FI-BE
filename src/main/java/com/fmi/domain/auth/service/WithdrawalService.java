@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,13 +42,12 @@ public class WithdrawalService {
 
         deleteProfileImage(user);
         validateOtherReason(request);
-        setWithdrawalReason(user, request);
         socialAccountsRepository
                 .findByUser(user)
                 .filter(account -> account.getProvider() == Provider.KAKAO)
                 .ifPresent(account -> kakaoOAuthClient.unlinkUser(account.getProviderId()));
 
-        user.setDeletedAt(LocalDateTime.now());
+        user.withdraw(request.getReasons(), request.getOtherReason(), LocalDateTime.now());
         userRepository.save(user);
         refreshTokenStore.revokeAllForUser(email);
         postService.softDeleteAllByUser(user);
@@ -76,14 +74,6 @@ public class WithdrawalService {
         if (request.getReasons().contains(WithdrawalReason.OTHER)
                 && (request.getOtherReason() == null || request.getOtherReason().isBlank())) {
             throw new GeneralException(ErrorStatus._BAD_REQUEST);
-        }
-    }
-
-    private void setWithdrawalReason(User user, AccountDeleteRequest request) {
-        String reasons = request.getReasons().stream().map(Enum::name).collect(Collectors.joining(","));
-        user.setWithdrawalReason(reasons);
-        if (request.getReasons().contains(WithdrawalReason.OTHER)) {
-            user.setWithdrawalOtherReason(request.getOtherReason());
         }
     }
 

@@ -97,10 +97,11 @@ public class UserService {
         User user =
                 userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        user.setPrivacyPolicyAgreed(request.isPrivacyPolicyAgreed());
-        user.setTermsOfServiceAgreed(request.isTermsOfServiceAgreed());
-        user.setContentPolicyAgreed(request.isContentPolicyAgreed());
-        user.setMarketingConsent(request.isMarketingConsent());
+        user.agreeTerms(
+                request.isPrivacyPolicyAgreed(),
+                request.isTermsOfServiceAgreed(),
+                request.isContentPolicyAgreed(),
+                request.isMarketingConsent());
         userRepository.save(user);
     }
 
@@ -469,6 +470,7 @@ public class UserService {
             String email, UserUpdateRequest request, MultipartFile profileImage, boolean deleteProfileImage) {
         User user =
                 userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        LocalDateTime updatedAt = LocalDateTime.now();
 
         // 닉네임 유효성 검사 및 중복 체크 (request가 존재하고 nickname 필드가 명시적으로 전송된 경우만)
         if (request != null && request.isNicknameProvided() && request.getNickname() != null) {
@@ -480,7 +482,7 @@ public class UserService {
                     throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
                 }
             }
-            user.setNickname(request.getNickname());
+            user.changeNickname(request.getNickname(), updatedAt);
         }
 
         // 기존 프로필 이미지 S3 삭제 (새 이미지 업로드 또는 삭제 요청 시)
@@ -502,12 +504,12 @@ public class UserService {
         // 프로필 이미지 처리
         if (profileImage != null && !profileImage.isEmpty()) {
             List<String> uploadedUrls = s3Service.upload(List.of(profileImage));
-            user.setProfile_img(uploadedUrls.get(0));
+            user.changeProfileImage(uploadedUrls.get(0), updatedAt);
         } else if (deleteProfileImage) {
-            user.setProfile_img(null);
+            user.removeProfileImage(updatedAt);
         }
 
-        user.setUpdatedAt(LocalDateTime.now());
+        user.recordProfileUpdate(updatedAt);
         User updatedUser = userRepository.save(user);
         boolean isSocialUser = socialAccountsRepository.findByUser(updatedUser).isPresent();
         return UserConverter.toUserProfileResponse(updatedUser, isSocialUser);
