@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -80,9 +81,6 @@ class AuthServiceTest {
         lenient().when(userRepository.existsByEmail(anyString())).thenReturn(false);
         lenient().when(userRepository.existsByNickname(anyString())).thenReturn(false);
         lenient()
-                .when(nicknameValidator.validateAvailable(anyString()))
-                .thenReturn(NicknameValidator.ValidationResult.success());
-        lenient()
                 .when(userRepository.existsRecentlyDeletedByEmail(anyString(), any()))
                 .thenReturn(false);
         lenient().when(emailVerificationService.isEmailVerified(anyString())).thenReturn(true);
@@ -157,8 +155,9 @@ class AuthServiceTest {
             @DisplayName("사용자를 저장하지 않고 유효하지 않은 닉네임 예외를 던진다")
             void itThrowsInvalidNicknameWithoutSavingUser() {
                 SignupRequest request = signupRequest();
-                when(nicknameValidator.validateAvailable(request.getNickname()))
-                        .thenReturn(NicknameValidator.ValidationResult.invalid("invalid"));
+                doThrow(new GeneralException(ErrorStatus._INVALID_NICKNAME))
+                        .when(nicknameValidator)
+                        .validateAvailable(request.getNickname());
 
                 assertThatThrownBy(() -> authService.signup(request))
                         .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
@@ -176,8 +175,9 @@ class AuthServiceTest {
             @DisplayName("사용자를 저장하지 않고 닉네임 중복 예외를 던진다")
             void itThrowsDuplicateNicknameWithoutSavingUser() {
                 SignupRequest request = signupRequest();
-                when(nicknameValidator.validateAvailable(request.getNickname()))
-                        .thenReturn(NicknameValidator.ValidationResult.duplicate("duplicate"));
+                doThrow(new GeneralException(ErrorStatus._NICKNAME_DUPLICATED))
+                        .when(nicknameValidator)
+                        .validateAvailable(request.getNickname());
 
                 assertThatThrownBy(() -> authService.signup(request))
                         .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())

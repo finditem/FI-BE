@@ -1,7 +1,6 @@
 package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.auth.converter.AuthConverter;
-import com.fmi.domain.auth.response.LoginResponse;
 import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.auth.service.PasswordService;
 import com.fmi.domain.auth.service.TokenIssuer;
@@ -11,7 +10,9 @@ import com.fmi.domain.auth.web.dto.LoginRequest;
 import com.fmi.domain.auth.web.dto.PasswordChangeRequest;
 import com.fmi.domain.auth.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.auth.web.dto.SignupRequest;
+import com.fmi.domain.auth.web.response.LoginResponse;
 import com.fmi.domain.user.service.NicknameService;
+import com.fmi.domain.user.web.response.CheckResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.CookieFactory;
 import io.swagger.v3.oas.annotations.Operation;
@@ -153,15 +154,8 @@ public class AuthController {
                                                         "{\"isSuccess\": false, \"code\": \"NICKNAME_DUPLICATE\", \"message\": \"중복된 닉네임입니다.\"}")))
     })
     public ResponseEntity<ApiResponse<?>> checkNickname(@RequestParam("nickname") @NotBlank String nickname) {
-        var result = nicknameService.check(nickname);
-
-        if (!result.available()) {
-            // 부적절한 닉네임 또는 중복된 닉네임
-            return ResponseEntity.status(400)
-                    .body(ApiResponse.onFailure("NICKNAME_" + result.errorType(), result.message(), null));
-        }
-
-        return ResponseEntity.ok(ApiResponse.onSuccess(AuthConverter.toCheckResponse(true)));
+        CheckResponse response = nicknameService.check(nickname);
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
     @PostMapping("/auth/refresh")

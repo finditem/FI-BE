@@ -1,6 +1,8 @@
 package com.fmi.domain.user.service.internal;
 
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -30,40 +32,35 @@ public class NicknameValidator {
         loadBannedWords();
     }
 
-    public ValidationResult validate(String nickname) {
+    public void validate(String nickname) {
         if (nickname == null || nickname.trim().isEmpty()) {
-            return ValidationResult.invalid("닉네임을 입력해주세요.");
+            throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
         }
 
         String trimmed = nickname.trim();
         if (trimmed.length() < MIN_LENGTH) {
-            return ValidationResult.invalid("닉네임은 최소 " + MIN_LENGTH + "자 이상이어야 합니다.");
+            throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
         }
         if (trimmed.length() > MAX_LENGTH) {
-            return ValidationResult.invalid("닉네임은 최대 " + MAX_LENGTH + "자까지 가능합니다.");
+            throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
         }
         if (!VALID_PATTERN.matcher(trimmed).matches()) {
-            return ValidationResult.invalid("닉네임은 한글, 영문, 숫자만 사용 가능합니다.");
+            throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
         }
 
         String lowerNickname = trimmed.toLowerCase();
         for (String bannedWord : bannedWords) {
             if (lowerNickname.contains(bannedWord)) {
-                return ValidationResult.invalid("사용할 수 없는 닉네임입니다.");
+                throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
             }
         }
-        return ValidationResult.success();
     }
 
-    public ValidationResult validateAvailable(String nickname) {
-        ValidationResult validationResult = validate(nickname);
-        if (!validationResult.valid()) {
-            return validationResult;
-        }
+    public void validateAvailable(String nickname) {
+        validate(nickname);
         if (userRepository.existsByNickname(nickname.trim())) {
-            return ValidationResult.duplicate("중복된 닉네임입니다.");
+            throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
         }
-        return ValidationResult.success();
     }
 
     private void loadBannedWords() {
@@ -83,25 +80,5 @@ public class NicknameValidator {
         } catch (Exception e) {
             log.warn("Failed to load banned words file. Using empty list.", e);
         }
-    }
-
-    public record ValidationResult(boolean valid, Failure failure, String errorMessage) {
-
-        public static ValidationResult success() {
-            return new ValidationResult(true, null, null);
-        }
-
-        public static ValidationResult invalid(String errorMessage) {
-            return new ValidationResult(false, Failure.INVALID, errorMessage);
-        }
-
-        public static ValidationResult duplicate(String errorMessage) {
-            return new ValidationResult(false, Failure.DUPLICATE, errorMessage);
-        }
-    }
-
-    public enum Failure {
-        INVALID,
-        DUPLICATE
     }
 }

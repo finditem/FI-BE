@@ -36,7 +36,7 @@ public class AuthService {
     public User signup(SignupRequest request) {
         signupValidator.validate(request.getEmail());
         passwordValidator.validateNewPassword(request.getPassword());
-        validateNickname(request.getNickname());
+        nicknameValidator.validateAvailable(request.getNickname());
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = User.builder()
@@ -75,7 +75,7 @@ public class AuthService {
     public Long adminSignup(AdminSignupRequest request) {
         signupValidator.validate(request.getEmail());
         passwordValidator.validateNewPassword(request.getPassword());
-        validateNickname(request.getNickname());
+        nicknameValidator.validateAvailable(request.getNickname());
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = User.builder()
@@ -123,16 +123,5 @@ public class AuthService {
     public static class AuthenticateResult {
         private final User user;
         private final boolean isTemporaryPassword;
-    }
-
-    private void validateNickname(String nickname) {
-        NicknameValidator.ValidationResult result = nicknameValidator.validateAvailable(nickname);
-        if (result.valid()) {
-            return;
-        }
-        if (result.failure() == NicknameValidator.Failure.INVALID) {
-            throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
-        }
-        throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
     }
 }

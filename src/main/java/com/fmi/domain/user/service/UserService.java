@@ -500,13 +500,10 @@ public class UserService {
 
         // 닉네임 유효성 검사 및 중복 체크 (request가 존재하고 nickname 필드가 명시적으로 전송된 경우만)
         if (request != null && request.isNicknameProvided() && request.getNickname() != null) {
-            if (!nicknameValidator.validate(request.getNickname()).valid()) {
-                throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
-            }
-            if (!request.getNickname().equals(user.getNickname())) {
-                if (!nicknameValidator.validateAvailable(request.getNickname()).valid()) {
-                    throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
-                }
+            if (request.getNickname().equals(user.getNickname())) {
+                nicknameValidator.validate(request.getNickname());
+            } else {
+                nicknameValidator.validateAvailable(request.getNickname());
             }
             user.changeNickname(request.getNickname(), updatedAt);
         }

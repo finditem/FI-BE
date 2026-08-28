@@ -1,10 +1,10 @@
 package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.Enum.Provider;
-import com.fmi.domain.auth.response.LoginResponse;
 import com.fmi.domain.auth.service.SocialLoginService;
 import com.fmi.domain.auth.service.TokenIssuer;
 import com.fmi.domain.auth.web.dto.AppleLoginRequest;
+import com.fmi.domain.auth.web.response.LoginResponse;
 import com.fmi.external.oauth.apple.AppleOAuthClient;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.CookieFactory;

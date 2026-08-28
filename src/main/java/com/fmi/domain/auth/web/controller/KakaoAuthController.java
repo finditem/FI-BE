@@ -1,10 +1,10 @@
 package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.Enum.Provider;
-import com.fmi.domain.auth.response.LoginResponse;
 import com.fmi.domain.auth.service.SocialLoginService;
 import com.fmi.domain.auth.service.TokenIssuer;
 import com.fmi.domain.auth.web.dto.KakaoLoginRequest;
+import com.fmi.domain.auth.web.response.LoginResponse;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient.KakaoToken;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient.KakaoUser;

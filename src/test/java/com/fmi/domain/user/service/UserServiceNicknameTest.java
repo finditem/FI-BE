@@ -2,6 +2,7 @@ package com.fmi.domain.user.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -98,8 +99,9 @@ class UserServiceNicknameTest {
             UserUpdateRequest request = new UserUpdateRequest();
             request.setNickname("가나다라마바사아자차카");
             when(userRepository.findByEmail("member@finditem.kr")).thenReturn(Optional.of(user));
-            when(nicknameValidator.validate(request.getNickname()))
-                    .thenReturn(NicknameValidator.ValidationResult.invalid("invalid"));
+            doThrow(new GeneralException(ErrorStatus._INVALID_NICKNAME))
+                    .when(nicknameValidator)
+                    .validateAvailable(request.getNickname());
 
             assertThatThrownBy(() -> userService.updateMyProfile("member@finditem.kr", request, null, false))
                     .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
@@ -116,8 +118,6 @@ class UserServiceNicknameTest {
             UserUpdateRequest request = new UserUpdateRequest();
             request.setNickname("새닉네임");
             when(userRepository.findByEmail("member@finditem.kr")).thenReturn(Optional.of(user));
-            when(nicknameValidator.validate("새닉네임")).thenReturn(NicknameValidator.ValidationResult.success());
-            when(nicknameValidator.validateAvailable("새닉네임")).thenReturn(NicknameValidator.ValidationResult.success());
             when(userRepository.save(user)).thenReturn(user);
             when(socialAccountsRepository.findByUser(user)).thenReturn(Optional.empty());
 

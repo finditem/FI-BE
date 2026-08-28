@@ -1,11 +1,15 @@
 package com.fmi.domain.user.service.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -37,26 +41,25 @@ class NicknameValidatorTest {
         @Test
         @DisplayName("2~10자의 한글·영문·숫자 닉네임은 유효하다")
         void itAcceptsNicknameFollowingPolicy() {
-            assertThat(nicknameValidator.validate("찾아줘토끼1").valid()).isTrue();
+            assertThatCode(() -> nicknameValidator.validate("찾아줘토끼1")).doesNotThrowAnyException();
         }
 
         @Test
         @DisplayName("10자를 초과하면 유효하지 않다")
         void itRejectsNicknameLongerThanTenCharacters() {
-            assertThat(nicknameValidator.validate("가나다라마바사아자차카").failure())
-                    .isEqualTo(NicknameValidator.Failure.INVALID);
+            assertInvalidNickname("가나다라마바사아자차카");
         }
 
         @Test
         @DisplayName("특수문자를 포함하면 유효하지 않다")
         void itRejectsSpecialCharacters() {
-            assertThat(nicknameValidator.validate("찾아줘_토끼").failure()).isEqualTo(NicknameValidator.Failure.INVALID);
+            assertInvalidNickname("찾아줘_토끼");
         }
 
         @Test
         @DisplayName("금칙어를 포함하면 유효하지 않다")
         void itRejectsBannedWords() {
-            assertThat(nicknameValidator.validate("관리자토끼").failure()).isEqualTo(NicknameValidator.Failure.INVALID);
+            assertInvalidNickname("관리자토끼");
         }
     }
 
@@ -67,7 +70,7 @@ class NicknameValidatorTest {
         @Test
         @DisplayName("형식이 유효하지 않으면 중복을 조회하지 않는다")
         void itDoesNotCheckDuplicationForInvalidNickname() {
-            nicknameValidator.validateAvailable("_");
+            assertThatThrownBy(() -> nicknameValidator.validateAvailable("_")).isInstanceOf(GeneralException.class);
 
             verify(userRepository, never()).existsByNickname("_");
         }
@@ -77,9 +80,15 @@ class NicknameValidatorTest {
         void itReturnsDuplicateForExistingNickname() {
             when(userRepository.existsByNickname("찾아줘토끼1")).thenReturn(true);
 
-            NicknameValidator.ValidationResult result = nicknameValidator.validateAvailable("찾아줘토끼1");
-
-            assertThat(result.failure()).isEqualTo(NicknameValidator.Failure.DUPLICATE);
+            assertThatThrownBy(() -> nicknameValidator.validateAvailable("찾아줘토끼1"))
+                    .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                            .isEqualTo(ErrorStatus._NICKNAME_DUPLICATED));
         }
+    }
+
+    private void assertInvalidNickname(String nickname) {
+        assertThatThrownBy(() -> nicknameValidator.validate(nickname))
+                .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                        .isEqualTo(ErrorStatus._INVALID_NICKNAME));
     }
 }
