@@ -8,6 +8,7 @@ import com.fmi.domain.auth.service.internal.SignupValidator;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.user.service.internal.NicknameValidator;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.util.Optional;
@@ -25,7 +26,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final NicknameValidationService nicknameValidationService;
+    private final NicknameValidator nicknameValidator;
     private final EmailVerificationService emailVerificationService;
     private final PasswordValidator passwordValidator;
     private final SignupValidator signupValidator;
@@ -35,6 +36,7 @@ public class AuthService {
     public User signup(SignupRequest request) {
         signupValidator.validate(request.getEmail());
         passwordValidator.validateNewPassword(request.getPassword());
+        validateNickname(request.getNickname());
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = User.builder()
@@ -73,6 +75,7 @@ public class AuthService {
     public Long adminSignup(AdminSignupRequest request) {
         signupValidator.validate(request.getEmail());
         passwordValidator.validateNewPassword(request.getPassword());
+        validateNickname(request.getNickname());
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = User.builder()
@@ -122,47 +125,14 @@ public class AuthService {
         private final boolean isTemporaryPassword;
     }
 
-    /**
-     * 닉네임 유효성 및 중복 검사
-     * @return NicknameCheckResult (available, errorType, message)
-     */
-    public NicknameCheckResult checkNickname(String nickname) {
-        // 1단계: 유효성 검증 (길이, 금칙어)
-        NicknameValidationService.ValidationResult validationResult = nicknameValidationService.validate(nickname);
-        if (!validationResult.isValid()) {
-            return NicknameCheckResult.invalid("부적절한 닉네임입니다");
+    private void validateNickname(String nickname) {
+        NicknameValidator.ValidationResult result = nicknameValidator.validateAvailable(nickname);
+        if (result.valid()) {
+            return;
         }
-
-        // 2단계: 중복 검사
-        if (userRepository.existsByNickname(nickname.trim())) {
-            return NicknameCheckResult.duplicate("중복된 닉네임입니다");
+        if (result.failure() == NicknameValidator.Failure.INVALID) {
+            throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
         }
-
-        return NicknameCheckResult.available();
-    }
-
-    @Data
-    public static class NicknameCheckResult {
-        private final boolean available;
-        private final String errorType; // "INVALID" or "DUPLICATE"
-        private final String message;
-
-        private NicknameCheckResult(boolean available, String errorType, String message) {
-            this.available = available;
-            this.errorType = errorType;
-            this.message = message;
-        }
-
-        public static NicknameCheckResult available() {
-            return new NicknameCheckResult(true, null, null);
-        }
-
-        public static NicknameCheckResult invalid(String message) {
-            return new NicknameCheckResult(false, "INVALID", message);
-        }
-
-        public static NicknameCheckResult duplicate(String message) {
-            return new NicknameCheckResult(false, "DUPLICATE", message);
-        }
+        throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
     }
 }
