@@ -3,6 +3,7 @@ package com.fmi.domain.user.data;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -122,6 +123,7 @@ class UserTest {
             assertThat(user.isTermsOfServiceAgreed()).isTrue();
             assertThat(user.isContentPolicyAgreed()).isFalse();
             assertThat(user.isMarketingConsent()).isFalse();
+            assertThat(user.getPreferredLanguage()).isEqualTo(LanguageCode.KO);
         }
     }
 
@@ -269,6 +271,59 @@ class UserTest {
 
             // then
             assertThat(user.getUpdatedAt()).isEqualTo(updatedAt);
+        }
+    }
+
+    @Nested
+    @DisplayName("선호 언어를 변경할 때")
+    class DescribeChangePreferredLanguage {
+
+        @Nested
+        @DisplayName("변경할 언어가 주어지면")
+        class ContextWithLanguage {
+
+            @Test
+            @DisplayName("선호 언어를 바꾸고 수정 시각을 갱신한다")
+            void itChangesPreferredLanguageAndUpdatesTimestamp() {
+                // given
+                LocalDateTime changedAt = LocalDateTime.of(2026, 8, 23, 12, 0);
+                User user = User.builder()
+                        .email("member@finditem.kr")
+                        .preferredLanguage(LanguageCode.KO)
+                        .build();
+
+                // when
+                user.changePreferredLanguage(LanguageCode.EN, changedAt);
+
+                // then
+                assertThat(user.getPreferredLanguage()).isEqualTo(LanguageCode.EN);
+                assertThat(user.getUpdatedAt()).isEqualTo(changedAt);
+            }
+        }
+
+        @Nested
+        @DisplayName("언어가 없으면")
+        class ContextWithNullLanguage {
+
+            @Test
+            @DisplayName("_PREFERRED_LANGUAGE_REQUIRED 예외를 던지고 기존 언어를 유지한다")
+            void itThrowsPreferredLanguageRequired() {
+                // given
+                LocalDateTime lastUpdatedAt = LocalDateTime.of(2026, 8, 23, 12, 0);
+                User user = User.builder()
+                        .email("member@finditem.kr")
+                        .preferredLanguage(LanguageCode.KO)
+                        .updatedAt(lastUpdatedAt)
+                        .build();
+
+                // when
+                // then
+                assertThatThrownBy(() -> user.changePreferredLanguage(null, lastUpdatedAt.plusHours(1)))
+                        .isInstanceOf(GeneralException.class)
+                        .hasFieldOrPropertyWithValue("code", ErrorStatus._PREFERRED_LANGUAGE_REQUIRED);
+                assertThat(user.getPreferredLanguage()).isEqualTo(LanguageCode.KO);
+                assertThat(user.getUpdatedAt()).isEqualTo(lastUpdatedAt);
+            }
         }
     }
 
