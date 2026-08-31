@@ -213,6 +213,14 @@ public class User {
         updatedAt = now;
     }
 
+    public void changePreferredLanguage(LanguageCode preferredLanguage, LocalDateTime now) {
+        if (preferredLanguage == null) {
+            throw new GeneralException(ErrorStatus._PREFERRED_LANGUAGE_REQUIRED);
+        }
+        this.preferredLanguage = preferredLanguage;
+        updatedAt = now;
+    }
+
     public void changeProfileImage(String profileImage, LocalDateTime now) {
         profile_img = profileImage;
         updatedAt = now;
