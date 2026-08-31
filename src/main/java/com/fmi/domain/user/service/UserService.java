@@ -33,10 +33,12 @@ import com.fmi.domain.user.response.DailyActivityResponse;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyActivityPageResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
+import com.fmi.domain.user.response.PreferredLanguageResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserMetaResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
+import com.fmi.domain.user.web.dto.PreferredLanguageUpdateRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -103,6 +105,28 @@ public class UserService {
                 request.isContentPolicyAgreed(),
                 request.isMarketingConsent());
         userRepository.save(user);
+    }
+
+    /**
+     * 선호 언어 조회
+     */
+    @Transactional(readOnly = true)
+    public PreferredLanguageResponse getPreferredLanguage(String email) {
+        User user = userQueryService.findUser(email);
+
+        return UserConverter.toPreferredLanguageResponse(user.getPreferredLanguage());
+    }
+
+    /**
+     * 선호 언어 변경
+     */
+    @Transactional
+    public PreferredLanguageResponse updatePreferredLanguage(String email, PreferredLanguageUpdateRequest request) {
+        User user = userQueryService.findUser(email);
+
+        user.changePreferredLanguage(request.getPreferredLanguage(), LocalDateTime.now());
+
+        return UserConverter.toPreferredLanguageResponse(user.getPreferredLanguage());
     }
 
     /**
