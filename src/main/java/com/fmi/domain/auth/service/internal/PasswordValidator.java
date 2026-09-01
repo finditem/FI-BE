@@ -26,41 +26,20 @@ public class PasswordValidator {
         }
     }
 
-    public boolean matchesActiveTemporaryPassword(User user, String rawPassword) {
+    public boolean matchesTemporaryPassword(User user, String rawPassword) {
         LocalDateTime now = LocalDateTime.now(clock);
         return user.hasActiveTemporaryPassword(now)
                 && passwordEncoder.matches(rawPassword, user.getTemporaryPassword());
     }
 
-    public void validateLoginPassword(User user, String rawPassword) {
+    public boolean matchesPermanentPassword(User user, String rawPassword) {
         LocalDateTime now = LocalDateTime.now(clock);
 
         if (user.hasActiveTemporaryPassword(now) || user.hasExpiredTemporaryPassword(now)) {
-            if (user.getOriginalPassword() == null
-                    || !passwordEncoder.matches(rawPassword, user.getOriginalPassword())) {
-                throw new GeneralException(ErrorStatus._INVALID_CREDENTIALS);
-            }
-            return;
+            return user.getOriginalPassword() != null
+                    && passwordEncoder.matches(rawPassword, user.getOriginalPassword());
         }
 
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new GeneralException(ErrorStatus._INVALID_CREDENTIALS);
-        }
-    }
-
-    public void validateAccountPassword(User user, String rawPassword) {
-        LocalDateTime now = LocalDateTime.now(clock);
-
-        if (user.hasActiveTemporaryPassword(now) || user.hasExpiredTemporaryPassword(now)) {
-            if (user.getOriginalPassword() == null
-                    || !passwordEncoder.matches(rawPassword, user.getOriginalPassword())) {
-                throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
-            }
-            return;
-        }
-
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new GeneralException(ErrorStatus._CURRENT_PASSWORD_INCORRECT);
-        }
+        return passwordEncoder.matches(rawPassword, user.getPassword());
     }
 }
