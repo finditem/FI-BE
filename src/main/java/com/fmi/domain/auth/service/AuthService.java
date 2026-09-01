@@ -101,9 +101,9 @@ public class AuthService {
                 .findByEmail(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INVALID_CREDENTIALS));
 
-        boolean isTemporaryPassword = passwordValidator.matchesActiveTemporaryPassword(user, rawPassword);
-        if (!isTemporaryPassword) {
-            passwordValidator.validateLoginPassword(user, rawPassword);
+        boolean isTemporaryPassword = passwordValidator.matchesTemporaryPassword(user, rawPassword);
+        if (!isTemporaryPassword && !passwordValidator.matchesPermanentPassword(user, rawPassword)) {
+            throw new GeneralException(ErrorStatus._INVALID_CREDENTIALS);
         }
         return new AuthenticateResult(user, isTemporaryPassword);
     }
