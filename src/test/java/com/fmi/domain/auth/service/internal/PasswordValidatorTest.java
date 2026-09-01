@@ -74,27 +74,27 @@ class PasswordValidatorTest {
     }
 
     @Nested
-    @DisplayName("현재 비밀번호를 검증할 때")
-    class DescribeValidateCurrentPassword {
+    @DisplayName("활성 임시 비밀번호인지 확인할 때")
+    class DescribeMatchesActiveTemporaryPassword {
 
         @Nested
         @DisplayName("활성 임시 비밀번호가 일치하면")
         class ContextWithMatchingActiveTemporaryPassword {
 
             @Test
-            @DisplayName("임시 인증 결과를 반환한다")
-            void itReturnsTemporaryAuthentication() {
+            @DisplayName("임시 비밀번호 사용 여부를 반환한다")
+            void itReturnsTemporaryPasswordUsage() {
                 // given
                 User user = temporaryPasswordUser(LocalDateTime.of(2026, 8, 23, 4, 0));
                 when(passwordEncoder.matches("temporary-password", "temporary-password-hash"))
                         .thenReturn(true);
 
                 // when
-                PasswordValidator.CurrentPasswordValidationResult result =
-                        passwordValidator.validateCurrentPassword(user, "temporary-password");
+                boolean isTemporaryPassword =
+                        passwordValidator.matchesActiveTemporaryPassword(user, "temporary-password");
 
                 // then
-                assertThat(result).isEqualTo(PasswordValidator.CurrentPasswordValidationResult.TEMPORARY);
+                assertThat(isTemporaryPassword).isTrue();
             }
         }
 
@@ -103,19 +103,20 @@ class PasswordValidatorTest {
         class ContextWithExpiredTemporaryPasswordAndMatchingOriginalPassword {
 
             @Test
-            @DisplayName("일반 인증 결과를 반환한다")
-            void itReturnsStandardAuthentication() {
+            @DisplayName("임시 비밀번호를 사용하지 않았음을 반환한다")
+            void itReturnsStandardPasswordUsage() {
                 // given
                 User user = temporaryPasswordUser(LocalDateTime.of(2026, 8, 23, 3, 0));
                 when(passwordEncoder.matches("original-password", "original-password-hash"))
                         .thenReturn(true);
 
                 // when
-                PasswordValidator.CurrentPasswordValidationResult result =
-                        passwordValidator.validateCurrentPassword(user, "original-password");
+                boolean isTemporaryPassword =
+                        passwordValidator.matchesActiveTemporaryPassword(user, "original-password");
+                passwordValidator.validateLoginPassword(user, "original-password");
 
                 // then
-                assertThat(result).isEqualTo(PasswordValidator.CurrentPasswordValidationResult.STANDARD);
+                assertThat(isTemporaryPassword).isFalse();
             }
         }
 
@@ -124,19 +125,53 @@ class PasswordValidatorTest {
         class ContextWithExpiredTemporaryPasswordAndTemporaryPassword {
 
             @Test
-            @DisplayName("임시 비밀번호 비교 없이 실패 결과를 반환한다")
-            void itReturnsFailedAuthenticationWithoutMatchingTemporaryPassword() {
+            @DisplayName("임시 비밀번호 비교 없이 로그인 실패 예외를 던진다")
+            void itThrowsInvalidCredentialsWithoutMatchingTemporaryPassword() {
                 // given
                 User user = temporaryPasswordUser(LocalDateTime.of(2026, 8, 23, 3, 0));
 
                 // when
-                PasswordValidator.CurrentPasswordValidationResult result =
-                        passwordValidator.validateCurrentPassword(user, "temporary-password");
-
-                // then
-                assertThat(result).isEqualTo(PasswordValidator.CurrentPasswordValidationResult.FAILED);
+                assertThat(passwordValidator.matchesActiveTemporaryPassword(user, "temporary-password"))
+                        .isFalse();
+                assertThatThrownBy(() -> passwordValidator.validateLoginPassword(user, "temporary-password"))
+                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                                .isEqualTo(ErrorStatus._INVALID_CREDENTIALS));
                 verify(passwordEncoder, never()).matches("temporary-password", "temporary-password-hash");
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("계정 비밀번호를 확인할 때")
+    class DescribeVerifyAccountPassword {
+
+        @Test
+        @DisplayName("활성 임시 비밀번호를 허용한다")
+        void acceptsActiveTemporaryPassword() {
+            // given
+            User user = temporaryPasswordUser(LocalDateTime.of(2026, 8, 23, 4, 0));
+            when(passwordEncoder.matches("temporary-password", "temporary-password-hash"))
+                    .thenReturn(true);
+
+            // when & then
+            assertThat(passwordValidator.matchesActiveTemporaryPassword(user, "temporary-password"))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("임시 비밀번호가 활성 상태여도 원래 비밀번호를 허용한다")
+        void acceptsOriginalPasswordWhileTemporaryPasswordIsActive() {
+            // given
+            User user = temporaryPasswordUser(LocalDateTime.of(2026, 8, 23, 4, 0));
+            when(passwordEncoder.matches("original-password", "temporary-password-hash"))
+                    .thenReturn(false);
+            when(passwordEncoder.matches("original-password", "original-password-hash"))
+                    .thenReturn(true);
+
+            // when & then
+            assertThat(passwordValidator.matchesActiveTemporaryPassword(user, "original-password"))
+                    .isFalse();
+            passwordValidator.validateAccountPassword(user, "original-password");
         }
     }
 
