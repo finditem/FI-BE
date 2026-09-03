@@ -7,10 +7,10 @@ import static org.mockito.Mockito.when;
 
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.Role;
-import com.fmi.domain.auth.response.LoginResponse;
 import com.fmi.domain.auth.service.SocialLoginService;
 import com.fmi.domain.auth.service.TokenIssuer;
 import com.fmi.domain.auth.web.dto.AppleLoginRequest;
+import com.fmi.domain.auth.web.response.LoginResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.external.oauth.apple.AppleOAuthClient;
 import com.fmi.global.apiPayload.ApiResponse;

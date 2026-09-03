@@ -38,6 +38,7 @@ import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserMetaResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
+import com.fmi.domain.user.service.internal.NicknameValidator;
 import com.fmi.domain.user.web.dto.PreferredLanguageUpdateRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
@@ -78,6 +79,7 @@ public class UserService {
     private final CommentImageService commentImageService;
     private final InquiryCommentRepository inquiryCommentRepository;
     private final SocialAccountsRepository socialAccountsRepository;
+    private final NicknameValidator nicknameValidator;
 
     /**
      * 내 정보 조회
@@ -498,13 +500,10 @@ public class UserService {
 
         // 닉네임 유효성 검사 및 중복 체크 (request가 존재하고 nickname 필드가 명시적으로 전송된 경우만)
         if (request != null && request.isNicknameProvided() && request.getNickname() != null) {
-            if (request.getNickname().isBlank()) {
-                throw new GeneralException(ErrorStatus._INVALID_NICKNAME);
-            }
-            if (!request.getNickname().equals(user.getNickname())) {
-                if (userRepository.existsByNickname(request.getNickname())) {
-                    throw new GeneralException(ErrorStatus._NICKNAME_DUPLICATED);
-                }
+            if (request.getNickname().equals(user.getNickname())) {
+                nicknameValidator.validate(request.getNickname());
+            } else {
+                nicknameValidator.validateAvailable(request.getNickname());
             }
             user.changeNickname(request.getNickname(), updatedAt);
         }

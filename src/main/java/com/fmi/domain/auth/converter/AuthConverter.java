@@ -1,10 +1,9 @@
 package com.fmi.domain.auth.converter;
 
 import com.fmi.domain.Enum.Role;
-import com.fmi.domain.auth.response.CheckResponse;
-import com.fmi.domain.auth.response.EmailVerifyResponse;
-import com.fmi.domain.auth.response.LoginResponse;
-import com.fmi.domain.auth.response.SignupResponse;
+import com.fmi.domain.auth.web.response.EmailVerifyResponse;
+import com.fmi.domain.auth.web.response.LoginResponse;
+import com.fmi.domain.auth.web.response.SignupResponse;
 import com.fmi.domain.user.data.User;
 import org.springframework.stereotype.Component;
 
@@ -39,10 +38,6 @@ public class AuthConverter {
 
     public static LoginResponse toLoginResponse(Long userId) {
         return new LoginResponse(userId, false);
-    }
-
-    public static CheckResponse toCheckResponse(boolean available) {
-        return new CheckResponse(available);
     }
 
     public static EmailVerifyResponse toEmailVerifyResponse(boolean verified) {

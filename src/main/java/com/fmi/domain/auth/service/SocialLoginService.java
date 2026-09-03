@@ -7,6 +7,7 @@ import com.fmi.domain.auth.data.SocialAccounts;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.user.service.internal.NicknameGenerator;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.time.LocalDateTime;
@@ -29,7 +30,7 @@ public class SocialLoginService {
     private final SocialAccountsRepository socialAccountsRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final NicknameGeneratorService nicknameGeneratorService;
+    private final NicknameGenerator nicknameGenerator;
 
     /** 재가입 7일 제한을 면제할 카카오 테스트 계정 이메일 목록 (쉼표 구분) */
     @Value("#{'${KAKAO_TEST_ACCOUNT_EMAILS:}'.split(',').![#this.trim()].?[!#this.isEmpty()]}")
@@ -51,7 +52,7 @@ public class SocialLoginService {
         User user = User.builder()
                 .email("apple_" + subject + "@apple.local")
                 .password(passwordEncoder.encode("{noop}-" + subject))
-                .nickname(nicknameGeneratorService.generateRandomNickname())
+                .nickname(nicknameGenerator.generate())
                 .profile_img("")
                 .role(Role.USER)
                 .email_verified(true)
@@ -128,9 +129,8 @@ public class SocialLoginService {
             log.info("새 사용자 생성: email={}", effectiveEmail);
 
             // 닉네임이 없으면 랜덤 닉네임 생성
-            String effectiveNickname = (nickname != null && !nickname.isBlank())
-                    ? nickname
-                    : nicknameGeneratorService.generateRandomNickname();
+            String effectiveNickname =
+                    (nickname != null && !nickname.isBlank()) ? nickname : nicknameGenerator.generate();
 
             log.info("소셜 로그인 닉네임: 원본={}, 사용={}", nickname, effectiveNickname);
 

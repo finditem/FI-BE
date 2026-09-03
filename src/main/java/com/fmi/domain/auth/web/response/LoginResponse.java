@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.response;
+package com.fmi.domain.auth.web.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

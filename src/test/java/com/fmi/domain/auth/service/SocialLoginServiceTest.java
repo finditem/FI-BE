@@ -13,6 +13,7 @@ import com.fmi.domain.auth.data.SocialAccounts;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.user.service.internal.NicknameGenerator;
 import java.util.Optional;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
@@ -38,7 +39,7 @@ class SocialLoginServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private NicknameGeneratorService nicknameGeneratorService;
+    private NicknameGenerator nicknameGenerator;
 
     @InjectMocks
     private SocialLoginService socialLoginService;
@@ -60,7 +61,7 @@ class SocialLoginServiceTest {
         String subject = "apple-subject";
         when(socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.APPLE, subject))
                 .thenReturn(Optional.empty());
-        when(nicknameGeneratorService.generateRandomNickname()).thenReturn("찾아줘토끼1");
+        when(nicknameGenerator.generate()).thenReturn("찾아줘토끼1");
         when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
         사용자_저장과_조회가_성공한다();
         // when
@@ -115,7 +116,7 @@ class SocialLoginServiceTest {
         String subject = "apple-subject";
         when(socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.APPLE, subject))
                 .thenReturn(Optional.empty());
-        when(nicknameGeneratorService.generateRandomNickname()).thenReturn("찾아줘토끼1");
+        when(nicknameGenerator.generate()).thenReturn("찾아줘토끼1");
         when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
         사용자_저장과_조회가_성공한다();
         // when

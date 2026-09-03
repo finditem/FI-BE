@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.Enum.WithdrawalReason;
-import com.fmi.domain.auth.response.LoginResponse;
 import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.auth.service.PasswordService;
 import com.fmi.domain.auth.service.TokenIssuer;
@@ -18,7 +17,9 @@ import com.fmi.domain.auth.web.dto.AccountDeleteRequest;
 import com.fmi.domain.auth.web.dto.LoginRequest;
 import com.fmi.domain.auth.web.dto.PasswordChangeRequest;
 import com.fmi.domain.auth.web.dto.PasswordVerifyRequest;
+import com.fmi.domain.auth.web.response.LoginResponse;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.service.NicknameService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.security.CookieFactory;
 import jakarta.servlet.http.Cookie;
@@ -49,6 +50,9 @@ class AuthControllerTest {
 
     @Mock
     private AuthService authService;
+
+    @Mock
+    private NicknameService nicknameService;
 
     @Mock
     private TokenIssuer tokenIssuer;

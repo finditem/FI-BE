@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -18,6 +19,7 @@ import com.fmi.domain.auth.service.internal.SignupValidator;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.user.service.internal.NicknameValidator;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.time.Clock;
@@ -49,7 +51,7 @@ class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private NicknameValidationService nicknameValidationService;
+    private NicknameValidator nicknameValidator;
 
     @Mock
     private EmailVerificationService emailVerificationService;
@@ -71,12 +73,13 @@ class AuthServiceTest {
         authService = new AuthService(
                 userRepository,
                 passwordEncoder,
-                nicknameValidationService,
+                nicknameValidator,
                 emailVerificationService,
                 passwordValidator,
                 signupValidator,
                 eventPublisher);
         lenient().when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        lenient().when(userRepository.existsByNickname(anyString())).thenReturn(false);
         lenient()
                 .when(userRepository.existsRecentlyDeletedByEmail(anyString(), any()))
                 .thenReturn(false);
@@ -139,6 +142,46 @@ class AuthServiceTest {
                                 .isEqualTo(ErrorStatus._WEAK_PASSWORD));
                 verify(emailVerificationService, never()).isEmailVerified(request.getEmail());
                 verify(passwordEncoder, never()).encode(request.getPassword());
+                verify(userRepository, never()).save(any(User.class));
+                verify(eventPublisher, never()).publishEvent(any());
+            }
+        }
+
+        @Nested
+        @DisplayName("닉네임 정책을 위반하면")
+        class ContextWithInvalidNickname {
+
+            @Test
+            @DisplayName("사용자를 저장하지 않고 유효하지 않은 닉네임 예외를 던진다")
+            void itThrowsInvalidNicknameWithoutSavingUser() {
+                SignupRequest request = signupRequest();
+                doThrow(new GeneralException(ErrorStatus._INVALID_NICKNAME))
+                        .when(nicknameValidator)
+                        .validateAvailable(request.getNickname());
+
+                assertThatThrownBy(() -> authService.signup(request))
+                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                                .isEqualTo(ErrorStatus._INVALID_NICKNAME));
+                verify(userRepository, never()).save(any(User.class));
+                verify(eventPublisher, never()).publishEvent(any());
+            }
+        }
+
+        @Nested
+        @DisplayName("닉네임이 중복이면")
+        class ContextWithDuplicateNickname {
+
+            @Test
+            @DisplayName("사용자를 저장하지 않고 닉네임 중복 예외를 던진다")
+            void itThrowsDuplicateNicknameWithoutSavingUser() {
+                SignupRequest request = signupRequest();
+                doThrow(new GeneralException(ErrorStatus._NICKNAME_DUPLICATED))
+                        .when(nicknameValidator)
+                        .validateAvailable(request.getNickname());
+
+                assertThatThrownBy(() -> authService.signup(request))
+                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
+                                .isEqualTo(ErrorStatus._NICKNAME_DUPLICATED));
                 verify(userRepository, never()).save(any(User.class));
                 verify(eventPublisher, never()).publishEvent(any());
             }
@@ -279,7 +322,7 @@ class AuthServiceTest {
     private AdminSignupRequest adminSignupRequest() {
         AdminSignupRequest request = new AdminSignupRequest();
         request.setEmail("admin@finditem.kr");
-        request.setNickname("admin");
+        request.setNickname("운영토끼");
         request.setPassword("Password1!");
         request.setEmailVerified(true);
         return request;

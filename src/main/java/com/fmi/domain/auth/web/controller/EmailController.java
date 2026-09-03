@@ -1,10 +1,10 @@
 package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.auth.converter.AuthConverter;
-import com.fmi.domain.auth.response.EmailVerifyResponse;
 import com.fmi.domain.auth.service.EmailVerificationService;
 import com.fmi.domain.auth.web.dto.EmailSendRequest;
 import com.fmi.domain.auth.web.dto.EmailVerifyRequest;
+import com.fmi.domain.auth.web.response.EmailVerifyResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.service.EmailBounceHandler;
 import io.swagger.v3.oas.annotations.Operation;
