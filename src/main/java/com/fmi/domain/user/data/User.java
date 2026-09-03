@@ -94,48 +94,6 @@ public class User {
         }
     }
 
-    public static User createUser(
-            String email,
-            String nickname,
-            String rawPassword,
-            String encodedPassword,
-            boolean emailVerified,
-            boolean privacyPolicyAgreed,
-            boolean termsOfServiceAgreed,
-            boolean contentPolicyAgreed,
-            boolean marketingConsent) {
-        User user = User.builder()
-                .email(email)
-                .password(encodedPassword)
-                .nickname(nickname)
-                .role(Role.USER)
-                .privacyPolicyAgreed(privacyPolicyAgreed)
-                .termsOfServiceAgreed(termsOfServiceAgreed)
-                .contentPolicyAgreed(contentPolicyAgreed)
-                .marketingConsent(marketingConsent)
-                .email_verified(emailVerified)
-                .build();
-        user.validatePasswordPolicy(rawPassword);
-        return user;
-    }
-
-    public static User createAdminUser(
-            String email, String nickname, String rawPassword, String encodedPassword, boolean emailVerified) {
-        User user = User.builder()
-                .email(email)
-                .password(encodedPassword)
-                .nickname(nickname)
-                .role(Role.ADMIN)
-                .privacyPolicyAgreed(false)
-                .termsOfServiceAgreed(false)
-                .contentPolicyAgreed(false)
-                .marketingConsent(false)
-                .email_verified(emailVerified)
-                .build();
-        user.validatePasswordPolicy(rawPassword);
-        return user;
-    }
-
     public void issueTemporaryPassword(String encodedPassword, LocalDateTime expiresAt, LocalDateTime now) {
         if (originalPassword == null) {
             originalPassword = password;
@@ -171,26 +129,12 @@ public class User {
         return temporaryPasswordExpiresAt != null && !now.isBefore(temporaryPasswordExpiresAt);
     }
 
-    public void changePassword(String rawPassword, String encodedPassword, LocalDateTime now) {
-        validatePasswordPolicy(rawPassword);
+    public void changePassword(String encodedPassword, LocalDateTime now) {
         password = encodedPassword;
         originalPassword = null;
         temporaryPassword = null;
         temporaryPasswordExpiresAt = null;
         updatedAt = now;
-    }
-
-    private void validatePasswordPolicy(String rawPassword) {
-        String password = rawPassword == null ? "" : rawPassword;
-        boolean valid = password.length() >= 8
-                && password.length() <= 16
-                && password.matches(".*[A-Z].*")
-                && password.matches(".*[a-z].*")
-                && password.matches(".*[0-9].*")
-                && password.matches(".*[!@#$%^&*()\\-_=+\\[{\\]}\\\\|;:'\",<.>/?].*");
-        if (!valid) {
-            throw new GeneralException(ErrorStatus._WEAK_PASSWORD);
-        }
     }
 
     public void agreeTerms(

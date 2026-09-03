@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fmi.domain.Enum.LanguageCode;
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -97,43 +96,12 @@ class UserTest {
     }
 
     @Nested
-    @DisplayName("일반 회원을 생성할 때")
-    class CreateUser {
-
-        @Test
-        @DisplayName("비밀번호 정책을 만족하지 않으면 기존 약한 비밀번호 예외를 던진다")
-        void rejectsWeakPassword() {
-            assertThatThrownBy(() -> User.createUser(
-                            "member@finditem.kr", "찾아줘토끼", "short", "encoded-password", true, true, true, false, false))
-                    .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
-                            .isEqualTo(ErrorStatus._WEAK_PASSWORD));
-        }
-
-        @Test
-        @DisplayName("정책을 만족하면 일반 회원 상태를 만든다")
-        void createsUserWithRegistrationState() {
-            User user = User.createUser(
-                    "member@finditem.kr", "찾아줘토끼", "Password1!", "encoded-password", true, true, true, false, false);
-
-            assertThat(user)
-                    .extracting(
-                            User::getEmail, User::getNickname, User::getPassword, User::getRole, User::isEmail_verified)
-                    .containsExactly("member@finditem.kr", "찾아줘토끼", "encoded-password", Role.USER, true);
-            assertThat(user.isPrivacyPolicyAgreed()).isTrue();
-            assertThat(user.isTermsOfServiceAgreed()).isTrue();
-            assertThat(user.isContentPolicyAgreed()).isFalse();
-            assertThat(user.isMarketingConsent()).isFalse();
-            assertThat(user.getPreferredLanguage()).isEqualTo(LanguageCode.KO);
-        }
-    }
-
-    @Nested
     @DisplayName("비밀번호를 변경할 때")
-    class ChangePassword {
+    class DescribeChangePassword {
 
         @Test
         @DisplayName("임시 비밀번호 상태를 모두 제거한다")
-        void clearsTemporaryPasswordState() {
+        void itClearsTemporaryPasswordState() {
             // given
             LocalDateTime issuedAt = LocalDateTime.of(2026, 8, 23, 12, 0);
             User user = User.builder().password("encoded-original-password").build();
@@ -142,7 +110,7 @@ class UserTest {
             LocalDateTime changedAt = issuedAt.plusMinutes(10);
 
             // when
-            user.changePassword("NewPassword1!", "encoded-new-password", changedAt);
+            user.changePassword("encoded-new-password", changedAt);
 
             // then
             assertThat(user.getPassword()).isEqualTo("encoded-new-password");
@@ -150,30 +118,6 @@ class UserTest {
             assertThat(user.getTemporaryPassword()).isNull();
             assertThat(user.getTemporaryPasswordExpiresAt()).isNull();
             assertThat(user.getUpdatedAt()).isEqualTo(changedAt);
-        }
-
-        @Test
-        @DisplayName("비밀번호 정책을 만족하지 않으면 기존 약한 비밀번호 예외를 던진다")
-        void rejectsWeakPassword() {
-            // given
-            User user = User.builder().password("encoded-original-password").build();
-
-            // when & then
-            assertThatThrownBy(() -> user.changePassword("short", "encoded-new-password", LocalDateTime.now()))
-                    .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
-                            .isEqualTo(ErrorStatus._WEAK_PASSWORD));
-        }
-
-        @Test
-        @DisplayName("새 비밀번호가 없으면 약한 비밀번호 예외를 던진다")
-        void rejectsMissingPassword() {
-            // given
-            User user = User.builder().password("encoded-original-password").build();
-
-            // when & then
-            assertThatThrownBy(() -> user.changePassword(null, "encoded-new-password", LocalDateTime.now()))
-                    .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
-                            .isEqualTo(ErrorStatus._WEAK_PASSWORD));
         }
     }
 
