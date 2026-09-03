@@ -1,10 +1,12 @@
 package com.fmi.domain.user.converter;
 
+import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.response.ImageUploadResponse;
+import com.fmi.domain.user.response.PreferredLanguageResponse;
 import com.fmi.domain.user.response.UserCommentSummaryResponse;
 import com.fmi.domain.user.response.UserOtherPageResponse;
 import com.fmi.domain.user.response.UserProfileResponse;
@@ -28,6 +30,15 @@ public class UserConverter {
                 .profileImg(user.getProfile_img())
                 .role(user.getRole())
                 .isSocialUser(isSocialUser)
+                .build();
+    }
+
+    /**
+     * 선호 언어 → PreferredLanguageResponse 변환
+     */
+    public static PreferredLanguageResponse toPreferredLanguageResponse(LanguageCode preferredLanguage) {
+        return PreferredLanguageResponse.builder()
+                .preferredLanguage(preferredLanguage)
                 .build();
     }
 
