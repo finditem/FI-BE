@@ -2,6 +2,7 @@ package com.fmi.domain.auth.service;
 
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
+import com.fmi.domain.auth.event.UserSignedUpEvent;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.service.internal.SignupValidator;
 import com.fmi.domain.auth.web.dto.SignupRequest;
@@ -9,17 +10,14 @@ import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.service.EmailService;
-import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -29,9 +27,9 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final NicknameValidationService nicknameValidationService;
     private final EmailVerificationService emailVerificationService;
-    private final EmailService emailService;
     private final PasswordValidator passwordValidator;
     private final SignupValidator signupValidator;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public User signup(SignupRequest request) {
@@ -60,29 +58,8 @@ public class AuthService {
             throw new GeneralException(ErrorStatus._EMAIL_NOT_VERIFIED);
         }
 
-        // 인증 플래그 소비 (한 번만 사용되도록)
-        emailVerificationService.consumeEmailVerification(request.getEmail());
-
         User savedUser = userRepository.save(user);
-
-        // 회원가입 환영 이메일 발송 (비동기로 처리하거나 트랜잭션 외부에서 처리 권장)
-        try {
-            String nickname = savedUser.getNickname() != null ? savedUser.getNickname() : "회원";
-            String email = savedUser.getEmail();
-            String signupDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-                    .format(savedUser.getCreatedAt() != null ? savedUser.getCreatedAt() : LocalDateTime.now());
-
-            emailService.sendHtmlEmailAsync(
-                    email,
-                    "회원가입을 환영합니다",
-                    "welcome-email.html",
-                    java.util.Map.of(
-                            "NAME", nickname,
-                            "USER", email,
-                            "DATE", signupDate));
-        } catch (Exception e) {
-            log.warn("회원가입 환영 이메일 발송 실패: email={}", savedUser.getEmail(), e);
-        }
+        eventPublisher.publishEvent(UserSignedUpEvent.from(savedUser));
 
         return savedUser;
     }

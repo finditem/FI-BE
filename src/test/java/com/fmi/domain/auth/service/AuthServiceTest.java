@@ -3,10 +3,7 @@ package com.fmi.domain.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -15,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
+import com.fmi.domain.auth.event.UserSignedUpEvent;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.service.internal.SignupValidator;
 import com.fmi.domain.auth.web.dto.SignupRequest;
@@ -22,7 +20,6 @@ import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.service.EmailService;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -34,9 +31,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,7 +55,7 @@ class AuthServiceTest {
     private EmailVerificationService emailVerificationService;
 
     @Mock
-    private EmailService emailService;
+    private ApplicationEventPublisher eventPublisher;
 
     private final Clock clock = Clock.fixed(Instant.parse("2026-08-23T03:00:00Z"), ZoneOffset.UTC);
 
@@ -74,9 +73,9 @@ class AuthServiceTest {
                 passwordEncoder,
                 nicknameValidationService,
                 emailVerificationService,
-                emailService,
                 passwordValidator,
-                signupValidator);
+                signupValidator,
+                eventPublisher);
         lenient().when(userRepository.existsByEmail(anyString())).thenReturn(false);
         lenient()
                 .when(userRepository.existsRecentlyDeletedByEmail(anyString(), any()))
@@ -99,8 +98,8 @@ class AuthServiceTest {
         class ContextWithEmailVerificationFlag {
 
             @Test
-            @DisplayName("인증 정보를 확인한 뒤 이메일 인증 사용자를 저장한다")
-            void itSavesVerifiedUserAfterConsumingVerification() {
+            @DisplayName("사용자를 저장한 뒤 가입 완료 이벤트를 발행한다")
+            void itSavesVerifiedUserAndPublishesSignedUpEvent() {
                 // given
                 SignupRequest request = signupRequest();
 
@@ -108,39 +107,18 @@ class AuthServiceTest {
                 User result = authService.signup(request);
 
                 // then
-                InOrder order = inOrder(emailVerificationService, userRepository);
-                order.verify(emailVerificationService).isEmailVerified(request.getEmail());
-                order.verify(emailVerificationService).consumeEmailVerification(request.getEmail());
+                verify(emailVerificationService).isEmailVerified(request.getEmail());
+                InOrder order = inOrder(userRepository, eventPublisher);
                 order.verify(userRepository).save(any(User.class));
+                ArgumentCaptor<UserSignedUpEvent> eventCaptor = ArgumentCaptor.forClass(UserSignedUpEvent.class);
+                order.verify(eventPublisher).publishEvent(eventCaptor.capture());
                 assertThat(result).isSameAs(savedUser.get());
                 assertThat(savedUser.get())
                         .extracting(User::getEmail, User::getNickname, User::isEmail_verified)
                         .containsExactly(request.getEmail(), request.getNickname(), true);
-                verify(emailService)
-                        .sendHtmlEmailAsync(
-                                eq(request.getEmail()), eq("회원가입을 환영합니다"), eq("welcome-email.html"), anyMap());
-            }
-        }
-
-        @Nested
-        @DisplayName("환영 메일 발송에 실패하면")
-        class ContextWithWelcomeMailFailure {
-
-            @Test
-            @DisplayName("사용자를 저장한다")
-            void itSavesUser() {
-                // given
-                SignupRequest request = signupRequest();
-                doThrow(new IllegalStateException("mail unavailable"))
-                        .when(emailService)
-                        .sendHtmlEmailAsync(anyString(), anyString(), anyString(), anyMap());
-
-                // when
-                User result = authService.signup(request);
-
-                // then
-                assertThat(result).isSameAs(savedUser.get());
-                verify(userRepository).save(any(User.class));
+                assertThat(eventCaptor.getValue())
+                        .extracting(UserSignedUpEvent::email, UserSignedUpEvent::nickname)
+                        .containsExactly(request.getEmail(), request.getNickname());
             }
         }
 
@@ -160,9 +138,28 @@ class AuthServiceTest {
                         .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
                                 .isEqualTo(ErrorStatus._WEAK_PASSWORD));
                 verify(emailVerificationService, never()).isEmailVerified(request.getEmail());
-                verify(emailVerificationService, never()).consumeEmailVerification(request.getEmail());
                 verify(passwordEncoder, never()).encode(request.getPassword());
                 verify(userRepository, never()).save(any(User.class));
+                verify(eventPublisher, never()).publishEvent(any());
+            }
+        }
+
+        @Nested
+        @DisplayName("사용자 저장에 실패하면")
+        class ContextWithUserSaveFailure {
+
+            @Test
+            @DisplayName("가입 완료 이벤트를 발행하지 않고 예외를 전파한다")
+            void itDoesNotPublishSignedUpEventAndPropagatesException() {
+                // given
+                SignupRequest request = signupRequest();
+                when(userRepository.save(any(User.class))).thenThrow(new IllegalStateException("database unavailable"));
+
+                // when & then
+                assertThatThrownBy(() -> authService.signup(request))
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessage("database unavailable");
+                verify(eventPublisher, never()).publishEvent(any());
             }
         }
     }
