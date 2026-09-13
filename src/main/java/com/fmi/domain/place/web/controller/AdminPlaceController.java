@@ -8,7 +8,6 @@ import com.fmi.domain.place.web.swagger.AdminPlaceSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,7 +34,7 @@ public class AdminPlaceController implements AdminPlaceSwagger {
             @RequestPart("thumbnail") MultipartFile thumbnail) {
         Long placeId = placeService.create(request.toCommand(), thumbnail);
         PlaceManagementResponse response = PlaceManagementResponse.from(placeService.getManagementDetail(placeId));
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.onSuccess(response));
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
     @Override
