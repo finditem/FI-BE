@@ -60,6 +60,7 @@ public final class PostConverter {
                 isNew,
                 isHot,
                 post.getCreatedAt(),
+                post.getDate(),
                 isMine,
                 imageList,
                 userPostResponse);

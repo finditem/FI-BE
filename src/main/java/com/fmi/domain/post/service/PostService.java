@@ -10,6 +10,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.repository.PostRepository;
+import com.fmi.domain.post.service.internal.PostValidator;
 import com.fmi.domain.post.web.dto.request.PostCreateRequest;
 import com.fmi.domain.post.web.dto.request.PostRadiusUpdateRequest;
 import com.fmi.domain.post.web.dto.request.PostStatusUpdateRequest;
@@ -44,11 +45,14 @@ public class PostService {
     private final ChatRoomRepository chatRoomRepository;
     private final PostUpdateRateLimiter postUpdateRateLimiter;
     private final PostTranslationService postTranslationService;
+    private final PostValidator postValidator;
 
     // 게시글 생성
     @Transactional
     public PostCreateResponse createPost(
             PostCreateRequest request, UserDetails userDetails, List<MultipartFile> images) {
+        postValidator.validateDate(request.date());
+
         User user = userQueryService.findUser(userDetails.getUsername());
 
         Post post = PostConverter.toEntity(request, user);
@@ -66,6 +70,8 @@ public class PostService {
     @Transactional
     public PostUpdateResponse updatePost(
             Long postId, PostUpdateRequest request, UserDetails userDetails, List<MultipartFile> images) {
+        postValidator.validateDate(request.date());
+
         Post post = postQueryService.findById(postId);
 
         checkPostAccessDenied(post, userDetails.getUsername());
