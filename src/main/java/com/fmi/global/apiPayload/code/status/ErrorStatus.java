@@ -76,6 +76,7 @@ public enum ErrorStatus implements BaseErrorCode {
     _POST_FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "POST-FAVORITE-NOT_FOUND", "해당 게시글에 대한 즐겨찾기를 하지 않았습니다."),
     _POST_RADIUS_NOT_MATCH(HttpStatus.BAD_REQUEST, "POST-RADIUS-NOT_MATCH", "유효하지 않는 Radius 값입니다."),
     _POST_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "POST_IMAGE-NOT_FOUND", "해당하는 게시글 이미지가 없습니다."),
+    _POST_DATE_IN_FUTURE(HttpStatus.BAD_REQUEST, "POST400-DATE_IN_FUTURE", "분실 또는 습득 일시는 미래일 수 없습니다."),
 
     _TEMP_POST_NOT_FOUND(HttpStatus.NOT_FOUND, "TEMP-POST404-NOT_FOUND", "임시저장글이 존재하지 않습니다."),
     _POST_UPDATE_RATE_LIMITED(
