@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 public interface AdminPlaceSwagger {
 
     @Operation(summary = "장소 등록", description = "장소 정보, 운영 일정과 썸네일을 등록합니다.")
-    @ApiResponses(@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "장소 등록 성공"))
+    @ApiResponses(@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 등록 성공"))
     ResponseEntity<ApiResponse<PlaceManagementResponse>> create(
             @Valid @RequestPart("request") PlaceUpsertRequest request,
             @RequestPart("thumbnail") MultipartFile thumbnail);

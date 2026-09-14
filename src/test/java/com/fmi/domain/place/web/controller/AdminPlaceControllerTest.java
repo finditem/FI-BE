@@ -76,7 +76,7 @@ class AdminPlaceControllerTest extends IntegrationTestSupport {
 
                 // when & then
                 mockMvc.perform(multipart("/admin/places").file(request).file(thumbnail))
-                        .andExpect(status().isCreated())
+                        .andExpect(status().isOk())
                         .andExpect(jsonPath("$.code").value("COMMON200"))
                         .andExpect(jsonPath("$.result.name").value("성수 카페"))
                         .andExpect(jsonPath("$.result.thumbnailUrl").value("thumbnail-url"))
