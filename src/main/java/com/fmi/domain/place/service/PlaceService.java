@@ -2,6 +2,7 @@ package com.fmi.domain.place.service;
 
 import com.fmi.domain.map.enums.MapLevel;
 import com.fmi.domain.place.data.Place;
+import com.fmi.domain.place.data.PlaceDailySchedule;
 import com.fmi.domain.place.data.PlaceManagementDetail;
 import com.fmi.domain.place.data.PlaceMapSearchResult;
 import com.fmi.domain.place.data.PlaceOperationPeriod;
@@ -70,6 +71,11 @@ public class PlaceService {
                 .operationPeriod(operationPeriod)
                 .build();
         placeBusinessHourUpdater.update(place, command.dailySchedules(), LocalDateTime.now(clock));
+        if (place.getType() == PlaceType.POPUP) {
+            List<PlaceDailySchedule> dailySchedules = place.dailySchedules();
+            LocalDateTime closingAt = popupClosingAtCalculator.calculate(operationPeriod, dailySchedules);
+            operationPeriod.scheduleClosingAt(closingAt);
+        }
         return placeRepository.save(place).getId();
     }
 
@@ -239,6 +245,12 @@ public class PlaceService {
                 thumbnailUrl,
                 place.getOperationPeriod());
         placeBusinessHourUpdater.update(place, command.dailySchedules(), LocalDateTime.now(clock));
+        if (place.getType() == PlaceType.POPUP) {
+            PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
+            List<PlaceDailySchedule> dailySchedules = place.dailySchedules();
+            LocalDateTime closingAt = popupClosingAtCalculator.calculate(operationPeriod, dailySchedules);
+            operationPeriod.scheduleClosingAt(closingAt);
+        }
     }
 
     @Transactional

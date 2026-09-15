@@ -52,4 +52,8 @@ public class PlaceOperationPeriod extends BaseEntity {
         this.startDate = startDate;
         this.endDate = endDate;
     }
+
+    public void scheduleClosingAt(LocalDateTime closingAt) {
+        this.closingAt = closingAt;
+    }
 }

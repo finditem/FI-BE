@@ -230,6 +230,11 @@ class PlaceServiceTest extends IntegrationTestSupport {
                     .findByPlaceId(placeId)
                     .orElseThrow()
                     .getId();
+            assertThat(placeOperationPeriodRepository
+                            .findByPlaceId(placeId)
+                            .orElseThrow()
+                            .getClosingAt())
+                    .isEqualTo(LocalDateTime.of(2026, 9, 20, 22, 0));
             PlaceUpsertCommand revised = new PlaceUpsertCommand(
                     "성수 팝업",
                     "서울 성동구",
@@ -251,6 +256,7 @@ class PlaceServiceTest extends IntegrationTestSupport {
             assertThat(operationPeriod.getId()).isEqualTo(operationPeriodId);
             assertThat(operationPeriod.getStartDate()).isEqualTo(LocalDate.of(2026, 9, 12));
             assertThat(operationPeriod.getEndDate()).isEqualTo(LocalDate.of(2026, 9, 25));
+            assertThat(operationPeriod.getClosingAt()).isEqualTo(LocalDateTime.of(2026, 9, 25, 22, 0));
         }
     }
 
