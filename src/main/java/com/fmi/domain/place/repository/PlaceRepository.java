@@ -1,6 +1,7 @@
 package com.fmi.domain.place.repository;
 
 import com.fmi.domain.place.data.Place;
+import java.time.DayOfWeek;
 import java.util.List;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,4 +13,16 @@ public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceReposi
     @EntityGraph(attributePaths = {"operationPeriod", "businessHours"})
     @Query("select distinct p from Place p where p.id in :placeIds")
     List<Place> findAllWithSchedulesByIdIn(@Param("placeIds") List<Long> placeIds);
+
+    @Query("""
+            select distinct p
+            from Place p
+            left join fetch p.operationPeriod
+            join fetch p.businessHours bh
+            where p.id in :placeIds
+              and bh.dayOfWeek in :dayOfWeeks
+              and bh.entityStatus = com.fmi.global.data.EntityStatus.ACTIVE
+            """)
+    List<Place> findAllWithSchedulesByIdInAndDayOfWeekIn(
+            @Param("placeIds") List<Long> placeIds, @Param("dayOfWeeks") List<DayOfWeek> dayOfWeeks);
 }

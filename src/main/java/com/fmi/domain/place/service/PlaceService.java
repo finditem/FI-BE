@@ -22,6 +22,8 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.dto.UploadedImage;
 import com.fmi.global.service.S3Service;
 import java.time.Clock;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -104,12 +106,17 @@ public class PlaceService {
 
     public List<PlaceSummary> getHomePlaces(PlaceType type, String userEmail) {
         LocalDateTime now = LocalDateTime.now(clock);
+        LocalDate today = now.toLocalDate();
+        DayOfWeek todayDayOfWeek = today.getDayOfWeek();
+        DayOfWeek yesterdayDayOfWeek = today.minusDays(1).getDayOfWeek();
+        List<DayOfWeek> relevantDayOfWeeks = List.of(todayDayOfWeek, yesterdayDayOfWeek);
         List<Long> candidateIds = placeRepository.findHomeCandidateIds(type);
         if (candidateIds.isEmpty()) {
             return List.of();
         }
 
-        List<Place> candidates = placeRepository.findAllWithSchedulesByIdIn(candidateIds);
+        List<Place> candidates =
+                placeRepository.findAllWithSchedulesByIdInAndDayOfWeekIn(candidateIds, relevantDayOfWeeks);
         candidates.sort(Comparator.comparingInt(place -> candidateIds.indexOf(place.getId())));
         List<Place> places = candidates.stream()
                 .filter(place -> {
@@ -134,9 +141,13 @@ public class PlaceService {
         return places.stream()
                 .map(place -> {
                     PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
-                    PlaceOperationState operationState = placeOperationStatusCalculator.calculate(
-                            place.getType(), operationPeriod, place.dailySchedules(), now);
-                    return PlaceSummary.from(place, operationState, favoritePlaceIds.contains(place.getId()));
+                    List<PlaceDailySchedule> dailySchedules = place.dailySchedules(relevantDayOfWeeks);
+                    PlaceType placeType = place.getType();
+                    PlaceOperationState operationState =
+                            placeOperationStatusCalculator.calculate(placeType, operationPeriod, dailySchedules, now);
+                    Long placeId = place.getId();
+                    boolean favorite = favoritePlaceIds.contains(placeId);
+                    return PlaceSummary.from(place, operationState, favorite);
                 })
                 .toList();
     }
@@ -149,6 +160,10 @@ public class PlaceService {
         double longitudeScale = Math.max(Math.abs(Math.cos(latitudeRadian)), 1e-8);
         double longitudeDelta = mapLevel.getHalfWidthMeter() / (111_320.0 * longitudeScale);
         LocalDateTime now = LocalDateTime.now(clock);
+        LocalDate today = now.toLocalDate();
+        DayOfWeek todayDayOfWeek = today.getDayOfWeek();
+        DayOfWeek yesterdayDayOfWeek = today.minusDays(1).getDayOfWeek();
+        List<DayOfWeek> relevantDayOfWeeks = List.of(todayDayOfWeek, yesterdayDayOfWeek);
         List<Long> candidateIds = placeRepository.findMapCandidateIds(
                 type,
                 latitude,
@@ -161,7 +176,8 @@ public class PlaceService {
             return new PlaceMapSearchResult(List.of(), 0);
         }
 
-        List<Place> candidates = placeRepository.findAllWithSchedulesByIdIn(candidateIds);
+        List<Place> candidates =
+                placeRepository.findAllWithSchedulesByIdInAndDayOfWeekIn(candidateIds, relevantDayOfWeeks);
         candidates.sort(Comparator.comparingInt(place -> candidateIds.indexOf(place.getId())));
         List<Place> visiblePlaces = candidates.stream()
                 .filter(place -> {
@@ -185,9 +201,14 @@ public class PlaceService {
 
         List<PlaceSummary> summaries = places.stream()
                 .map(place -> {
-                    PlaceOperationState operationState = placeOperationStatusCalculator.calculate(
-                            place.getType(), place.getOperationPeriod(), place.dailySchedules(), now);
-                    return PlaceSummary.from(place, operationState, favoritePlaceIds.contains(place.getId()));
+                    PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
+                    List<PlaceDailySchedule> dailySchedules = place.dailySchedules(relevantDayOfWeeks);
+                    PlaceType placeType = place.getType();
+                    PlaceOperationState operationState =
+                            placeOperationStatusCalculator.calculate(placeType, operationPeriod, dailySchedules, now);
+                    Long placeId = place.getId();
+                    boolean favorite = favoritePlaceIds.contains(placeId);
+                    return PlaceSummary.from(place, operationState, favorite);
                 })
                 .toList();
         return new PlaceMapSearchResult(summaries, visiblePlaces.size());
@@ -195,7 +216,12 @@ public class PlaceService {
 
     public PlaceSummary getPlaceSummary(Long placeId, String userEmail) {
         LocalDateTime now = LocalDateTime.now(clock);
-        Place place = placeRepository.findAllWithSchedulesByIdIn(List.of(placeId)).stream()
+        LocalDate today = now.toLocalDate();
+        DayOfWeek todayDayOfWeek = today.getDayOfWeek();
+        DayOfWeek yesterdayDayOfWeek = today.minusDays(1).getDayOfWeek();
+        List<DayOfWeek> relevantDayOfWeeks = List.of(todayDayOfWeek, yesterdayDayOfWeek);
+        List<Long> placeIds = List.of(placeId);
+        Place place = placeRepository.findAllWithSchedulesByIdInAndDayOfWeekIn(placeIds, relevantDayOfWeeks).stream()
                 .findFirst()
                 .orElseThrow(() -> new GeneralException(PlaceErrorStatus.NOT_FOUND));
         if (place.isDeleted()) {
@@ -217,8 +243,11 @@ public class PlaceService {
                     .filter(placeFavorite -> placeFavorite.isActive() && placeFavorite.isFavorite())
                     .isPresent();
         }
-        PlaceOperationState operationState = placeOperationStatusCalculator.calculate(
-                place.getType(), place.getOperationPeriod(), place.dailySchedules(), now);
+        PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
+        List<PlaceDailySchedule> dailySchedules = place.dailySchedules(relevantDayOfWeeks);
+        PlaceType placeType = place.getType();
+        PlaceOperationState operationState =
+                placeOperationStatusCalculator.calculate(placeType, operationPeriod, dailySchedules, now);
         return PlaceSummary.from(place, operationState, favorite);
     }
 

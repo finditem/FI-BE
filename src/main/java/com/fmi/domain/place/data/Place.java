@@ -116,9 +116,14 @@ public class Place extends BaseEntity {
     }
 
     public List<PlaceDailySchedule> dailySchedules() {
+        List<DayOfWeek> dayOfWeeks = List.of(DayOfWeek.values());
+        return dailySchedules(dayOfWeeks);
+    }
+
+    public List<PlaceDailySchedule> dailySchedules(List<DayOfWeek> dayOfWeeks) {
         List<PlaceBusinessHour> activeBusinessHours =
                 businessHours.stream().filter(PlaceBusinessHour::isActive).toList();
-        return List.of(DayOfWeek.values()).stream()
+        return dayOfWeeks.stream()
                 .map(dayOfWeek -> {
                     List<PlaceBusinessHour> hours = activeBusinessHours.stream()
                             .filter(businessHour -> businessHour.getDayOfWeek() == dayOfWeek)
