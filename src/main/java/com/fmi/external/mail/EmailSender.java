@@ -1,8 +1,7 @@
-package com.fmi.service;
+package com.fmi.external.mail;
 
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -15,25 +14,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class EmailService {
+public class EmailSender {
 
     private final JavaMailSender mailSender;
-    private final EmailTemplateService templateService;
+    private final EmailTemplateRenderer templateRenderer;
 
     @Value("${spring.mail.username:test@example.com}")
     private String fromEmail;
 
-    @Value("${spring.mail.test-mode:false}")
-    private boolean testMode;
-
-    /**
-     * 텍스트 이메일 발송 (기존 메서드 - 하위 호환성 유지)
-     */
-    public void sendEmail(String to, String subject, String body) {
-        if (testMode) {
-            return;
-        }
-
+    private void sendText(String to, String subject, String body) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
@@ -51,9 +40,9 @@ public class EmailService {
      * HTML 이메일 비동기 발송 (API 응답 블로킹 없음)
      */
     @Async
-    public void sendHtmlEmailAsync(String to, String subject, String templateName, Map<String, String> variables) {
+    public void sendAsync(String to, String subject, String templateName, Map<String, String> variables) {
         try {
-            sendHtmlEmail(to, subject, templateName, variables);
+            send(to, subject, templateName, variables);
         } catch (Exception ignored) {
         }
     }
@@ -66,22 +55,18 @@ public class EmailService {
      * @param templateName 템플릿 파일명 (예: "verify-code.html")
      * @param variables    템플릿 변수 맵 (예: {"code": "123456", "name": "홍길동"})
      */
-    public void sendHtmlEmail(String to, String subject, String templateName, Map<String, String> variables) {
-        if (testMode) {
-            return;
-        }
-
-        boolean templateExists = templateService.templateExists(templateName);
+    public void send(String to, String subject, String templateName, Map<String, String> variables) {
+        boolean templateExists = templateRenderer.templateExists(templateName);
         if (!templateExists) {
             String textBody = variables != null && variables.containsKey("code")
                     ? "인증번호: " + variables.get("code")
                     : "이메일이 발송되었습니다.";
-            sendEmail(to, subject, textBody);
+            sendText(to, subject, textBody);
             return;
         }
 
         try {
-            String htmlContent = templateService.loadTemplate(templateName, variables);
+            String htmlContent = templateRenderer.render(templateName, variables);
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -93,8 +78,6 @@ public class EmailService {
 
             mailSender.send(message);
 
-        } catch (MessagingException ignored) {
-            throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
         } catch (Exception ignored) {
             throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
         }

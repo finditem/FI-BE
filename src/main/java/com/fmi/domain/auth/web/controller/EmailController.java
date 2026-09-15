@@ -7,7 +7,6 @@ import com.fmi.domain.auth.web.dto.EmailVerifyRequest;
 import com.fmi.domain.auth.web.response.EmailVerifyResponse;
 import com.fmi.domain.auth.web.swagger.EmailSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
-import com.fmi.service.EmailBounceHandler;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class EmailController implements EmailSwagger {
 
     private final EmailVerificationService service;
-    private final EmailBounceHandler emailBounceHandler;
 
     @PostMapping("/send-code")
     @Override
@@ -38,7 +36,7 @@ public class EmailController implements EmailSwagger {
     @PostMapping("/bounce")
     @Override
     public ApiResponse<Void> registerBounce(@Valid @RequestBody EmailSendRequest req) {
-        emailBounceHandler.registerBounce(req.getEmail());
+        service.registerBounce(req.getEmail());
         return ApiResponse.onSuccess(null);
     }
 }

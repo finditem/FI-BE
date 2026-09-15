@@ -3,6 +3,7 @@ package com.fmi.domain.auth.service;
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
 import com.fmi.domain.auth.web.dto.AccountDeleteRequest;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.user.data.User;
@@ -12,11 +13,8 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
 import com.fmi.security.RefreshTokenStore;
-import com.fmi.service.EmailService;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +28,7 @@ public class WithdrawalService {
 
     private final UserRepository userRepository;
     private final S3Service s3Service;
-    private final EmailService emailService;
+    private final AuthEmailNotifier authEmailNotifier;
     private final RefreshTokenStore refreshTokenStore;
     private final PostService postService;
     private final SocialAccountsRepository socialAccountsRepository;
@@ -80,12 +78,7 @@ public class WithdrawalService {
     private void sendDeletionEmail(User user) {
         try {
             String nickname = user.getNickname() != null ? user.getNickname() : "회원";
-            String deletionDate = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일").format(LocalDateTime.now());
-            emailService.sendHtmlEmailAsync(
-                    user.getEmail(),
-                    "계정이 삭제되었습니다",
-                    "account-deletion-email.html",
-                    Map.of("NAME", nickname, "USER", user.getEmail(), "DATE", deletionDate));
+            authEmailNotifier.sendWithdrawal(user.getEmail(), nickname, LocalDateTime.now());
         } catch (Exception e) {
             log.warn("계정 삭제 이메일 발송 실패: {}", e.getMessage());
         }

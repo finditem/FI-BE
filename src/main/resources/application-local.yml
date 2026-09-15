@@ -30,7 +30,6 @@ spring:
     port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:support@finditem.kr}
     password: ${MAIL_PASSWORD:}
-    test-mode: ${MAIL_TEST_MODE:false}
     properties:
       mail:
         smtp:

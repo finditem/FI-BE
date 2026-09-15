@@ -8,6 +8,7 @@ import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.event.InquiryEvent;
 import com.fmi.domain.inquiry.repository.InquiryImageRepository;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
+import com.fmi.domain.inquiry.service.internal.InquiryEmailNotifier;
 import com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
@@ -23,7 +24,6 @@ import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
-import com.fmi.service.EmailService;
 import java.time.Duration;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class InquiryService {
     private final InquiryImageRepository inquiryImageRepository;
     private final InquiryConverter inquiryConverter;
     private final NotificationService notificationService;
-    private final EmailService emailService;
+    private final InquiryEmailNotifier inquiryEmailNotifier;
     private final ApplicationEventPublisher eventPublisher;
     private final UserRepository userRepository;
     private final InquiryCommentService inquiryCommentService;
@@ -114,33 +114,7 @@ public class InquiryService {
 
         // 문의 접수 이메일 발송
         try {
-            String recipientEmail = saved.getEmail() != null
-                    ? saved.getEmail()
-                    : (saved.getUser() != null ? saved.getUser().getEmail() : null);
-            if (recipientEmail != null) {
-                String inquiryDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-                        .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
-
-                String recipientName =
-                        saved.getUser() != null && saved.getUser().getNickname() != null
-                                ? saved.getUser().getNickname()
-                                : recipientEmail;
-                emailService.sendHtmlEmailAsync(
-                        recipientEmail,
-                        "문의가 접수되었습니다",
-                        "support-request-email.html",
-                        java.util.Map.of(
-                                "name",
-                                recipientName,
-                                "TITLE",
-                                saved.getTitle(),
-                                "DATE",
-                                inquiryDate,
-                                "CONTENT",
-                                saved.getContent() != null ? saved.getContent() : "",
-                                "INQUIRY_ID",
-                                String.valueOf(saved.getId())));
-            }
+            inquiryEmailNotifier.sendReceipt(saved);
         } catch (Exception e) {
             log.error("문의 접수 이메일 발송 실패: inquiryId={}", saved.getId(), e);
         }
@@ -279,19 +253,7 @@ public class InquiryService {
         inquiry.markAsAnswered();
 
         try {
-            String replyDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-                    .format(java.time.LocalDateTime.now());
-
-            emailService.sendHtmlEmailAsync(
-                    inquiry.getEmail(),
-                    "문의에 대한 답변이 도착했습니다",
-                    "support-reply-email.html",
-                    java.util.Map.of(
-                            "name", inquiry.getEmail(),
-                            "TITLE", inquiry.getTitle(),
-                            "DATE", replyDate,
-                            "CONTENT", content,
-                            "INQUIRY_ID", String.valueOf(inquiry.getId())));
+            inquiryEmailNotifier.sendGuestReply(inquiry, content);
         } catch (Exception e) {
             log.error("비회원 문의 답변 이메일 발송 실패: inquiryId={}, email={}", inquiry.getId(), inquiry.getEmail(), e);
         }

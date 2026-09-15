@@ -1,6 +1,7 @@
 package com.fmi.domain.auth.service;
 
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
 import com.fmi.domain.auth.service.internal.PasswordGenerator;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.web.dto.PasswordVerifyRequest;
@@ -9,10 +10,8 @@ import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.security.RefreshTokenStore;
-import com.fmi.service.EmailService;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,7 +28,7 @@ public class PasswordService {
     private final PasswordValidator passwordValidator;
     private final PasswordGenerator passwordGenerator;
     private final RefreshTokenStore refreshTokenStore;
-    private final EmailService emailService;
+    private final AuthEmailNotifier authEmailNotifier;
     private final Clock clock;
 
     public void verify(String email, PasswordVerifyRequest request) {
@@ -68,7 +67,6 @@ public class PasswordService {
         LocalDateTime now = LocalDateTime.now(clock);
         user.issueTemporaryPassword(passwordEncoder.encode(temporaryPassword), now.plusHours(1), now);
         userRepository.save(user);
-        emailService.sendHtmlEmail(
-                email, "임시 비밀번호 발급", "password-reset-email.html", Map.of("PASSWORD", temporaryPassword));
+        authEmailNotifier.sendTemporaryPassword(email, temporaryPassword);
     }
 }

@@ -1,15 +1,14 @@
 package com.fmi.domain.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
-import com.fmi.service.EmailBounceHandler;
-import com.fmi.service.EmailService;
+import com.fmi.external.mail.EmailBounceRegistry;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -38,13 +37,13 @@ class EmailVerificationServiceTest {
     private ValueOperations<String, String> valueOperations;
 
     @Mock
-    private EmailService emailService;
+    private AuthEmailNotifier authEmailNotifier;
 
     @Mock
     private UserRepository userRepository;
 
     @Mock
-    private EmailBounceHandler emailBounceHandler;
+    private EmailBounceRegistry emailBounceRegistry;
 
     @Captor
     private ArgumentCaptor<String> redisValueCaptor;
@@ -70,7 +69,7 @@ class EmailVerificationServiceTest {
             void 이메일_인증_코드_발송은_기존_코드를_삭제한_뒤_5분_TTL로_저장하고_메일을_요청한다() {
                 // given
                 when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
-                when(emailBounceHandler.hasBounced(EMAIL)).thenReturn(false);
+                when(emailBounceRegistry.hasBounced(EMAIL)).thenReturn(false);
 
                 // when
                 emailVerificationService.sendCode(EMAIL);
@@ -79,8 +78,8 @@ class EmailVerificationServiceTest {
                 verify(redis).delete("email:verify:" + EMAIL);
                 verify(valueOperations)
                         .set(eq("email:verify:" + EMAIL), redisValueCaptor.capture(), eq(Duration.ofMinutes(5)));
-                verify(emailService).sendHtmlEmailAsync(eq(EMAIL), eq("이메일 인증 코드"), eq("verify-code.html"), anyMap());
                 String[] codeAndExpiry = redisValueCaptor.getValue().split(":");
+                verify(authEmailNotifier).sendVerificationCode(eq(EMAIL), eq(codeAndExpiry[0]));
                 assertThat(codeAndExpiry).hasSize(2);
                 assertThat(codeAndExpiry[0]).matches("\\d{6}");
                 assertThat(Long.parseLong(codeAndExpiry[1]))

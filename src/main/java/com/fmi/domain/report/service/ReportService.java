@@ -18,6 +18,7 @@ import com.fmi.domain.report.data.enums.ReportType;
 import com.fmi.domain.report.event.ReportEvent;
 import com.fmi.domain.report.repository.ReportAnswerImageRepository;
 import com.fmi.domain.report.repository.ReportRepository;
+import com.fmi.domain.report.service.internal.ReportEmailNotifier;
 import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
 import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
 import com.fmi.domain.report.web.dto.response.ReportListDTO;
@@ -27,7 +28,6 @@ import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.service.EmailService;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +53,7 @@ public class ReportService {
     private final ChatRoomRepository chatRoomRepository;
     private final ReportConverter reportConverter;
     private final NotificationService notificationService;
-    private final EmailService emailService;
+    private final ReportEmailNotifier reportEmailNotifier;
     private final ReportAnswerImageRepository reportAnswerImageRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final BlockService blockService;
@@ -101,21 +101,7 @@ public class ReportService {
         // 신고 접수 이메일 발송 (신고자에게)
         try {
             String targetTitle = getTargetTitle(saved.getTargetType(), saved.getTargetId());
-            String nickname = user.getNickname() != null ? user.getNickname() : "회원";
-            String reportDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-                    .format(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now());
-            String reportContent = saved.getReason() != null ? saved.getReason() : "";
-
-            emailService.sendHtmlEmailAsync(
-                    user.getEmail(),
-                    "신고가 접수되었습니다",
-                    "report-received-email.html",
-                    java.util.Map.of(
-                            "NAME", nickname,
-                            "TITLE", targetTitle,
-                            "USER", user.getEmail(),
-                            "DATE", reportDate,
-                            "CONTENT", reportContent));
+            reportEmailNotifier.sendReceipt(saved, user, targetTitle);
         } catch (Exception e) {
             log.error("신고 접수 이메일 발송 실패: reportId={}", saved.getReportId(), e);
         }
@@ -351,21 +337,7 @@ public class ReportService {
 
             try {
                 String targetTitle = getTargetTitle(report.getTargetType(), report.getTargetId());
-                String reporterNickname = reporter.getNickname() != null ? reporter.getNickname() : "회원";
-                String reportDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-                        .format(report.getCreatedAt() != null ? report.getCreatedAt() : java.time.LocalDateTime.now());
-
-                emailService.sendHtmlEmailAsync(
-                        reporter.getEmail(),
-                        "신고 답변 안내",
-                        "report-result-email.html",
-                        java.util.Map.of(
-                                "name", reporterNickname,
-                                "TITLE", targetTitle,
-                                "USER", reporter.getEmail(),
-                                "RESULT", "답변 완료",
-                                "DATE", reportDate,
-                                "CONTENT", adminAnswer));
+                reportEmailNotifier.sendResult(report, reporter, targetTitle, adminAnswer);
             } catch (Exception e) {
                 log.error("신고 답변 이메일 발송 실패: reportId={}", report.getReportId(), e);
             }
@@ -375,18 +347,9 @@ public class ReportService {
         try {
             User targetUser = findTargetUser(report.getTargetType(), report.getTargetId());
             if (targetUser != null) {
-                String targetNickname = targetUser.getNickname() != null ? targetUser.getNickname() : "회원";
                 String categoryName =
                         report.getTargetType() != null ? report.getTargetType().getDescription() : "";
-                emailService.sendHtmlEmailAsync(
-                        targetUser.getEmail(),
-                        "신고 처리 결과 안내",
-                        "report-notification-email.html",
-                        java.util.Map.of(
-                                "name", targetNickname,
-                                "CATEGORY", categoryName,
-                                "USER", targetUser.getEmail(),
-                                "NICKNAME", targetNickname));
+                reportEmailNotifier.sendAction(targetUser, categoryName);
             }
         } catch (Exception e) {
             log.error("피신고자 이메일 발송 실패: reportId={}", report.getReportId(), e);

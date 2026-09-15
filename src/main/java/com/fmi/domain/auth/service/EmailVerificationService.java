@@ -1,11 +1,11 @@
 package com.fmi.domain.auth.service;
 
+import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.external.mail.EmailBounceRegistry;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.service.EmailBounceHandler;
-import com.fmi.service.EmailService;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
@@ -22,9 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class EmailVerificationService {
 
     private final StringRedisTemplate redis;
-    private final EmailService emailService;
+    private final AuthEmailNotifier authEmailNotifier;
     private final UserRepository userRepository;
-    private final EmailBounceHandler emailBounceHandler;
+    private final EmailBounceRegistry emailBounceRegistry;
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -40,7 +40,7 @@ public class EmailVerificationService {
         }
 
         // Bounce back을 받은 이메일 주소인지 확인
-        if (emailBounceHandler.hasBounced(email)) {
+        if (emailBounceRegistry.hasBounced(email)) {
             log.warn("[EMAIL SEND BLOCKED] email={}, reason=이전에 bounce back을 받은 이메일 주소", email);
             throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
         }
@@ -58,7 +58,7 @@ public class EmailVerificationService {
         redis.opsForValue().set(key(email), value, Duration.ofMinutes(5));
 
         // 이메일 비동기 발송 (SMTP 응답 대기 없이 즉시 API 응답)
-        emailService.sendHtmlEmailAsync(email, "이메일 인증 코드", "verify-code.html", java.util.Map.of("CODE", code));
+        authEmailNotifier.sendVerificationCode(email, code);
     }
 
     @Transactional
@@ -120,5 +120,9 @@ public class EmailVerificationService {
     public void consumeEmailVerification(String email) {
         String verifiedKey = "email:verified:" + email;
         redis.delete(verifiedKey);
+    }
+
+    public void registerBounce(String email) {
+        emailBounceRegistry.registerBounce(email);
     }
 }

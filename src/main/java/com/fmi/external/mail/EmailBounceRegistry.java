@@ -1,4 +1,4 @@
-package com.fmi.service;
+package com.fmi.external.mail;
 
 import java.time.Duration;
 import java.util.regex.Matcher;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
-public class EmailBounceHandler {
+public class EmailBounceRegistry {
 
     private final StringRedisTemplate redis;
 

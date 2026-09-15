@@ -17,11 +17,11 @@ import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.data.enums.ReportType;
 import com.fmi.domain.report.repository.ReportAnswerImageRepository;
 import com.fmi.domain.report.repository.ReportRepository;
+import com.fmi.domain.report.service.internal.ReportEmailNotifier;
 import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.service.BlockService;
-import com.fmi.service.EmailService;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -61,7 +61,7 @@ class ReportServiceTest {
     private NotificationService notificationService;
 
     @Mock
-    private EmailService emailService;
+    private ReportEmailNotifier reportEmailNotifier;
 
     @Mock
     private ReportAnswerImageRepository reportAnswerImageRepository;

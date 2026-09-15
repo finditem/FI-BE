@@ -1,4 +1,4 @@
-package com.fmi.service;
+package com.fmi.external.mail;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +11,7 @@ import org.springframework.util.StreamUtils;
  * 이메일 템플릿 로드 및 변수 치환 서비스
  */
 @Service
-public class EmailTemplateService {
+public class EmailTemplateRenderer {
 
     private static final String TEMPLATE_PATH = "templates/emails/";
 
@@ -22,7 +22,7 @@ public class EmailTemplateService {
      * @param variables    치환할 변수 맵 (예: {"code": "123456", "name": "홍길동"})
      * @return 치환된 HTML 문자열
      */
-    public String loadTemplate(String templateName, Map<String, String> variables) {
+    public String render(String templateName, Map<String, String> variables) {
         try {
             // 템플릿 파일 로드
             ClassPathResource resource = new ClassPathResource(TEMPLATE_PATH + templateName);
