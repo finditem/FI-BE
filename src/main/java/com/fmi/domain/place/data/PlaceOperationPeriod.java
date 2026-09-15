@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,6 +34,9 @@ public class PlaceOperationPeriod extends BaseEntity {
 
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
+
+    @Column(name = "closing_at")
+    private LocalDateTime closingAt;
 
     @Builder
     private PlaceOperationPeriod(LocalDate startDate, LocalDate endDate) {
