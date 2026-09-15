@@ -35,4 +35,21 @@ public record PlaceSummary(
                 operationState,
                 favorite);
     }
+
+    public static PlaceSummary from(HomePlace place, PlaceOperationState operationState) {
+        return new PlaceSummary(
+                place.placeId(),
+                place.name(),
+                place.address(),
+                place.latitude(),
+                place.longitude(),
+                place.station(),
+                place.stationDistanceMeters(),
+                place.type(),
+                place.thumbnailUrl(),
+                place.operationStartDate(),
+                place.operationEndDate(),
+                operationState,
+                place.favorite());
+    }
 }
