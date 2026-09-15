@@ -1,6 +1,7 @@
 package com.fmi.domain.place.service;
 
 import com.fmi.domain.map.enums.MapLevel;
+import com.fmi.domain.place.data.HomePlace;
 import com.fmi.domain.place.data.Place;
 import com.fmi.domain.place.data.PlaceDailySchedule;
 import com.fmi.domain.place.data.PlaceManagementDetail;
@@ -25,6 +26,7 @@ import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -104,52 +106,38 @@ public class PlaceService {
                 place.dailySchedules());
     }
 
-    public List<PlaceSummary> getHomePlaces(PlaceType type, String userEmail) {
+    public List<PlaceSummary> getHomePlaces(PlaceType type, Long userId) {
+        // 자정을 넘긴 전날 영업시간을 판단하기 위해 오늘과 전날 요일을 조회
         LocalDateTime now = LocalDateTime.now(clock);
         LocalDate today = now.toLocalDate();
         DayOfWeek todayDayOfWeek = today.getDayOfWeek();
         DayOfWeek yesterdayDayOfWeek = today.minusDays(1).getDayOfWeek();
-        List<DayOfWeek> relevantDayOfWeeks = List.of(todayDayOfWeek, yesterdayDayOfWeek);
-        List<Long> candidateIds = placeRepository.findHomeCandidateIds(type);
-        if (candidateIds.isEmpty()) {
-            return List.of();
+
+        // 타입별로 조회
+        List<HomePlace> places;
+        if (type == null) {
+            places = placeRepository.findHomePlaces(now, todayDayOfWeek, yesterdayDayOfWeek, userId);
+        } else {
+            places = placeRepository.findHomePlaces(type, now, todayDayOfWeek, yesterdayDayOfWeek, userId);
         }
 
-        List<Place> candidates =
-                placeRepository.findAllWithSchedulesByIdInAndDayOfWeekIn(candidateIds, relevantDayOfWeeks);
-        candidates.sort(Comparator.comparingInt(place -> candidateIds.indexOf(place.getId())));
-        List<Place> places = candidates.stream()
-                .filter(place -> {
-                    if (place.getType() != PlaceType.POPUP) {
-                        return true;
-                    }
-                    PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
-                    LocalDateTime closingAt = operationPeriod.getClosingAt();
-                    return now.isBefore(closingAt);
-                })
-                .limit(5)
-                .toList();
-        List<Long> placeIds = places.stream().map(Place::getId).toList();
-        Set<Long> favoritePlaceIds = new HashSet<>();
-        if (userEmail != null) {
-            userRepository
-                    .findByEmail(userEmail)
-                    .ifPresent(user -> favoritePlaceIds.addAll(
-                            placeFavoriteRepository.findFavoritePlaceIds(user.getId(), placeIds)));
-        }
+        // 운영 상태 계산
+        List<PlaceSummary> summaries = new ArrayList<>(places.size());
+        for (HomePlace place : places) {
+            PlaceOperationPeriod operationPeriod = null;
+            if (place.type() == PlaceType.POPUP) {
+                operationPeriod = PlaceOperationPeriod.builder()
+                        .startDate(place.operationStartDate())
+                        .endDate(place.operationEndDate())
+                        .build();
+            }
 
-        return places.stream()
-                .map(place -> {
-                    PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
-                    List<PlaceDailySchedule> dailySchedules = place.dailySchedules(relevantDayOfWeeks);
-                    PlaceType placeType = place.getType();
-                    PlaceOperationState operationState =
-                            placeOperationStatusCalculator.calculate(placeType, operationPeriod, dailySchedules, now);
-                    Long placeId = place.getId();
-                    boolean favorite = favoritePlaceIds.contains(placeId);
-                    return PlaceSummary.from(place, operationState, favorite);
-                })
-                .toList();
+            PlaceOperationState operationState = placeOperationStatusCalculator.calculate(
+                    place.type(), operationPeriod, place.dailySchedules(), now);
+            // 운영 상태와 함께 응답 VO 변환
+            summaries.add(PlaceSummary.from(place, operationState));
+        }
+        return summaries;
     }
 
     public PlaceMapSearchResult getMapPlaces(

@@ -8,6 +8,7 @@ import com.fmi.domain.place.web.dto.response.PlaceFavoriteResponse;
 import com.fmi.domain.place.web.dto.response.PlaceSummaryResponse;
 import com.fmi.domain.place.web.swagger.PlaceSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,13 +27,16 @@ public class PlaceController implements PlaceSwagger {
 
     private final PlaceService placeService;
     private final PlaceFavoriteService placeFavoriteService;
+    private final UserQueryService userQueryService;
 
     @Override
     @GetMapping
     public ApiResponse<HomePlaceResponse> getHomePlaces(
             @RequestParam(required = false) PlaceType type, @AuthenticationPrincipal UserDetails userDetails) {
-        String userEmail = userDetails == null ? null : userDetails.getUsername();
-        return ApiResponse.onSuccess(new HomePlaceResponse(placeService.getHomePlaces(type, userEmail).stream()
+        Long userId = userDetails == null
+                ? null
+                : userQueryService.findUser(userDetails.getUsername()).getId();
+        return ApiResponse.onSuccess(new HomePlaceResponse(placeService.getHomePlaces(type, userId).stream()
                 .map(PlaceSummaryResponse::from)
                 .toList()));
     }
