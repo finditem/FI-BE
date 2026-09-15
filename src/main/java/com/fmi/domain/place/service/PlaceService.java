@@ -112,9 +112,14 @@ public class PlaceService {
         List<Place> candidates = placeRepository.findAllWithSchedulesByIdIn(candidateIds);
         candidates.sort(Comparator.comparingInt(place -> candidateIds.indexOf(place.getId())));
         List<Place> places = candidates.stream()
-                .filter(place -> place.getType() != PlaceType.POPUP
-                        || now.isBefore(
-                                popupClosingAtCalculator.calculate(place.getOperationPeriod(), place.dailySchedules())))
+                .filter(place -> {
+                    if (place.getType() != PlaceType.POPUP) {
+                        return true;
+                    }
+                    PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
+                    LocalDateTime closingAt = operationPeriod.getClosingAt();
+                    return now.isBefore(closingAt);
+                })
                 .limit(5)
                 .toList();
         List<Long> placeIds = places.stream().map(Place::getId).toList();
@@ -159,9 +164,14 @@ public class PlaceService {
         List<Place> candidates = placeRepository.findAllWithSchedulesByIdIn(candidateIds);
         candidates.sort(Comparator.comparingInt(place -> candidateIds.indexOf(place.getId())));
         List<Place> visiblePlaces = candidates.stream()
-                .filter(place -> place.getType() != PlaceType.POPUP
-                        || now.isBefore(
-                                popupClosingAtCalculator.calculate(place.getOperationPeriod(), place.dailySchedules())))
+                .filter(place -> {
+                    if (place.getType() != PlaceType.POPUP) {
+                        return true;
+                    }
+                    PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
+                    LocalDateTime closingAt = operationPeriod.getClosingAt();
+                    return now.isBefore(closingAt);
+                })
                 .toList();
         List<Place> places = visiblePlaces.stream().limit(10).toList();
         List<Long> placeIds = places.stream().map(Place::getId).toList();
@@ -191,10 +201,12 @@ public class PlaceService {
         if (place.isDeleted()) {
             throw new GeneralException(PlaceErrorStatus.NOT_FOUND);
         }
-        if (place.getType() == PlaceType.POPUP
-                && !now.isBefore(
-                        popupClosingAtCalculator.calculate(place.getOperationPeriod(), place.dailySchedules()))) {
-            throw new GeneralException(PlaceErrorStatus.NOT_FOUND);
+        if (place.getType() == PlaceType.POPUP) {
+            PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
+            LocalDateTime closingAt = operationPeriod.getClosingAt();
+            if (!now.isBefore(closingAt)) {
+                throw new GeneralException(PlaceErrorStatus.NOT_FOUND);
+            }
         }
 
         boolean favorite = false;
