@@ -3,7 +3,6 @@ package com.fmi.service;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
@@ -12,7 +11,6 @@ import org.springframework.util.StreamUtils;
  * 이메일 템플릿 로드 및 변수 치환 서비스
  */
 @Service
-@Slf4j
 public class EmailTemplateService {
 
     private static final String TEMPLATE_PATH = "templates/emails/";
@@ -40,11 +38,9 @@ public class EmailTemplateService {
                 }
             }
 
-            log.info("[EMAIL TEMPLATE] 로드 완료: {} (변수 {}개 치환)", templateName, variables != null ? variables.size() : 0);
             return result;
 
         } catch (IOException e) {
-            log.error("[EMAIL TEMPLATE] 템플릿 로드 실패: {}", templateName, e);
             throw new RuntimeException("이메일 템플릿을 로드할 수 없습니다: " + templateName, e);
         }
     }
