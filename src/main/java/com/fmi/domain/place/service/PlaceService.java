@@ -15,7 +15,7 @@ import com.fmi.domain.place.repository.PlaceRepository;
 import com.fmi.domain.place.service.internal.PlaceBusinessHourUpdater;
 import com.fmi.domain.place.service.internal.PlaceOperationStatusCalculator;
 import com.fmi.domain.place.service.internal.PlaceValidator;
-import com.fmi.domain.place.service.internal.PopupClosingDateTimeCalculator;
+import com.fmi.domain.place.service.internal.PopupClosingAtCalculator;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.dto.UploadedImage;
@@ -42,7 +42,7 @@ public class PlaceService {
     private final PlaceValidator placeValidator;
     private final PlaceBusinessHourUpdater placeBusinessHourUpdater;
     private final PlaceOperationStatusCalculator placeOperationStatusCalculator;
-    private final PopupClosingDateTimeCalculator popupClosingDateTimeCalculator;
+    private final PopupClosingAtCalculator popupClosingAtCalculator;
     private final S3Service s3Service;
     private final Clock clock;
 
@@ -107,8 +107,8 @@ public class PlaceService {
         candidates.sort(Comparator.comparingInt(place -> candidateIds.indexOf(place.getId())));
         List<Place> places = candidates.stream()
                 .filter(place -> place.getType() != PlaceType.POPUP
-                        || now.isBefore(popupClosingDateTimeCalculator.calculate(
-                                place.getOperationPeriod(), place.dailySchedules())))
+                        || now.isBefore(
+                                popupClosingAtCalculator.calculate(place.getOperationPeriod(), place.dailySchedules())))
                 .limit(5)
                 .toList();
         List<Long> placeIds = places.stream().map(Place::getId).toList();
@@ -154,8 +154,8 @@ public class PlaceService {
         candidates.sort(Comparator.comparingInt(place -> candidateIds.indexOf(place.getId())));
         List<Place> visiblePlaces = candidates.stream()
                 .filter(place -> place.getType() != PlaceType.POPUP
-                        || now.isBefore(popupClosingDateTimeCalculator.calculate(
-                                place.getOperationPeriod(), place.dailySchedules())))
+                        || now.isBefore(
+                                popupClosingAtCalculator.calculate(place.getOperationPeriod(), place.dailySchedules())))
                 .toList();
         List<Place> places = visiblePlaces.stream().limit(10).toList();
         List<Long> placeIds = places.stream().map(Place::getId).toList();
@@ -187,7 +187,7 @@ public class PlaceService {
         }
         if (place.getType() == PlaceType.POPUP
                 && !now.isBefore(
-                        popupClosingDateTimeCalculator.calculate(place.getOperationPeriod(), place.dailySchedules()))) {
+                        popupClosingAtCalculator.calculate(place.getOperationPeriod(), place.dailySchedules()))) {
             throw new GeneralException(PlaceErrorStatus.NOT_FOUND);
         }
 

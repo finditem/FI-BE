@@ -10,7 +10,7 @@ import com.fmi.domain.place.exception.PlaceErrorStatus;
 import com.fmi.domain.place.repository.PlaceFavoriteStateRepository;
 import com.fmi.domain.place.repository.PlaceRepository;
 import com.fmi.domain.place.service.internal.PlaceOperationStatusCalculator;
-import com.fmi.domain.place.service.internal.PopupClosingDateTimeCalculator;
+import com.fmi.domain.place.service.internal.PopupClosingAtCalculator;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -35,7 +35,7 @@ public class PlaceFavoriteService {
     private final PlaceFavoriteStateRepository placeFavoriteStateRepository;
     private final UserRepository userRepository;
     private final PlaceOperationStatusCalculator placeOperationStatusCalculator;
-    private final PopupClosingDateTimeCalculator popupClosingDateTimeCalculator;
+    private final PopupClosingAtCalculator popupClosingAtCalculator;
     private final Clock clock;
 
     @Transactional
@@ -85,7 +85,7 @@ public class PlaceFavoriteService {
                 .filter(candidate -> {
                     Place place = placesById.get(candidate.placeId());
                     return place.getType() != PlaceType.POPUP
-                            || now.isBefore(popupClosingDateTimeCalculator.calculate(
+                            || now.isBefore(popupClosingAtCalculator.calculate(
                                     place.getOperationPeriod(), place.dailySchedules()));
                 })
                 .limit(size + 1L)

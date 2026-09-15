@@ -16,9 +16,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-@DisplayName("PopupClosingDateTimeCalculator")
-class PopupClosingDateTimeCalculatorTest {
-    private final PopupClosingDateTimeCalculator calculator = new PopupClosingDateTimeCalculator();
+@DisplayName("PopupClosingAtCalculator")
+class PopupClosingAtCalculatorTest {
+    private final PopupClosingAtCalculator calculator = new PopupClosingAtCalculator();
 
     @Nested
     @DisplayName("노출 마감을 계산할 때")
