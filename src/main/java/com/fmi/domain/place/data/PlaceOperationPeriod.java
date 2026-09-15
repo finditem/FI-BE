@@ -35,7 +35,7 @@ public class PlaceOperationPeriod extends BaseEntity {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-    @Column(name = "closing_at")
+    @Column(name = "closing_at", nullable = false)
     private LocalDateTime closingAt;
 
     @Builder
