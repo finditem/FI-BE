@@ -160,7 +160,7 @@ class PlaceHomeServiceTest extends IntegrationTestSupport {
                         .build());
 
                 // when
-                List<PlaceSummary> result = placeService.getHomePlaces(null, user.getEmail());
+                List<PlaceSummary> result = placeService.getHomePlaces(null, user.getId());
 
                 // then
                 assertThat(result).singleElement().satisfies(place -> assertThat(place.favorite())

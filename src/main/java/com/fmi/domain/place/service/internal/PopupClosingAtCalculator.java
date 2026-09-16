@@ -11,7 +11,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PopupClosingDateTimeCalculator {
+public class PopupClosingAtCalculator {
 
     public LocalDateTime calculate(PlaceOperationPeriod operationPeriod, List<PlaceDailySchedule> dailySchedules) {
         LocalDate lastBusinessDate = findLastBusinessDate(operationPeriod, dailySchedules);

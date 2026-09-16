@@ -333,6 +333,8 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
                                 .timeRange(new PlaceTimeRange(
                                         PlaceBusinessHourType.BUSINESS, LocalTime.of(10, 0), LocalTime.of(22, 0)))
                                 .build()));
+                LocalDateTime expiredPopupClosingAt = LocalDateTime.of(2026, 9, 9, 22, 0);
+                expiredPopup.getOperationPeriod().scheduleClosingAt(expiredPopupClosingAt);
                 placeRepository.save(expiredPopup);
                 Place deletedPlace = Place.builder()
                         .name("삭제된 카페")
