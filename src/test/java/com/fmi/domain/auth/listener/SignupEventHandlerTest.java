@@ -1,25 +1,19 @@
 package com.fmi.domain.auth.listener;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
 import com.fmi.domain.auth.event.UserSignedUpEvent;
-import com.fmi.domain.auth.service.EmailVerificationService;
-import com.fmi.service.EmailService;
+import com.fmi.domain.auth.service.SignupEmailVerificationService;
+import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
 import java.time.LocalDateTime;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,19 +26,16 @@ class SignupEventHandlerTest {
     private static final LocalDateTime SIGNED_UP_AT = LocalDateTime.of(2026, 8, 26, 15, 0);
 
     @Mock
-    private EmailVerificationService emailVerificationService;
+    private SignupEmailVerificationService signupEmailVerificationService;
 
     @Mock
-    private EmailService emailService;
-
-    @Captor
-    private ArgumentCaptor<Map<String, String>> variablesCaptor;
+    private AuthEmailNotifier authEmailNotifier;
 
     private SignupEventHandler signupEventHandler;
 
     @BeforeEach
     void setUp() {
-        signupEventHandler = new SignupEventHandler(emailVerificationService, emailService);
+        signupEventHandler = new SignupEventHandler(signupEmailVerificationService, authEmailNotifier);
     }
 
     @Nested
@@ -61,15 +52,9 @@ class SignupEventHandlerTest {
             signupEventHandler.handle(event);
 
             // then
-            InOrder order = inOrder(emailVerificationService, emailService);
-            order.verify(emailVerificationService).consumeEmailVerification(EMAIL);
-            order.verify(emailService)
-                    .sendHtmlEmailAsync(
-                            eq(EMAIL), eq("회원가입을 환영합니다"), eq("welcome-email.html"), variablesCaptor.capture());
-            assertThat(variablesCaptor.getValue())
-                    .containsEntry("NAME", "찾아줘토끼")
-                    .containsEntry("USER", EMAIL)
-                    .containsEntry("DATE", "2026년 08월 26일");
+            InOrder order = inOrder(signupEmailVerificationService, authEmailNotifier);
+            order.verify(signupEmailVerificationService).consumeEmailVerification(EMAIL);
+            order.verify(authEmailNotifier).sendSignupWelcome(EMAIL, "찾아줘토끼", SIGNED_UP_AT);
         }
 
         @Nested
@@ -82,12 +67,12 @@ class SignupEventHandlerTest {
                 // given
                 UserSignedUpEvent event = new UserSignedUpEvent(1L, EMAIL, "찾아줘토끼", SIGNED_UP_AT);
                 doThrow(new IllegalStateException("mail unavailable"))
-                        .when(emailService)
-                        .sendHtmlEmailAsync(eq(EMAIL), eq("회원가입을 환영합니다"), eq("welcome-email.html"), anyMap());
+                        .when(authEmailNotifier)
+                        .sendSignupWelcome(EMAIL, "찾아줘토끼", SIGNED_UP_AT);
 
                 // when & then
                 assertThatCode(() -> signupEventHandler.handle(event)).doesNotThrowAnyException();
-                verify(emailVerificationService).consumeEmailVerification(EMAIL);
+                verify(signupEmailVerificationService).consumeEmailVerification(EMAIL);
             }
         }
     }

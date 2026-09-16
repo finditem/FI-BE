@@ -9,6 +9,7 @@ import com.fmi.domain.inquirycomment.repository.InquiryCommentImageRepository;
 import com.fmi.domain.inquirycomment.repository.InquiryCommentRepository;
 import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
 import com.fmi.domain.inquirycomment.response.InquiryCommentSliceResponse;
+import com.fmi.domain.inquirycomment.service.internal.InquiryCommentEmailNotifier;
 import com.fmi.domain.inquirycomment.web.dto.CreateInquiryCommentDto;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
@@ -18,7 +19,6 @@ import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.service.S3Service;
-import com.fmi.service.EmailService;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,7 +44,7 @@ public class InquiryCommentService {
     private final InquiryCommentConverter inquiryCommentConverter;
     private final NotificationService notificationService;
     private final S3Service s3Service;
-    private final EmailService emailService;
+    private final InquiryCommentEmailNotifier inquiryCommentEmailNotifier;
 
     /**
      * 댓글 작성
@@ -96,22 +96,7 @@ public class InquiryCommentService {
         // 관리자 답변 시 문의 작성자에게 이메일 발송
         if (isAdmin(userDetails) && inquiry.getUser() != null) {
             try {
-                String replyDate = java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-                        .format(java.time.LocalDateTime.now());
-                String nickname = inquiry.getUser().getNickname() != null
-                        ? inquiry.getUser().getNickname()
-                        : "회원";
-
-                emailService.sendHtmlEmailAsync(
-                        inquiry.getUser().getEmail(),
-                        "문의에 대한 답변이 도착했습니다",
-                        "support-reply-email.html",
-                        java.util.Map.of(
-                                "name", nickname,
-                                "TITLE", inquiry.getTitle(),
-                                "DATE", replyDate,
-                                "CONTENT", savedComment.getContent(),
-                                "INQUIRY_ID", String.valueOf(inquiry.getId())));
+                inquiryCommentEmailNotifier.sendReply(inquiry, savedComment);
             } catch (Exception e) {
                 log.warn("문의 답변 이메일 발송 실패: inquiryId={}", inquiry.getId(), e);
             }

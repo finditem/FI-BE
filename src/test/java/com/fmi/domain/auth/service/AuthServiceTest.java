@@ -54,7 +54,7 @@ class AuthServiceTest {
     private NicknameValidator nicknameValidator;
 
     @Mock
-    private EmailVerificationService emailVerificationService;
+    private SignupEmailVerificationService signupEmailVerificationService;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -74,7 +74,7 @@ class AuthServiceTest {
                 userRepository,
                 passwordEncoder,
                 nicknameValidator,
-                emailVerificationService,
+                signupEmailVerificationService,
                 passwordValidator,
                 signupValidator,
                 eventPublisher);
@@ -83,7 +83,9 @@ class AuthServiceTest {
         lenient()
                 .when(userRepository.existsRecentlyDeletedByEmail(anyString(), any()))
                 .thenReturn(false);
-        lenient().when(emailVerificationService.isEmailVerified(anyString())).thenReturn(true);
+        lenient()
+                .when(signupEmailVerificationService.isEmailVerified(anyString()))
+                .thenReturn(true);
         lenient().when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
         lenient().when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
@@ -110,7 +112,7 @@ class AuthServiceTest {
                 User result = authService.signup(request);
 
                 // then
-                verify(emailVerificationService).isEmailVerified(request.getEmail());
+                verify(signupEmailVerificationService).isEmailVerified(request.getEmail());
                 InOrder order = inOrder(userRepository, eventPublisher);
                 order.verify(userRepository).save(any(User.class));
                 ArgumentCaptor<UserSignedUpEvent> eventCaptor = ArgumentCaptor.forClass(UserSignedUpEvent.class);
@@ -140,7 +142,7 @@ class AuthServiceTest {
                 assertThatThrownBy(() -> authService.signup(request))
                         .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
                                 .isEqualTo(ErrorStatus._WEAK_PASSWORD));
-                verify(emailVerificationService, never()).isEmailVerified(request.getEmail());
+                verify(signupEmailVerificationService, never()).isEmailVerified(request.getEmail());
                 verify(passwordEncoder, never()).encode(request.getPassword());
                 verify(userRepository, never()).save(any(User.class));
                 verify(eventPublisher, never()).publishEvent(any());

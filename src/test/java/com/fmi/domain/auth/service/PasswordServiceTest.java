@@ -3,9 +3,7 @@ package com.fmi.domain.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -14,13 +12,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
 import com.fmi.domain.auth.service.internal.PasswordGenerator;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.security.RefreshTokenStore;
-import com.fmi.service.EmailService;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -52,7 +50,7 @@ class PasswordServiceTest {
     private SocialAccountsRepository socialAccountsRepository;
 
     @Mock
-    private EmailService emailService;
+    private AuthEmailNotifier authEmailNotifier;
 
     @Mock
     private PasswordGenerator passwordGenerator;
@@ -71,7 +69,7 @@ class PasswordServiceTest {
                 passwordValidator,
                 passwordGenerator,
                 refreshTokenStore,
-                emailService,
+                authEmailNotifier,
                 clock);
     }
 
@@ -97,10 +95,9 @@ class PasswordServiceTest {
             passwordService.issueTemporaryPassword(email);
 
             // then
-            InOrder order = inOrder(userRepository, emailService);
+            InOrder order = inOrder(userRepository, authEmailNotifier);
             order.verify(userRepository).save(user);
-            order.verify(emailService)
-                    .sendHtmlEmail(eq(email), eq("임시 비밀번호 발급"), eq("password-reset-email.html"), anyMap());
+            order.verify(authEmailNotifier).sendTemporaryPassword(email, "temporary-password");
             verify(passwordGenerator).generateTemporaryPassword();
             assertThat(user.getOriginalPassword()).isEqualTo("original-password-hash");
             assertThat(user.getTemporaryPassword()).isEqualTo("temporary-password-hash");
@@ -122,7 +119,7 @@ class PasswordServiceTest {
             assertThatThrownBy(() -> passwordService.issueTemporaryPassword(email))
                     .isInstanceOf(RuntimeException.class);
             verify(userRepository, never()).save(any(User.class));
-            verify(emailService, never()).sendHtmlEmail(anyString(), anyString(), anyString(), anyMap());
+            verify(authEmailNotifier, never()).sendTemporaryPassword(anyString(), anyString());
         }
 
         @Test
@@ -139,16 +136,16 @@ class PasswordServiceTest {
             when(passwordGenerator.generateTemporaryPassword()).thenReturn("temporary-password");
             when(passwordEncoder.encode("temporary-password")).thenReturn("temporary-password-hash");
             doThrow(new IllegalStateException("mail unavailable"))
-                    .when(emailService)
-                    .sendHtmlEmail(anyString(), anyString(), anyString(), anyMap());
+                    .when(authEmailNotifier)
+                    .sendTemporaryPassword(anyString(), anyString());
 
             // when & then
             assertThatThrownBy(() -> passwordService.issueTemporaryPassword(email))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("mail unavailable");
-            InOrder order = inOrder(userRepository, emailService);
+            InOrder order = inOrder(userRepository, authEmailNotifier);
             order.verify(userRepository).save(user);
-            order.verify(emailService).sendHtmlEmail(anyString(), anyString(), anyString(), anyMap());
+            order.verify(authEmailNotifier).sendTemporaryPassword(anyString(), anyString());
         }
     }
 

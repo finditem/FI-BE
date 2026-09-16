@@ -1,10 +1,9 @@
-package com.fmi.service;
+package com.fmi.external.mail;
 
 import java.time.Duration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -15,9 +14,8 @@ import org.springframework.stereotype.Service;
  * 현재는 기본 구조만 제공합니다.
  */
 @Service
-@Slf4j
 @RequiredArgsConstructor
-public class EmailBounceHandler {
+public class EmailBounceRegistry {
 
     private final StringRedisTemplate redis;
 
@@ -35,15 +33,12 @@ public class EmailBounceHandler {
         String recipientEmail = extractRecipientEmail(bounceEmailContent);
 
         if (recipientEmail == null) {
-            log.warn("[BOUNCE BACK] 원본 수신자 이메일 주소를 추출할 수 없습니다.");
             return;
         }
 
         // Bounce back 발생한 이메일 주소를 Redis에 저장 (24시간)
         String bounceKey = BOUNCE_KEY_PREFIX + recipientEmail;
         redis.opsForValue().set(bounceKey, "true", Duration.ofHours(24));
-
-        log.warn("[BOUNCE BACK] email={} - 이메일 주소가 유효하지 않거나 존재하지 않습니다.", recipientEmail);
     }
 
     /**
@@ -103,7 +98,6 @@ public class EmailBounceHandler {
     public void registerBounce(String email) {
         String bounceKey = BOUNCE_KEY_PREFIX + email;
         redis.opsForValue().set(bounceKey, "true", Duration.ofHours(24));
-        log.warn("[BOUNCE BACK REGISTERED] email={} - 수동으로 bounce back 등록됨", email);
     }
 
     /**
@@ -114,6 +108,5 @@ public class EmailBounceHandler {
     public void clearBounce(String email) {
         String bounceKey = BOUNCE_KEY_PREFIX + email;
         redis.delete(bounceKey);
-        log.info("[BOUNCE BACK CLEARED] email={}", email);
     }
 }

@@ -1,9 +1,8 @@
-package com.fmi.service;
+package com.fmi.external.mail;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
@@ -12,8 +11,7 @@ import org.springframework.util.StreamUtils;
  * 이메일 템플릿 로드 및 변수 치환 서비스
  */
 @Service
-@Slf4j
-public class EmailTemplateService {
+public class EmailTemplateRenderer {
 
     private static final String TEMPLATE_PATH = "templates/emails/";
 
@@ -24,7 +22,7 @@ public class EmailTemplateService {
      * @param variables    치환할 변수 맵 (예: {"code": "123456", "name": "홍길동"})
      * @return 치환된 HTML 문자열
      */
-    public String loadTemplate(String templateName, Map<String, String> variables) {
+    public String render(String templateName, Map<String, String> variables) {
         try {
             // 템플릿 파일 로드
             ClassPathResource resource = new ClassPathResource(TEMPLATE_PATH + templateName);
@@ -40,11 +38,9 @@ public class EmailTemplateService {
                 }
             }
 
-            log.info("[EMAIL TEMPLATE] 로드 완료: {} (변수 {}개 치환)", templateName, variables != null ? variables.size() : 0);
             return result;
 
         } catch (IOException e) {
-            log.error("[EMAIL TEMPLATE] 템플릿 로드 실패: {}", templateName, e);
             throw new RuntimeException("이메일 템플릿을 로드할 수 없습니다: " + templateName, e);
         }
     }

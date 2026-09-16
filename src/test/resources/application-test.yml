@@ -30,7 +30,6 @@ spring:
     port: 1025
     username: test-mail-user
     password: test-mail-password
-    test-mode: true
     properties:
       mail:
         smtp:
