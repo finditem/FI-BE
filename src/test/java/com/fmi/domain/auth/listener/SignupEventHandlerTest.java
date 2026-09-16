@@ -6,7 +6,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
 import com.fmi.domain.auth.event.UserSignedUpEvent;
-import com.fmi.domain.auth.service.EmailVerificationService;
+import com.fmi.domain.auth.service.SignupEmailVerificationService;
 import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +26,7 @@ class SignupEventHandlerTest {
     private static final LocalDateTime SIGNED_UP_AT = LocalDateTime.of(2026, 8, 26, 15, 0);
 
     @Mock
-    private EmailVerificationService emailVerificationService;
+    private SignupEmailVerificationService signupEmailVerificationService;
 
     @Mock
     private AuthEmailNotifier authEmailNotifier;
@@ -35,7 +35,7 @@ class SignupEventHandlerTest {
 
     @BeforeEach
     void setUp() {
-        signupEventHandler = new SignupEventHandler(emailVerificationService, authEmailNotifier);
+        signupEventHandler = new SignupEventHandler(signupEmailVerificationService, authEmailNotifier);
     }
 
     @Nested
@@ -52,8 +52,8 @@ class SignupEventHandlerTest {
             signupEventHandler.handle(event);
 
             // then
-            InOrder order = inOrder(emailVerificationService, authEmailNotifier);
-            order.verify(emailVerificationService).consumeEmailVerification(EMAIL);
+            InOrder order = inOrder(signupEmailVerificationService, authEmailNotifier);
+            order.verify(signupEmailVerificationService).consumeEmailVerification(EMAIL);
             order.verify(authEmailNotifier).sendSignupWelcome(EMAIL, "찾아줘토끼", SIGNED_UP_AT);
         }
 
@@ -72,7 +72,7 @@ class SignupEventHandlerTest {
 
                 // when & then
                 assertThatCode(() -> signupEventHandler.handle(event)).doesNotThrowAnyException();
-                verify(emailVerificationService).consumeEmailVerification(EMAIL);
+                verify(signupEmailVerificationService).consumeEmailVerification(EMAIL);
             }
         }
     }
