@@ -275,7 +275,9 @@ public class PostController {
     }
 
     @PutMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "게시글 수정")
+    @Operation(
+            summary = "게시글 수정",
+            description = "작성자만 수정할 수 있습니다. 한 게시글은 1분에 5번까지 수정할 수 있고, 6번째 요청부터는 429 응답으로 차단되며 3분 뒤에 다시 수정할 수 있습니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -288,11 +290,28 @@ public class PostController {
                 responseCode = "400",
                 description = "FILE400-EXT_MISSING: 확장자가 존재하지 않습니다"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "POST403-ACCESS_DENIED: 해당 글에 접근 권한이 없습니다"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "415",
                 description = "FILE415-EXT_UNSUPPORTED: 허용되지 않는 확장자입니다"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "429",
+                description = "POST429-UPDATE_RATE_LIMITED: 게시글 수정이 1분에 5번을 초과했습니다. "
+                        + "result.retryAfterSeconds(재시도까지 남은 초)만큼 기다린 뒤 다시 요청해야 합니다",
+                content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "POST429-UPDATE_RATE_LIMITED",
+                                      "message": "게시글 수정이 1분에 5번을 초과했습니다. 잠시 후 다시 시도해주세요.",
+                                      "result": {
+                                        "retryAfterSeconds": 180
+                                      }
+                                    }
+                                    """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "500",
                 description = "FILE500-UPLOAD_IO: 업로드 중 오류가 발생했습니다")
