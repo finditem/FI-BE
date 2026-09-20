@@ -16,8 +16,12 @@ import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.user.service.internal.NicknameGenerator;
 import java.util.Optional;
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -26,8 +30,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 class SocialLoginServiceTest {
-
-    private User savedUser;
 
     @Mock
     private SocialAccountsRepository socialAccountsRepository;
@@ -44,86 +46,103 @@ class SocialLoginServiceTest {
     @InjectMocks
     private SocialLoginService socialLoginService;
 
+    @Nested
+    @DisplayName("최초 소셜 로그인")
+    class FirstSocialLogin {
+
+        @ParameterizedTest
+        @CsvSource({"KAKAO, 123456, kakao_123456@kakao.local", "APPLE, 000123, apple_000123@apple.local"})
+        @DisplayName("제공자별 내부 이메일로 사용자와 소셜 계정을 생성한다")
+        void createsUserAndSocialAccount(Provider provider, String providerId, String expectedEmail) {
+            // given
+            SocialLoginCommand command = new SocialLoginCommand(provider, providerId, "찾아줘토끼1", null);
+            when(socialAccountsRepository.findByProviderAndProviderIdWithUser(provider, providerId))
+                    .thenReturn(Optional.empty());
+            when(passwordEncoder.encode("{noop}-" + providerId)).thenReturn("encoded-password");
+            사용자_저장과_조회가_성공한다();
+
+            // when
+            User result = socialLoginService.login(command);
+
+            // then
+            ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+            ArgumentCaptor<SocialAccounts> accountCaptor = ArgumentCaptor.forClass(SocialAccounts.class);
+            verify(userRepository).save(userCaptor.capture());
+            verify(socialAccountsRepository).save(accountCaptor.capture());
+            verify(userRepository, never()).findByEmail(anyString());
+
+            User createdUser = userCaptor.getValue();
+            SocialAccounts createdAccount = accountCaptor.getValue();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result).isSameAs(createdUser);
+                softly.assertThat(createdUser.getEmail()).isEqualTo(expectedEmail);
+                softly.assertThat(createdUser.getNickname()).isEqualTo("찾아줘토끼1");
+                softly.assertThat(createdUser.getProfile_img()).isEmpty();
+                softly.assertThat(createdUser.getRole()).isEqualTo(Role.USER);
+                softly.assertThat(createdAccount.getUser()).isSameAs(createdUser);
+                softly.assertThat(createdAccount.getProvider()).isEqualTo(provider);
+                softly.assertThat(createdAccount.getProviderId()).isEqualTo(providerId);
+            });
+        }
+
+        @Test
+        @DisplayName("제공자 닉네임이 없으면 닉네임을 생성한다")
+        void generatesNicknameWhenProviderNicknameIsMissing() {
+            // given
+            SocialLoginCommand command = new SocialLoginCommand(Provider.APPLE, "apple-subject", null, null);
+            when(socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.APPLE, "apple-subject"))
+                    .thenReturn(Optional.empty());
+            when(nicknameGenerator.generate()).thenReturn("찾아줘토끼1");
+            when(passwordEncoder.encode("{noop}-apple-subject")).thenReturn("encoded-password");
+            사용자_저장과_조회가_성공한다();
+
+            // when
+            socialLoginService.login(command);
+
+            // then
+            ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+            verify(userRepository).save(userCaptor.capture());
+            assertThat(userCaptor.getValue().getNickname()).isEqualTo("찾아줘토끼1");
+        }
+    }
+
+    @Nested
+    @DisplayName("기존 소셜 로그인")
+    class ExistingSocialLogin {
+
+        @ParameterizedTest
+        @CsvSource({"KAKAO, 123456", "APPLE, apple-subject"})
+        @DisplayName("같은 제공자와 계정 식별자로 로그인하면 기존 사용자를 반환한다")
+        void returnsExistingUser(Provider provider, String providerId) {
+            // given
+            User existingUser =
+                    User.builder().id(1L).email("internal@provider.local").build();
+            SocialAccounts existingAccount = SocialAccounts.builder()
+                    .user(existingUser)
+                    .provider(provider)
+                    .providerId(providerId)
+                    .build();
+            SocialLoginCommand command = new SocialLoginCommand(provider, providerId, null, null);
+            when(socialAccountsRepository.findByProviderAndProviderIdWithUser(provider, providerId))
+                    .thenReturn(Optional.of(existingAccount));
+
+            // when
+            User result = socialLoginService.login(command);
+
+            // then
+            assertThat(result).isSameAs(existingUser);
+            verify(userRepository, never()).save(any(User.class));
+            verify(socialAccountsRepository, never()).save(any(SocialAccounts.class));
+        }
+    }
+
     private void 사용자_저장과_조회가_성공한다() {
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            savedUser = invocation.getArgument(0);
+            User savedUser = invocation.getArgument(0);
             savedUser.setId(1L);
             return savedUser;
         });
         when(socialAccountsRepository.save(any(SocialAccounts.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        when(userRepository.findById(1L)).thenAnswer(invocation -> Optional.ofNullable(savedUser));
-    }
-
-    @Test
-    void 최초_Apple_로그인이면_사용자와_소셜_계정을_생성한다() {
-        // given
-        String subject = "apple-subject";
-        when(socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.APPLE, subject))
-                .thenReturn(Optional.empty());
-        when(nicknameGenerator.generate()).thenReturn("찾아줘토끼1");
-        when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
-        사용자_저장과_조회가_성공한다();
-        // when
-        SocialLoginService.AppleLoginResult result = socialLoginService.upsertUserFromApple(subject);
-
-        // then
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        ArgumentCaptor<SocialAccounts> socialAccountCaptor = ArgumentCaptor.forClass(SocialAccounts.class);
-        verify(userRepository).save(userCaptor.capture());
-        verify(socialAccountsRepository).save(socialAccountCaptor.capture());
-
-        User savedUser = userCaptor.getValue();
-        SocialAccounts savedSocialAccount = socialAccountCaptor.getValue();
-        SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(result.user()).isSameAs(savedUser);
-            softly.assertThat(savedUser.getEmail()).isEqualTo("apple_apple-subject@apple.local");
-            softly.assertThat(savedUser.getNickname()).isEqualTo("찾아줘토끼1");
-            softly.assertThat(savedUser.getRole()).isEqualTo(Role.USER);
-            softly.assertThat(savedSocialAccount.getUser()).isSameAs(savedUser);
-            softly.assertThat(savedSocialAccount.getProvider()).isEqualTo(Provider.APPLE);
-            softly.assertThat(savedSocialAccount.getProviderId()).isEqualTo(subject);
-        });
-    }
-
-    @Test
-    void 같은_subject로_재로그인하면_기존_사용자를_반환한다() {
-        // given
-        String subject = "apple-subject";
-        User existingUser =
-                User.builder().id(1L).email("apple_apple-subject@apple.local").build();
-        SocialAccounts existingAccount = SocialAccounts.builder()
-                .user(existingUser)
-                .provider(Provider.APPLE)
-                .providerId(subject)
-                .build();
-        when(socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.APPLE, subject))
-                .thenReturn(Optional.of(existingAccount));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
-
-        // when
-        SocialLoginService.AppleLoginResult result = socialLoginService.upsertUserFromApple(subject);
-
-        // then
-        assertThat(result.user()).isSameAs(existingUser);
-        verify(userRepository, never()).save(any(User.class));
-        verify(socialAccountsRepository, never()).save(any(SocialAccounts.class));
-    }
-
-    @Test
-    void Apple_로그인은_같은_이메일의_일반_계정과_별도_사용자를_생성한다() {
-        // given
-        String subject = "apple-subject";
-        when(socialAccountsRepository.findByProviderAndProviderIdWithUser(Provider.APPLE, subject))
-                .thenReturn(Optional.empty());
-        when(nicknameGenerator.generate()).thenReturn("찾아줘토끼1");
-        when(passwordEncoder.encode(anyString())).thenReturn("encoded-password");
-        사용자_저장과_조회가_성공한다();
-        // when
-        socialLoginService.upsertUserFromApple(subject);
-
-        // then
-        verify(userRepository, never()).findByEmail(anyString());
-        verify(userRepository).save(any(User.class));
     }
 }

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.IssuedTokens;
+import com.fmi.domain.auth.service.SocialLoginCommand;
 import com.fmi.domain.auth.service.SocialLoginService;
 import com.fmi.domain.auth.service.TokenService;
 import com.fmi.domain.auth.web.dto.AppleLoginRequest;
@@ -54,9 +55,9 @@ class AppleAuthControllerTest {
                 .email("apple_apple-subject@apple.local")
                 .role(Role.USER)
                 .build();
+        SocialLoginCommand command = new SocialLoginCommand(Provider.APPLE, "apple-subject", null, null);
         when(appleOAuthService.exchangeCodeForSubject("apple-code", "dev")).thenReturn("apple-subject");
-        when(socialLoginService.upsertUserFromApple("apple-subject"))
-                .thenReturn(new SocialLoginService.AppleLoginResult(user));
+        when(socialLoginService.login(command)).thenReturn(user);
         Date accessExpiration = Date.from(Instant.now().plusSeconds(900));
         Date refreshExpiration = Date.from(Instant.now().plusSeconds(1_200));
         when(tokenService.issue(user, false, Provider.APPLE))
@@ -71,6 +72,7 @@ class AppleAuthControllerTest {
         ResponseEntity<ApiResponse<LoginResponse>> response = appleAuthController.loginWithApple(request, httpRequest);
 
         // then
+        verify(socialLoginService).login(command);
         verify(tokenService).issue(user, false, Provider.APPLE);
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(response.getStatusCode().value()).isEqualTo(200);

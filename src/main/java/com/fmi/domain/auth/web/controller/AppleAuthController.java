@@ -2,6 +2,7 @@ package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.auth.data.IssuedTokens;
+import com.fmi.domain.auth.service.SocialLoginCommand;
 import com.fmi.domain.auth.service.SocialLoginService;
 import com.fmi.domain.auth.service.TokenService;
 import com.fmi.domain.auth.web.dto.AppleLoginRequest;
@@ -33,7 +34,8 @@ public class AppleAuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> loginWithApple(
             @Valid @RequestBody AppleLoginRequest request, HttpServletRequest httpServletRequest) {
         String subject = appleOAuthService.exchangeCodeForSubject(request.getCode(), request.getEnvironment());
-        var localUser = socialLoginService.upsertUserFromApple(subject).user();
+        SocialLoginCommand command = new SocialLoginCommand(Provider.APPLE, subject, null, null);
+        var localUser = socialLoginService.login(command);
         boolean termsAgreed = localUser.isPrivacyPolicyAgreed() && localUser.isTermsOfServiceAgreed();
 
         IssuedTokens issuedTokens = tokenService.issue(localUser, false, Provider.APPLE);
