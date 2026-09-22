@@ -382,8 +382,8 @@ public class PostController {
 
                     기준
                     - 같은 카테고리 + 같은 지역(주소)
-                    - 같은 Post type (분실/습득)
-                    - 기준 게시글 날짜(createdAt) 기준 -7일 ~ +7일 범위
+                    - 반대 게시글 유형(분실/발견)
+                    - 기준 게시글의 분실 또는 발견 일시(date, 없으면 createdAt) 기준 -7일 ~ +7일 범위
                     - 최신순(createdAt DESC) 최대 5개
                     - 로그인 시 favoriteStatus(내 즐겨찾기 여부) 포함
 

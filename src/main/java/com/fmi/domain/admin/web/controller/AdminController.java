@@ -70,7 +70,7 @@ public class AdminController {
             summary = "운영진 게스트 문의 상세 조회",
             description = "운영진이 게스트가 작성한 문의의 상세 정보를 조회합니다.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비회원 문의 상세 조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게스트 문의 상세 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다",
@@ -99,7 +99,7 @@ public class AdminController {
             예) /admin/guest-inquiries?size=20 → /admin/guest-inquiries?cursor=98&size=20
             """)
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비회원 문의 목록 조회 성공")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게스트 문의 목록 조회 성공")
     })
     public ApiResponse<AdminGuestInquiryPageResponse> getGuestInquiries(
             @RequestParam(required = false) InquiryStatus status,

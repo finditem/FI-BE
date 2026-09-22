@@ -16,7 +16,7 @@ public interface MyFavoritePlaceSwagger {
 
     @Operation(summary = "좋아요 장소 목록 조회", description = "현재 노출할 수 있는 좋아요 장소를 최신 좋아요순으로 조회합니다.")
     @ApiResponses(
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "저장 장소 조회 성공"))
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "좋아요 장소 목록 조회 성공"))
     ApiResponse<FavoritePlacePageResponse> getFavorites(
             @Valid @ModelAttribute FavoritePlaceRequest request, @AuthenticationPrincipal UserDetails userDetails);
 }

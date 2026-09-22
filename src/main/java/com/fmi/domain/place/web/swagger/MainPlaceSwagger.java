@@ -29,7 +29,7 @@ public interface MainPlaceSwagger {
 
     @Operation(summary = "장소 단일 요약 조회", description = "placeId로 장소 한 건의 화면 표시용 요약 정보를 조회합니다.")
     @ApiResponses(
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 동네 정보 조회 성공"))
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 단일 요약 조회 성공"))
     ApiResponse<PlaceSummaryResponse> getSummary(
             @PathVariable Long placeId, @AuthenticationPrincipal UserDetails userDetails);
 
