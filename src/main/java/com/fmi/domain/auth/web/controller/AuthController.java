@@ -20,6 +20,7 @@ import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.security.AuthCookieFactory;
 import com.fmi.security.AuthCookieResolver;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -118,6 +119,10 @@ public class AuthController implements AuthSwagger {
     }
 
     @PostMapping("/users/me/password/verify")
+    @Operation(
+            summary = "현재 비밀번호 확인",
+            description = "현재 회원의 비밀번호가 일치하는지 확인합니다.",
+            tags = {"인증"})
     public ApiResponse<Void> verifyPassword(
             @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody PasswordVerifyRequest request) {
         passwordService.verify(userDetails.getUsername(), request);
@@ -125,6 +130,10 @@ public class AuthController implements AuthSwagger {
     }
 
     @PatchMapping("/users/me/password")
+    @Operation(
+            summary = "비밀번호 변경",
+            description = "현재 회원의 비밀번호를 새 비밀번호로 변경합니다.",
+            tags = {"인증"})
     public ApiResponse<Void> changePassword(
             @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody PasswordChangeRequest request) {
         passwordService.change(userDetails.getUsername(), request.getNewPassword(), request.getNewPasswordConfirm());
@@ -132,6 +141,10 @@ public class AuthController implements AuthSwagger {
     }
 
     @DeleteMapping("/users/me")
+    @Operation(
+            summary = "회원 탈퇴",
+            description = "현재 회원의 계정과 서비스 이용 정보를 탈퇴 처리합니다.",
+            tags = {"인증"})
     public ResponseEntity<ApiResponse<Void>> deleteAccount(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody AccountDeleteRequest request,

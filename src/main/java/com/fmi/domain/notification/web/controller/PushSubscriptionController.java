@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/push")
 @RequiredArgsConstructor
-@Tag(name = "Web Push", description = "Web Push 알림 구독 API")
+@Tag(name = "알림", description = "서비스 내 알림과 브라우저 알림 구독을 관리합니다.")
 public class PushSubscriptionController {
 
     private final PushSubscriptionRepository pushSubscriptionRepository;
@@ -57,10 +57,10 @@ public class PushSubscriptionController {
     @PostMapping("/subscribe")
     @PreAuthorize("isAuthenticated()")
     @Operation(
-            summary = "푸시 구독 등록",
-            description = "브라우저 Service Worker에서 생성한 푸시 구독 정보를 저장합니다. " + "동일한 endpoint가 이미 등록되어 있으면 중복 저장하지 않습니다.")
+            summary = "브라우저 알림 구독 등록",
+            description = "현재 회원의 브라우저 알림 구독 정보를 등록합니다. " + "동일한 endpoint가 이미 등록되어 있으면 중복 저장하지 않습니다.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "푸시 구독 등록 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "브라우저 알림 구독 등록 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "USER404-NOT_FOUND: 사용자를 찾을 수 없습니다",
@@ -102,9 +102,9 @@ public class PushSubscriptionController {
      */
     @DeleteMapping("/subscribe")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "푸시 구독 해제", description = "브라우저 푸시 구독을 해제합니다. 로그아웃 시 호출하여 불필요한 푸시 발송을 방지합니다.")
+    @Operation(summary = "브라우저 알림 구독 해제", description = "현재 회원의 브라우저 알림 구독을 해제합니다. 로그아웃 시 호출하여 불필요한 알림 발송을 방지합니다.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "푸시 구독 해제 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "브라우저 알림 구독 해제 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "USER404-NOT_FOUND: 사용자를 찾을 수 없습니다",

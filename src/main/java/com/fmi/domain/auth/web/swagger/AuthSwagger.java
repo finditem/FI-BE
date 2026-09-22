@@ -15,7 +15,7 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Auth")
+@Tag(name = "인증")
 public interface AuthSwagger {
 
     @Operation(

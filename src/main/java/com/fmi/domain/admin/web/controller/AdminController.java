@@ -39,7 +39,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -57,7 +56,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/admin")
 @RequiredArgsConstructor
-@Tag(name = "Admin", description = "관리자 전용 API")
 public class AdminController {
 
     private final AdminService adminService;
@@ -67,9 +65,12 @@ public class AdminController {
     private final AuthService authService;
 
     @GetMapping("/guest-inquiries/{inquiryId}")
-    @Operation(summary = "관리자 비회원 문의 상세 조회", description = "비회원이 작성한 문의의 상세 정보를 조회합니다.")
+    @Operation(
+            tags = {"문의"},
+            summary = "운영진 게스트 문의 상세 조회",
+            description = "운영진이 게스트가 작성한 문의의 상세 정보를 조회합니다.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비회원 문의 상세 조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게스트 문의 상세 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다",
@@ -87,15 +88,18 @@ public class AdminController {
     }
 
     @GetMapping("/guest-inquiries")
-    @Operation(summary = "관리자 비회원 문의 목록 조회", description = """
-            비회원이 작성한 문의 내역을 조회합니다. (커서 기반 무한스크롤)
+    @Operation(
+            tags = {"문의"},
+            summary = "운영진 게스트 문의 목록 조회",
+            description = """
+            운영진이 게스트가 작성한 문의 목록을 커서 방식으로 조회합니다.
 
             - 첫 요청: cursor 없이 호출
             - 다음 요청: 응답의 nextCursor를 cursor 파라미터로 전달
             예) /admin/guest-inquiries?size=20 → /admin/guest-inquiries?cursor=98&size=20
             """)
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비회원 문의 목록 조회 성공")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게스트 문의 목록 조회 성공")
     })
     public ApiResponse<AdminGuestInquiryPageResponse> getGuestInquiries(
             @RequestParam(required = false) InquiryStatus status,
@@ -110,8 +114,9 @@ public class AdminController {
 
     @GetMapping("/inquiries")
     @Operation(
-            summary = "관리자 회원 문의 목록 조회",
-            description = "커서 기반 페이지네이션으로 회원이 작성한 문의 내역을 조회합니다. (비회원 문의 제외) cursor를 생략하면 최신 항목부터 반환합니다.")
+            tags = {"문의"},
+            summary = "운영진 회원 문의 목록 조회",
+            description = "운영진이 회원이 작성한 문의 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 목록 조회 성공")
     })
@@ -129,7 +134,10 @@ public class AdminController {
     }
 
     @GetMapping("/inquiries/{inquiryId}")
-    @Operation(summary = "관리자 문의 상세 조회", description = "문의 상세 정보를 조회합니다. 관리자는 비공개 문의도 조회 가능합니다.")
+    @Operation(
+            tags = {"문의"},
+            summary = "운영진 회원 문의 상세 조회",
+            description = "운영진이 회원이 작성한 문의의 상세 정보를 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 상세 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -150,7 +158,10 @@ public class AdminController {
     }
 
     @GetMapping("/reports")
-    @Operation(summary = "관리자 신고 내역 조회", description = "커서 기반 페이지네이션으로 신고 내역을 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다.")
+    @Operation(
+            tags = {"신고"},
+            summary = "운영진 신고 목록 조회",
+            description = "운영진이 신고 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 내역 조회 성공")
     })
@@ -167,7 +178,10 @@ public class AdminController {
     }
 
     @GetMapping("/reports/{reportId}")
-    @Operation(summary = "관리자 신고 상세 조회", description = "신고 상세 정보를 조회합니다.")
+    @Operation(
+            tags = {"신고"},
+            summary = "운영진 신고 상세 조회",
+            description = "운영진이 신고의 상세 정보를 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 상세 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -187,7 +201,10 @@ public class AdminController {
     }
 
     @GetMapping("/users/{userId}")
-    @Operation(summary = "관리자 사용자 상세 조회", description = "특정 사용자의 기본 정보 및 활동 통계를 조회합니다.")
+    @Operation(
+            tags = {"회원"},
+            summary = "운영진 회원 상세 조회",
+            description = "운영진이 특정 회원의 기본 정보와 활동 통계를 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "사용자 상세 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -207,7 +224,10 @@ public class AdminController {
     }
 
     @PostMapping("/notices")
-    @Operation(summary = "공지 생성(관리자)")
+    @Operation(
+            tags = {"공지사항"},
+            summary = "운영진 공지사항 작성",
+            description = "운영진이 공지사항을 작성합니다.")
     @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "공지 생성 성공")
     })
     public ApiResponse<Long> createNotice(
@@ -217,7 +237,10 @@ public class AdminController {
     }
 
     @GetMapping("/notices/draft")
-    @Operation(summary = "임시저장 공지사항 조회(관리자)", description = "현재 로그인한 관리자의 임시저장 공지사항을 조회합니다.")
+    @Operation(
+            tags = {"공지사항"},
+            summary = "운영진 임시 저장 공지사항 조회",
+            description = "현재 운영진이 임시 저장한 공지사항을 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "임시저장 조회 성공")
     })
@@ -227,7 +250,10 @@ public class AdminController {
     }
 
     @PutMapping("/notices/{noticeId}")
-    @Operation(summary = "공지 수정(관리자)")
+    @Operation(
+            tags = {"공지사항"},
+            summary = "운영진 공지사항 수정",
+            description = "운영진이 공지사항을 수정합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -238,7 +264,7 @@ public class AdminController {
                                 examples =
                                         @ExampleObject(
                                                 value =
-                                                        "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"noticeId\": 1, \"title\": \"수정 제목\", \"content\": \"수정 내용\", \"category\": \"GENERAL\", \"pinned\": false, \"viewCount\": 10, \"likeCount\": 12, \"commentCount\": 5, \"authorName\": \"관리자\", \"thumbnailUrl\": null, \"images\": [], \"isNew\": false, \"isHot\": false, \"likeStatus\": false, \"createdAt\": \"2024-01-01T00:00:00\", \"updatedAt\": \"2024-01-02T00:00:00\"}}"))),
+                                                        "{\"isSuccess\": true, \"code\": \"COMMON200\", \"message\": \"성공\", \"result\": {\"noticeId\": 1, \"title\": \"수정 제목\", \"content\": \"수정 내용\", \"category\": \"GENERAL\", \"pinned\": false, \"viewCount\": 10, \"likeCount\": 12, \"commentCount\": 5, \"authorName\": \"운영진\", \"thumbnailUrl\": null, \"images\": [], \"isNew\": false, \"isHot\": false, \"likeStatus\": false, \"createdAt\": \"2024-01-01T00:00:00\", \"updatedAt\": \"2024-01-02T00:00:00\"}}"))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "NOTICE404-NOT_FOUND: 존재하지 않는 공지사항입니다",
@@ -257,7 +283,10 @@ public class AdminController {
     }
 
     @DeleteMapping("/notices/{noticeId}")
-    @Operation(summary = "공지 삭제(관리자)")
+    @Operation(
+            tags = {"공지사항"},
+            summary = "운영진 공지사항 삭제",
+            description = "운영진이 공지사항을 삭제합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -286,7 +315,10 @@ public class AdminController {
     }
 
     @PostMapping("/guest-inquiries/{inquiryId}/reply")
-    @Operation(summary = "비회원 문의 답변 (이메일 발송)", description = "비회원 문의에 대해 이메일로 답변을 발송합니다. 상태가 ANSWERED로 변경됩니다.")
+    @Operation(
+            tags = {"문의"},
+            summary = "운영진 게스트 문의 답변",
+            description = "운영진이 게스트가 작성한 문의에 이메일로 답변합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "답변 발송 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -317,7 +349,10 @@ public class AdminController {
     }
 
     @PutMapping("/inquiries/{inquiryId}/status")
-    @Operation(summary = "문의 처리 상태 변경(관리자)")
+    @Operation(
+            tags = {"문의"},
+            summary = "운영진 문의 상태 변경",
+            description = "운영진이 문의 상태를 변경합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 처리 상태 변경 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -339,7 +374,10 @@ public class AdminController {
     }
 
     @PostMapping("/inquiries/{inquiryId}/block-ip")
-    @Operation(summary = "문의 IP 차단(관리자)", description = "문의에 저장된 IP를 블랙리스트에 등록합니다.")
+    @Operation(
+            tags = {"문의"},
+            summary = "운영진 문의 IP 차단",
+            description = "운영진이 문의 작성자의 IP를 차단합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "IP 차단 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -381,7 +419,10 @@ public class AdminController {
     }
 
     @PutMapping("/reports/{reportId}/status")
-    @Operation(summary = "신고 처리 상태 변경(관리자)")
+    @Operation(
+            tags = {"신고"},
+            summary = "운영진 신고 상태 변경",
+            description = "운영진이 신고 상태를 변경합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 처리 상태 변경 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -402,7 +443,10 @@ public class AdminController {
     }
 
     @PutMapping("/reports/{reportId}/answer")
-    @Operation(summary = "신고 답변 작성(관리자)", description = "신고에 대한 답변을 작성합니다. answered 상태가 자동으로 true로 설정됩니다.")
+    @Operation(
+            tags = {"신고"},
+            summary = "운영진 신고 답변 등록",
+            description = "운영진이 신고에 대한 답변을 등록합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "답변 작성 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -425,9 +469,12 @@ public class AdminController {
     }
 
     @PostMapping("/users/signup")
-    @Operation(summary = "관리자 회원가입", description = "관리자 계정을 생성합니다. Role은 자동으로 ADMIN으로 설정됩니다.")
+    @Operation(
+            tags = {"회원"},
+            summary = "운영진 계정 생성",
+            description = "운영 권한을 가진 계정을 생성합니다.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "관리자 회원가입 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "운영진 계정 생성 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
                 description = "AUTH400-WEAK_PASSWORD: 비밀번호 규칙을 만족하지 않습니다",
@@ -455,8 +502,11 @@ public class AdminController {
     }
 
     @GetMapping("/posts/content-policy")
-    @Operation(summary = "콘텐츠 활용 동의 유저 게시글 목록 조회", description = """
-                콘텐츠 활용에 동의한 유저들의 게시글을 조회합니다.
+    @Operation(
+            tags = {"회원"},
+            summary = "콘텐츠 활용 동의 회원 게시글 목록 조회",
+            description = """
+                콘텐츠 활용에 동의한 회원의 게시글을 조회합니다.
                 커서 기반 무한스크롤을 지원하며, 정렬/카테고리/찾음 여부/키워드 필터를 제공합니다.
 
                 **정렬 (sortType):**
@@ -480,7 +530,7 @@ public class AdminController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자만 접근할 수 있습니다")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "운영진만 접근할 수 있습니다")
     })
     public ApiResponse<CursorPageResponse<PostBriefResponse>> getContentPolicyPosts(
             @Parameter(description = "정렬 (LATEST=최신순, OLDEST=오래된순, MOST_VIEWED=조회수순, MOST_FAVORITED=즐겨찾기순)")
@@ -523,9 +573,12 @@ public class AdminController {
     }
 
     @GetMapping("/users/deleted")
-    @Operation(summary = "탈퇴 유저 목록 조회", description = "커서 기반 페이지네이션으로 탈퇴한 사용자 목록을 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다.")
+    @Operation(
+            tags = {"회원"},
+            summary = "탈퇴 회원 목록 조회",
+            description = "탈퇴한 회원 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "탈퇴 유저 목록 조회 성공")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "탈퇴 회원 목록 조회 성공")
     })
     public ApiResponse<CursorPageResponse<AdminDeletedUserResponse>> getDeletedUsers(
             @RequestParam(required = false) WithdrawalReason reason,

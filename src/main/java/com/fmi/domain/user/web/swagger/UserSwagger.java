@@ -31,7 +31,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-@Tag(name = "User", description = "사용자 정보 관리 API")
+@Tag(name = "회원", description = "회원 정보, 활동, 구독 카테고리와 즐겨찾기를 관리합니다.")
 public interface UserSwagger {
 
     @Operation(summary = "이미지 업로드", description = "여러 장의 이미지를 S3에 업로드하고 URL을 반환합니다. (JPEG, PNG 형식만 지원)")
@@ -70,7 +70,7 @@ public interface UserSwagger {
     })
     ApiResponse<ImageUploadResponse> uploadImages(@RequestPart(value = "images") List<MultipartFile> images);
 
-    @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 기본 프로필 정보를 조회합니다. (닉네임, 이메일, 프로필 이미지, 소셜 로그인 여부)")
+    @Operation(summary = "내 정보 조회", description = "현재 회원의 닉네임, 이메일, 프로필 이미지와 소셜 로그인 여부를 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 정보 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -104,7 +104,7 @@ public interface UserSwagger {
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody com.fmi.domain.user.web.dto.TermsAgreeRequest request);
 
-    @Operation(summary = "선호 언어 조회", description = "현재 로그인한 사용자의 선호 언어를 조회합니다. (KO: 한국어, EN: 영어)")
+    @Operation(summary = "선호 언어 조회", description = "현재 회원의 선호 언어를 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "선호 언어 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -121,7 +121,7 @@ public interface UserSwagger {
     ApiResponse<PreferredLanguageResponse> getPreferredLanguage(@AuthenticationPrincipal UserDetails userDetails);
 
     @Operation(summary = "선호 언어 변경", description = """
-                현재 로그인한 사용자의 선호 언어를 변경합니다. 게시글 번역 등 언어별 기능에 적용됩니다.
+                현재 회원의 선호 언어를 변경하고 게시글 번역 등 언어별 기능에 적용합니다.
 
                 **preferredLanguage** (필수): KO(한국어) / EN(영어)
                 """)
@@ -153,7 +153,7 @@ public interface UserSwagger {
             @Valid @RequestBody PreferredLanguageUpdateRequest request);
 
     @Operation(summary = "내가 쓴 댓글 목록", description = """
-                현재 로그인한 사용자가 작성한 댓글 목록을 커서 기반으로 조회합니다. 삭제된 댓글은 제외됩니다.
+                현재 회원이 작성한 댓글 목록을 커서 방식으로 조회합니다. 삭제된 댓글은 제외됩니다.
 
                 **필터 파라미터** (모두 선택):
                 - startDate, endDate: yyyy-MM-dd 형식 (예: 2024-01-01)
@@ -180,7 +180,7 @@ public interface UserSwagger {
             @RequestParam(defaultValue = "20") int size);
 
     @Operation(summary = "내가 쓴 게시글 목록", description = """
-                현재 로그인한 사용자가 작성한 게시글 목록을 커서 기반으로 조회합니다.
+                현재 회원이 작성한 게시글 목록을 커서 방식으로 조회합니다.
 
                 **필터 파라미터** (모두 선택):
                 - postType: LOST / FOUND
@@ -208,7 +208,7 @@ public interface UserSwagger {
             @RequestParam(defaultValue = "20") int size);
 
     @Operation(summary = "내 활동 내역 통합 조회", description = """
-                현재 로그인한 사용자의 모든 활동 내역을 통합하여 최신순으로 조회합니다.
+                현재 회원의 활동 내역을 통합하여 날짜별 최신순으로 조회합니다.
                 응답은 날짜별로 그룹화되어 반환됩니다.
 
                 **활동 유형 (type):**
@@ -246,7 +246,7 @@ public interface UserSwagger {
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int size);
 
-    @Operation(summary = "유저 메타데이터 조회", description = "OG 태그 생성용 경량 API. 해당 유저의 닉네임을 반환합니다.")
+    @Operation(summary = "회원 메타데이터 조회", description = "userId로 회원의 닉네임을 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "메타데이터 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -256,7 +256,7 @@ public interface UserSwagger {
     ApiResponse<UserMetaResponse> getUserMeta(@PathVariable Long userId);
 
     @Operation(summary = "타인 페이지 조회", description = """
-                다른 사용자의 닉네임, 프로필 이미지, 게시글, 작성 댓글, 즐겨찾기 목록을 조회합니다.
+                다른 회원의 닉네임, 프로필 이미지, 게시글, 댓글과 즐겨찾기 목록을 조회합니다.
 
                 **type 파라미터:**
                 - type=posts → 게시글만 조회
@@ -300,7 +300,7 @@ public interface UserSwagger {
             @RequestParam(defaultValue = "10") int size);
 
     @Operation(summary = "내 정보 수정", description = """
-                현재 로그인한 사용자의 프로필 정보를 수정합니다. (닉네임, 프로필 이미지 통합)
+                현재 회원의 닉네임과 프로필 이미지를 수정합니다.
 
                 **닉네임** (request JSON 내 nickname 필드):
                 - 필드 자체를 보내지 않으면 → 닉네임 변경 없음

@@ -21,16 +21,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/reports")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
-@Tag(name = "Report", description = "신고/차단 API")
+@Tag(name = "차단", description = "회원 사이의 차단 관계를 관리합니다.")
 public class BlockController {
 
     private final BlockService blockService;
     private final UserRepository userRepository;
 
     @PostMapping("/{userId}/block")
-    @Operation(summary = "유저 차단", description = "로그인 사용자가 대상 유저를 차단합니다.")
+    @Operation(summary = "사용자 차단", description = "현재 회원과 대상 회원 사이에 차단 관계를 설정합니다. 차단된 회원과는 메시지를 주고받을 수 없습니다.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "유저 차단 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "사용자 차단 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
                 description = "USER400-BLOCK_SELF: 자기 자신은 차단할 수 없습니다"),
@@ -50,9 +50,9 @@ public class BlockController {
     }
 
     @DeleteMapping("/{userId}/block")
-    @Operation(summary = "유저 차단 해제", description = "로그인 사용자가 대상 유저의 차단을 해제합니다.")
+    @Operation(summary = "사용자 차단 해제", description = "현재 회원과 대상 회원 사이의 차단 관계를 해제합니다.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "유저 차단 해제 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "사용자 차단 해제 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다"),
@@ -69,9 +69,9 @@ public class BlockController {
     }
 
     @GetMapping("/block")
-    @Operation(summary = "내가 차단한 유저 목록", description = "차단한 유저의 ID, 닉네임, 프로필 사진을 커서 기반으로 조회합니다.")
+    @Operation(summary = "차단한 사용자 목록 조회", description = "현재 회원의 차단 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "차단 유저 목록 조회 성공")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "차단한 사용자 목록 조회 성공")
     })
     public ApiResponse<CursorPageResponse<BlockedUserResponse>> list(
             @AuthenticationPrincipal UserDetails userDetails,

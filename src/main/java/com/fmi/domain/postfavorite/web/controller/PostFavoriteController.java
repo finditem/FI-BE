@@ -19,15 +19,15 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "Post", description = "게시글 관련 API")
+@Tag(name = "회원", description = "회원 정보, 활동, 구독 카테고리와 즐겨찾기를 관리합니다.")
 public class PostFavoriteController {
     private final PostFavoriteService postFavoriteService;
     private final PostQueryService postQueryService;
 
     @Operation(
-            summary = "즐겨찾기 추가",
-            description = "즐겨찾기를 추가합니다.",
-            tags = {"Post"})
+            summary = "게시글 즐겨찾기 추가",
+            description = "회원이 특정 게시글을 즐겨찾기에 추가합니다.",
+            tags = {"회원"})
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 추가 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -44,11 +44,11 @@ public class PostFavoriteController {
     }
 
     @Operation(
-            summary = "즐겨찾기 삭제",
-            description = "즐겨찾기를 삭제합니다.",
-            tags = {"Post"})
+            summary = "게시글 즐겨찾기 취소",
+            description = "회원이 특정 게시글의 즐겨찾기를 취소합니다. 즐겨찾기 관계는 비활성 상태로 변경됩니다.",
+            tags = {"회원"})
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 삭제 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 취소 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다"),
@@ -65,9 +65,9 @@ public class PostFavoriteController {
     }
 
     @Operation(
-            summary = "즐겨찾기 목록 조회",
+            summary = "내 즐겨찾기 게시글 목록 조회",
             description = """
-            현재 로그인한 사용자의 즐겨찾기 목록을 커서 기반으로 조회합니다.
+            현재 회원이 즐겨찾기한 게시글 목록을 커서 방식으로 조회합니다.
 
             **필터 파라미터** (모두 선택):
             - postType: LOST / FOUND
@@ -75,7 +75,7 @@ public class PostFavoriteController {
             - address: 지역 필터 (예: 서울특별시, 서울특별시 강남구)
             - keyword: 제목 또는 내용 검색
             """,
-            tags = {"User"})
+            tags = {"회원"})
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 목록 조회 성공")
     })

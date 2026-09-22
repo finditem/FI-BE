@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/reports")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
-@Tag(name = "Report", description = "신고 API")
+@Tag(name = "신고", description = "회원 신고 접수와 운영진 신고 처리를 제공합니다.")
 public class ReportController {
 
     private final ReportService reportService;
@@ -45,9 +45,7 @@ public class ReportController {
      * }
      */
     @PostMapping
-    @Operation(
-            summary = "신고하기",
-            description = "게시글, 댓글, 사용자, 채팅을 신고할 수 있습니다. targetType과 reportType을 조합하여 다양한 신고 유형을 처리합니다.")
+    @Operation(summary = "신고 접수", description = "회원이 게시글, 댓글, 다른 회원 또는 채팅방에 대한 신고를 접수합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -102,7 +100,7 @@ public class ReportController {
      * GET /api/reports/me?status=PENDING&cursor=10&size=10
      */
     @GetMapping("/me")
-    @Operation(summary = "내 신고 내역 조회", description = "커서 기반 페이지네이션으로 내가 접수한 신고 내역을 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다.")
+    @Operation(summary = "내 신고 목록 조회", description = "현재 회원이 접수한 신고 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 내역 조회 성공")
     })
