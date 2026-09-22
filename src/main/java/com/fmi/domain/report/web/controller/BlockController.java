@@ -28,9 +28,7 @@ public class BlockController {
     private final UserRepository userRepository;
 
     @PostMapping("/{userId}/block")
-    @Operation(
-            summary = "사용자 차단",
-            description = "현재 회원과 대상 회원 사이에 차단 관계를 설정합니다. 두 회원 사이의 메시지 교환과 서로의 게시글, 댓글과 채팅방 노출이 제한됩니다.")
+    @Operation(summary = "사용자 차단", description = "현재 회원과 대상 회원 사이에 차단 관계를 설정합니다. 차단된 회원과는 메시지를 주고받을 수 없습니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "사용자 차단 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

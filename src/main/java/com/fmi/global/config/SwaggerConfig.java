@@ -45,7 +45,7 @@ public class SwaggerConfig {
     }
 
     @Bean
-    public OpenApiCustomizer sortTagsAlphabetically() {
+    public OpenApiCustomizer sortTagsByConfiguredOrder() {
         return openApi -> {
             List<Tag> tags = openApi.getTags();
             if (tags == null || tags.isEmpty()) return;

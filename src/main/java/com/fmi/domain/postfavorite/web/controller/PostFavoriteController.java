@@ -48,7 +48,7 @@ public class PostFavoriteController {
             description = "회원이 특정 게시글의 즐겨찾기를 취소합니다. 즐겨찾기 관계는 비활성 상태로 변경됩니다.",
             tags = {"회원"})
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 삭제 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 취소 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다"),
