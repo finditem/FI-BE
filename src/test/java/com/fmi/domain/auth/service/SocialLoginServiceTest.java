@@ -10,7 +10,9 @@ import static org.mockito.Mockito.when;
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.SocialAccounts;
+import com.fmi.domain.auth.data.SocialLoginCommand;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.service.internal.RejoinPolicy;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.user.service.internal.NicknameGenerator;
@@ -42,6 +44,9 @@ class SocialLoginServiceTest {
 
     @Mock
     private NicknameGenerator nicknameGenerator;
+
+    @Mock
+    private RejoinPolicy rejoinPolicy;
 
     @InjectMocks
     private SocialLoginService socialLoginService;

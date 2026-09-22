@@ -15,7 +15,7 @@ import com.fmi.domain.Enum.Role;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
 import com.fmi.domain.auth.event.UserSignedUpEvent;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
-import com.fmi.domain.auth.service.internal.SignupValidator;
+import com.fmi.domain.auth.service.internal.RejoinPolicy;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -63,26 +64,23 @@ class AuthServiceTest {
 
     private final AtomicReference<User> savedUser = new AtomicReference<>();
     private PasswordValidator passwordValidator;
-    private SignupValidator signupValidator;
+    private RejoinPolicy rejoinPolicy;
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
         passwordValidator = new PasswordValidator(passwordEncoder, clock);
-        signupValidator = new SignupValidator(userRepository, clock);
+        rejoinPolicy = new RejoinPolicy(clock, Set.of());
         authService = new AuthService(
                 userRepository,
                 passwordEncoder,
                 nicknameValidator,
                 signupEmailVerificationService,
                 passwordValidator,
-                signupValidator,
+                rejoinPolicy,
                 eventPublisher);
-        lenient().when(userRepository.existsByEmail(anyString())).thenReturn(false);
         lenient().when(userRepository.existsByNickname(anyString())).thenReturn(false);
-        lenient()
-                .when(userRepository.existsRecentlyDeletedByEmail(anyString(), any()))
-                .thenReturn(false);
+        lenient().when(userRepository.findByEmailIncludingDeleted(anyString())).thenReturn(Optional.empty());
         lenient()
                 .when(signupEmailVerificationService.isEmailVerified(anyString()))
                 .thenReturn(true);
@@ -124,6 +122,44 @@ class AuthServiceTest {
                 assertThat(eventCaptor.getValue())
                         .extracting(UserSignedUpEvent::email, UserSignedUpEvent::nickname)
                         .containsExactly(request.getEmail(), request.getNickname());
+            }
+        }
+
+        @Nested
+        @DisplayName("7일이 지난 탈퇴 계정이면")
+        class ContextWithRejoinableAccount {
+
+            @Test
+            @DisplayName("기존 사용자 식별자를 유지한 채 새 가입 정보로 재활성화한다")
+            void itReactivatesExistingUser() {
+                // given
+                SignupRequest request = signupRequest();
+                User withdrawnUser = User.builder()
+                        .id(1L)
+                        .email(request.getEmail())
+                        .password("old-password")
+                        .nickname("탈퇴토끼")
+                        .deletedAt(LocalDateTime.of(2026, 8, 1, 12, 0))
+                        .withdrawalReason("NOT_USING")
+                        .temporaryPassword("temporary-password")
+                        .build();
+                when(userRepository.findByEmailIncludingDeleted(request.getEmail()))
+                        .thenReturn(Optional.of(withdrawnUser));
+
+                // when
+                User result = authService.signup(request);
+
+                // then
+                assertThat(result).isSameAs(withdrawnUser);
+                assertThat(withdrawnUser)
+                        .extracting(
+                                User::getId,
+                                User::getPassword,
+                                User::getNickname,
+                                User::getDeletedAt,
+                                User::getWithdrawalReason)
+                        .containsExactly(1L, "encoded-password", request.getNickname(), null, null);
+                assertThat(withdrawnUser.getTemporaryPassword()).isNull();
             }
         }
 

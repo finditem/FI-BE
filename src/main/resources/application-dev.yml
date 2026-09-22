@@ -116,6 +116,10 @@ translation:
     api-key: ${DEEPL_API_KEY:}
     base-url: ${DEEPL_BASE_URL:https://api-free.deepl.com/v2/translate}
 
+auth:
+  rejoin:
+    kakao-test-account-emails: ${KAKAO_TEST_ACCOUNT_EMAILS:}
+
 oauth:
   kakao:
     client-id: ${KAKAO_TEST_CLIENT_ID}

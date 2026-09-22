@@ -1,14 +1,14 @@
 package com.fmi.domain.auth.service;
 
 import com.fmi.domain.auth.converter.AuthConverter;
+import com.fmi.domain.auth.data.RejoinType;
 import com.fmi.domain.auth.data.SocialAccounts;
+import com.fmi.domain.auth.data.SocialLoginCommand;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.service.internal.RejoinPolicy;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.user.service.internal.NicknameGenerator;
-import com.fmi.global.apiPayload.code.status.ErrorStatus;
-import com.fmi.global.apiPayload.exception.GeneralException;
-import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +25,7 @@ public class SocialLoginService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final NicknameGenerator nicknameGenerator;
+    private final RejoinPolicy rejoinPolicy;
 
     public User login(SocialLoginCommand command) {
         Optional<SocialAccounts> existingAccount =
@@ -34,7 +35,10 @@ public class SocialLoginService {
         if (existingAccount.isPresent()) {
             User existingUser = existingAccount.get().getUser();
             if (existingUser.getDeletedAt() != null) {
-                reactivate(existingUser);
+                // 탈퇴 계정은 재가입 정책을 검증한 뒤 탈퇴 상태와 약관 동의 이력을 초기화한다.
+                rejoinPolicy.validate(existingUser, rejoinType(command));
+                existingUser.reactivateForSocialLogin();
+                userRepository.save(existingUser);
             }
             return existingUser;
         }
@@ -64,13 +68,10 @@ public class SocialLoginService {
         return savedUser;
     }
 
-    // 탈퇴한 유저가 재로그인 했을 때
-    private void reactivate(User existingUser) {
-        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
-        if (existingUser.getDeletedAt().isAfter(oneWeekAgo)) {
-            throw new GeneralException(ErrorStatus._EMAIL_RECENTLY_DELETED);
-        }
-        existingUser.reactivateForSocialLogin();
-        userRepository.save(existingUser);
+    private RejoinType rejoinType(SocialLoginCommand command) {
+        return switch (command.provider()) {
+            case KAKAO -> RejoinType.KAKAO;
+            default -> RejoinType.SOCIAL;
+        };
     }
 }

@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.service;
+package com.fmi.domain.auth.data;
 
 import com.fmi.domain.Enum.Provider;
 

@@ -2,7 +2,7 @@ package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.auth.data.IssuedTokens;
-import com.fmi.domain.auth.service.SocialLoginCommand;
+import com.fmi.domain.auth.data.SocialLoginCommand;
 import com.fmi.domain.auth.service.SocialLoginService;
 import com.fmi.domain.auth.service.TokenService;
 import com.fmi.domain.auth.web.dto.AppleLoginRequest;
