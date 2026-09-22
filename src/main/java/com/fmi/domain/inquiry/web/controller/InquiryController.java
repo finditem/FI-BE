@@ -32,7 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/inquiries")
 @RequiredArgsConstructor
-@Tag(name = "Inquiry", description = "문의 API")
+@Tag(name = "문의", description = "회원과 게스트의 문의, 문의 댓글과 운영진 처리를 제공합니다.")
 public class InquiryController {
 
     private final InquiryService inquiryService;
@@ -44,7 +44,7 @@ public class InquiryController {
      * POST /api/inquiries
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "1:1 개인 문의 작성", description = "비회원도 가능하며, 비회원인 경우 email 필수입니다. 이미지 첨부 가능합니다.")
+    @Operation(summary = "1:1 문의 작성", description = "회원 또는 게스트가 1:1 문의를 작성합니다. 게스트는 회신 이메일을 반드시 입력해야 합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 작성 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -84,7 +84,7 @@ public class InquiryController {
      */
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "내 문의 내역 조회", description = "커서 기반 페이지네이션으로 본인의 1:1 개인 문의를 조회합니다. cursor를 생략하면 최신 항목부터 반환합니다.")
+    @Operation(summary = "내 문의 목록 조회", description = "현재 회원이 작성한 문의 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 문의 내역 조회 성공")
     })
@@ -113,7 +113,7 @@ public class InquiryController {
      */
     @GetMapping("/{inquiryId}")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "문의 상세 조회", description = "본인의 1:1 개인 문의만 조회 가능합니다.")
+    @Operation(summary = "내 문의 상세 조회", description = "현재 회원이 작성한 문의의 상세 정보를 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "문의 상세 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "ChatRoom", description = "채팅방 관련 API")
+@Tag(name = "채팅", description = "채팅방, 메시지와 메시지 번역을 관리합니다.")
 public class ChatRoomController {
 
     private final UserQueryService userService;
@@ -75,7 +75,7 @@ public class ChatRoomController {
         }
     }
 
-    @Operation(summary = "내 채팅 목록 조회", description = "내가 참여하고 있는 채팅방 목록을 커서 기반 페이지네이션으로 조회합니다.")
+    @Operation(summary = "내 채팅방 목록 조회", description = "현재 회원이 참여 중인 채팅방 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",

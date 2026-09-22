@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "신고 목록 응답")
 public class ReportListDTO {
-    @Schema(description = "유저 닉네임", example = "홍길동")
+    @Schema(description = "회원 닉네임", example = "홍길동")
     private String nickname;
 
     @Schema(description = "신고 ID", example = "1")
@@ -37,7 +37,7 @@ public class ReportListDTO {
     @Schema(description = "신고 사유 내용", example = "스팸 게시글입니다.")
     private String reason;
 
-    @Schema(description = "처리 상태", example = "PENDING")
+    @Schema(description = "신고 상태", example = "PENDING")
     private ReportStatus status;
 
     @Schema(description = "답변 여부", example = "false")

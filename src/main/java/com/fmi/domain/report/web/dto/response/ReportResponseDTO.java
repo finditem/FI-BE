@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "관리자 신고 상세 응답")
+@Schema(description = "운영진 신고 상세 응답")
 public class ReportResponseDTO {
     @Schema(description = "신고 ID", example = "1")
     private Long reportId;
@@ -35,22 +35,22 @@ public class ReportResponseDTO {
     @Schema(description = "신고 사유", example = "스팸 게시글입니다.")
     private String reason;
 
-    @Schema(description = "처리 상태", example = "PENDING")
+    @Schema(description = "신고 상태", example = "PENDING")
     private ReportStatus status;
 
     @Schema(description = "답변 여부", example = "false")
     private Boolean answered;
 
-    @Schema(description = "관리자 답변 내용", example = "확인 후 조치하였습니다.")
+    @Schema(description = "운영진 답변 내용", example = "확인 후 조치하였습니다.")
     private String adminAnswer;
 
-    @Schema(description = "답변 작성 관리자 ID", example = "1")
+    @Schema(description = "답변 작성 운영진 ID", example = "1")
     private Long adminId;
 
-    @Schema(description = "답변 작성 관리자 닉네임", example = "관리자")
+    @Schema(description = "답변 작성 운영진 닉네임", example = "운영진")
     private String adminNickname;
 
-    @Schema(description = "답변 작성 관리자 프로필 이미지")
+    @Schema(description = "답변 작성 운영진 프로필 이미지")
     private String adminProfileImg;
 
     @Schema(description = "답변 첨부 이미지 URL 목록")

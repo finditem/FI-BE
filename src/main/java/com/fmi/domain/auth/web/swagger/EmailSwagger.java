@@ -12,11 +12,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Auth")
+@Tag(name = "인증")
 public interface EmailSwagger {
 
     @Operation(
-            summary = "email 인증 코드 발송",
+            summary = "이메일 인증 코드 발송",
             description = "이메일 중복 검사를 수행하고, 중복이 아니면 이메일로 6자리 인증번호를 발송합니다. 중복이면 409 에러를 반환합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "인증 코드 발송 성공"),
@@ -43,7 +43,7 @@ public interface EmailSwagger {
     })
     ApiResponse<Void> send(@Valid @RequestBody EmailSendRequest req);
 
-    @Operation(summary = "email 인증 코드 검증", description = "이메일과 인증번호가 일치하고 유효기간 내인지 확인합니다.")
+    @Operation(summary = "이메일 인증 코드 검증", description = "이메일과 인증번호가 일치하고 유효기간 내인지 확인합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "인증 코드 검증 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -60,7 +60,7 @@ public interface EmailSwagger {
     ApiResponse<EmailVerifyResponse> verify(@Valid @RequestBody EmailVerifyRequest req);
 
     @Operation(
-            summary = "bounce back 수동 등록",
+            summary = "반송 이메일 수동 등록",
             description = "Gmail에서 bounce back을 받은 이메일 주소를 수동으로 등록합니다. 등록된 이메일 주소로는 인증 코드가 발송되지 않습니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bounce back 등록 성공")

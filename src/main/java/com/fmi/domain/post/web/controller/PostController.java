@@ -40,7 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/posts")
-@Tag(name = "Post", description = "게시글 관련 API")
+@Tag(name = "게시글", description = "게시글을 작성하고 조회하며 지도에서 탐색합니다.")
 public class PostController {
 
     private final PostService postService;
@@ -51,7 +51,7 @@ public class PostController {
     private final PostTranslationService postTranslationService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "게시글 생성")
+    @Operation(summary = "게시글 작성", description = "회원이 분실 또는 발견 게시글을 작성합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -81,8 +81,8 @@ public class PostController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "게시글 리스트 검색/필터/정렬 (무한스크롤)", description = """
-                    주소 기반으로 게시글 목록을 조회합니다.
+    @Operation(summary = "게시글 목록 조회", description = """
+                    유형, 상태, 카테고리, 지역과 정렬 기준으로 게시글 목록을 커서 방식으로 조회합니다.
 
                     - 무한스크롤: 첫 요청은 cursor 없이 호출하고, 이후 응답의 nextCursor를 cursor로 넣어 다음 페이지를 요청합니다.
                     - size: 한 번에 가져올 개수 (기본 20)
@@ -328,7 +328,7 @@ public class PostController {
     }
 
     @DeleteMapping("/{postId}")
-    @Operation(summary = "게시글 삭제")
+    @Operation(summary = "게시글 삭제", description = "현재 회원이 작성한 게시글을 삭제합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시글 삭제 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -377,8 +377,8 @@ public class PostController {
     }
 
     @GetMapping("/{postId}/similar")
-    @Operation(summary = "비슷한 분실물/습득물 추천 목록 조회", description = """
-                    상세 조회 페이지 하단에 노출할 “비슷한 분실물/습득물” 추천 리스트를 조회합니다.
+    @Operation(summary = "유사 분실 및 발견 게시글 목록 조회", description = """
+                    기준 게시글과 반대 유형이면서 같은 카테고리와 지역에 속하고 분실 또는 발견 일자가 7일 이내인 게시글을 최대 5개 조회합니다.
 
                     기준
                     - 같은 카테고리 + 같은 지역(주소)
@@ -596,7 +596,7 @@ public class PostController {
     }
 
     @GetMapping("/{postId}/share")
-    @Operation(summary = "메타 데이터용 api")
+    @Operation(summary = "게시글 공유 메타데이터 조회", description = "게시글 공유와 OG 태그 표시에 필요한 제목, 내용 요약과 이미지를 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -619,7 +619,7 @@ public class PostController {
 
     @PutMapping("/{postId}/status")
     @Operation(summary = "게시글 상태 변경", description = """
-                    게시글의 상태를 변경합니다.
+                    회원이 본인 게시글의 상태를 찾아요(SEARCHING) 또는 찾았어요(FOUND)로 변경합니다.
 
                     - 본인 게시글만 변경 가능
                     - 인증 필요 (JWT)

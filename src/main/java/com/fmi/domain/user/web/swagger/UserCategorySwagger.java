@@ -12,10 +12,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "User", description = "사용자 카테고리 관리 API")
+@Tag(name = "회원", description = "회원 정보, 활동, 구독 카테고리와 즐겨찾기를 관리합니다.")
 public interface UserCategorySwagger {
 
-    @Operation(summary = "내 카테고리 목록", description = "로그인한 사용자가 구독 중인 게시글 카테고리를 조회합니다.")
+    @Operation(summary = "내 카테고리 목록", description = "현재 회원이 구독 중인 게시글 카테고리 목록을 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카테고리 목록 조회 성공")
     })

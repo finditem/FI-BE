@@ -37,7 +37,7 @@ public class NoticeResponseDTO {
     @Schema(description = "댓글수", example = "5")
     private Integer commentCount;
 
-    @Schema(description = "작성자", example = "관리자")
+    @Schema(description = "작성자", example = "운영진")
     private String authorName;
 
     @Schema(description = "썸네일 이미지 URL")

@@ -26,13 +26,13 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/notices")
 @RequiredArgsConstructor
-@Tag(name = "NoticeComment", description = "공지사항 댓글 API")
+@Tag(name = "댓글", description = "게시글과 공지사항의 댓글, 답글과 좋아요를 관리합니다.")
 public class NoticeCommentController {
 
     private final NoticeCommentService noticeCommentService;
 
     @PostMapping(value = "/{noticeId}/comments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "공지사항 댓글 생성", description = "인증된 사용자(관리자 포함)만 작성할 수 있습니다. 이미지 첨부 가능.")
+    @Operation(summary = "공지사항 댓글 작성", description = "인증된 회원과 운영진만 작성할 수 있습니다. parentId를 지정하면 해당 댓글에 대한 답글을 작성합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 생성 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -57,7 +57,7 @@ public class NoticeCommentController {
     }
 
     @GetMapping("/{noticeId}/comments")
-    @Operation(summary = "공지사항 댓글 조회 (커서 기반 무한스크롤)")
+    @Operation(summary = "공지사항 댓글 목록 조회", description = "공지사항에 직접 작성된 댓글 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -83,11 +83,11 @@ public class NoticeCommentController {
 
     @GetMapping("/comments/{commentId}/replies")
     @Operation(
-            summary = "공지사항 대댓글 조회 (페이지네이션)",
-            description = "특정 댓글의 대댓글 목록을 페이지네이션 방식으로 조회합니다. "
+            summary = "공지사항 답글 목록 조회",
+            description = "특정 공지사항 댓글 또는 답글에 작성된 답글 목록을 페이지네이션 방식으로 조회합니다. "
                     + "첫 요청은 page=0, '더보기' 클릭 시 nextPage 값을 page로 넣어 다음 페이지를 요청합니다.")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "대댓글 조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "답글 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "COMMENT404-NOT_FOUND: 존재하지 않는 댓글입니다",
@@ -134,7 +134,7 @@ public class NoticeCommentController {
     }
 
     @PostMapping("/comments/{commentId}/like")
-    @Operation(summary = "공지사항 댓글 추천 추가")
+    @Operation(summary = "공지사항 댓글 추천 추가", description = "현재 회원이 공지사항 댓글에 추천을 추가합니다.")
     public ResponseEntity<ApiResponse<Void>> addCommentLike(
             @PathVariable Long commentId, @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
@@ -145,7 +145,7 @@ public class NoticeCommentController {
     }
 
     @DeleteMapping("/comments/{commentId}/like")
-    @Operation(summary = "공지사항 댓글 추천 취소")
+    @Operation(summary = "공지사항 댓글 추천 취소", description = "현재 회원이 공지사항 댓글의 추천을 취소합니다.")
     public ResponseEntity<ApiResponse<Void>> removeCommentLike(
             @PathVariable Long commentId, @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
@@ -156,7 +156,7 @@ public class NoticeCommentController {
     }
 
     @DeleteMapping("/comments/{commentId}")
-    @Operation(summary = "공지사항 댓글 삭제", description = "작성자 또는 관리자(ROLE_ADMIN)만 삭제할 수 있습니다. 대댓글이 있으면 소프트 삭제됩니다.")
+    @Operation(summary = "공지사항 댓글 삭제", description = "작성자 또는 운영진(ROLE_ADMIN)만 삭제할 수 있습니다. 답글이 있으면 소프트 삭제됩니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 삭제 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

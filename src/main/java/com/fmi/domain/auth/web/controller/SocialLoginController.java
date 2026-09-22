@@ -16,6 +16,7 @@ import com.fmi.external.oauth.kakao.KakaoOAuthClient;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient.KakaoToken;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient.KakaoUser;
 import com.fmi.global.apiPayload.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,7 @@ public class SocialLoginController implements KakaoAuthSwagger {
     }
 
     @PostMapping("/auth/apple")
+    @Operation(summary = "Apple 로그인", description = "Apple 인증 코드로 로그인하거나 회원가입합니다.")
     public ResponseEntity<ApiResponse<LoginResponse>> loginWithApple(
             @Valid @RequestBody AppleLoginRequest request, HttpServletRequest httpServletRequest) {
         String subject = appleOAuthService.exchangeCodeForSubject(request.getCode(), request.getEnvironment());

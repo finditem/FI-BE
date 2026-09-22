@@ -14,10 +14,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "관리자 사용자 상세 응답")
+@Schema(description = "운영진 회원 상세 응답")
 public class AdminUserDetailResponse {
 
-    @Schema(description = "사용자 ID", example = "1")
+    @Schema(description = "회원 ID", example = "1")
     private Long userId;
 
     @Schema(description = "닉네임", example = "홍길동")

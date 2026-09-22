@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/s3")
-@Tag(name = "S3", description = "S3 테스트용 API")
+@Tag(name = "시스템", description = "서비스 상태와 파일 저장소 연동을 확인합니다.")
 public class S3Controller {
 
     private final S3Service s3Service;

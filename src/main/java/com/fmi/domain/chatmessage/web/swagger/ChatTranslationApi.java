@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.userdetails.UserDetails;
 
-@Tag(name = "ChatMessage")
+@Tag(name = "채팅", description = "채팅방, 메시지와 메시지 번역을 관리합니다.")
 public interface ChatTranslationApi {
 
     @Operation(summary = "채팅 메시지 번역", description = """

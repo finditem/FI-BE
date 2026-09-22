@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "관리자 탈퇴 사용자 응답")
+@Schema(description = "운영진 탈퇴 회원 응답")
 public class AdminDeletedUserResponse {
-    @Schema(description = "사용자 ID", example = "1")
+    @Schema(description = "회원 ID", example = "1")
     private Long userId;
 
     @Schema(description = "닉네임", example = "홍길동")

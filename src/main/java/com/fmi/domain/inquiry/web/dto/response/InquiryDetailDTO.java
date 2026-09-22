@@ -16,10 +16,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "문의 상세 응답")
 public class InquiryDetailDTO {
-    @Schema(description = "유저 닉네임", example = "홍길동")
+    @Schema(description = "회원 닉네임", example = "홍길동")
     private String nickname;
 
-    @Schema(description = "비회원 이메일", example = "guest@example.com")
+    @Schema(description = "게스트 이메일", example = "guest@example.com")
     private String email;
 
     @Schema(description = "문의 ID", example = "1")
@@ -31,7 +31,7 @@ public class InquiryDetailDTO {
     @Schema(description = "내용", example = "비밀번호를 변경하고 싶습니다.")
     private String content;
 
-    @Schema(description = "처리 상태", example = "ANSWERED")
+    @Schema(description = "문의 상태", example = "ANSWERED")
     private InquiryStatus status;
 
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")

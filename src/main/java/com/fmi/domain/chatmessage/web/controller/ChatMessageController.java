@@ -30,7 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @RequestMapping("/chats")
 @Slf4j
-@Tag(name = "ChatMessage", description = "채팅 메시지 관련 API")
+@Tag(name = "채팅", description = "채팅방, 메시지와 메시지 번역을 관리합니다.")
 public class ChatMessageController {
 
     private final ChatMessageService chatMessageService;
@@ -72,7 +72,7 @@ public class ChatMessageController {
         return ApiResponse.of(SuccessStatus._MESSAGE_IMAGE_SENT);
     }
 
-    @Operation(summary = "이전 채팅 내역 조회", description = "현재 채팅방의 이전 대화 내역을 커서 기반 페이지네이션으로 조회합니다.")
+    @Operation(summary = "채팅 메시지 목록 조회", description = "특정 채팅방의 메시지 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -98,9 +98,9 @@ public class ChatMessageController {
     }
 
     @Operation(
-            summary = "채팅방 메시지 읽음 처리",
-            description = "유저가 특정 채팅방에 입장할 때 호출하여 쌓인 메시지를 모두 읽음 처리합니다. \n"
-                    + "1. 해당 유저의 unreadCount를 0으로 갱신하고 lastReadMessageId를 최신으로 업데이트합니다. \n"
+            summary = "채팅방 내 메시지 전체 읽음 처리",
+            description = "특정 채팅방에 쌓인 현재 회원의 읽지 않은 메시지를 모두 읽음 처리합니다. \n"
+                    + "1. 현재 회원의 unreadCount를 0으로 갱신하고 lastReadMessageId를 최신으로 업데이트합니다. \n"
                     + "2. (WebSocket) 상대방에게는 '/queue/read-receipts'로 실시간 읽음 확인 이벤트를 전송합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
