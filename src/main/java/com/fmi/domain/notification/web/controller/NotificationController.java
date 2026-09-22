@@ -28,7 +28,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
-@Tag(name = "Notification", description = "알림 API")
+@Tag(name = "알림", description = "서비스 내 알림과 브라우저 알림 구독을 관리합니다.")
 public class NotificationController {
 
     private final NotificationService notificationService;
@@ -42,8 +42,8 @@ public class NotificationController {
      */
     @GetMapping(value = "/subscribe", produces = "text/event-stream")
     @Operation(
-            summary = "실시간 알림 구독 (SSE)",
-            description = "Server-Sent Events를 통해 실시간으로 알림을 수신합니다. " + "연결 시 미읽은 알림을 자동으로 전송합니다. "
+            summary = "실시간 알림 구독",
+            description = "SSE 연결을 통해 현재 회원의 실시간 알림을 수신합니다. " + "연결 시 미읽은 알림을 자동으로 전송합니다. "
                     + "연결이 끊기면 클라이언트에서 자동으로 재연결해야 합니다.")
     @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SSE 연결 성공")
     })
@@ -75,7 +75,7 @@ public class NotificationController {
             @RequestParam(required = false, defaultValue = "false") Boolean unreadOnly,
             @Parameter(
                             description =
-                                    "알림 타입 필터 (COMMENT, REPLY, MENTION, CHAT, CHAT_REMINDER, INQUIRY_REPLY, REPORT_RESULT, FAVORITE, CATEGORY, NOTICE, SYSTEM, LIKE)")
+                                    "알림 유형 필터 (COMMENT, CHAT, CHAT_REMINDER, INQUIRY_REPLY, REPORT_RESULT, FAVORITE, CATEGORY, NOTICE, SYSTEM)")
                     @RequestParam(required = false)
                     NotificationType notificationType,
             @RequestParam(required = false) Long cursor,
@@ -94,7 +94,7 @@ public class NotificationController {
      * GET /api/notifications/settings
      */
     @GetMapping("/settings")
-    @Operation(summary = "내 알림 설정 조회")
+    @Operation(summary = "내 알림 설정 조회", description = "현재 회원의 알림 유형별 수신 설정을 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 설정 조회 성공")
     })
@@ -133,7 +133,7 @@ public class NotificationController {
      * PUT /notification/read-batch
      */
     @PutMapping("/read-batch")
-    @Operation(summary = "알림 다건 읽음 처리")
+    @Operation(summary = "선택 알림 읽음 처리", description = "현재 회원이 선택한 알림을 읽음 상태로 변경합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 읽음 처리 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -162,7 +162,7 @@ public class NotificationController {
      * DELETE /notifications/all
      */
     @DeleteMapping("/all")
-    @Operation(summary = "알림 전체 삭제", description = "인증된 사용자의 모든 알림을 삭제합니다.")
+    @Operation(summary = "알림 전체 삭제", description = "현재 회원의 모든 알림을 삭제합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 전체 삭제 성공")
     })
@@ -179,7 +179,7 @@ public class NotificationController {
      * DELETE /notification/batch
      */
     @DeleteMapping("/batch")
-    @Operation(summary = "알림 다건 삭제")
+    @Operation(summary = "선택 알림 삭제", description = "현재 회원이 선택한 알림을 삭제합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 삭제 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

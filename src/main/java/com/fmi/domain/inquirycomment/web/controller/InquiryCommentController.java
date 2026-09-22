@@ -20,13 +20,13 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/inquiries/{inquiryId}/comments")
 @RequiredArgsConstructor
-@Tag(name = "InquiryComment", description = "문의 댓글 관련 API")
+@Tag(name = "문의", description = "회원과 게스트의 문의, 문의 댓글과 운영진 처리를 제공합니다.")
 public class InquiryCommentController {
 
     private final InquiryCommentService inquiryCommentService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "문의 댓글 작성", description = "문의 작성자 또는 관리자만 댓글 작성 가능. 이미지 첨부 가능.")
+    @Operation(summary = "문의 댓글 작성", description = "문의 작성자 또는 운영진이 회원 문의에 댓글을 작성합니다. 답글 허용 여부와 깊이는 정책 확정 후 반영합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 작성 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -50,7 +50,7 @@ public class InquiryCommentController {
     }
 
     @GetMapping
-    @Operation(summary = "문의 댓글 목록 조회 (커서 기반 무한스크롤)", description = "문의 작성자 또는 관리자만 조회 가능.")
+    @Operation(summary = "문의 댓글 목록 조회", description = "회원 문의의 댓글 목록을 커서 방식으로 조회합니다. 답글 조회 방식은 정책 확정 후 반영합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -71,7 +71,7 @@ public class InquiryCommentController {
     }
 
     @PutMapping(value = "/{commentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "문의 댓글 수정", description = "작성자만 수정할 수 있습니다. 이미지 첨부 가능.")
+    @Operation(summary = "문의 댓글 수정", description = "작성자가 회원 문의의 댓글을 수정합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 수정 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -93,7 +93,7 @@ public class InquiryCommentController {
     }
 
     @DeleteMapping("/{commentId}")
-    @Operation(summary = "문의 댓글 삭제", description = "작성자 또는 관리자(ROLE_ADMIN)만 삭제할 수 있습니다.")
+    @Operation(summary = "문의 댓글 삭제", description = "작성자 또는 운영진이 회원 문의의 댓글을 삭제합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 삭제 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

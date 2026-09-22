@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "Comment", description = "댓글 관련 API")
+@Tag(name = "댓글", description = "게시글과 공지사항의 댓글, 답글과 좋아요를 관리합니다.")
 public class CommentLikeController {
 
     private final CommentLikeService commentLikeService;

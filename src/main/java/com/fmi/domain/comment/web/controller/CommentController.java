@@ -27,18 +27,18 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/comments")
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "Comment", description = "댓글 관련 API")
+@Tag(name = "댓글", description = "게시글과 공지사항의 댓글, 답글과 좋아요를 관리합니다.")
 public class CommentController {
 
     private final CommentService commentService;
     private final CommentQueryService commentQueryService;
 
     @PostMapping(value = "/posts/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "댓글 생성", description = """
-                    게시글에 댓글/대댓글을 생성합니다.
+    @Operation(summary = "게시글 댓글 작성", description = """
+                    게시글에 댓글을 작성합니다. parentId를 지정하면 해당 댓글에 대한 답글을 작성합니다.
 
                     - parentId가 null이면 댓글(depth=0)
-                    - parentId가 있으면 대댓글(depth=1~2)
+                    - parentId가 있으면 답글(depth=1~3)
                     - 이미지 첨부 가능 (multipart/form-data)
                     """)
     @ApiResponses({
@@ -91,7 +91,7 @@ public class CommentController {
                 content = @Content),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
-                description = "COMMENT400_DEPTH-EXCEEDED: 대댓글은 3단계까지만 작성할 수 있습니다.",
+                description = "COMMENT400_DEPTH-EXCEEDED: 답글은 3단계까지만 작성할 수 있습니다.",
                 content = @Content),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "500",
@@ -110,14 +110,14 @@ public class CommentController {
     }
 
     @GetMapping("/posts/{postId}")
-    @Operation(summary = "게시글 댓글 조회 (페이지네이션 - 더보기)", description = """
+    @Operation(summary = "게시글 댓글 목록 조회", description = """
                     게시글에 달린 최상위 댓글(depth = 0)을 페이지네이션 방식으로 조회합니다.
 
                     - size는 서버에서 10개로 고정됩니다.
                     - 첫 요청은 page=0
                     - '댓글 더보기' 클릭 시 nextPage 값을 page로 넣어 다음 페이지를 요청합니다.
-                    - 차단한 유저/나를 차단한 유저의 댓글은 제외됩니다.
-                    - 대댓글은 별도 API로 조회합니다.
+                    - 차단한 회원 또는 나를 차단한 회원의 댓글은 제외됩니다.
+                    - 답글은 별도 API로 조회합니다.
 
                     예)
                     - 첫 요청: /comments/posts/{postId}?page=0
@@ -189,13 +189,13 @@ public class CommentController {
     }
 
     @GetMapping("/{commentId}/replies")
-    @Operation(summary = "댓글 대댓글 조회 (페이지네이션 - 더보기)", description = """
-                    특정 댓글(commentId)의 대댓글 목록을 페이지네이션 방식으로 조회합니다.
+    @Operation(summary = "답글 목록 조회", description = """
+                    특정 댓글 또는 답글에 작성된 답글 목록을 페이지네이션 방식으로 조회합니다.
 
                     - size는 서버에서 10개로 고정됩니다.
                     - 첫 요청은 page=0
-                    - '대댓글 더보기' 클릭 시 nextPage 값을 page로 넣어 다음 페이지를 요청합니다.
-                    - 차단한 유저/나를 차단한 유저의 댓글은 제외됩니다.
+                    - '답글 더보기' 클릭 시 nextPage 값을 page로 넣어 다음 페이지를 요청합니다.
+                    - 차단한 회원 또는 나를 차단한 회원의 댓글은 제외됩니다.
 
                     예)
                     - 첫 요청: /comments/{commentId}/replies?page=0
@@ -204,7 +204,7 @@ public class CommentController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
-                description = "대댓글 조회 성공",
+                description = "답글 조회 성공",
                 content =
                         @Content(
                                 mediaType = "application/json",
@@ -218,7 +218,7 @@ public class CommentController {
                                                 "comments": [
                                                   {
                                                     "id": 45,
-                                                    "content": "대댓글 내용입니다.",
+                                                    "content": "답글 내용입니다.",
                                                     "deleted": false,
                                                     "depth": 1,
                                                     "createdAt": "2024-01-01T00:00:00",
@@ -259,8 +259,8 @@ public class CommentController {
     }
 
     @PutMapping(value = "/{commentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "댓글 수정", description = """
-                    작성자만 댓글을 수정할 수 있습니다.
+    @Operation(summary = "게시글 댓글 수정", description = """
+                    작성자만 게시글의 댓글 또는 답글을 수정할 수 있습니다.
 
                     - 삭제된 댓글은 수정할 수 없습니다.
                     - 이미지 추가/삭제를 지원합니다.
@@ -339,8 +339,8 @@ public class CommentController {
     }
 
     @DeleteMapping("/{commentId}")
-    @Operation(summary = "댓글 삭제", description = """
-                    댓글을 삭제합니다. (Soft Delete)
+    @Operation(summary = "게시글 댓글 삭제", description = """
+                    게시글의 댓글 또는 답글을 삭제합니다. (Soft Delete)
 
                     - 작성자만 삭제할 수 있습니다.
                     - 삭제된 댓글은 deleted=true 처리되며, content는 '삭제된 댓글입니다.'로 변경됩니다.
