@@ -89,6 +89,7 @@ cors:
   allowed-origin-patterns:
     - "https://finditem.kr"
     - "https://www.finditem.kr"
+    - "https://a.finditem.kr"
 
 jwt:
   secret: ${JWT_SECRET}
