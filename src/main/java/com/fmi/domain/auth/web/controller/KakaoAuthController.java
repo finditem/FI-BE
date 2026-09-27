@@ -2,6 +2,7 @@ package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.auth.data.IssuedTokens;
+import com.fmi.domain.auth.data.SocialLoginCommand;
 import com.fmi.domain.auth.service.SocialLoginService;
 import com.fmi.domain.auth.service.TokenService;
 import com.fmi.domain.auth.web.dto.KakaoLoginRequest;
@@ -38,7 +39,6 @@ public class KakaoAuthController implements KakaoAuthSwagger {
         String kakaoAccessToken = token.getAccess_token();
 
         KakaoUser user = kakaoOAuthService.getUserInfo(kakaoAccessToken);
-        String email = user.getKakao_account() != null ? user.getKakao_account().getEmail() : null;
         String nickname = null;
         String profile = null;
         if (user.getKakao_account() != null && user.getKakao_account().getProfile() != null) {
@@ -50,8 +50,9 @@ public class KakaoAuthController implements KakaoAuthSwagger {
             profile = profile != null ? profile : user.getProperties().getProfile_image();
         }
 
-        var result = socialLoginService.upsertUserFromKakao(user.getId(), email, nickname, profile);
-        var localUser = result.user();
+        String providerId = String.valueOf(user.getId());
+        SocialLoginCommand command = new SocialLoginCommand(Provider.KAKAO, providerId, nickname, profile);
+        var localUser = socialLoginService.login(command);
         boolean termsAgreed = localUser.isPrivacyPolicyAgreed() && localUser.isTermsOfServiceAgreed();
 
         IssuedTokens issuedTokens = tokenService.issue(localUser, false, Provider.KAKAO);

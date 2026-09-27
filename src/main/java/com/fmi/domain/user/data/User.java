@@ -194,4 +194,30 @@ public class User {
         withdrawalReason = null;
         withdrawalOtherReason = null;
     }
+
+    public void reactivateForSignup(
+            String encodedPassword,
+            String nickname,
+            Role role,
+            boolean privacyPolicyAgreed,
+            boolean termsOfServiceAgreed,
+            boolean contentPolicyAgreed,
+            boolean marketingConsent) {
+        deletedAt = null;
+        password = encodedPassword;
+        originalPassword = null;
+        temporaryPassword = null;
+        temporaryPasswordExpiresAt = null;
+        this.nickname = nickname;
+        this.role = role;
+        email_verified = true;
+        profile_img = "";
+        preferredLanguage = LanguageCode.KO;
+        this.privacyPolicyAgreed = privacyPolicyAgreed;
+        this.termsOfServiceAgreed = termsOfServiceAgreed;
+        this.contentPolicyAgreed = contentPolicyAgreed;
+        this.marketingConsent = marketingConsent;
+        withdrawalReason = null;
+        withdrawalOtherReason = null;
+    }
 }

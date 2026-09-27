@@ -11,14 +11,12 @@ import org.springframework.stereotype.Component;
 public class AuthConverter {
 
     public static User toSocialUserEntity(
-            Long providerId, String email, String nickname, String profileImageUrl, String encodedPassword) {
-        String effectiveEmail = (email != null && !email.isBlank()) ? email : ("kakao_" + providerId + "@kakao.local");
-
+            String email, String nickname, String profileImageUrl, String encodedPassword) {
         return User.builder()
-                .email(effectiveEmail)
+                .email(email)
                 .password(encodedPassword)
-                .nickname(nickname != null ? nickname : ("kakao_" + providerId))
-                .profile_img(profileImageUrl != null ? profileImageUrl : "")
+                .nickname(nickname)
+                .profile_img(profileImageUrl)
                 .role(Role.USER)
                 .email_verified(true)
                 .privacyPolicyAgreed(false)

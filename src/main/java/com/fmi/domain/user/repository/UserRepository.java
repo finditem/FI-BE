@@ -15,6 +15,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.email = :email AND u.deletedAt IS NULL")
     Optional<User> findByEmail(@Param("email") String email);
 
+    @Query("SELECT u FROM User u WHERE u.email = :email")
+    Optional<User> findByEmailIncludingDeleted(@Param("email") String email);
+
     @Query(
             "SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.email = :email AND u.deletedAt IS NULL")
     boolean existsByEmail(@Param("email") String email);
@@ -22,11 +25,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(
             "SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.nickname = :nickname AND u.deletedAt IS NULL")
     boolean existsByNickname(@Param("nickname") String nickname);
-
-    // 일주일(7일) 이내 탈퇴한 이메일 체크 (재가입 방지용)
-    @Query(
-            "SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.email = :email AND u.deletedAt IS NOT NULL AND u.deletedAt >= :oneWeekAgo")
-    boolean existsRecentlyDeletedByEmail(@Param("email") String email, @Param("oneWeekAgo") LocalDateTime oneWeekAgo);
 
     // 30일 이상 된 삭제된 사용자 조회 (하드 삭제 스케줄러용)
     @Query("SELECT u FROM User u WHERE u.deletedAt IS NOT NULL AND u.deletedAt < :thirtyDaysAgo")

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fmi.domain.Enum.LanguageCode;
+import com.fmi.domain.Enum.Role;
 import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -325,6 +326,49 @@ class UserTest {
             assertThat(user.getWithdrawalReason()).isNull();
             assertThat(user.getWithdrawalOtherReason()).isNull();
             assertThat(user.getUpdatedAt()).isEqualTo(lastUpdatedAt);
+        }
+    }
+
+    @Nested
+    @DisplayName("일반 회원가입 재가입")
+    class ReactivateForSignup {
+
+        @Test
+        @DisplayName("새 가입 정보로 탈퇴 상태와 인증 정보를 초기화한다")
+        void reactivatesAccount() {
+            // given
+            User user = User.builder()
+                    .deletedAt(LocalDateTime.of(2026, 8, 1, 12, 0))
+                    .password("old-password")
+                    .originalPassword("original-password")
+                    .temporaryPassword("temporary-password")
+                    .temporaryPasswordExpiresAt(LocalDateTime.of(2026, 8, 2, 12, 0))
+                    .profile_img("https://example.com/profile.png")
+                    .withdrawalReason("NOT_USING")
+                    .withdrawalOtherReason("직접 입력한 사유")
+                    .build();
+
+            // when
+            user.reactivateForSignup("new-password", "새토끼", Role.USER, true, true, false, true);
+
+            // then
+            assertThat(user)
+                    .extracting(
+                            User::getDeletedAt,
+                            User::getPassword,
+                            User::getOriginalPassword,
+                            User::getTemporaryPassword,
+                            User::getTemporaryPasswordExpiresAt,
+                            User::getNickname,
+                            User::getProfile_img,
+                            User::getWithdrawalReason,
+                            User::getWithdrawalOtherReason)
+                    .containsExactly(null, "new-password", null, null, null, "새토끼", "", null, null);
+            assertThat(user.isEmail_verified()).isTrue();
+            assertThat(user.isPrivacyPolicyAgreed()).isTrue();
+            assertThat(user.isTermsOfServiceAgreed()).isTrue();
+            assertThat(user.isContentPolicyAgreed()).isFalse();
+            assertThat(user.isMarketingConsent()).isTrue();
         }
     }
 }
