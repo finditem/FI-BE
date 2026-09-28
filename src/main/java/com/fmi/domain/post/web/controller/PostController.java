@@ -40,7 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/posts")
-@Tag(name = "게시글", description = "게시글을 작성하고 조회하며 지도에서 탐색합니다.")
+@Tag(name = "게시글", description = "게시글 작성, 조회와 지도 탐색, 댓글과 좋아요를 제공합니다.")
 public class PostController {
 
     private final PostService postService;
