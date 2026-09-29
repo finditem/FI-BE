@@ -81,7 +81,6 @@ public class PostService {
         PostStatus previousStatus = post.getPostStatus();
 
         post.update(
-                request.postType(),
                 request.title(),
                 request.postStatus(),
                 request.date(),

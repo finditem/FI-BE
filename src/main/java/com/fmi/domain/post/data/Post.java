@@ -173,7 +173,6 @@ public class Post {
     }
 
     public void update(
-            PostType postType,
             String title,
             PostStatus postStatus,
             LocalDateTime date,
@@ -185,7 +184,6 @@ public class Post {
             Radius radius,
             Category category) {
 
-        applyIfNotNull(postType, this::setPostType);
         applyIfNotNull(title, this::setTitle);
         applyIfNotNull(postStatus, this::setPostStatus);
         applyIfNotNull(date, this::setDate);
