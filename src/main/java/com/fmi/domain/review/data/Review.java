@@ -40,7 +40,7 @@ public class Review extends BaseEntity {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "find_completion_id", nullable = false, updatable = false, unique = true)
+    @JoinColumn(name = "find_completion_id", nullable = false, updatable = false)
     private FindCompletion findCompletion;
 
     @ManyToOne(fetch = FetchType.LAZY)
