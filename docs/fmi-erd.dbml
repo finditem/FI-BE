@@ -143,6 +143,53 @@ Table chat_room_participant {
   user_id bigint
 }
 
+Table find_completion {
+  id bigint [pk, increment]
+  source_post_id bigint [not null, unique, note: '삭제된 게시글에도 유지되는 원본 게시글 ID']
+  chat_room_id bigint [note: '원본 채팅방 삭제 시 NULL']
+  requester_id bigint [note: '회원 물리 삭제 시 NULL']
+  helper_id bigint [note: '회원 물리 삭제 시 NULL']
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  entity_status varchar(20) [not null, default: 'ACTIVE']
+  deleted_at datetime
+
+  indexes {
+    chat_room_id [name: 'idx_find_completion_chat_room']
+    helper_id [name: 'idx_find_completion_helper']
+    requester_id [name: 'idx_find_completion_requester']
+  }
+}
+
+Table review {
+  id bigint [pk, increment]
+  find_completion_id bigint [not null, unique]
+  author_id bigint [note: '작성자 물리 삭제 시 NULL']
+  recipient_id bigint [note: '수신자 물리 삭제 시 NULL']
+  emotion varchar(30) [not null, note: 'MOVED, GRATEFUL, HEART_FLUTTERED']
+  content varchar(300)
+  hidden_by_recipient boolean [not null, default: false, note: '수신자의 받은 후기 목록에서 숨김; 복구 기능 없음']
+  revised_at datetime [note: '작성자가 후기 내용을 수정한 시각; 수정 전 NULL']
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  entity_status varchar(20) [not null, default: 'ACTIVE']
+  deleted_at datetime
+
+  indexes {
+    (author_id, created_at, id) [name: 'idx_review_author_created']
+    (recipient_id, hidden_by_recipient, created_at, id) [name: 'idx_review_recipient_hidden_created']
+  }
+}
+
+Table review_help_type {
+  review_id bigint [not null]
+  help_type varchar(40) [not null, note: 'KIND_AND_WARM, TRUSTWORTHY_COMMUNICATION, QUICK_RESPONSE, SAFE_STORAGE, USEFUL_INFORMATION']
+
+  indexes {
+    (review_id, help_type) [pk]
+  }
+}
+
 Table message_image {
   id bigint [pk, increment]
   image_url varchar(1000) [not null]
@@ -367,6 +414,14 @@ Ref: chat_room_participant.last_message_id > chat_message.id
 Ref: chat_room_participant.user_id > users.id
 Ref: message_image.chat_message_id > chat_message.id
 
+Ref: find_completion.chat_room_id > chat_room.id [delete: set null]
+Ref: find_completion.requester_id > users.id [delete: set null]
+Ref: find_completion.helper_id > users.id [delete: set null]
+Ref: review.find_completion_id > find_completion.id
+Ref: review.author_id > users.id [delete: set null]
+Ref: review.recipient_id > users.id [delete: set null]
+Ref: review_help_type.review_id > review.id [delete: cascade]
+
 Ref: customer_inquiry.user_id > users.id
 Ref: inquiry_image.inquiry_id > customer_inquiry.id
 Ref: inquiry_comment.inquiry_id > customer_inquiry.id
@@ -422,6 +477,12 @@ TableGroup chat {
   chat_message
   chat_room_participant
   message_image
+}
+
+TableGroup find_review {
+  find_completion
+  review
+  review_help_type
 }
 
 TableGroup notice {
