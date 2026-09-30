@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
-@Tag(name = "장소", description = "장소 탐색, 장소 좋아요와 운영진 장소 관리를 제공합니다.")
+@Tag(name = "Place", description = "장소 탐색, 장소 좋아요와 운영진 장소 관리를 제공합니다.")
 public interface AdminPlaceSwagger {
 
     @Operation(summary = "운영진 장소 등록", description = "운영진이 장소를 등록합니다.")

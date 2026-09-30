@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/push")
 @RequiredArgsConstructor
-@Tag(name = "알림", description = "서비스 내 알림과 브라우저 알림 구독을 관리합니다.")
+@Tag(name = "Notification", description = "서비스 내 알림과 브라우저 알림 구독을 관리합니다.")
 public class PushSubscriptionController {
 
     private final PushSubscriptionRepository pushSubscriptionRepository;

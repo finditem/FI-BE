@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/reports")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
-@Tag(name = "신고", description = "회원 신고 접수와 운영진 신고 처리를 제공합니다.")
+@Tag(name = "Report", description = "회원 신고 접수와 운영진 신고 처리를 제공합니다.")
 public class ReportController {
 
     private final ReportService reportService;

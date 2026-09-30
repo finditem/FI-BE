@@ -18,7 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@Tag(name = "장소", description = "장소 탐색, 장소 좋아요와 운영진 장소 관리를 제공합니다.")
+@Tag(name = "Place", description = "장소 탐색, 장소 좋아요와 운영진 장소 관리를 제공합니다.")
 public interface MainPlaceSwagger {
 
     @Operation(summary = "지도 범위 내 장소 목록 조회", description = "현재 지도 범위 안의 장소 마커와 장소 목록을 함께 조회합니다.")

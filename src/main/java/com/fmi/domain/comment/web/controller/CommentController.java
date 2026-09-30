@@ -27,7 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/comments")
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "게시글", description = "게시글 작성, 조회와 지도 탐색, 댓글과 좋아요를 제공합니다.")
+@Tag(name = "Post", description = "게시글 작성, 조회와 지도 탐색, 댓글과 좋아요를 제공합니다.")
 public class CommentController {
 
     private final CommentService commentService;

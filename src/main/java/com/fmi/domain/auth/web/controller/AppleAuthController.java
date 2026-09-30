@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth/apple")
 @RequiredArgsConstructor
-@Tag(name = "인증", description = "회원가입, 로그인, 이메일 인증, 소셜 로그인과 비밀번호 관리를 제공합니다.")
+@Tag(name = "Auth", description = "회원가입, 로그인, 이메일 인증, 소셜 로그인과 비밀번호 관리를 제공합니다.")
 public class AppleAuthController {
 
     private final AppleOAuthClient appleOAuthService;

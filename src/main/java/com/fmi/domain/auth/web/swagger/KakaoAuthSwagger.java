@@ -13,7 +13,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "인증")
+@Tag(name = "Auth")
 public interface KakaoAuthSwagger {
 
     @Operation(summary = "카카오 로그인", description = """

@@ -12,7 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = "장소", description = "장소 탐색, 장소 좋아요와 운영진 장소 관리를 제공합니다.")
+@Tag(name = "Place", description = "장소 탐색, 장소 좋아요와 운영진 장소 관리를 제공합니다.")
 public interface PlaceSwagger {
 
     @Operation(summary = "장소 목록 조회", description = "지도 카테고리를 선택하지 않은 화면에 노출할 최신 장소를 최대 5개 조회합니다.")

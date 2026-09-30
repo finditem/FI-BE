@@ -122,7 +122,7 @@ public class AuthController implements AuthSwagger {
     @Operation(
             summary = "현재 비밀번호 확인",
             description = "현재 회원의 비밀번호가 일치하는지 확인합니다.",
-            tags = {"인증"})
+            tags = {"Auth"})
     public ApiResponse<Void> verifyPassword(
             @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody PasswordVerifyRequest request) {
         passwordService.verify(userDetails.getUsername(), request);
@@ -133,7 +133,7 @@ public class AuthController implements AuthSwagger {
     @Operation(
             summary = "비밀번호 변경",
             description = "현재 회원의 비밀번호를 새 비밀번호로 변경합니다.",
-            tags = {"인증"})
+            tags = {"Auth"})
     public ApiResponse<Void> changePassword(
             @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody PasswordChangeRequest request) {
         passwordService.change(userDetails.getUsername(), request.getNewPassword(), request.getNewPasswordConfirm());
@@ -144,7 +144,7 @@ public class AuthController implements AuthSwagger {
     @Operation(
             summary = "회원 탈퇴",
             description = "현재 회원의 계정과 서비스 이용 정보를 탈퇴 처리합니다.",
-            tags = {"인증"})
+            tags = {"Auth"})
     public ResponseEntity<ApiResponse<Void>> deleteAccount(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody AccountDeleteRequest request,

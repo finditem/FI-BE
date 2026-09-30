@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@Tag(name = "시스템", description = "서비스 상태와 파일 저장소 연동을 확인합니다.")
+@Tag(name = "System", description = "서비스 상태와 파일 저장소 연동을 확인합니다.")
 public class HealthController {
 
     @GetMapping("/health")

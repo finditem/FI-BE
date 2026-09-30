@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/reports")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
-@Tag(name = "차단", description = "회원 사이의 차단 관계를 관리합니다.")
+@Tag(name = "Block", description = "회원 사이의 차단 관계를 관리합니다.")
 public class BlockController {
 
     private final BlockService blockService;
