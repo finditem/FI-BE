@@ -37,4 +37,4 @@ Post Controller의 HTTP 요청
 
 요청 형식은 `web`의 Bean Validation으로, 업무 조건은 `service/internal`의 Validator로, 상태 변화는 `data` 객체의 의미 있는 메서드로 표현한다. 이 역할 구분은 [Domain Boundaries](../architecture/domain-boundaries.md)가 소유한다. 목록과 집계 조회에는 [Persistence](../architecture/persistence.md)의 QueryDSL 기준을 적용한다.
 
-MySQL, transaction 또는 외부 연동 결과가 중요하다면 [Testing](testing.md)의 실제 통합 테스트를 작성한다. HTTP 계약이 바뀌면 현재 SpringDoc 설정과 해당 DTO를 확인한다. 커밋 전에는 [Contributing Overview](overview.md)의 순서를 따른다.
+MySQL, transaction 또는 외부 연동 결과가 중요하다면 [Testing](testing.md)의 실제 통합 테스트를 작성한다. HTTP 계약이 바뀌면 [API 설계 기준](api-pattern.md), [OpenAPI 작성 가이드](openapi-guide.md), DOCS의 관련 API 스펙과 해당 DTO를 확인한다. 커밋 전에는 [Contributing Overview](overview.md)의 순서를 따른다.

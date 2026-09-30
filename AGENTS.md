@@ -29,6 +29,7 @@ FI-BE/
 | 구조 설계와 코드 리뷰 | [Decision Guide](docs/architecture/decision-guide.md), [Domain Boundaries](docs/architecture/domain-boundaries.md) |
 | DB와 migration | [Persistence](docs/architecture/persistence.md), [Testing](docs/contributing/testing.md) |
 | 기능 추가 | [Adding Feature](docs/contributing/adding-feature.md), [Error Handling](docs/contributing/error-handling.md) |
+| API 설계와 Swagger | [API Pattern](docs/contributing/api-pattern.md), [OpenAPI Guide](docs/contributing/openapi-guide.md) |
 | 버그 수정 | [Fixing Bugs](docs/contributing/fixing-bugs.md), [Testing](docs/contributing/testing.md) |
 | 리팩터링 | [Refactoring](docs/contributing/refactoring.md), [Code Style](docs/contributing/code-style.md) |
 | Java 코드 또는 설정 | [Contributing Overview](docs/contributing/overview.md), [Code Style](docs/contributing/code-style.md), 필요하면 [Configuration](docs/contributing/configuration.md) |
@@ -73,7 +74,7 @@ Gradle은 Java 17로 실행한다. SDKMAN을 사용할 수 있으면 설치된 J
 
 ```bash
 ./gradlew spotlessApply  # 커밋 전 항상 실행하고 적용된 변경을 검토
-./gradlew test           # 변경과 관련된 테스트 검증
+./gradlew test           # 전체 테스트 검증
 ./gradlew spotlessCheck  # CI 또는 별도 형식 검사가 필요할 때 실행
 ```
 

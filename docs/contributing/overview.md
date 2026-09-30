@@ -5,6 +5,7 @@
 | 작업 | 문서 | 함께 읽을 기준 |
 | --- | --- | --- |
 | 기능 추가 | [Adding Feature](adding-feature.md) | [Decision Guide](../architecture/decision-guide.md), [Persistence](../architecture/persistence.md) |
+| API 설계와 Swagger | [API Pattern](api-pattern.md), [OpenAPI Guide](openapi-guide.md) | DOCS의 API 스펙과 공통 API 스펙 |
 | 버그 수정 | [Fixing Bugs](fixing-bugs.md) | [Testing](testing.md), [Error Handling](error-handling.md) |
 | 리팩터링 | [Refactoring](refactoring.md) | [Domain Boundaries](../architecture/domain-boundaries.md), [Code Style](code-style.md) |
 | Java와 테스트 | [Code Style](code-style.md), [Testing](testing.md) | 변경된 경계의 기존 코드 |
