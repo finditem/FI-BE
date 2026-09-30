@@ -1,31 +1,55 @@
-# API 설계 기준
+# API 설계 예시
 
-이 문서는 FI-BE에서 HTTP API를 추가하거나 변경할 때 확인할 설계 기준을 정리한다. 클라이언트 계약의 상세 형식은 DOCS의 [API 스펙 문서 가이드](https://github.com/finditem/DOCS/blob/main/guide/API%20%EC%8A%A4%ED%8E%99%20%EB%AC%B8%EC%84%9C%20%EA%B0%80%EC%9D%B4%EB%93%9C.md)와 [공통 API 스펙](https://github.com/finditem/DOCS/blob/main/00-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8/%EC%B0%BE%EC%95%84%EC%A4%98%21%20-%20%EC%9A%B4%EC%98%81%20%282%EC%B0%A8%20MVP%29/API%20%EC%8A%A4%ED%8E%99/%EA%B3%B5%ED%86%B5%20API%20%EC%8A%A4%ED%8E%99.md)이 소유한다. Swagger 작성 방법은 [OpenAPI 작성 가이드](openapi-guide.md)를 따른다. 기존 API가 공통 기준과 다르면 현재 동작과 변경하려는 계약을 구분한다.
+새 HTTP API를 설계할 때 요청과 응답을 먼저 아래 형식으로 적는다. 예시는 현재 [`PostController`](../../src/main/java/com/fmi/domain/post/web/controller/PostController.java)의 게시글 필터 검색을 바탕으로 한다. 클라이언트 계약의 공통 기준은 DOCS의 [공통 API 스펙](https://github.com/finditem/DOCS/blob/main/00-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8/%EC%B0%BE%EC%95%84%EC%A4%98%21%20-%20%EC%9A%B4%EC%98%81%20%282%EC%B0%A8%20MVP%29/API%20%EC%8A%A4%ED%8E%99/%EA%B3%B5%ED%86%B5%20API%20%EC%8A%A4%ED%8E%99.md)을 따른다.
 
-## 자원과 경로
+## 게시글 목록 조회 예시
 
-업무 자원과 호출 결과를 먼저 정의한 뒤 경로와 HTTP 메서드를 정한다. 조회, 생성, 수정과 삭제의 기존 사례를 확인하고, 해당 API의 요청과 반복 호출 결과에 맞는 메서드를 선택한다. `PUT`과 `PATCH`의 선택처럼 기존 문서에 확정 기준이 없는 사항은 일반 관례만으로 팀 규칙을 만들지 않는다. 하위 자원과 특정 동작을 표현할 때는 기존 도메인의 경로 관례와 클라이언트 사용처를 확인한다. 새 경로를 위해 배포된 경로를 묵시적으로 바꾸지 않는다.
+| 항목 | 설계 내용 |
+| --- | --- |
+| 기능 | 조건에 맞는 게시글 목록을 커서 방식으로 조회 |
+| 요청 | `GET /posts/search` |
+| Swagger 태그 | `Post` |
+| 인증 | 선택 인증. 로그인하지 않아도 조회 가능하며, 로그인하면 사용자별 정보를 반영 |
+| 주요 입력 | `postType`, `postStatus`, `category`, `address`, `sortType`, `cursor`, `size` |
+| 성공 | HTTP `200 OK`, `ApiResponse<PostPageResponse>` |
+| 오류 | 현재 Swagger에는 `400`, `401`이 기재되어 있다. 발생 조건과 응답 코드는 구현을 확인해 개별 API 스펙에 적는다. |
 
-경로에는 자원을 드러내는 이름을 사용하고, 요청자가 누구인지와 운영진 권한이 필요한지 구분한다. 동일한 자원에 대한 API는 가능한 한 같은 경로 계열과 Swagger 태그에 둔다. 태그 변경은 프론트엔드의 API 요청 파일 구조에 영향을 주므로 [OpenAPI 작성 가이드](openapi-guide.md#분류와-이름)의 확인 절차를 따른다.
+```text
+첫 요청: GET /posts/search?address=서울&sortType=LATEST&size=20
+다음 요청: GET /posts/search?address=서울&sortType=LATEST&cursor=98&size=20
+```
 
-## 요청과 인증
+결과가 없을 때 응답의 핵심 구조는 다음과 같다. `postList`와 `postCount`는 기존 [`PostPageResponse`](../../src/main/java/com/fmi/domain/post/web/dto/response/PostPageResponse.java)의 필드다. 새 목록 API의 공통 필드명으로 복사하지 않는다.
 
-요청값의 존재 여부와 일반적인 형식은 `web`의 Bean Validation에서 검증한다. 권한, 상태와 업무 조건은 [도메인 경계](../architecture/domain-boundaries.md#요청값-검증)에 따라 판단한다. 인증 없음, 선택 인증, 로그인, 운영진 권한 중 어떤 조건인지 API 스펙에 명시한다. 쿠키와 Bearer 헤더의 지원 범위 및 우선순위는 DOCS 공통 API 스펙을 따른다.
+```json
+{
+  "isSuccess": true,
+  "code": "COMMON200",
+  "message": "성공입니다.",
+  "result": {
+    "postList": [],
+    "postCount": 0,
+    "nextCursor": null,
+    "hasNext": false
+  }
+}
+```
 
-## 응답과 오류
+다음 페이지가 있으면 응답의 `nextCursor`를 다음 요청에 전달한다. 마지막 페이지에는 `hasNext=false`, `nextCursor=null`을 사용한다. 현재 조회 흐름은 [`PostQueryService`](../../src/main/java/com/fmi/domain/post/service/PostQueryService.java)와 [`PostRepositoryImpl`](../../src/main/java/com/fmi/domain/post/repository/PostRepositoryImpl.java)에서 확인한다.
 
-새 API의 성공 응답은 공통 `ApiResponse<T>` 계약과 HTTP `200 OK`, `COMMON200`을 기본으로 한다. 반환할 데이터가 없으면 `result`를 생략한다. 생성이나 삭제라는 이유만으로 `201` 또는 `204`를 선택하지 않는다. 현재 구현의 예외와 채팅 API의 기존 성공 코드는 DOCS 공통 API 스펙에 기록된 계약을 유지한다.
+## 새 API 설계에 사용할 틀
 
-예를 들어 DOCS 공통 API 스펙은 `POST /admin/places`의 현재 `201 Created`와 `PUT /posts/{postId}/radius`의 현재 `204 No Content`를 구현 예외로 기록한다. 새 API의 기본값을 정할 때 이 사례를 공통 규칙으로 일반화하지 않는다.
+```text
+기능과 결과:
+Method와 Path:
+Swagger 태그:
+인증: 없음 / 선택 인증 / 로그인 / 운영진
+요청: 위치, 필드, 필수 여부, 허용 값
+성공: HTTP 상태, 응답 코드, JSON 필드, 빈 결과
+오류: 발생 조건, HTTP 상태, 응답 코드
+목록이면: 정렬, 첫 요청, 다음 커서, 마지막 페이지
+반복 요청이면: 같은 요청의 두 번째 결과
+근거: 정책서, DOCS API 스펙, 현재 Controller와 DTO
+```
 
-오류의 HTTP 상태는 실패 원인에 맞게 선택한다. 응답 코드에는 공통 또는 도메인 오류 코드를 사용하고, 코드 안의 HTTP 숫자는 실제 HTTP 상태와 일치시킨다. 이미 배포된 코드와 응답 형식을 바꾸기 전에는 클라이언트 사용 여부와 전환 방법을 확인한다. 개별 API 스펙에는 실제로 발생할 수 있는 오류 조건만 적는다.
-
-## 데이터와 목록
-
-JSON 필드는 `camelCase`, Enum 값은 원칙적으로 `UPPER_SNAKE_CASE`를 사용한다. 날짜, 일시와 단위는 DOCS 공통 API 스펙의 표현 기준을 확인한다. 결과가 없는 목록은 빈 배열로 반환한다.
-
-무한 스크롤은 커서 방식이 기본이다. 첫 요청에서는 커서를 생략하고, 다음 요청에서는 응답의 다음 커서를 전달한다. 마지막 페이지에는 `hasNext=false`와 `nextCursor=null`을 반환한다. 정렬 키가 여러 개면 복합 커서의 필드, 동점 처리와 일부 필드 누락 시 오류를 개별 스펙에 정의한다. 기존 목록 응답 모델의 다른 필드명은 변경 전 클라이언트 영향을 확인한다.
-
-## 설계와 변경 확인
-
-API를 추가할 때는 입력, 성공과 실패 결과, 인증, 읽고 쓰는 데이터, 외부 효과와 재시도 결과를 [기능 추가](adding-feature.md)에 따라 먼저 정리한다. 같은 요청을 반복했을 때의 결과가 중요하면 멱등성도 개별 API 스펙에 적는다. 정책, DOCS API 스펙, 실제 Controller와 DTO가 다르면 차이를 드러내고 계약을 확정한 뒤 구현, 테스트와 Swagger를 함께 맞춘다.
+공통 응답, 오류 코드, 데이터 표현과 커서 기준은 DOCS의 공통 API 스펙을 연결하고 중복 정의하지 않는다. 현재 구현과 새 계약이 다르면 차이를 적고 합의한 뒤 코드, 테스트, DOCS API 스펙과 [Swagger 설명](openapi-guide.md)을 함께 바꾼다. Swagger 태그 변경은 프론트엔드의 API 요청 파일 구조에 영향을 주므로 [분류 변경 절차](openapi-guide.md#분류와-이름)를 먼저 따른다.
