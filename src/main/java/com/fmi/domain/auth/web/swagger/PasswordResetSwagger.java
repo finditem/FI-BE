@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "인증")
+@Tag(name = "Auth")
 public interface PasswordResetSwagger {
 
     @Operation(summary = "임시 비밀번호 발급", description = """

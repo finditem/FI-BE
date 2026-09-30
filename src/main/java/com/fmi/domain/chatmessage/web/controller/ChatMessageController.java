@@ -30,7 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @RequestMapping("/chats")
 @Slf4j
-@Tag(name = "채팅", description = "채팅방, 메시지와 메시지 번역을 관리합니다.")
+@Tag(name = "Chat", description = "채팅방, 메시지와 메시지 번역을 관리합니다.")
 public class ChatMessageController {
 
     private final ChatMessageService chatMessageService;

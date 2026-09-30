@@ -31,7 +31,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-@Tag(name = "회원", description = "회원 정보, 활동, 구독 카테고리와 즐겨찾기를 관리합니다.")
+@Tag(name = "User", description = "회원 정보, 활동, 구독 카테고리와 즐겨찾기를 관리합니다.")
 public interface UserSwagger {
 
     @Operation(summary = "이미지 업로드", description = "여러 장의 이미지를 S3에 업로드하고 URL을 반환합니다. (JPEG, PNG 형식만 지원)")

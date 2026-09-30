@@ -66,7 +66,7 @@ public class AdminController {
 
     @GetMapping("/guest-inquiries/{inquiryId}")
     @Operation(
-            tags = {"문의"},
+            tags = {"Inquiry"},
             summary = "운영진 게스트 문의 상세 조회",
             description = "운영진이 게스트가 작성한 문의의 상세 정보를 조회합니다.")
     @ApiResponses({
@@ -89,7 +89,7 @@ public class AdminController {
 
     @GetMapping("/guest-inquiries")
     @Operation(
-            tags = {"문의"},
+            tags = {"Inquiry"},
             summary = "운영진 게스트 문의 목록 조회",
             description = """
             운영진이 게스트가 작성한 문의 목록을 커서 방식으로 조회합니다.
@@ -114,7 +114,7 @@ public class AdminController {
 
     @GetMapping("/inquiries")
     @Operation(
-            tags = {"문의"},
+            tags = {"Inquiry"},
             summary = "운영진 회원 문의 목록 조회",
             description = "운영진이 회원이 작성한 문의 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({
@@ -135,7 +135,7 @@ public class AdminController {
 
     @GetMapping("/inquiries/{inquiryId}")
     @Operation(
-            tags = {"문의"},
+            tags = {"Inquiry"},
             summary = "운영진 회원 문의 상세 조회",
             description = "운영진이 회원이 작성한 문의의 상세 정보를 조회합니다.")
     @ApiResponses({
@@ -159,7 +159,7 @@ public class AdminController {
 
     @GetMapping("/reports")
     @Operation(
-            tags = {"신고"},
+            tags = {"Report"},
             summary = "운영진 신고 목록 조회",
             description = "운영진이 신고 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({
@@ -179,7 +179,7 @@ public class AdminController {
 
     @GetMapping("/reports/{reportId}")
     @Operation(
-            tags = {"신고"},
+            tags = {"Report"},
             summary = "운영진 신고 상세 조회",
             description = "운영진이 신고의 상세 정보를 조회합니다.")
     @ApiResponses({
@@ -202,7 +202,7 @@ public class AdminController {
 
     @GetMapping("/users/{userId}")
     @Operation(
-            tags = {"회원"},
+            tags = {"User"},
             summary = "운영진 회원 상세 조회",
             description = "운영진이 특정 회원의 기본 정보와 활동 통계를 조회합니다.")
     @ApiResponses({
@@ -225,7 +225,7 @@ public class AdminController {
 
     @PostMapping("/notices")
     @Operation(
-            tags = {"공지사항"},
+            tags = {"Notice"},
             summary = "운영진 공지사항 작성",
             description = "운영진이 공지사항을 작성합니다.")
     @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "공지 생성 성공")
@@ -238,7 +238,7 @@ public class AdminController {
 
     @GetMapping("/notices/draft")
     @Operation(
-            tags = {"공지사항"},
+            tags = {"Notice"},
             summary = "운영진 임시 저장 공지사항 조회",
             description = "현재 운영진이 임시 저장한 공지사항을 조회합니다.")
     @ApiResponses({
@@ -251,7 +251,7 @@ public class AdminController {
 
     @PutMapping("/notices/{noticeId}")
     @Operation(
-            tags = {"공지사항"},
+            tags = {"Notice"},
             summary = "운영진 공지사항 수정",
             description = "운영진이 공지사항을 수정합니다.")
     @ApiResponses({
@@ -284,7 +284,7 @@ public class AdminController {
 
     @DeleteMapping("/notices/{noticeId}")
     @Operation(
-            tags = {"공지사항"},
+            tags = {"Notice"},
             summary = "운영진 공지사항 삭제",
             description = "운영진이 공지사항을 삭제합니다.")
     @ApiResponses({
@@ -316,7 +316,7 @@ public class AdminController {
 
     @PostMapping("/guest-inquiries/{inquiryId}/reply")
     @Operation(
-            tags = {"문의"},
+            tags = {"Inquiry"},
             summary = "운영진 게스트 문의 답변",
             description = "운영진이 게스트가 작성한 문의에 이메일로 답변합니다.")
     @ApiResponses({
@@ -350,7 +350,7 @@ public class AdminController {
 
     @PutMapping("/inquiries/{inquiryId}/status")
     @Operation(
-            tags = {"문의"},
+            tags = {"Inquiry"},
             summary = "운영진 문의 상태 변경",
             description = "운영진이 문의 상태를 변경합니다.")
     @ApiResponses({
@@ -375,7 +375,7 @@ public class AdminController {
 
     @PostMapping("/inquiries/{inquiryId}/block-ip")
     @Operation(
-            tags = {"문의"},
+            tags = {"Inquiry"},
             summary = "운영진 문의 IP 차단",
             description = "운영진이 문의 작성자의 IP를 차단합니다.")
     @ApiResponses({
@@ -420,7 +420,7 @@ public class AdminController {
 
     @PutMapping("/reports/{reportId}/status")
     @Operation(
-            tags = {"신고"},
+            tags = {"Report"},
             summary = "운영진 신고 상태 변경",
             description = "운영진이 신고 상태를 변경합니다.")
     @ApiResponses({
@@ -444,7 +444,7 @@ public class AdminController {
 
     @PutMapping("/reports/{reportId}/answer")
     @Operation(
-            tags = {"신고"},
+            tags = {"Report"},
             summary = "운영진 신고 답변 등록",
             description = "운영진이 신고에 대한 답변을 등록합니다.")
     @ApiResponses({
@@ -470,7 +470,7 @@ public class AdminController {
 
     @PostMapping("/users/signup")
     @Operation(
-            tags = {"회원"},
+            tags = {"User"},
             summary = "운영진 계정 생성",
             description = "운영 권한을 가진 계정을 생성합니다.")
     @ApiResponses({
@@ -503,7 +503,7 @@ public class AdminController {
 
     @GetMapping("/posts/content-policy")
     @Operation(
-            tags = {"회원"},
+            tags = {"User"},
             summary = "콘텐츠 활용 동의 회원 게시글 목록 조회",
             description = """
                 콘텐츠 활용에 동의한 회원의 게시글을 조회합니다.
@@ -574,7 +574,7 @@ public class AdminController {
 
     @GetMapping("/users/deleted")
     @Operation(
-            tags = {"회원"},
+            tags = {"User"},
             summary = "탈퇴 회원 목록 조회",
             description = "탈퇴한 회원 목록을 커서 방식으로 조회합니다.")
     @ApiResponses({

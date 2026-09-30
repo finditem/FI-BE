@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/inquiries/{inquiryId}/comments")
 @RequiredArgsConstructor
-@Tag(name = "문의", description = "회원과 게스트의 문의, 문의 댓글과 운영진 처리를 제공합니다.")
+@Tag(name = "Inquiry", description = "회원과 게스트의 문의, 문의 댓글과 운영진 처리를 제공합니다.")
 public class InquiryCommentController {
 
     private final InquiryCommentService inquiryCommentService;

@@ -26,7 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/notices")
 @RequiredArgsConstructor
-@Tag(name = "공지사항", description = "공지사항 조회, 댓글과 추천, 운영진 관리를 제공합니다.")
+@Tag(name = "Notice", description = "공지사항 조회, 댓글과 추천, 운영진 관리를 제공합니다.")
 public class NoticeCommentController {
 
     private final NoticeCommentService noticeCommentService;

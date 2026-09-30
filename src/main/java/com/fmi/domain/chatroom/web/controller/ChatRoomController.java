@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "채팅", description = "채팅방, 메시지와 메시지 번역을 관리합니다.")
+@Tag(name = "Chat", description = "채팅방, 메시지와 메시지 번역을 관리합니다.")
 public class ChatRoomController {
 
     private final UserQueryService userService;

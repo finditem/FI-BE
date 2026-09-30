@@ -12,7 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
-@Tag(name = "장소", description = "장소 탐색, 장소 좋아요와 운영진 장소 관리를 제공합니다.")
+@Tag(name = "Place", description = "장소 탐색, 장소 좋아요와 운영진 장소 관리를 제공합니다.")
 public interface MyFavoritePlaceSwagger {
 
     @Operation(

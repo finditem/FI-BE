@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "회원", description = "회원 정보, 활동, 구독 카테고리와 즐겨찾기를 관리합니다.")
+@Tag(name = "User", description = "회원 정보, 활동, 구독 카테고리와 즐겨찾기를 관리합니다.")
 public class PostFavoriteController {
     private final PostFavoriteService postFavoriteService;
     private final PostQueryService postQueryService;
@@ -27,7 +27,7 @@ public class PostFavoriteController {
     @Operation(
             summary = "게시글 즐겨찾기 추가",
             description = "회원이 특정 게시글을 즐겨찾기에 추가합니다.",
-            tags = {"회원"})
+            tags = {"User"})
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 추가 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -46,7 +46,7 @@ public class PostFavoriteController {
     @Operation(
             summary = "게시글 즐겨찾기 취소",
             description = "회원이 특정 게시글의 즐겨찾기를 취소합니다. 즐겨찾기 관계는 비활성 상태로 변경됩니다.",
-            tags = {"회원"})
+            tags = {"User"})
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 취소 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -75,7 +75,7 @@ public class PostFavoriteController {
             - address: 지역 필터 (예: 서울특별시, 서울특별시 강남구)
             - keyword: 제목 또는 내용 검색
             """,
-            tags = {"회원"})
+            tags = {"User"})
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "즐겨찾기 목록 조회 성공")
     })
