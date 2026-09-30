@@ -8,6 +8,6 @@ import lombok.Data;
 @AllArgsConstructor
 @Schema(description = "회원가입 응답")
 public class SignupResponse {
-    @Schema(description = "사용자 ID", example = "1")
+    @Schema(description = "회원 ID", example = "1")
     private Long id;
 }
