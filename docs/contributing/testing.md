@@ -182,7 +182,7 @@ class PasswordPolicyTest {
 }
 ```
 
-이 코드는 테스트 구성 예시이며 현재 정책의 최소 길이를 새로 정하지 않습니다. 현재 사례는 [`PasswordPolicyTest`](../../src/test/java/com/fmi/domain/user/data/PasswordPolicyTest.java)와 [`PostValidatorTest`](../../src/test/java/com/fmi/domain/post/service/internal/PostValidatorTest.java)에서 확인합니다. 정책과 QueryDSL 조건이 같은 규칙을 표현한다면 동일한 경계값과 상태 조합을 단위 테스트와 MySQL 통합 테스트에서 각각 관찰합니다. 조건 중복의 결정 기준은 [Persistence](../architecture/persistence.md)를 따릅니다.
+이 코드는 테스트 구성 예시이며 현재 정책의 최소 길이를 새로 정하지 않습니다. 현재 사례는 [`PasswordPolicyTest`](../../src/test/java/com/fmi/domain/user/data/PasswordPolicyTest.java)와 [`PostValidatorTest`](../../src/test/java/com/fmi/domain/post/service/internal/PostValidatorTest.java)에서 확인합니다. 정책과 QueryDSL 조건이 같은 규칙을 표현한다면 동일한 경계값과 상태 조합을 단위 테스트와 MySQL 통합 테스트에서 각각 관찰합니다. 조회 조건의 작성 기준은 [Persistence](../architecture/persistence.md)를 따릅니다.
 
 ## 유스케이스 테스트는 절차와 결과를 보여줍니다
 
