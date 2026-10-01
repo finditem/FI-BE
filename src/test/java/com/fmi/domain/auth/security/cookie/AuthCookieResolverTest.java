@@ -1,4 +1,4 @@
-package com.fmi.security;
+package com.fmi.domain.auth.security.cookie;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

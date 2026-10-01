@@ -1,7 +1,7 @@
 package com.fmi.config;
 
+import com.fmi.domain.auth.security.websocket.CustomHandshakeInterceptor;
 import com.fmi.global.handler.StompHandler;
-import com.fmi.global.interceptor.CustomHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;

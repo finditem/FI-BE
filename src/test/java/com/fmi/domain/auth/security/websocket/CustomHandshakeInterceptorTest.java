@@ -1,12 +1,12 @@
-package com.fmi.global.interceptor;
+package com.fmi.domain.auth.security.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fmi.security.AuthCookieResolver;
-import com.fmi.security.JwtTokenProvider;
+import com.fmi.domain.auth.security.cookie.AuthCookieResolver;
+import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

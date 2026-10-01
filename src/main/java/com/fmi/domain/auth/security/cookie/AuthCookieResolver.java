@@ -1,4 +1,4 @@
-package com.fmi.security;
+package com.fmi.domain.auth.security.cookie;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

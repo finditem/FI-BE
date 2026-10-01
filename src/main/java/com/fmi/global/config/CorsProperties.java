@@ -1,4 +1,4 @@
-package com.fmi.config;
+package com.fmi.global.config;
 
 import java.util.List;
 import lombok.Getter;

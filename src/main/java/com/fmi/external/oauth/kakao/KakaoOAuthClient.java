@@ -1,6 +1,5 @@
 package com.fmi.external.oauth.kakao;
 
-import com.fmi.config.KakaoOAuthProperties;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import lombok.AllArgsConstructor;

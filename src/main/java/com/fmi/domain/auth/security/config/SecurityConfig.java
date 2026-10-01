@@ -1,18 +1,16 @@
-package com.fmi.config;
+package com.fmi.domain.auth.security.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fmi.domain.auth.security.CustomUserDetailsService;
+import com.fmi.domain.auth.security.cookie.AuthCookieResolver;
+import com.fmi.domain.auth.security.jwt.JwtAuthenticationFilter;
+import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
-import com.fmi.security.AuthCookieResolver;
-import com.fmi.security.CustomUserDetailsService;
-import com.fmi.security.JwtAuthenticationFilter;
-import com.fmi.security.JwtTokenProvider;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,16 +26,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final CorsProperties corsProperties;
 
     @Bean
     public SecurityFilterChain filterChain(
@@ -131,23 +123,6 @@ public class SecurityConfig {
                 objectMapper.writeValue(response.getWriter(), apiResponse);
             }
         };
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-
-        config.setAllowCredentials(true);
-        config.setAllowedOriginPatterns(corsProperties.getAllowedOriginPatterns());
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-        config.setMaxAge(3600L);
-        config.setExposedHeaders(Arrays.asList("Authorization"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return source;
     }
 
     @Bean
