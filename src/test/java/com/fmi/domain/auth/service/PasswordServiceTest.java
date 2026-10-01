@@ -12,13 +12,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.security.token.RefreshTokenStore;
 import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
 import com.fmi.domain.auth.service.internal.PasswordGenerator;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
-import com.fmi.security.RefreshTokenStore;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;

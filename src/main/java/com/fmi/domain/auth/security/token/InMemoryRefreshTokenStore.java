@@ -1,4 +1,4 @@
-package com.fmi.security;
+package com.fmi.domain.auth.security.token;
 
 import java.time.Instant;
 import java.util.Map;

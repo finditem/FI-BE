@@ -1,4 +1,4 @@
-package com.fmi.security;
+package com.fmi.domain.auth.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

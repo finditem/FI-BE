@@ -1,6 +1,7 @@
-package com.fmi.security;
+package com.fmi.domain.auth.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fmi.domain.auth.security.cookie.AuthCookieResolver;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.ErrorReasonDTO;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;

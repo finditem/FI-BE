@@ -1,7 +1,7 @@
-package com.fmi.global.interceptor;
+package com.fmi.domain.auth.security.websocket;
 
-import com.fmi.security.AuthCookieResolver;
-import com.fmi.security.JwtTokenProvider;
+import com.fmi.domain.auth.security.cookie.AuthCookieResolver;
+import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;

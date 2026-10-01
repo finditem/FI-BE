@@ -12,6 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fmi.domain.Enum.Role;
 import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.auth.data.IssuedTokens;
+import com.fmi.domain.auth.security.cookie.AuthCookieFactory;
+import com.fmi.domain.auth.security.cookie.AuthCookieResolver;
 import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.auth.service.PasswordService;
 import com.fmi.domain.auth.service.TokenService;
@@ -27,8 +29,6 @@ import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.ExceptionAdvice;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.security.AuthCookieFactory;
-import com.fmi.security.AuthCookieResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.Date;

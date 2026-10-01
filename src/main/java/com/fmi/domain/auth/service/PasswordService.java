@@ -1,6 +1,7 @@
 package com.fmi.domain.auth.service;
 
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.security.token.RefreshTokenStore;
 import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
 import com.fmi.domain.auth.service.internal.PasswordGenerator;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
@@ -9,7 +10,6 @@ import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.security.RefreshTokenStore;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
