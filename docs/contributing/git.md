@@ -1,16 +1,12 @@
 # Git 컨벤션
 
-## 목적
-
-Issue, 브랜치, 커밋, Pull Request(PR)에서 작업 성격을 같은 type으로 표시합니다. 팀원은 변경 범위와 병합 대상을 빠르게 확인할 수 있습니다.
-
 ## 작업 성격
 
 Issue 제목 prefix, 작업 성격 라벨, 브랜치 type, PR 제목 type, 커밋 type에는 같은 값을 사용합니다.
 
 Issue와 PR에는 작업 성격 라벨을 1개 적용합니다.
 
-| 성격 | Issue 제목 | 작업 성격 라벨 | 브랜치 | PR·커밋 |
+| 성격 | Issue 제목 | 작업 성격 라벨 | 브랜치 | PR, 커밋 |
 | --- | --- | --- | --- | --- |
 | 기능 | `[FEAT] 제목` | `:sparkles: feature` | `feat/#번호` | `feat: 제목` |
 | 버그 수정 | `[FIX] 제목` | `:bug: fix` | `fix/#번호` | `fix: 제목` |
@@ -18,8 +14,8 @@ Issue와 PR에는 작업 성격 라벨을 1개 적용합니다.
 | 코드 스타일 | `[STYLE] 제목` | `:art: style` | `style/#번호` | `style: 제목` |
 | 리팩터링 | `[REFACTOR] 제목` | `:recycle: refactor` | `refactor/#번호` | `refactor: 제목` |
 | 테스트 | `[TEST] 제목` | `:white_check_mark: test` | `test/#번호` | `test: 제목` |
-| 설정·빌드 | `[CHORE] 제목` | `:building_construction: chore` | `chore/#번호` | `chore: 제목` |
-| 이름·위치 변경 | `[RENAME] 제목` | `:truck: rename` | `rename/#번호` | `rename: 제목` |
+| 설정, 빌드 | `[CHORE] 제목` | `:building_construction: chore` | `chore/#번호` | `chore: 제목` |
+| 이름, 위치 변경 | `[RENAME] 제목` | `:truck: rename` | `rename/#번호` | `rename: 제목` |
 | 성능 | `[PERF] 제목` | `:zap: perf` | `perf/#번호` | `perf: 제목` |
 
 - `style`은 코드 포맷, 공백, 줄바꿈, import처럼 기능에 영향을 주지 않는 변경에 사용합니다.
@@ -60,7 +56,7 @@ feat/#3-2
 develop ← refactor/#527-1 ← refactor/#527-2 ← refactor/#527-3
 ```
 
-`refactor/#527-2`의 PR 대상은 `refactor/#527-1`입니다. `refactor/#527-3`의 PR 대상은 `refactor/#527-2`입니다. `gh stack` 확장을 사용하거나 GitHub에서 PR을 만들 때 바로 아래 브랜치를 대상으로 선택합니다.
+`gh stack` 확장을 사용하거나 GitHub에서 바로 아래 브랜치를 PR 대상으로 선택합니다.
 
 ### Worktree
 
@@ -89,9 +85,9 @@ feat: 로그인 기능 구현
 개발 서버 브랜치 규칙입니다.
 
 - Restrict deletions(브랜치 삭제 금지)
-- Require linear history(머지 커밋 금지, 히스토리 깔끔하게 유지. Squash/Rebase만 허용)
+- Require linear history(Squash/Rebase만 허용)
 - Require a pull request before merging(PR을 통해서만 머지 가능)
-    - Required approvals: 0(0명 이상 승인 필요)
+    - Required approvals: 0
     - Dismiss stale pull request approvals when new commits are pushed: ON(새 커밋이 올라오면 기존 승인 무효)
     - Require conversation resolution before merging: ON(리뷰 코멘트 전부 Resolve 되어야 머지 가능)
     - Require an additional approval for unattributed Copilot pull requests: ON(Copilot이 혼자 만든 PR은 사람이 만든 PR보다 승인을 1명 더 받아야 한다)
@@ -106,7 +102,7 @@ feat: 로그인 기능 구현
 
 - Restrict deletions(브랜치 삭제 금지)
 - Require a pull request before merging(PR을 통해서만 머지 가능)
-    - Required approvals: 0(0명 이상 승인 필요)
+    - Required approvals: 0
     - Require an additional approval for unattributed Copilot pull requests: ON(Copilot이 혼자 만든 PR은 사람이 만든 PR보다 승인을 1명 더 받아야 한다)
 - Allowed merge methods(Merge commit / Squash / Rebase 허용)
 - Block force pushes(강제 푸시 방지)
@@ -121,11 +117,11 @@ Issue에 작업 이유, 범위, 완료 기준을 적습니다. 하나의 Issue�
 제목: [CHORE] 작업 제목
 라벨: :building_construction: chore
 
-> 작업 성격에 따라 [작업 성격](#작업-성격)의 제목 prefix와 라벨을 선택한다.
+> 작업 성격에 따라 [작업 성격](#작업-성격)의 제목 prefix와 라벨을 선택합니다.
 
 ## 💡 작업 내용
 
-- 이번 작업의 개요를 작성한다.
+- 이번 작업의 개요를 작성합니다.
 
 ## ✅ 상세 내용
 
@@ -133,17 +129,17 @@ Issue에 작업 이유, 범위, 완료 기준을 적습니다. 하나의 Issue�
 
 ## 📢 참고 사항
 
-- 리뷰어와 팀원이 알아야 할 추가 맥락을 작성한다.
+- 리뷰어와 팀원이 알아야 할 추가 맥락을 작성합니다.
 
 ## 🎯 기대 결과
 
-- 사용자가 확인할 수 있는 최종 결과 또는 데모 기준을 작성한다.
+- 사용자가 확인할 수 있는 최종 결과 또는 데모 기준을 작성합니다.
 
 ## ⚖️ 브랜치/PR 정책 확인
 
-- [ ] develop에서 브랜치를 생성한다. (예외적으로 의존 브랜치에서 분기 가능)
+- [ ] develop에서 브랜치를 생성합니다. (예외적으로 의존 브랜치에서 분기 가능)
 - [ ] main, develop에 직접 push/commit 하지 않는다 (반드시 PR로 머지).
-- [ ] PR 대상은 develop 브랜치다.
+- [ ] PR 대상은 develop 브랜치입니다.
 - [ ] 커밋 메시지는 Conventional Commits 양식을 따른다 (feat/fix/chore/docs/refactor/test 등).
 ```
 
@@ -168,8 +164,6 @@ PR을 병합한 뒤 오류가 발생하면, 기존 Issue의 완료 조건을 기
 Comment: develop 배포 실패, 후속 PR #21
 └─ PR #21 fix: Slack 알림 전송 조건 수정 → develop 배포 성공
 ```
-
-`#10`은 Slack 알림 추가가 완료되지 않아 재오픈합니다. `#21`은 오류를 고치므로 `fix` type을 사용합니다.
 
 ### 버그 제보 Issue
 
@@ -235,7 +229,7 @@ Comment: develop 배포 실패, 후속 PR #21
 
 ### PR 본문 작성 예시
 
-PR 본문은 리뷰어가 변경 목적, 핵심 결과와 확인할 부분을 빠르게 파악할 수 있게 간결하게 작성합니다. 구현 과정이나 변경 파일 목록을 본문에 반복하지 않습니다. 위 템플릿의 항목과 체크리스트는 유지하고, 해당하지 않는 항목에는 이유를 적습니다.
+PR 본문에는 변경 목적, 핵심 결과와 검토 지점을 적습니다. 구현 과정과 파일 목록은 생략합니다. 템플릿 항목과 체크리스트는 유지하고 해당하지 않는 항목에는 이유를 적습니다.
 
 **좋은 예시: 변경 결과와 검토 지점이 보임**
 
@@ -265,7 +259,7 @@ PR 본문은 리뷰어가 변경 목적, 핵심 결과와 확인할 부분을 �
 - 문서별 수정 과정과 파일 목록을 순서대로 나열
 ```
 
-예시는 본문의 길이와 정보 선택을 보여줍니다. 실제 PR에서는 위 템플릿의 체크리스트를 유지하고, 검증 결과와 남은 위험을 해당 항목에 구체적으로 적습니다.
+검증 결과와 남은 위험은 템플릿의 해당 항목에 적습니다.
 
 ### 병합
 
@@ -277,16 +271,11 @@ PR 본문은 리뷰어가 변경 목적, 핵심 결과와 확인할 부분을 �
     - title에 `{PR 제목} (#{PR번호})`를 적습니다.
     - body에는 기본적으로 적지 않습니다.
 - 최소 1명의 승인을 받은 뒤 병합합니다.
-    - 브랜치 룰에 0명으로 설정한 이유는 review-gate의 구현 한계입니다.
 - 모든 리뷰 대화를 해결한 뒤 병합합니다. AI 리뷰도 포함합니다.
 - 리뷰 뒤 변경 사항을 추가하면 다시 검토받습니다.
 
 ## 핫픽스
 
 `dev` 환경 QA 중 발견한 버그는 [Deployment의 QA 중 버그 수정](../operations/deployment.md#qa-중-버그-수정) 절차를 따릅니다.
-
-1. Bug Issue를 생성하고 `main`에서 `hotfix/{issue_number}` 브랜치를 분기합니다.
-2. 로컬에서 수정하고 테스트한 뒤 `main` 대상 Hotfix PR을 만듭니다.
-3. CI와 리뷰 게이트를 통과해 `main`에 병합하면 GitHub Actions가 `prod`에 배포합니다.
 
 긴급 배포에서 승인 예외를 적용하는 별도 절차는 아직 정하지 않았습니다. 예외가 필요하면 팀과 논의합니다.

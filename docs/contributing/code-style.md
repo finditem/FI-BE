@@ -4,16 +4,9 @@
 
 ### Spotless
 
-개발자는 코드 변경 후 아래 명령어로 형식을 적용합니다.
-
 ```bash
-./gradlew spotlessApply
-```
-
-지속적 통합(Continuous Integration, CI)은 아래 명령어로 형식을 검증합니다. 검증에 실패하면 병합할 수 없습니다.
-
-```bash
-./gradlew spotlessCheck
+./gradlew spotlessApply  # 변경 후 포맷 적용
+./gradlew spotlessCheck  # CI 포맷 검증, 실패 시 병합 금지
 ```
 
 Spotless는 다음 규칙을 적용합니다.
@@ -26,13 +19,13 @@ Spotless는 다음 규칙을 적용합니다.
 
 ### import
 
-Java 코드 본문에서 FQCN(Fully Qualified Class Name)을 사용하지 않습니다. 클래스와 정적 멤버는 `import` 또는 `import static`으로 선언하고 단순 이름으로 참조합니다.
+Java 본문에서는 FQCN 대신 `import` 또는 `import static`을 사용합니다.
 
 같은 단순 이름을 가진 타입이 충돌하면 FQCN으로 구분하지 않습니다. 각 타입의 책임이 드러나도록 이름을 변경합니다.
 
 ### Commitlint
 
-Commitlint는 Git 커밋 메시지가 커밋 컨벤션을 따르는지 검사합니다. Git hook이 커밋할 때마다 Commitlint를 실행합니다.
+Git hook에서 Commitlint로 커밋 메시지를 검사합니다.
 
 ### 도입 후보
 
@@ -45,15 +38,11 @@ Commitlint는 Git 커밋 메시지가 커밋 컨벤션을 따르는지 검사합
 
 ## 이름 규칙
 
-클래스 이름은 `[도메인 대상] + [수행 책임]`으로 작성합니다. 이름만 보고 클래스 책임을 파악할 수 있어야 합니다.
-
-예를 들어 주문 번호를 생성하는 클래스는 `OrderNumberGenerator`로 작성합니다.
+클래스 이름: `[도메인 대상] + [수행 책임]`. 예: `OrderNumberGenerator`.
 
 ### 서비스 클래스 이름
 
-서비스 클래스 이름은 담당하는 유스케이스를 드러내야 합니다.
-
-`QueryService`와 `CommandService`처럼 조회와 변경이라는 기술적 분류만 나타내는 이름은 피합니다. 클래스가 처리하는 업무를 기준으로 `[도메인 대상] + [유스케이스 역할] + Service` 형식의 이름을 사용합니다.
+서비스 이름은 `[도메인 대상] + [유스케이스 역할] + Service`로 작성합니다.
 
 ```text
 // 비권장
@@ -73,7 +62,7 @@ UserProfileChangeService
 
 ### internal 클래스 이름
 
-`internal` 클래스 이름은 데이터 조회와 저장 순서, 사용 기술보다 유스케이스에서 수행하는 업무 책임을 나타냅니다. 도메인 대상과 업무 결과를 먼저 정하고 실제 책임에 맞는 접미사를 사용합니다.
+`internal` 이름은 도메인 대상과 업무 책임에 맞춰 정합니다. 저장 순서와 사용 기술로 이름을 짓지 않습니다.
 
 ```text
 // 비권장
@@ -114,18 +103,6 @@ PopupClosingDateTimeCalculator
 
 ### 주문 생성
 
-`OrderService`는 다음 세부 작업을 사용합니다.
-
-```text
-OrderService
-├── OrderFactory
-├── OrderNumberGenerator
-├── InventoryAllocator
-├── CouponEligibilityValidator
-├── OrderPriceCalculator
-└── OrderCreatedEventPublisher
-```
-
 | 클래스 | 책임 |
 | --- | --- |
 | `OrderFactory` | 주문 Aggregate를 생성합니다. |
@@ -156,42 +133,15 @@ public class OrderService {
 
 ### 주문 취소
 
-`OrderCancellationService`는 다음 세부 작업을 사용합니다.
-
-```text
-OrderCancellationService
-├── OrderCancellationValidator
-├── InventoryReservationManager
-├── PaymentRefundHandler
-├── OrderStatusTransitionHandler
-└── OrderCancelledEventPublisher
-```
-
 | 클래스 | 책임 |
 | --- | --- |
 | `OrderCancellationValidator` | 주문 취소 가능 여부와 정책 위반을 검증합니다. |
-| `InventoryReservationManager` | 기존 재고 예약을 해제합니다. |
+| `InventoryReservationManager` | 재고 예약의 생성과 해제를 관리합니다. |
 | `PaymentRefundHandler` | 결제 수단별 환불을 처리합니다. |
 | `OrderStatusTransitionHandler` | 주문 상태를 취소 상태로 변경합니다. |
 | `OrderCancelledEventPublisher` | 주문 취소 이벤트를 발행합니다. |
 
-`InventoryReservationManager`는 예약 생성과 해제를 함께 관리합니다. 따라서 상태 수명주기를 나타내는 `Manager`를 사용합니다.
-
-`PaymentRefundHandler`는 환불 명령 하나를 처리합니다. 따라서 `Handler`를 사용합니다.
-
 ### 결제 승인
-
-`PaymentApprovalService`는 다음 세부 작업을 사용합니다.
-
-```text
-PaymentApprovalService
-├── PaymentMethodResolver
-├── PaymentAmountValidator
-├── PaymentGatewayProvider
-├── PaymentApprovalHandler
-├── PaymentResultMapper
-└── PaymentStatusTransitionHandler
-```
 
 | 클래스 | 책임 |
 | --- | --- |
@@ -204,17 +154,6 @@ PaymentApprovalService
 
 ### 쿠폰 적용
 
-`CouponApplicationService`는 다음 세부 작업을 사용합니다.
-
-```text
-CouponApplicationService
-├── CouponEligibilityValidator
-├── CouponDiscountCalculator
-├── CouponQuotaAllocator
-├── CouponUsageManager
-└── CouponAppliedEventPublisher
-```
-
 | 클래스 | 책임 |
 | --- | --- |
 | `CouponEligibilityValidator` | 쿠폰 기간, 대상, 최소 주문 금액 조건을 검증합니다. |
@@ -222,8 +161,6 @@ CouponApplicationService
 | `CouponQuotaAllocator` | 선착순 또는 한정 수량 쿠폰의 사용 가능 수량을 확보합니다. |
 | `CouponUsageManager` | 쿠폰 사용, 취소, 복구 상태를 관리합니다. |
 | `CouponAppliedEventPublisher` | 쿠폰 적용 이벤트를 발행합니다. |
-
-`CouponUsageManager`는 쿠폰 사용 상태의 생성, 취소, 복구를 관리합니다. 따라서 상태 수명주기를 나타내는 `Manager`를 사용합니다.
 
 ## 메서드 이름
 
@@ -353,7 +290,7 @@ if (field == null) {
 rejoinPolicy.ensureRejoinAllowed(user, command, now);
 ```
 
-매번 같은 업무 오류를 던지는 `isBlocked()`의 결과를 호출자가 다시 해석하기보다, 거절 결과를 표현하는 `ensureRejoinAllowed()`처럼 이름을 정할 수 있습니다. 실제 오류 소유자는 [Error Handling](error-handling.md)을 따릅니다.
+항상 같은 업무 오류로 거절한다면 `isBlocked()`보다 `ensureRejoinAllowed()`처럼 검증 계약을 드러냅니다. 오류 소유자는 [Error Handling](error-handling.md)을 따릅니다.
 
 ## 상수
 
@@ -368,13 +305,7 @@ rejoinPolicy.ensureRejoinAllowed(user, command, now);
 
 ## Private helper method
 
-호출 메서드에서 중요한 조건과 데이터 흐름이 보여야 합니다. 코드 길이를 줄이거나 중복만 없애려고 private 메서드를 만들지 않습니다. 추출할 때는 다음을 함께 확인합니다.
-
-1. 분리한 부분에 독립적인 책임과 이름이 있는가?
-2. 추출 뒤에도 호출 메서드에서 주요 순서와 조건을 파악할 수 있는가?
-3. 실제 반복이나 다른 변경 이유가 확인되었는가?
-
-Service의 유스케이스 단계는 위 [Service의 private 메서드](#service의-private-메서드) 기준을 우선합니다. `internal`, Repository와 외부 연동 클래스의 기술 세부 사항은 같은 책임 안에서 private 메서드로 나눌 수 있습니다. 새 업무 책임이 생기면 해당 owner의 클래스로 분리합니다.
+[Service의 private 메서드](#service의-private-메서드)를 따릅니다. 추출 전에는 책임의 독립성, 호출 지점의 흐름, 실제 반복과 변경 이유를 확인합니다.
 
 ## 메서드 인자와 중간값
 
@@ -406,7 +337,7 @@ tokenStore.save(userId, accessToken);
 
 한 메서드에서만 쓴다는 이유로 `service/internal` 클래스 안에 임시 중첩 `record`를 만들지 않습니다. 최상위 HTTP response DTO는 별도 파일에 둡니다. 단순하고 불변인 DTO에는 `record`를 사용할 수 있지만 기존 class DTO를 형식만 맞추려고 바꾸지 않습니다.
 
-응답 DTO의 순수한 `from` 메서드는 이미 계산된 Service 결과를 HTTP body로 옮길 수 있습니다. 여기에서 Repository, 외부 API, `Clock`, cookie, header를 호출하거나 업무 규칙을 판단하지 않습니다. cookie와 header 조합은 Controller가 담당합니다.
+응답 DTO의 `from`은 Service 결과를 부수 효과 없이 매핑합니다. Repository, 외부 API와 `Clock`을 호출하지 않습니다. 업무 판단은 Service, cookie와 header 설정은 Controller에 둡니다.
 
 ```java
 public record PostSummaryResponse(Long id, String title) {
@@ -417,11 +348,21 @@ public record PostSummaryResponse(Long id, String title) {
 }
 ```
 
-이 코드는 타입의 경계를 보여주는 예시이며 현재 구현을 복사한 것은 아닙니다. HTTP JSON 구조에서만 의미가 있는 중첩 DTO는 바깥 DTO 안에 둘 수 있습니다. 독립적인 업무 개념, 생명주기 또는 불변식을 갖거나 다른 경계에서 쓰이면 별도 타입의 owner를 먼저 정합니다. Controller 내부에 최상위 응답 DTO를 선언하지 않고, HTTP JSON 구조를 `data`의 Value Object에 강요하지 않습니다.
+가상 예시입니다.
+
+- HTTP JSON 전용 중첩 DTO는 바깥 DTO 안에 둘 수 있습니다.
+- 독립된 업무 개념, 생명주기, 불변식이나 다른 경계의 사용처가 있으면 별도 타입의 owner를 정합니다.
+- Controller 안에 최상위 응답 DTO를 선언하지 않습니다.
+- `data`의 VO에 HTTP JSON 구조를 강요하지 않습니다.
 
 ## 반복과 분기
 
-`Stream`을 습관적으로 사용하지 않습니다. 단순 filter, map, aggregate처럼 위에서 아래로 한 번에 읽히면 사용할 수 있습니다. 분기, 상태 변경, 예외 처리 또는 여러 중간 단계가 있으면 `if`, `for`, `switch`를 우선합니다. `Stream` 안에서 외부 상태를 바꾸거나 중첩된 `Stream`과 `flatMap`으로 반복 구조를 숨기지 않습니다.
+| 처리 | 우선 사용 |
+| --- | --- |
+| 단순 filter, map, aggregate | `Stream` |
+| 분기, 상태 변경, 예외 처리, 여러 중간 단계 | `if`, `for`, `switch` |
+
+`Stream` 안의 외부 상태 변경과 반복 구조를 숨기는 중첩 `Stream`, `flatMap`은 피합니다.
 
 ## Null, fallback, 예외와 retry
 
@@ -434,16 +375,18 @@ public record PostSummaryResponse(Long id, String title) {
 
 깨진 내부 불변식을 빈 문자열, 빈 목록, 임의의 enum이나 현재 시각으로 바꾸어 계속 진행하지 않습니다. fallback은 계약에 정의되어 있고 호출자가 원래 실패와 구분할 수 있을 때만 사용합니다.
 
-`try/catch`는 예상한 예외를 현재 경계가 복구하거나 업무 실패로 해석할 수 있을 때만 둡니다. 넓은 catch로 원인을 숨기거나 성공 값으로 바꾸지 않습니다. retry는 일시적 실패, 멱등성, 횟수 제한과 이미 일어난 외부 효과를 설명할 수 있을 때만 추가합니다. 자세한 오류 책임은 [Error Handling](error-handling.md)을 따릅니다.
+- `try/catch`: 현재 경계에서 복구하거나 업무 실패로 해석할 수 있는 예상 예외만 처리합니다. 넓은 catch로 원인을 숨기거나 성공 값으로 바꾸지 않습니다.
+- Retry: 일시적 실패, 멱등성, 횟수 제한과 이미 발생한 외부 부수 효과를 확인한 경우에만 추가합니다.
+- 오류 책임: [Error Handling](error-handling.md)을 따릅니다.
 
 ## 코드 검토 기준
 
-- 조건, 실패 지점과 실행 순서를 호출 메서드에서 바로 확인할 수 있는가?
-- 상수나 helper를 따라가야만 실제 값과 조건을 알 수 있지는 않은가?
-- 중복 제거가 변경 이유가 다른 책임을 억지로 묶지는 않았는가?
-- `Stream`이 반복과 부수 효과의 순서를 감추지 않는가?
-- 여러 반환값의 의미와 owner가 타입으로 드러나는가?
-- DTO, Service 결과, 조회 Projection, Value Object의 경계가 구분되는가?
-- 근거 없는 `null` 방어, fallback이나 넓은 catch가 원래 실패를 숨기지 않는가?
+- 조건, 실패 지점과 실행 순서를 호출 메서드에서 바로 확인할 수 있습니까?
+- 상수나 helper를 따라가야만 실제 값과 조건을 알 수 있지는 않습니까?
+- 중복 제거가 변경 이유가 다른 책임을 억지로 묶지는 않았습니까?
+- `Stream`이 반복과 부수 효과의 순서를 감추지 않습니까?
+- 여러 반환값의 의미와 owner가 타입으로 드러납니까?
+- DTO, Service 결과, 조회 Projection, Value Object의 경계가 구분됩니까?
+- 근거 없는 `null` 방어, fallback이나 넓은 catch가 원래 실패를 숨기지 않습니까?
 
-테스트의 선택, 이름, DCI 구조와 Given, When, Then 기준은 [Testing](testing.md)을 따른다.
+테스트의 선택, 이름, DCI 구조와 Given, When, Then 기준은 [Testing](testing.md)을 따릅니다.

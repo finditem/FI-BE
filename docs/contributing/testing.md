@@ -1,15 +1,6 @@
 # 테스트 코드 컨벤션
 
-## 목적
-
-테스트 코드를 같은 방식으로 작성해 읽기와 수정 비용을 줄입니다. 테스트는 도메인 정책, 데이터 상태, 동시성 상황에서 기대한 결과를 확인해야 합니다.
-
-## 전제
-
-아래 컨벤션을 지킬 수 없는 상황이 생기거나, 더 좋은 방안이 있다면 논의 후 예외 사항으로 적용하거나, 컨벤션을 갱신할 수 있습니다.
-
-- 테스트는 동작을 설명하는 실행 가능한 문서입니다.
-- 저장소와 연동하는 기능은 mock이 아닌 실제 저장소로 검증합니다.
+컨벤션 예외와 변경은 팀 논의 후 적용합니다. 테스트는 동작 명세로 작성하고 저장소 연동은 실제 저장소로 검증합니다.
 
 ## 테스트 범위
 
@@ -20,11 +11,11 @@
 | 도메인 Entity, Value Object, 도메인 정책, 순수 로직 | 단위 테스트 | 상태 전이, 정책, 계산, 예외 |
 | Usecase Service, Repository | Testcontainers 통합 테스트 | 트랜잭션, JPA 연관관계, MySQL, Redis, S3 |
 | 외부 HTTP 연동 | WireMock 통합 테스트 | 요청 형식, 응답 변환, 오류 처리 |
-| Web | 보안·쿠키 테스트 | 인증·인가 실패, 쿠키 발급·갱신·만료 |
+| Web | 보안, 쿠키 테스트 | 인증, 인가 실패, 쿠키 발급, 갱신, 만료 |
 
 Usecase Service는 Mockito 단위 테스트로 작성하지 않습니다. Spring context에서 실제 bean을 조립하고 Testcontainers와 WireMock으로 유스케이스 전체 흐름을 검증합니다.
 
-Web 테스트는 보안과 쿠키 계약만 검증합니다. DTO 바인딩, Bean Validation, 성공·실패 응답 body 형식은 검증하지 않습니다.
+Web 테스트는 보안과 쿠키 계약만 검증합니다. DTO 바인딩, Bean Validation, 성공, 실패 응답 body 형식은 검증하지 않습니다.
 
 ## 테스트 설정
 
@@ -36,7 +27,7 @@ Web 테스트는 보안과 쿠키 계약만 검증합니다. DTO 바인딩, Bean
 
 ## 테스트 패키지
 
-테스트는 테스트 대상과 같은 패키지에 둡니다. 운영 코드와 테스트 코드의 경로를 같게 유지해 대상 코드를 바로 찾을 수 있어야 합니다.
+테스트는 대상 코드와 같은 패키지에 둡니다.
 
 ```text
 src/main/java/com/fmi/
@@ -61,11 +52,11 @@ User user = Instancio.of(User.class)
         .create();
 ```
 
-fixture는 각 테스트 본문에서 생성합니다. 공통 Fixture 클래스, Object Mother, `private` helper를 만들지 않습니다. 테스트에서 사용하는 데이터와 조건을 한눈에 파악할 수 있어야 합니다.
+fixture는 테스트 본문에서 생성합니다. 공통 Fixture 클래스, Object Mother와 `private` helper는 만들지 않습니다.
 
 Mockito는 단위 테스트의 JVM 내부 협력 객체만 대체합니다. Usecase Service와 Repository 통합 테스트의 Repository, Redis, S3는 Mockito로 대체하지 않습니다. 외부 HTTP 연동은 WireMock으로 대체합니다.
 
-Mockito 단위 테스트는 `MockitoExtension`을 사용합니다. SUT(System Under Test)는 `@InjectMocks`로 선언하고, 협력 객체는 테스트 클래스의 `@Mock` 필드로 선언합니다. 생성자 호출과 `@InjectMocks`를 섞어 SUT를 만들지 않습니다.
+Mockito 단위 테스트 구성은 아래 예시를 따릅니다. 생성자 호출과 `@InjectMocks`를 섞지 않습니다.
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -130,9 +121,10 @@ class AuthServiceTest {
 
 ## 테스트를 고르는 세 가지 질문
 
-테스트를 작성하기 전에 **무엇을 검증하는지**, **어디까지 함께 실행해야 결과를 관찰할 수 있는지**, **어떤 위험을 막는지**를 각각 적습니다. 정책이라는 이유만으로 무조건 단위 테스트를 선택하거나, 유스케이스라는 이유만으로 모든 시나리오를 같은 통합 테스트에 넣지 않습니다. 이 저장소의 [테스트 범위](#테스트-범위)를 지키면서 위험을 실제로 관찰할 수 있는 가장 작은 범위를 고릅니다.
+[테스트 범위](#테스트-범위) 안에서 위험을 관찰할 수 있는 가장 작은 범위를 선택합니다.
 
-테스트의 목적도 분명히 합니다. 구현 확인과 회귀 방지, 허용과 거절 조건의 명세, 책임이 불분명한 설계의 발견, 독자를 위한 업무 설명 중 무엇을 맡는지 확인합니다. 하나의 테스트가 여러 목적을 수행할 수 있습니다.
+- 검증 대상, 함께 실행할 의존성과 방지할 위험을 적습니다.
+- 목적을 확인합니다: 구현 확인, 회귀 방지, 동작 명세, 설계 검토 또는 업무 설명.
 
 | 검증할 위험 | 우선 선택 | 관찰할 결과 |
 | --- | --- | --- |
@@ -148,7 +140,7 @@ Mock 호출 횟수만으로 DB commit, rollback, JPA flush, QueryDSL 결과나 �
 
 ## 정책 테스트는 결정 경계를 보여줍니다
 
-정책 테스트는 대표적인 성공 하나와 임의의 실패 하나에서 끝나지 않습니다. 허용되는 최소값, 바로 바깥 값, 상태 조합과 거절 이유를 구분해 정책의 경계를 읽을 수 있게 합니다. 예를 들어 길이 제한이 있다면 정확한 최소 길이와 그보다 1 짧은 길이를 각각 검증합니다. 실제 기준값은 [업무 정책](../policies/overview.md)과 구현에서 확인합니다.
+정책 테스트는 경계값, 상태 조합과 거절 이유를 검증합니다. 기준값은 [업무 정책](../policies/overview.md)과 구현에서 확인합니다.
 
 ```java
 @DisplayName("PasswordPolicy")
@@ -182,13 +174,13 @@ class PasswordPolicyTest {
 }
 ```
 
-이 코드는 테스트 구성 예시이며 현재 정책의 최소 길이를 새로 정하지 않습니다. 현재 사례는 [`PasswordPolicyTest`](../../src/test/java/com/fmi/domain/user/data/PasswordPolicyTest.java)와 [`PostValidatorTest`](../../src/test/java/com/fmi/domain/post/service/internal/PostValidatorTest.java)에서 확인합니다. 정책과 QueryDSL 조건이 같은 규칙을 표현한다면 동일한 경계값과 상태 조합을 단위 테스트와 MySQL 통합 테스트에서 각각 관찰합니다. 조회 조건의 작성 기준은 [Persistence](../architecture/persistence.md)를 따릅니다.
+가상 예시이며 최소 길이는 정의하지 않습니다. 구현 사례는 [`PasswordPolicyTest`](../../src/test/java/com/fmi/domain/user/data/PasswordPolicyTest.java)와 [`PostValidatorTest`](../../src/test/java/com/fmi/domain/post/service/internal/PostValidatorTest.java)에서 확인합니다. 정책과 QueryDSL 조건이 같은 규칙을 표현한다면 동일한 경계값과 상태 조합을 단위 테스트와 MySQL 통합 테스트에서 각각 관찰합니다. 조회 조건의 작성 기준은 [Persistence](../architecture/persistence.md)를 따릅니다.
 
 ## 유스케이스 테스트는 절차와 결과를 보여줍니다
 
-유스케이스 테스트는 독자가 `given → when → then`을 순서대로 읽으며 준비된 상태, 실행한 한 가지 행동, 그 뒤에 남은 데이터와 외부 효과를 이해할 수 있어야 합니다. 중요한 입력, 저장 결과와 호출 순서를 fixture나 helper에 감추지 않습니다. `when`에는 검증 대상의 행동을 한 번 실행하고, `then`에서 관찰 가능한 결과를 확인합니다. 여러 assertion이 하나의 업무 결과를 설명하면 함께 둘 수 있지만 독립된 정책과 실패 이유는 테스트를 나눕니다.
-
-다음 시나리오를 한 테스트 메서드에 모두 넣지 않고 각각 DCI의 `Context`와 `It`로 표현합니다.
+- Given, When, Then에 핵심 입력, 실행과 관찰 가능한 결과를 직접 드러냅니다.
+- `when`에서 검증 대상 행동을 한 번 실행합니다.
+- 하나의 업무 결과에 필요한 assertion은 함께 둡니다. 독립된 정책과 실패 이유는 Context와 It로 나눕니다.
 
 | 순서 | 시나리오 | 직접 확인할 결과 |
 | --- | --- | --- |
@@ -198,27 +190,7 @@ class PasswordPolicyTest {
 | 4 | 외부 연동 실패 | transaction 결과와 이미 발생한 외부 효과 |
 | 5 | 중복 또는 동시 요청 | DB 제약과 최종 데이터 상태 |
 
-```java
-@Nested
-@DisplayName("회원 가입할 때")
-class DescribeSignup {
-
-    @Nested
-    @DisplayName("인증된 이메일과 유효한 가입 정보가 있으면")
-    class ContextWithVerifiedEmail {
-
-        @Test
-        @DisplayName("사용자를 저장하고 가입 완료 결과를 반환한다")
-        void itPersistsUserAndReturnsSignupResult() {
-            // given: 이메일 인증 상태와 명시적인 가입 정보
-            // when: 회원 가입을 한 번 실행
-            // then: 실제 DB에서 사용자 상태와 결과를 조회
-        }
-    }
-}
-```
-
-위 코드는 흐름을 보여주는 골격입니다. 실제 [`PlaceServiceTest`](../../src/test/java/com/fmi/domain/place/service/PlaceServiceTest.java)는 장소 생성의 선행 조건을 만들고, `placeService.create()`를 실행한 뒤 Repository에서 장소와 요일별 영업시간을 다시 조회합니다. 테스트 본문에 요청의 주요 값과 최종 DB 상태가 보입니다.
+실제 사례: [`PlaceServiceTest`](../../src/test/java/com/fmi/domain/place/service/PlaceServiceTest.java).
 
 ```java
 // given
@@ -236,25 +208,27 @@ assertThat(place.getThumbnailUrl()).isEqualTo("https://storage.test/thumbnail.pn
 assertThat(placeBusinessHourRepository.findAllByPlaceId(placeId)).hasSize(7);
 ```
 
-이 발췌에는 `schedules`를 준비하는 부분이 생략되어 있으므로 전체 테스트는 연결한 실제 파일에서 확인합니다. 이 테스트는 MySQL 저장 결과를 관찰하지만 테스트 설정에서 S3는 대체하므로 실제 S3 프로토콜까지 검증하지는 않습니다.
+발췌에서 `schedules` 준비는 생략했습니다. MySQL 저장 결과를 검증하며 S3는 대체하므로 실제 S3 프로토콜은 검증하지 않습니다.
 
-현재 [`AuthServiceTest`](../../src/test/java/com/fmi/domain/auth/service/AuthServiceTest.java)는 DCI 구조와 일부 호출 순서를 보여주지만 Mockito로 Repository를 대체합니다. 따라서 그 테스트만으로 실제 DB 저장, 제약 조건 또는 rollback이 검증됐다고 주장하지 않습니다. 새 유스케이스 통합 테스트는 [테스트 범위](#테스트-범위)에 맞는 실제 저장소에서 최종 상태를 확인합니다.
+레거시 사례: [`AuthServiceTest`](../../src/test/java/com/fmi/domain/auth/service/AuthServiceTest.java)는 Repository를 mock으로 대체하므로 DB 저장, 제약과 rollback을 검증하지 않습니다. 새 테스트는 [테스트 범위](#테스트-범위)를 따릅니다.
 
 ## 이름과 Given, When, Then
 
-DCI의 `Describe`는 행동, `Context`는 결과를 바꾸는 조건, `It`은 관찰 가능한 결과를 표현합니다. 조건이 없는 단일 시나리오는 기존 기준대로 `Context`를 생략할 수 있습니다. 이름에 `성공`, `정상 동작` 대신 저장, 거절, 반환, 발행 금지 같은 업무 결과를 적습니다. 새로운 정책이나 중요한 유스케이스의 이름은 사람이 조건과 결과를 검토합니다. 이미 확정된 이름을 같은 뜻으로 반복 적용할 때마다 다시 승인을 요구하지 않습니다.
+DCI 이름은 [테스트 구조](#테스트-구조)를 따릅니다. 새 정책과 주요 유스케이스의 이름은 사람이 검토합니다. 확정된 이름을 같은 뜻으로 재사용할 때는 다시 승인받지 않습니다.
 
-테스트 본문에는 `// given`, `// when`, `// then`을 두고 각 구간의 중요한 값을 직접 드러냅니다. 예외를 검증할 때도 `when`에서 실행 결과를 포착하고 `then`에서 오류와 부수 효과를 확인할 수 있게 작성합니다. `Instancio`는 결과와 무관한 유효한 값에만 사용하고 경계값, 상태, 시간과 식별자는 본문에 명시합니다. fixture와 mock의 세부 제한은 위 [fixture와 mock](#fixture와-mock) 기준을 따릅니다.
+- 본문에 `// given`, `// when`, `// then`을 표시합니다.
+- 예외는 `when`에서 포착하고 `then`에서 오류와 부수 효과를 확인합니다.
+- Instancio와 fixture는 [fixture와 mock](#fixture와-mock)을 따릅니다. 경계값, 상태, 시간과 식별자는 본문에 명시합니다.
 
 ## 작성 전 확인
 
-- 검증 대상과 가장 위험한 실패를 한 문장으로 설명할 수 있는가?
-- 선택한 테스트에서 실제로 그 결과를 관찰할 수 있는가?
-- 정책의 허용과 거절 경계가 드러나는가?
-- 유스케이스의 DB 변경, transaction, 외부 효과와 실패 뒤 상태가 드러나는가?
-- DCI 이름과 `DisplayName`이 구현 방식 대신 업무 결과를 설명하는가?
-- Given, When, Then에서 핵심 입력과 결과를 바로 찾을 수 있는가?
-- mock 검증을 실제 저장소나 외부 계약의 증거로 잘못 해석하지 않았는가?
+- 검증 대상과 가장 위험한 실패를 한 문장으로 설명할 수 있습니까?
+- 선택한 테스트에서 실제로 그 결과를 관찰할 수 있습니까?
+- 정책의 허용과 거절 경계가 드러납니까?
+- 유스케이스의 DB 변경, transaction, 외부 효과와 실패 뒤 상태가 드러납니까?
+- DCI 이름과 `DisplayName`이 구현 방식 대신 업무 결과를 설명합니까?
+- Given, When, Then에서 핵심 입력과 결과를 바로 찾을 수 있습니까?
+- mock 검증을 실제 저장소나 외부 계약의 증거로 잘못 해석하지 않았습니까?
 
 ## 팀 논의가 필요한 규칙
 

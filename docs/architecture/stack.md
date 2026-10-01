@@ -17,4 +17,4 @@
 
 ## 아키텍처
 
-업무 경계와 실행 흐름은 [Architecture Overview](overview.md), 구체적인 계층 책임은 [Domain Boundaries](domain-boundaries.md)를 따른다.
+업무 경계와 실행 흐름은 [Architecture Overview](overview.md), 구체적인 계층 책임은 [Domain Boundaries](domain-boundaries.md)를 따릅니다.

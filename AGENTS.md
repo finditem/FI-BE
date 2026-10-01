@@ -1,6 +1,6 @@
 # FindItem Backend Agent Guide
 
-이 저장소는 FindItem 백엔드의 구현과 개발 문서를 함께 관리한다. 사람과 AI가 같은 근거를 찾을 수 있도록, 이 파일은 작업별 문서 경로와 실행 절차만 안내한다. 확정된 규칙의 원본은 연결된 `docs/` 문서에 둔다.
+작업별 문서와 실행 절차를 안내합니다. 규칙의 원본은 `docs/`에 둡니다.
 
 ## Repository Structure
 
@@ -18,19 +18,17 @@ FI-BE/
 └── AGENTS.md
 ```
 
-현재 코드에는 이 기본 구조와 다른 과거 배치도 있다. 문서 형식을 맞추기 위해 관련 없는 코드를 이동하지 않는다.
+## 레거시 코드와 리팩터링
 
-## 레거시 코드와 점진적 리팩터링
-
-이 프로젝트에는 `docs/`의 가이드와 컨벤션이 정리되기 전에 작성된 코드가 많다. 기존 코드가 문서와 다르다는 사실만으로 그 구현이 잘못됐거나 즉시 수정해야 한다고 가정하지 않는다. 먼저 현재 동작과 주변 코드가 그 방식을 택한 이유를 확인한다.
-
-기능을 추가할 때는 변경 지점의 기존 명명, 구조와 호출 흐름에 맞춰 필요한 범위만 수정한다. 새 코드에 문서 기준을 적용할 수 있는지 검토하되, 주변 코드를 문서 형식에 맞추려고 함께 대량 수정하지 않는다. 기존 방식과 문서 기준이 충돌해 결과나 변경 범위가 달라진다면 차이를 설명하고 팀과 결정한다.
-
-레거시 코드에서 리팩터링할 만한 지점을 계속 찾는 것이 이 프로젝트의 주요 과제다. 발견하면 현재 동작, 개선이 필요한 이유, 영향 범위와 검증 방법을 작업 결과에 구체적으로 알린다. 기능 작업에 필요한 수정과 별도의 리팩터링 제안을 구분하고, 합의되지 않은 구조 변경을 기능 변경에 끼워 넣지 않는다.
+- 기존 레거시 기능을 수정하거나 추가할 때는 해당 영역의 명명, 구조와 호출 스타일을 유지합니다. 부분적인 컨벤션 정리와 리팩터링을 섞지 않습니다.
+- 새 도메인과 새 Use Case는 프로젝트 가이드를 따릅니다. 기존 레거시 도메인을 호출하는 접점은 해당 코드의 방식을 유지합니다.
+- 리팩터링은 [Refactoring](docs/contributing/refactoring.md)의 E2E 회귀 테스트, 흐름 파악, 미확정 사항 합의, 메시지와 경계 정리, Use Case 전체 재작성 순서를 따릅니다.
+- 운영 위험이 큰 경우에만 Feature Flag로 Legacy와 New 경로를 점진 전환합니다.
+- 기능 작업에서 발견한 리팩터링 후보는 별도 작업으로 제안합니다.
 
 ## Documentation Map
 
-먼저 [Architecture Overview](docs/architecture/overview.md)를 읽고 작업에 맞는 원본 문서를 선택한다. 전체 문서 목록은 [Documentation Map](docs/README.md)에 있다.
+먼저 [Architecture Overview](docs/architecture/overview.md)를 읽고 작업에 맞는 원본 문서를 선택합니다. 전체 문서 목록은 [Documentation Map](docs/README.md)에 있습니다.
 
 | 작업 | 읽을 문서 |
 | --- | --- |
@@ -45,56 +43,63 @@ FI-BE/
 | 문서 변경 | [Documentation](docs/contributing/documentation.md) |
 | Issue, 브랜치, 커밋, PR | [Git Guide](docs/contributing/git.md) |
 
-업무 정책은 [Policies Overview](docs/policies/overview.md)에 적힌 소유 원칙을 확인하고 DOCS의 관련 확정 정책서를 읽는다. FI-BE 코드는 현재 동작의 증거이며 정책을 확정하는 근거는 아니다.
+업무 정책은 [Policies Overview](docs/policies/overview.md)에 적힌 소유 원칙을 확인하고 DOCS의 관련 확정 정책서를 읽습니다. FI-BE 코드는 현재 동작의 증거이며 정책을 확정하는 근거는 아닙니다.
 
 ## 문서에 없는 정책
 
-문서에는 사람이 알고 있는 모든 요구와 결정이 담겨 있지 않다. 결과, 권한, 데이터 보관, 동시성 또는 외부 효과가 달라지는 선택을 기존 코드나 일반 관례만으로 확정하지 않는다.
+사용자 결과, 권한, 데이터 보관, 동시성, 외부 부수 효과가 달라지는 미확정 정책은 기존 코드나 관례로 결정하지 않습니다.
 
-1. 확인한 사실, 문서에 없는 조건, 가능한 선택과 각 결과를 구분한다.
-2. 필요한 질문을 구현 전에 묶어서 묻고, 답과 무관한 코드 조사는 계속한다.
-3. 답을 기다리는 동안 임의 정책을 코드나 테스트에 고정하지 않는다.
-4. 구현 선택만 남았고 기존 원칙으로 판단할 수 있다면 직접 결정하고 근거를 적는다.
-5. 결정이 확정되면 원본 문서의 소유 위치를 확인하고 코드와 테스트를 함께 갱신한다.
+1. 확인한 사실, 미확정 조건, 선택지와 결과를 정리합니다.
+2. 구현 전에 질문을 묶어 묻고, 답과 무관한 조사는 계속합니다.
+3. 답을 기다리는 동안 임의 정책을 코드나 테스트에 고정하지 않습니다.
+4. 기존 원칙으로 판단할 수 있는 구현 선택은 직접 결정하고 근거를 적습니다.
+5. 확정된 결정은 소유 문서, 코드와 테스트에 반영합니다.
 
-기존 문서와 구현이 다르면 차이를 드러낸다. 팀 논의가 필요한 항목은 해당 문서의 기준을 따르며, AI가 혼자 정책을 확정하지 않는다.
+문서와 구현의 차이는 보고하고, 팀 논의는 해당 문서의 기준을 따릅니다.
 
 ## Workflow
 
-1. Issue와 관련 문서, 실제 코드와 테스트를 읽는다.
-2. 입력과 출력, read와 write, transaction, 외부 호출과 실패 뒤 상태를 적는다.
-3. [Decision Guide](docs/architecture/decision-guide.md)로 코드 위치와 DB 접근 방식을 정한다.
-4. 주변 구현의 스타일과 흐름에 맞춰 변경하되 필요 없는 class, interface와 공통 추상화를 추가하지 않는다.
-5. 위험한 가정을 [Testing](docs/contributing/testing.md)에 맞춰 검증한다.
-6. 코드와 원본 문서의 변경 사항을 함께 확인한다.
+1. Issue와 관련 문서, 실제 코드와 테스트를 읽습니다.
+2. 입력과 출력, read와 write, transaction, 외부 호출과 실패 뒤 상태를 적습니다.
+3. [Decision Guide](docs/architecture/decision-guide.md)로 코드 위치와 DB 접근 방식을 정합니다.
+4. [레거시와 리팩터링 기준](#레거시-코드와-리팩터링)에 따라 적용할 스타일을 정합니다. 불필요한 class, interface와 공통 추상화는 추가하지 않습니다.
+5. 위험한 가정을 [Testing](docs/contributing/testing.md)에 맞춰 검증합니다.
+6. 코드와 원본 문서의 변경 사항을 함께 확인합니다.
 
 ## Change Boundaries
 
-- 새 도메인 분리, `global` 배치, `service/internal`의 도입 시점, port 또는 직접 의존은 [Domain Boundaries](docs/architecture/domain-boundaries.md)의 팀 논의 조건을 따른다.
-- JPA 관계, QueryDSL, native SQL과 Flyway 변경은 [Persistence](docs/architecture/persistence.md)를 따른다.
-- 외부 서비스, 배포, Secret 또는 데이터 삭제처럼 실제 환경에 영향을 주는 작업은 담당자에게 확인한다.
-- 문서 형식을 맞추기 위한 대규모 코드 이동이나 새 업무 정책 추가는 하지 않는다.
-- generated code를 직접 수정하지 않는다.
+- 새 도메인 분리, `global` 배치, `service/internal`의 도입 시점, port 또는 직접 의존은 [Domain Boundaries](docs/architecture/domain-boundaries.md)의 팀 논의 조건을 따릅니다.
+- JPA 관계, QueryDSL, native SQL과 Flyway 변경은 [Persistence](docs/architecture/persistence.md)를 따릅니다.
+- 외부 서비스, 배포, Secret 또는 데이터 삭제처럼 실제 환경에 영향을 주는 작업은 담당자에게 확인합니다.
+- 새 업무 정책은 팀 합의 후 반영합니다.
+- generated code를 직접 수정하지 않습니다.
 
 ## Commands
 
-Gradle은 Java 17로 실행한다. SDKMAN을 사용할 수 있으면 설치된 Java 17 후보를 `sdk use java <Java 17 후보>`로 선택한다. 저장소에 `.sdkmanrc`가 있다면 `sdk env`를 사용한다. SDKMAN이 없으면 설치된 Java 17 JDK를 `JAVA_HOME`으로 선택한다. `java -version`으로 17인지 확인한다. 적합한 JDK가 없으면 경로 또는 설치 방법을 사용자에게 확인한다. Gradle toolchain 설정만으로 Gradle 실행 JVM의 버전이 바뀌지는 않는다.
+Gradle 실행 JVM은 Java 17을 사용합니다. toolchain 설정과 별도로 `java -version`을 확인합니다.
+
+| 환경 | JDK 선택 |
+| --- | --- |
+| SDKMAN과 `.sdkmanrc` 사용 | `sdk env` |
+| SDKMAN 사용 | `sdk use java <Java 17 후보>` |
+| SDKMAN 미사용 | 설치된 Java 17의 `JAVA_HOME` 설정 |
+| Java 17 미설치 | 사용자에게 경로 또는 설치 방법 확인 |
 
 ```bash
-./gradlew spotlessApply  # 커밋 전 항상 실행하고 적용된 변경을 검토
+./gradlew spotlessApply  # 파일 종류와 관계없이 커밋 전 실행, 적용 결과 검토
 ./gradlew test           # 전체 테스트 검증
 ./gradlew spotlessCheck  # CI 또는 별도 형식 검사가 필요할 때 실행
 ```
 
-커밋 전에는 변경 파일 종류와 관계없이 `spotlessApply`를 실행한다. Gradle 실행이 실패하면 cache를 삭제하지 말고 실패 종류를 확인한다.
+Gradle 실패 시 cache를 삭제하지 않고 원인을 확인합니다.
 
-- 기존 cache의 lock이나 접근 권한 문제라면 해당 경로의 실행 권한을 요청한 뒤 같은 명령을 다시 실행한다.
-- 제한된 환경에서 별도의 쓰기 가능 cache가 필요하면 `GRADLE_USER_HOME`을 지정한다.
-- 임시 cache의 `metadata.bin`이 없거나 읽히지 않으면 기존 cache를 건드리지 않고 새로운 임시 경로를 지정해 재시도한다. 예: `GRADLE_USER_HOME="$(mktemp -d)" ./gradlew --no-daemon spotlessApply`.
-- 재시도에도 실패하면 첫 유의미한 오류와 cache 경로를 보고한다.
+- 기존 cache의 lock이나 접근 권한 문제라면 해당 경로의 실행 권한을 요청한 뒤 같은 명령을 다시 실행합니다.
+- 제한된 환경에서 별도의 쓰기 가능 cache가 필요하면 `GRADLE_USER_HOME`을 지정합니다.
+- 임시 cache의 `metadata.bin`이 없거나 읽히지 않으면 기존 cache를 건드리지 않고 새로운 임시 경로를 지정해 재시도합니다. 예: `GRADLE_USER_HOME="$(mktemp -d)" ./gradlew --no-daemon spotlessApply`.
+- 재시도에도 실패하면 첫 유의미한 오류와 cache 경로를 보고합니다.
 
-Issue, 브랜치, PR과 scope 없는 `type: 한글 요약` 커밋 형식은 [Git Guide](docs/contributing/git.md)를 따른다. 사용자가 커밋 전 보고를 요청했다면 검증 결과와 변경 목록을 먼저 보고하고, 답을 받은 뒤 커밋한다.
+Issue, 브랜치, PR과 scope 없는 `type: 한글 요약` 커밋 형식은 [Git Guide](docs/contributing/git.md)를 따릅니다. 사용자가 커밋 전 보고를 요청했다면 검증 결과와 변경 목록을 먼저 보고하고, 답을 받은 뒤 커밋합니다.
 
 ## Review Output
 
-코드와 설계를 검토할 때 시작점에서 결과까지의 흐름, 읽고 쓰는 데이터와 owner, transaction, 외부 호출 순서, 최종 정합성 방어선, 실패와 재시도, 검증 방법을 구체적으로 설명한다. 근거 없는 정책은 확정된 것처럼 쓰지 않는다.
+코드와 설계를 검토할 때 시작점에서 결과까지의 흐름, 읽고 쓰는 데이터와 owner, transaction, 외부 호출 순서, 최종 정합성 방어선, 실패와 재시도, 검증 방법을 구체적으로 설명합니다. 근거 없는 정책은 확정된 것처럼 쓰지 않습니다.

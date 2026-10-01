@@ -10,8 +10,6 @@
 | `dev` | `dev` | `develop` | 통합 테스트와 QA | `develop` 병합 후 GitHub Actions가 자동 배포 |
 | `prod` | `prod` | `main` | 실제 서비스 운영 | `main` 병합 후 GitHub Actions가 자동 배포 |
 
-`main`은 운영 배포를 시작하는 브랜치입니다. 운영 환경과 Spring Profile에는 모두 `prod`를 사용합니다.
-
 ## 배포 흐름
 
 ### 기능 개발과 `dev` 배포
@@ -20,10 +18,10 @@
 2. `develop`에서 `type/#issueNumber` 형식의 작업 브랜치를 분기합니다.
 3. 로컬에서 구현하고 테스트합니다.
 4. `develop`을 대상으로 Pull Request(PR)를 생성합니다.
-5. 지속적 통합(Continuous Integration, CI)과 리뷰 게이트를 통과합니다.
+5. CI와 리뷰 게이트를 통과합니다.
 6. `develop`에 병합합니다.
 7. GitHub Actions가 `dev` 환경에 자동 배포합니다.
-8. `dev` 환경에서 종단 간(End-to-End, E2E) 테스트와 품질 보증(Quality Assurance, QA)을 진행합니다.
+8. `dev` 환경에서 E2E 테스트와 QA를 진행합니다.
 
 ### 운영 릴리즈와 `prod` 배포
 
@@ -53,8 +51,7 @@
 
 ### `dev`
 
-- CI/CD를 우회해 Amazon Elastic Compute Cloud(EC2)에서 컨테이너나 환경 설정을 직접 변경하지 않습니다.
-- CI/CD를 우회해 수동 배포하지 않습니다.
+- CI/CD를 우회한 EC2 컨테이너와 설정 변경, 수동 배포를 금지합니다.
 - 검증하지 않은 데이터베이스 마이그레이션, Secret, 외부 연동 변경을 적용하지 않습니다.
 - 운영 데이터와 운영 Secret을 사용하지 않습니다.
 
