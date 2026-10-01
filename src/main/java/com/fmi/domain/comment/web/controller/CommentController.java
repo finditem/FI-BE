@@ -38,7 +38,7 @@ public class CommentController {
                     게시글에 댓글/대댓글을 생성합니다.
 
                     - parentId가 null이면 댓글(depth=0)
-                    - parentId가 있으면 대댓글(depth=1~2)
+                    - parentId가 있으면 대댓글(depth=1~3)
                     - 이미지 첨부 가능 (multipart/form-data)
                     """)
     @ApiResponses({
