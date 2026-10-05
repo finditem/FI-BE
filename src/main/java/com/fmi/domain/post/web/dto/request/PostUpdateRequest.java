@@ -2,7 +2,6 @@ package com.fmi.domain.post.web.dto.request;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.data.Radius;
 import com.fmi.domain.post.web.dto.validation.ValidThumbnailKeep;
 import jakarta.validation.constraints.Positive;
@@ -12,8 +11,6 @@ import java.util.List;
 
 @ValidThumbnailKeep
 public record PostUpdateRequest(
-        PostType postType,
-
         @Size(min = 1, max = 50, message = "제목은 최대 50자까지 입력 가능합니다.") String title,
 
         PostStatus postStatus,
