@@ -1,10 +1,11 @@
-package com.fmi.security;
+package com.fmi.domain.auth.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fmi.domain.auth.security.cookie.AuthCookieResolver;
 import jakarta.servlet.FilterChain;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;

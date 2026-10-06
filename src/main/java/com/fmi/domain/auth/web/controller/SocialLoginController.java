@@ -3,16 +3,19 @@ package com.fmi.domain.auth.web.controller;
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.auth.data.IssuedTokens;
 import com.fmi.domain.auth.data.SocialLoginCommand;
+import com.fmi.domain.auth.security.cookie.AuthCookieFactory;
 import com.fmi.domain.auth.service.SocialLoginService;
 import com.fmi.domain.auth.service.TokenService;
+import com.fmi.domain.auth.web.dto.AppleLoginRequest;
 import com.fmi.domain.auth.web.dto.KakaoLoginRequest;
 import com.fmi.domain.auth.web.response.LoginResponse;
 import com.fmi.domain.auth.web.swagger.KakaoAuthSwagger;
+import com.fmi.domain.user.data.User;
+import com.fmi.external.oauth.apple.AppleOAuthClient;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient.KakaoToken;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient.KakaoUser;
 import com.fmi.global.apiPayload.ApiResponse;
-import com.fmi.security.AuthCookieFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,16 +24,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth/kakao")
 @RequiredArgsConstructor
-public class KakaoAuthController implements KakaoAuthSwagger {
+public class SocialLoginController implements KakaoAuthSwagger {
 
     private final KakaoOAuthClient kakaoOAuthService;
+    private final AppleOAuthClient appleOAuthService;
     private final SocialLoginService socialLoginService;
     private final TokenService tokenService;
     private final AuthCookieFactory authCookieFactory;
 
-    @PostMapping
+    @PostMapping("/auth/kakao")
     @Override
     public ResponseEntity<ApiResponse<LoginResponse>> loginWithKakao(
             @Valid @RequestBody KakaoLoginRequest req, HttpServletRequest request) {
@@ -52,19 +55,28 @@ public class KakaoAuthController implements KakaoAuthSwagger {
 
         String providerId = String.valueOf(user.getId());
         SocialLoginCommand command = new SocialLoginCommand(Provider.KAKAO, providerId, nickname, profile);
-        var localUser = socialLoginService.login(command);
+        User localUser = socialLoginService.login(command);
+        return buildLoginResponse(request, localUser, Provider.KAKAO);
+    }
+
+    @PostMapping("/auth/apple")
+    public ResponseEntity<ApiResponse<LoginResponse>> loginWithApple(
+            @Valid @RequestBody AppleLoginRequest request, HttpServletRequest httpServletRequest) {
+        String subject = appleOAuthService.exchangeCodeForSubject(request.getCode(), request.getEnvironment());
+        SocialLoginCommand command = new SocialLoginCommand(Provider.APPLE, subject, null, null);
+        User localUser = socialLoginService.login(command);
+        return buildLoginResponse(httpServletRequest, localUser, Provider.APPLE);
+    }
+
+    private ResponseEntity<ApiResponse<LoginResponse>> buildLoginResponse(
+            HttpServletRequest request, User localUser, Provider provider) {
         boolean termsAgreed = localUser.isPrivacyPolicyAgreed() && localUser.isTermsOfServiceAgreed();
-
-        IssuedTokens issuedTokens = tokenService.issue(localUser, false, Provider.KAKAO);
-
+        IssuedTokens issuedTokens = tokenService.issue(localUser, false, provider);
         ResponseCookie accessCookie = authCookieFactory.createAccessCookie(
                 request, issuedTokens.accessToken(), issuedTokens.accessExpiration());
         ResponseCookie refreshCookie = authCookieFactory.createRefreshCookie(
                 request, issuedTokens.refreshToken(), issuedTokens.refreshExpiration());
 
-        // 응답 생성 및 반환
-        // accessToken과 refreshToken은 쿠키로 전송되므로 응답 body에는 포함하지 않습니다.
-        // 소셜 로그인은 임시 비밀번호 기능이 없으므로 isTemporaryPassword는 항상 false입니다.
         return ResponseEntity.ok()
                 .header("Set-Cookie", accessCookie.toString())
                 .header("Set-Cookie", refreshCookie.toString())

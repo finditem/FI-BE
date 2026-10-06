@@ -2,8 +2,8 @@ package com.fmi.domain.auth.service.internal;
 
 import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.auth.data.IssuedTokens;
+import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
 import com.fmi.domain.user.data.User;
-import com.fmi.security.JwtTokenProvider;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;

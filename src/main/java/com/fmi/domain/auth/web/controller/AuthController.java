@@ -2,6 +2,8 @@ package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.data.IssuedTokens;
+import com.fmi.domain.auth.security.cookie.AuthCookieFactory;
+import com.fmi.domain.auth.security.cookie.AuthCookieResolver;
 import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.auth.service.PasswordService;
 import com.fmi.domain.auth.service.TokenService;
@@ -18,8 +20,6 @@ import com.fmi.domain.user.web.response.CheckResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.security.AuthCookieFactory;
-import com.fmi.security.AuthCookieResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
