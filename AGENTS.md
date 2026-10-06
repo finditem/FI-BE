@@ -1,102 +1,105 @@
 # FindItem Backend Agent Guide
 
-이 파일은 이 저장소에서 작업하는 AI 에이전트와 개발자를 위한 작업 지침입니다. 사람이 작성한 현재 코드의 구조와 관례를 존중합니다. 이 파일의 규칙을 맞추기 위해 관련 없는 기존 코드를 대량으로 옮기거나 재작성하지 않습니다.
+작업별 문서와 실행 절차를 안내합니다. 규칙의 원본은 `docs/`에 둡니다.
 
-## 작업 원칙
+## Repository Structure
 
-- 요청한 범위 안에서 필요한 코드와 테스트만 변경합니다.
-- 구현 전에 관련 코드, 테스트, 설정을 읽고 기존 관례를 따릅니다.
-- 요구사항이 모호하지만 안전한 가정으로 진행할 수 있으면 가정을 짧게 밝히고 진행합니다.
-- 외부 서비스 변경, 배포, Secret 변경, 데이터 삭제, 범위가 크게 넓어지는 작업은 실행 전에 사용자 또는 담당자에게 확인합니다.
-- 코드 변경을 요청받지 않은 조사, 설명, 리뷰 작업에서는 파일을 수정하지 않습니다.
-- 기존 실패, 미검증 항목, 후속 작업을 숨기지 않습니다. 완료 보고와 PR 설명에 원인과 영향을 적습니다.
+```text
+FI-BE/
+├── src/
+│   ├── main/
+│   │   ├── java/com/fmi/
+│   │   │   ├── domain/      # 업무 기능, 상태와 데이터 접근
+│   │   │   ├── global/      # 여러 도메인의 공통 기술 코드
+│   │   │   └── external/    # 외부 기술 연동
+│   │   └── resources/db/migration/ # Flyway schema
+│   └── test/                # 단위 테스트와 통합 테스트
+├── docs/                    # 아래 Documentation Map 참고
+└── AGENTS.md
+```
 
-## 저장소 구조
+## 레거시 코드와 리팩터링
 
-새 코드나 구조를 변경할 때 아래 경계를 따릅니다. 기존 구조가 다르더라도 이 규칙만을 이유로 이동하지 않습니다.
+- 기존 레거시 기능을 수정하거나 추가할 때는 해당 영역의 명명, 구조와 호출 스타일을 유지합니다. 부분적인 컨벤션 정리와 리팩터링을 섞지 않습니다.
+- 새 도메인과 새 Use Case는 프로젝트 가이드를 따릅니다. 기존 레거시 도메인을 호출하는 접점은 해당 코드의 방식을 유지합니다.
+- 리팩터링은 [Refactoring](docs/contributing/refactoring.md)의 E2E 회귀 테스트, 흐름 파악, 미확정 사항 합의, 메시지와 경계 정리, Use Case 전체 재작성 순서를 따릅니다.
+- 운영 위험이 큰 경우에만 Feature Flag로 Legacy와 New 경로를 점진 전환합니다.
+- 기능 작업에서 발견한 리팩터링 후보는 별도 작업으로 제안합니다.
 
-| 영역 | 책임 |
+## Documentation Map
+
+먼저 [Architecture Overview](docs/architecture/overview.md)를 읽고 작업에 맞는 원본 문서를 선택합니다. 전체 문서 목록은 [Documentation Map](docs/README.md)에 있습니다.
+
+| 작업 | 읽을 문서 |
 | --- | --- |
-| `domain` | 서비스 업무 기능, 도메인 규칙, 도메인 오류 |
-| `global` | 여러 도메인이 공유하는 비업무 코드. 업무 규칙과 유스케이스 흐름은 두지 않음 |
-| `external` | 외부 API, 스토리지, 메시징 등 외부 기술 연동 |
+| 구조 설계와 코드 리뷰 | [Decision Guide](docs/architecture/decision-guide.md), [Domain Boundaries](docs/architecture/domain-boundaries.md) |
+| DB와 migration | [Persistence](docs/architecture/persistence.md), [Testing](docs/contributing/testing.md) |
+| 기능 추가 | [Adding Feature](docs/contributing/adding-feature.md), [Error Handling](docs/contributing/error-handling.md) |
+| API 설계와 Swagger | [API Pattern](docs/contributing/api-pattern.md), [OpenAPI Guide](docs/contributing/openapi-guide.md) |
+| 버그 수정 | [Fixing Bugs](docs/contributing/fixing-bugs.md), [Testing](docs/contributing/testing.md) |
+| 리팩터링 | [Refactoring](docs/contributing/refactoring.md), [Code Style](docs/contributing/code-style.md) |
+| Java 코드 또는 설정 | [Contributing Overview](docs/contributing/overview.md), [Code Style](docs/contributing/code-style.md), 필요하면 [Configuration](docs/contributing/configuration.md) |
+| 배포와 운영 | [Operations Overview](docs/operations/overview.md), [Deployment](docs/operations/deployment.md) |
+| 문서 변경 | [Documentation](docs/contributing/documentation.md) |
+| Issue, 브랜치, 커밋, PR | [Git Guide](docs/contributing/git.md) |
 
-- 새 도메인은 기본적으로 `data`, `repository`, `service`, `web` 패키지로 구성합니다. DTO 변환이 필요할 때만 `converter`를 추가합니다.
-- `web`은 HTTP 요청과 응답을 처리합니다.
-- `service`는 유스케이스 흐름과 트랜잭션 경계를 표현합니다.
-- `data`는 Entity, 값 객체, Enum, 상태, 도메인 정책을 관리합니다.
-- `repository`는 데이터 접근을 담당합니다.
-- 도메인 규칙과 오류 코드는 해당 도메인에 둡니다.
-- 패키지나 모듈 사이에 순환 의존성을 만들지 않습니다.
-- 새 도메인 분리, `global` 배치, 공통화 범위가 불명확하면 먼저 제안하고 합의 뒤 변경합니다.
+업무 정책은 [Policies Overview](docs/policies/overview.md)에 적힌 소유 원칙을 확인하고 DOCS의 관련 확정 정책서를 읽습니다. FI-BE 코드는 현재 동작의 증거이며 정책을 확정하는 근거는 아닙니다.
 
-## Java 작성 규칙
+## 문서에 없는 정책
 
-- Java 17과 Spring Boot 3.5를 사용합니다.
-- `lint.gradle`의 Spotless와 Palantir Java Format 결과를 그대로 사용합니다. 수동 포맷으로 다시 바꾸지 않습니다.
-- 클래스 이름은 `도메인 대상 + 수행 책임`으로 작성합니다. 책임이 드러나는 `Factory`, `Generator`, `Resolver`, `Validator`, `Handler`, `Calculator`, `Mapper`, `Provider`, `Publisher` 등의 접미사를 선택합니다.
-- 메서드는 동사로 시작합니다. 클래스의 책임이 충분히 구체적이면 `generate()`, `validate()`, `resolve()`처럼 대상을 반복하지 않습니다.
-- 상태 변경에는 `update`, `modify`, `change` 대신 `cancel()`, `approve()`, `expire()` 같은 도메인 동사를 사용합니다.
-- 반드시 존재해야 하는 조회는 `getBy…` 또는 `getRequiredBy…`로 반환 계약을 드러냅니다. 없을 수 있는 조회에는 `findBy…`와 `Optional`을 사용합니다.
+사용자 결과, 권한, 데이터 보관, 동시성, 외부 부수 효과가 달라지는 미확정 정책은 기존 코드나 관례로 결정하지 않습니다.
 
-## 테스트
+1. 확인한 사실, 미확정 조건, 선택지와 결과를 정리합니다.
+2. 구현 전에 질문을 묶어 묻고, 답과 무관한 조사는 계속합니다.
+3. 답을 기다리는 동안 임의 정책을 코드나 테스트에 고정하지 않습니다.
+4. 기존 원칙으로 판단할 수 있는 구현 선택은 직접 결정하고 근거를 적습니다.
+5. 확정된 결정은 소유 문서, 코드와 테스트에 반영합니다.
 
-- 테스트는 운영 코드와 같은 패키지 경로의 `src/test/java`에 둡니다.
-- 테스트 클래스는 `<대상 클래스>Test`로 이름을 짓습니다.
-- 테스트 하나는 하나의 핵심 시나리오를 검증합니다. 구현 세부 사항보다 상태 변화, 정책, 예외, 외부 효과 같은 동작 계약을 검증합니다.
-- 조건에 따라 결과가 달라지면 `@Nested`로 구분합니다. `@DisplayName`에는 대상, 조건, 기대 결과를 한국어로 구체적으로 작성합니다.
-- 시간, 난수, 현재 사용자처럼 변하는 입력은 고정하거나 주입합니다.
-- Mock 호출 검증은 외부 효과, 호출 금지, 호출 순서가 실제 계약일 때만 사용합니다.
+문서와 구현의 차이는 보고하고, 팀 논의는 해당 문서의 기준을 따릅니다.
 
-## 설정과 보안
+## Workflow
 
-- 실제 Secret, 개인정보, 운영 데이터는 코드, Git, Docker 이미지, 로그, 테스트 데이터에 넣지 않습니다.
-- 실제 설정값은 환경 변수 또는 승인된 Secret 관리 체계로 주입합니다.
-- 설정을 변경하면 적용 환경, 영향 범위, 롤백 방법 또는 후속 수정 방법을 PR에 기록합니다.
+1. Issue와 관련 문서, 실제 코드와 테스트를 읽습니다.
+2. 입력과 출력, read와 write, transaction, 외부 호출과 실패 뒤 상태를 적습니다.
+3. [Decision Guide](docs/architecture/decision-guide.md)로 코드 위치와 DB 접근 방식을 정합니다.
+4. [레거시와 리팩터링 기준](#레거시-코드와-리팩터링)에 따라 적용할 스타일을 정합니다. 불필요한 class, interface와 공통 추상화는 추가하지 않습니다.
+5. 위험한 가정을 [Testing](docs/contributing/testing.md)에 맞춰 검증합니다.
+6. 코드와 원본 문서의 변경 사항을 함께 확인합니다.
 
-## 검증 절차
+## Change Boundaries
 
-Java 코드를 변경했으면 다음 순서로 검증합니다.
+- 새 도메인 분리, `global` 배치, `service/internal`의 도입 시점, port 또는 직접 의존은 [Domain Boundaries](docs/architecture/domain-boundaries.md)의 팀 논의 조건을 따릅니다.
+- JPA 관계, QueryDSL, native SQL과 Flyway 변경은 [Persistence](docs/architecture/persistence.md)를 따릅니다.
+- 외부 서비스, 배포, Secret 또는 데이터 삭제처럼 실제 환경에 영향을 주는 작업은 담당자에게 확인합니다.
+- 새 업무 정책은 팀 합의 후 반영합니다.
+- generated code를 직접 수정하지 않습니다.
 
-1. `./gradlew spotlessApply`를 실행합니다.
-2. 변경 범위와 관련된 테스트를 실행합니다. 전체 검증이 필요하면 `./gradlew test`를 실행합니다.
-3. PR을 만들기 전에 `./gradlew spotlessCheck`를 실행합니다.
+## Commands
 
-검증하지 못한 항목이 있으면 이유와 예상 영향을 보고합니다.
+Gradle 실행 JVM은 Java 17을 사용합니다. toolchain 설정과 별도로 `java -version`을 확인합니다.
 
-## Git과 PR
-
-- 모든 구현 작업은 Issue를 기준으로 관리합니다. Issue가 없고 새 Issue 생성이 필요하면 외부 생성 전에 확인합니다.
-- `main`과 `develop`에 직접 commit하거나 push하지 않습니다. 작업 브랜치에서 PR로 병합합니다.
-- Issue 하나를 PR 하나로 끝내면 브랜치 이름은 `type/#issueNumber`로 작성합니다. 여러 PR로 나누면 `type/#issueNumber-subNumber`을 사용합니다. 예: `feat/#3`, `feat/#3-1`, `feat/#3-2`.
-- 독립 PR의 대상 브랜치는 `develop`입니다. 의존 PR은 바로 아래 작업 브랜치를 대상으로 하는 Stacked PR로 만듭니다.
-- 하나의 PR에는 하나의 검토 가능한 의도만 담습니다. 기능, 리팩터링, 포맷 변경, 의존성 갱신은 가능한 한 분리합니다.
-- Issue를 끝내는 PR에는 `close #이슈번호`를, 중간 PR에는 `related #이슈번호`를 적습니다.
-- 병합은 Squash merge를 사용합니다. 최소 1명의 승인을 받고 모든 리뷰 대화를 해결한 뒤 병합합니다.
-
-### 작업 type
-
-Issue, 브랜치, PR, 커밋에는 같은 type을 사용합니다.
-
-| type | 사용 시점 |
+| 환경 | JDK 선택 |
 | --- | --- |
-| `feat` | 기능 추가 |
-| `fix` | 버그 수정 |
-| `docs` | 문서 변경 |
-| `style` | 기능에 영향 없는 포맷, 공백, import 변경 |
-| `refactor` | 동작을 유지하는 구조 개선 |
-| `test` | 테스트 추가 또는 수정 |
-| `chore` | 설정, 빌드, 기타 유지보수 |
-| `rename` | 파일, 패키지, 클래스, 메서드의 이름 또는 위치 변경 |
-| `perf` | 성능 개선 |
+| SDKMAN과 `.sdkmanrc` 사용 | `sdk env` |
+| SDKMAN 사용 | `sdk use java <Java 17 후보>` |
+| SDKMAN 미사용 | 설치된 Java 17의 `JAVA_HOME` 설정 |
+| Java 17 미설치 | 사용자에게 경로 또는 설치 방법 확인 |
 
-### 커밋과 PR 작성
+```bash
+./gradlew spotlessApply  # 파일 종류와 관계없이 커밋 전 실행, 적용 결과 검토
+./gradlew test           # 전체 테스트 검증
+./gradlew spotlessCheck  # CI 또는 별도 형식 검사가 필요할 때 실행
+```
 
-- 커밋과 PR 제목은 `type: 변경 대상 요약` 형식으로 작성합니다. 예: `feat: 로그인 기능 구현`.
-- scope는 사용하지 않습니다. `feat(auth): 로그인 구현`은 허용하지 않습니다.
-- 커밋 메시지는 한글 개조식으로 작성하고, 변경 방법보다 변경 대상을 먼저 적습니다.
-- Commitlint hook이 설정되지 않았다면 필요할 때 `npm ci`와 `git config --local core.hooksPath .githooks`로 설정할 수 있습니다.
-- Issue에는 작업 이유, 범위, 완료 기준을 적습니다. 확정되지 않은 구현 방법을 단정하지 않습니다.
-- PR에는 관련 Issue, 변경 내용, 검증 결과, 제한 사항 또는 후속 작업을 적습니다.
-- PR 템플릿의 항목과 체크리스트를 유지합니다. 해당하지 않는 항목은 이유를 적습니다.
-- PR 제목과 본문은 짧고 구체적인 한국어로 작성합니다. `개선`, `처리`, `정상 동작`처럼 모호한 표현 대신 변경 대상, 조건, 결과, 확인 방법을 적습니다.
+Gradle 실패 시 cache를 삭제하지 않고 원인을 확인합니다.
+
+- 기존 cache의 lock이나 접근 권한 문제라면 해당 경로의 실행 권한을 요청한 뒤 같은 명령을 다시 실행합니다.
+- 제한된 환경에서 별도의 쓰기 가능 cache가 필요하면 `GRADLE_USER_HOME`을 지정합니다.
+- 임시 cache의 `metadata.bin`이 없거나 읽히지 않으면 기존 cache를 건드리지 않고 새로운 임시 경로를 지정해 재시도합니다. 예: `GRADLE_USER_HOME="$(mktemp -d)" ./gradlew --no-daemon spotlessApply`.
+- 재시도에도 실패하면 첫 유의미한 오류와 cache 경로를 보고합니다.
+
+Issue, 브랜치, PR과 scope 없는 `type: 한글 요약` 커밋 형식은 [Git Guide](docs/contributing/git.md)를 따릅니다. 사용자가 커밋 전 보고를 요청했다면 검증 결과와 변경 목록을 먼저 보고하고, 답을 받은 뒤 커밋합니다.
+
+## Review Output
+
+코드와 설계를 검토할 때 시작점에서 결과까지의 흐름, 읽고 쓰는 데이터와 owner, transaction, 외부 호출 순서, 최종 정합성 방어선, 실패와 재시도, 검증 방법을 구체적으로 설명합니다. 근거 없는 정책은 확정된 것처럼 쓰지 않습니다.
