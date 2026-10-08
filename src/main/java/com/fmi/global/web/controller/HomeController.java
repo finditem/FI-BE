@@ -1,4 +1,4 @@
-package com.fmi.controller;
+package com.fmi.global.web.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
