@@ -1,8 +1,8 @@
 package com.fmi.global.web.controller;
 
+import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.ApiResponse;
-import com.fmi.global.service.S3Service;
-import com.fmi.global.web.dto.ImageDeleteRequest;
+import com.fmi.global.web.dto.request.ImageDeleteRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;

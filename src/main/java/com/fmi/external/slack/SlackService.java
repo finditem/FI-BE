@@ -1,4 +1,4 @@
-package com.fmi.global.service;
+package com.fmi.external.slack;
 
 import com.fmi.domain.inquiry.event.InquiryEvent;
 import com.fmi.domain.report.event.ReportEvent;

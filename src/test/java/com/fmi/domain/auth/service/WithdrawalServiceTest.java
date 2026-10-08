@@ -17,7 +17,7 @@ import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient;
-import com.fmi.global.service.S3Service;
+import com.fmi.external.storage.S3Service;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;

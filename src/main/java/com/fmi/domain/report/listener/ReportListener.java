@@ -1,7 +1,7 @@
 package com.fmi.domain.report.listener;
 
 import com.fmi.domain.report.event.ReportEvent;
-import com.fmi.global.service.SlackService;
+import com.fmi.external.slack.SlackService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

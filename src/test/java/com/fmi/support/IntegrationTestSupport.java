@@ -2,7 +2,7 @@ package com.fmi.support;
 
 import static org.mockito.Mockito.mock;
 
-import com.fmi.global.service.S3Service;
+import com.fmi.external.storage.S3Service;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;

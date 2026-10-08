@@ -1,4 +1,4 @@
-package com.fmi.config;
+package com.fmi.global.config;
 
 import com.fmi.domain.auth.security.websocket.CustomHandshakeInterceptor;
 import com.fmi.global.handler.StompHandler;
