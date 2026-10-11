@@ -168,6 +168,7 @@ Table review {
   recipient_id bigint [note: '수신자 물리 삭제 시 NULL']
   emotion varchar(30) [not null, note: 'MOVED, GRATEFUL, HEART_FLUTTERED']
   content varchar(300)
+  hidden_by_author boolean [not null, default: false, note: '작성자의 보낸 후기 목록에서만 숨김; 수신자에게는 계속 노출']
   hidden_by_recipient boolean [not null, default: false, note: '수신자의 받은 후기 목록에서 숨김; 복구 기능 없음']
   revised_at datetime [note: '작성자가 후기 내용을 수정한 시각; 수정 전 NULL']
   created_at datetime [not null]
@@ -176,7 +177,7 @@ Table review {
   deleted_at datetime
 
   indexes {
-    (author_id, created_at, id) [name: 'idx_review_author_created']
+    (author_id, hidden_by_author, created_at, id) [name: 'idx_review_author_hidden_created']
     (recipient_id, hidden_by_recipient, created_at, id) [name: 'idx_review_recipient_hidden_created']
   }
 }
