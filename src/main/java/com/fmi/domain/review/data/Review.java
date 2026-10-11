@@ -64,6 +64,9 @@ public class Review extends BaseEntity {
     @Column(name = "content", length = 300)
     private String content;
 
+    @Column(name = "hidden_by_author", nullable = false)
+    private boolean hiddenByAuthor;
+
     @Column(name = "hidden_by_recipient", nullable = false)
     private boolean hiddenByRecipient;
 
