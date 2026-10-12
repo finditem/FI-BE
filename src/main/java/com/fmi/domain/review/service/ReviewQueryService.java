@@ -35,7 +35,7 @@ public class ReviewQueryService {
     // 숨김 여부와 관계없이 조회한다. 숨김은 각자의 목록에서만 빼는 기능이다.
     public ReviewDetail getReview(Long reviewId) {
         Review review = reviewRepository
-                .findById(reviewId)
+                .findDetailById(reviewId)
                 .filter(Review::isActive)
                 .orElseThrow(() -> new GeneralException(ReviewErrorStatus.NOT_FOUND));
 

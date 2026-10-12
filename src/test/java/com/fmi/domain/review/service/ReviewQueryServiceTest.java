@@ -34,6 +34,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
@@ -440,6 +441,53 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
 
                 // then
                 assertThat(result.reviewId()).isEqualTo(review.getId());
+            }
+        }
+
+        @Nested
+        @DisplayName("조회가 끝난 뒤 트랜잭션 밖에서 결과를 읽으면")
+        class ContextOutsideTransaction {
+
+            @Test
+            @Transactional(propagation = Propagation.NOT_SUPPORTED)
+            @DisplayName("도움 경험을 지연 로딩 없이 읽을 수 있다")
+            void itReadsHelpTypesWithoutSession() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("세션밖작성자")
+                        .email("outside-tx-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User helper = userRepository.save(User.builder()
+                        .nickname("세션밖도움자")
+                        .email("outside-tx-helper@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                        .sourcePostId(960003L)
+                        .requester(author)
+                        .helper(helper)
+                        .build());
+                Review review = reviewRepository.save(Review.builder()
+                        .findCompletion(findCompletion)
+                        .emotion(ReviewEmotion.GRATEFUL)
+                        .helpTypes(Set.of(ReviewHelpType.QUICK_RESPONSE, ReviewHelpType.SAFE_STORAGE))
+                        .build());
+
+                try {
+                    // when
+                    ReviewDetail result = reviewQueryService.getReview(review.getId());
+
+                    // then
+                    assertThat(result.helpTypes())
+                            .containsExactlyInAnyOrder(ReviewHelpType.QUICK_RESPONSE, ReviewHelpType.SAFE_STORAGE);
+                } finally {
+                    reviewRepository.deleteById(review.getId());
+                    findCompletionRepository.delete(findCompletion);
+                    userRepository.deleteAll(List.of(author, helper));
+                }
             }
         }
 
