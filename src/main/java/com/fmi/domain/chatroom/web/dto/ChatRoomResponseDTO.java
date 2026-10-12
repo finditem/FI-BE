@@ -5,6 +5,7 @@ import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.findcompletion.data.FindCompletionStatus;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -31,9 +32,16 @@ public class ChatRoomResponseDTO {
     @NoArgsConstructor
     @Getter
     public static class FindCompletionInfoDTO {
+        @Schema(description = "NONE(채팅방에서 완료 전), COMPLETED_HERE(이 채팅방에서 완료), COMPLETED_ELSEWHERE(같은 게시글의 다른 채팅방에서 완료)")
         private FindCompletionStatus status;
+
+        @Schema(description = "찾기 완료 id. COMPLETED_HERE일 때만 값이 있고, 후기 작성 API에 사용합니다.")
         private Long findCompletionId;
+
+        @Schema(description = "[분실물 찾기 완료] 버튼 노출 여부")
         private boolean canComplete;
+
+        @Schema(description = "[후기 작성하기] 버튼 노출 여부")
         private boolean canWriteReview;
     }
 

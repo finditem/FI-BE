@@ -26,7 +26,8 @@ public interface ReviewSwagger {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "후기 작성 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
-                description = "감정 유형 또는 도움 경험이 없습니다. REVIEW400-INVALID_CONTENT: 상세 후기가 300자를 넘습니다."),
+                description = "COMMON400: 감정 유형이나 도움 경험이 없거나 값이 올바르지 않습니다. "
+                        + "REVIEW400-INVALID_CONTENT: 상세 후기가 300자를 넘습니다."),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "403",
                 description = "REVIEW403-ACCESS_DENIED: 찾기 완료를 처리한 사용자가 아닙니다. "
@@ -64,7 +65,7 @@ public interface ReviewSwagger {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
-                description = "type이 RECEIVED, SENT가 아니거나 size가 1~50 범위를 벗어났습니다.")
+                description = "COMMON400: type이 RECEIVED, SENT가 아니거나 size가 1~50 범위를 벗어났습니다.")
     })
     ApiResponse<ReviewPageResponse> getMyReviews(
             @Valid @ModelAttribute ReviewPageRequest request, @AuthenticationPrincipal UserDetails userDetails);

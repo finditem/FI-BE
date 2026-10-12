@@ -19,8 +19,7 @@ public record ReviewDetailResponse(
         @Schema(description = "후기를 받은 사용자") ReviewUserResponse recipient,
         ReviewPostResponse post,
 
-        @Schema(description = "채팅방 이동용 id")
-        Long roomId) {
+        @Schema(description = "채팅방 이동용 id") Long roomId) {
 
     public static ReviewDetailResponse from(ReviewDetail detail) {
         return new ReviewDetailResponse(

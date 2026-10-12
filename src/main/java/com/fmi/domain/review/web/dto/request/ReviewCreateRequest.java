@@ -15,5 +15,5 @@ public record ReviewCreateRequest(
 
         @Schema(description = "도움 경험. 1개 이상 선택", requiredMode = Schema.RequiredMode.REQUIRED) @NotEmpty Set<@NotNull ReviewHelpType> helpTypes,
 
-        @Schema(description = "상세 후기. 선택 입력, 최대 300자. 공백만 입력하면 저장하지 않습니다.")
+        @Schema(description = "상세 후기. 선택 입력, 최대 300자. 공백만 입력하면 상세 후기 없이 저장합니다.")
         String content) {}
