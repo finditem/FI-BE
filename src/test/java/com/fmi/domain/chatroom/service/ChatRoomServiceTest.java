@@ -20,6 +20,7 @@ import com.fmi.domain.review.repository.ReviewRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.service.BlockService;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -218,6 +219,50 @@ class ChatRoomServiceTest {
         given(findCompletion.isRequestedBy(currentUser.getId())).willReturn(false);
         given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
         given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().isCanWriteReview()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 도움을 준 상대가 탈퇴했으면 canWriteReview = false")
+    void getChatRoomDetail_withdrawnOpponent_cannotWriteReview() {
+        // given
+        User withdrawnOpponent = User.builder()
+                .id(2L)
+                .email("other@test.com")
+                .nickname("상대")
+                .deletedAt(LocalDateTime.of(2026, 9, 11, 10, 0))
+                .build();
+        given(chatRoom.getOtherParticipant(currentUser.getId())).willReturn(withdrawnOpponent);
+        FindCompletion findCompletion = mock(FindCompletion.class);
+        given(findCompletion.getId()).willReturn(5L);
+        given(findCompletion.isCompletedIn(10L)).willReturn(true);
+        given(findCompletion.isRequestedBy(currentUser.getId())).willReturn(true);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().isCanWriteReview()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 상대와 차단 관계이면 canWriteReview = false")
+    void getChatRoomDetail_blockedOpponent_cannotWriteReview() {
+        // given
+        FindCompletion findCompletion = mock(FindCompletion.class);
+        given(findCompletion.getId()).willReturn(5L);
+        given(findCompletion.isCompletedIn(10L)).willReturn(true);
+        given(findCompletion.isRequestedBy(currentUser.getId())).willReturn(true);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
+        given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(true);
 
         // when
         ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);

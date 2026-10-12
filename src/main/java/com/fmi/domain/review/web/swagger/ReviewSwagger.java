@@ -29,7 +29,8 @@ public interface ReviewSwagger {
                 description = "감정 유형 또는 도움 경험이 없습니다. REVIEW400-INVALID_CONTENT: 상세 후기가 300자를 넘습니다."),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "403",
-                description = "REVIEW403-ACCESS_DENIED: 찾기 완료를 처리한 사용자가 아닙니다."),
+                description = "REVIEW403-ACCESS_DENIED: 찾기 완료를 처리한 사용자가 아닙니다. "
+                        + "REVIEW403-NOT_ALLOWED: 받을 사용자가 탈퇴했거나 차단 관계입니다."),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "FIND_COMPLETION404-NOT_FOUND: 찾기 완료 기록이 없습니다."),

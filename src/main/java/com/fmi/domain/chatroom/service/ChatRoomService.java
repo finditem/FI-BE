@@ -181,7 +181,7 @@ public class ChatRoomService {
 
         FindCompletion completion = findFindCompletion(chatRoom);
         FindCompletionInfoDTO findCompletion = ChatRoomConverter.toFindCompletionInfoDTO(
-                chatRoom, completion, canWriteReview(chatRoom, completion, user));
+                chatRoom, completion, canWriteReview(chatRoom, completion, user, opponent, isBlocked));
 
         // 게시글 완전 삭제 아닐 경우 -> fk로 최신 데이터
         if (!chatRoom.isSourcePostDeleted() && chatRoom.getPost() != null) {
@@ -206,10 +206,14 @@ public class ChatRoomService {
     }
 
     // 이 채팅방에서 완료한 요청자가 아직 후기를 쓰지 않았을 때만 후기 작성 버튼을 노출
-    private boolean canWriteReview(ChatRoom chatRoom, FindCompletion completion, User user) {
+    // 상대가 탈퇴했거나 차단 관계이면 노출하지 않는다.
+    private boolean canWriteReview(
+            ChatRoom chatRoom, FindCompletion completion, User user, User opponent, boolean isBlocked) {
         return completion != null
                 && completion.isCompletedIn(chatRoom.getId())
                 && completion.isRequestedBy(user.getId())
+                && opponent.getDeletedAt() == null
+                && !isBlocked
                 && !reviewRepository.existsByFindCompletionId(completion.getId());
     }
 }

@@ -6,12 +6,17 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class FindCompletionValidator {
+
+    private final BlockService blockService;
 
     public void validate(ChatRoom chatRoom, User requester) {
         if (!chatRoom.isParticipant(requester)) {
@@ -30,6 +35,11 @@ public class FindCompletionValidator {
         }
         if (post.getPostStatus() != PostStatus.SEARCHING) {
             throw new GeneralException(FindCompletionErrorStatus.ALREADY_COMPLETED);
+        }
+
+        User helper = chatRoom.getOtherParticipant(requester.getId());
+        if (helper.getDeletedAt() != null || blockService.isBlocked(requester.getId(), helper.getId())) {
+            throw new GeneralException(FindCompletionErrorStatus.NOT_ALLOWED);
         }
     }
 }

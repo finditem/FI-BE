@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 public enum FindCompletionErrorStatus implements BaseErrorCode {
     INVALID_POST_TYPE(HttpStatus.BAD_REQUEST, "FIND_COMPLETION400-INVALID_POST_TYPE", "분실물 게시글만 찾기 완료를 처리할 수 있습니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "FIND_COMPLETION403-ACCESS_DENIED", "게시글 작성자만 찾기 완료를 처리할 수 있습니다."),
+    NOT_ALLOWED(HttpStatus.FORBIDDEN, "FIND_COMPLETION403-NOT_ALLOWED", "탈퇴했거나 차단 관계인 사용자와는 찾기 완료를 처리할 수 없습니다."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "FIND_COMPLETION404-NOT_FOUND", "찾기 완료 기록을 찾을 수 없습니다."),
     ALREADY_COMPLETED(HttpStatus.CONFLICT, "FIND_COMPLETION409-ALREADY_COMPLETED", "이미 찾기 완료된 게시글입니다.");
 

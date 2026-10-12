@@ -22,6 +22,8 @@ import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.userblock.data.BlockedUser;
+import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.support.IntegrationTestSupport;
 import java.time.LocalDateTime;
@@ -64,6 +66,9 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BlockedUserRepository blockedUserRepository;
 
     @Nested
     @DisplayName("채팅방에서 찾기 완료를 처리할 때")
@@ -353,6 +358,111 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
                         .get()
                         .extracting(completion -> completion.isCompletedIn(firstRoom.getId()))
                         .isEqualTo(true);
+            }
+        }
+
+        @Nested
+        @DisplayName("채팅 상대가 탈퇴했으면")
+        class ContextWithWithdrawnHelper {
+
+            @Test
+            @DisplayName("NOT_ALLOWED 예외를 던진다")
+            void itThrowsNotAllowed() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("탈퇴상대작성자")
+                        .email("탈퇴상대-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User helper = userRepository.save(User.builder()
+                        .nickname("탈퇴상대도움자")
+                        .email("탈퇴상대-helper@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .deletedAt(LocalDateTime.of(2026, 9, 11, 10, 0))
+                        .build());
+                Post post = postRepository.save(Post.create(
+                        "이어폰을 잃어버렸어요",
+                        "서울 성동구",
+                        37.5422,
+                        127.0549,
+                        PostType.LOST,
+                        Category.ELECTRONICS,
+                        "흰색 이어폰입니다.",
+                        false,
+                        LocalDateTime.of(2026, 9, 10, 10, 0),
+                        Radius.DISTANCE_1000,
+                        author));
+                ChatRoom chatRoom = ChatRoom.builder()
+                        .post(post)
+                        .createdAt(LocalDateTime.of(2026, 9, 10, 11, 0))
+                        .build();
+                chatRoom.initFromPost(post);
+                chatRoom.addParticipant(
+                        ChatRoomParticipant.builder().user(author).build());
+                chatRoom.addParticipant(
+                        ChatRoomParticipant.builder().user(helper).build());
+                chatRoomRepository.save(chatRoom);
+
+                // when & then
+                assertThatThrownBy(() -> findCompletionService.complete(chatRoom.getId(), author.getEmail()))
+                        .isInstanceOf(GeneralException.class)
+                        .extracting("code")
+                        .isEqualTo(FindCompletionErrorStatus.NOT_ALLOWED);
+            }
+        }
+
+        @Nested
+        @DisplayName("채팅 상대가 나를 차단했으면")
+        class ContextWithBlockedHelper {
+
+            @Test
+            @DisplayName("NOT_ALLOWED 예외를 던진다")
+            void itThrowsNotAllowed() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("차단상대작성자")
+                        .email("차단상대-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User helper = userRepository.save(User.builder()
+                        .nickname("차단상대도움자")
+                        .email("차단상대-helper@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                Post post = postRepository.save(Post.create(
+                        "이어폰을 잃어버렸어요",
+                        "서울 성동구",
+                        37.5422,
+                        127.0549,
+                        PostType.LOST,
+                        Category.ELECTRONICS,
+                        "흰색 이어폰입니다.",
+                        false,
+                        LocalDateTime.of(2026, 9, 10, 10, 0),
+                        Radius.DISTANCE_1000,
+                        author));
+                ChatRoom chatRoom = ChatRoom.builder()
+                        .post(post)
+                        .createdAt(LocalDateTime.of(2026, 9, 10, 11, 0))
+                        .build();
+                chatRoom.initFromPost(post);
+                chatRoom.addParticipant(
+                        ChatRoomParticipant.builder().user(author).build());
+                chatRoom.addParticipant(
+                        ChatRoomParticipant.builder().user(helper).build());
+                chatRoomRepository.save(chatRoom);
+                blockedUserRepository.save(
+                        BlockedUser.builder().blocker(helper).blocked(author).build());
+
+                // when & then
+                assertThatThrownBy(() -> findCompletionService.complete(chatRoom.getId(), author.getEmail()))
+                        .isInstanceOf(GeneralException.class)
+                        .extracting("code")
+                        .isEqualTo(FindCompletionErrorStatus.NOT_ALLOWED);
             }
         }
 
