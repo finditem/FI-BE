@@ -10,6 +10,9 @@ import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResultDTO;
+import com.fmi.domain.findcompletion.data.FindCompletion;
+import com.fmi.domain.findcompletion.data.FindCompletionStatus;
+import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
@@ -51,6 +54,9 @@ class ChatRoomServiceTest {
 
     @Mock
     private BlockService blockService;
+
+    @Mock
+    private FindCompletionRepository findCompletionRepository;
 
     @InjectMocks
     private ChatRoomService chatRoomService;
@@ -107,5 +113,56 @@ class ChatRoomServiceTest {
 
         // then
         assertThat(result.getOpponentUser().isBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 게시글의 찾기 완료 기록이 없으면 findCompletion.status = NONE")
+    void getChatRoomDetail_notCompleted_returnsNone() {
+        // given
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.empty());
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().getStatus()).isEqualTo(FindCompletionStatus.NONE);
+        assertThat(result.getFindCompletion().getFindCompletionId()).isNull();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 이 채팅방에서 찾기 완료했으면 findCompletion.status = COMPLETED_HERE")
+    void getChatRoomDetail_completedHere_returnsCompletedHere() {
+        // given
+        FindCompletion findCompletion = mock(FindCompletion.class);
+        given(findCompletion.getId()).willReturn(5L);
+        given(findCompletion.isCompletedIn(10L)).willReturn(true);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().getStatus()).isEqualTo(FindCompletionStatus.COMPLETED_HERE);
+        assertThat(result.getFindCompletion().getFindCompletionId()).isEqualTo(5L);
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 같은 게시글의 다른 채팅방에서 찾기 완료했으면 findCompletion.status = COMPLETED_ELSEWHERE")
+    void getChatRoomDetail_completedElsewhere_returnsCompletedElsewhere() {
+        // given
+        FindCompletion findCompletion = mock(FindCompletion.class);
+        given(findCompletion.getId()).willReturn(5L);
+        given(findCompletion.isCompletedIn(10L)).willReturn(false);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().getStatus()).isEqualTo(FindCompletionStatus.COMPLETED_ELSEWHERE);
+        assertThat(result.getFindCompletion().getFindCompletionId()).isNull();
     }
 }

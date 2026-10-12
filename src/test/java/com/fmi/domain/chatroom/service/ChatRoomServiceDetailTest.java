@@ -11,6 +11,7 @@ import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResultDTO;
+import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
@@ -55,6 +56,9 @@ class ChatRoomServiceDetailTest {
 
     @Mock
     private BlockService blockService;
+
+    @Mock
+    private FindCompletionRepository findCompletionRepository;
 
     @InjectMocks
     private ChatRoomService chatRoomService;

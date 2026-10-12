@@ -11,6 +11,8 @@ import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.data.enums.ParticipantState;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
+import com.fmi.domain.findcompletion.data.FindCompletion;
+import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
@@ -44,6 +46,7 @@ public class ChatRoomService {
     private final ChatMessageRepository chatMessageRepository;
     private final PostImageService postImageService;
     private final BlockService blockService;
+    private final FindCompletionRepository findCompletionRepository;
 
     public Pair<ChatRoomResultDTO, Boolean> createChatRoom(Long postId, Long contactUserId) {
 
@@ -174,15 +177,28 @@ public class ChatRoomService {
 
         boolean isBlocked = blockService.isBlocked(user.getId(), opponent.getId());
 
+        FindCompletionInfoDTO findCompletion =
+                ChatRoomConverter.toFindCompletionInfoDTO(chatRoom, findFindCompletion(chatRoom));
+
         // 게시글 완전 삭제 아닐 경우 -> fk로 최신 데이터
         if (!chatRoom.isSourcePostDeleted() && chatRoom.getPost() != null) {
             Post post = chatRoom.getPost();
             String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
             return ChatRoomConverter.toChatRoomResultDTO(
-                    chatRoom, opponent, post, unreadCount, thumbnailImageUrl, isBlocked);
+                    chatRoom, opponent, post, unreadCount, thumbnailImageUrl, isBlocked, findCompletion);
         }
 
         // 게시글 완전 삭제 -> 스냅샷 사용
-        return ChatRoomConverter.toChatRoomResultDTOFromSnapshot(chatRoom, opponent, unreadCount, isBlocked);
+        return ChatRoomConverter.toChatRoomResultDTOFromSnapshot(
+                chatRoom, opponent, unreadCount, isBlocked, findCompletion);
+    }
+
+    // 같은 게시글의 다른 채팅방에서 완료됐는지도 알아야 하므로 게시글 기준으로 조회
+    private FindCompletion findFindCompletion(ChatRoom chatRoom) {
+        Long postId = chatRoom.getPost() != null ? chatRoom.getPost().getId() : chatRoom.getSourcePostId();
+        if (postId == null) {
+            return null;
+        }
+        return findCompletionRepository.findBySourcePostId(postId).orElse(null);
     }
 }

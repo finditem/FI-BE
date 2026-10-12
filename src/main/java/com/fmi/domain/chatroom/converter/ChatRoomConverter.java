@@ -6,6 +6,8 @@ import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
+import com.fmi.domain.findcompletion.data.FindCompletion;
+import com.fmi.domain.findcompletion.data.FindCompletionStatus;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.user.data.User;
 import java.util.List;
@@ -16,6 +18,17 @@ public class ChatRoomConverter {
 
     public static ChatRoomResultDTO toChatRoomResultDTO(
             ChatRoom chatRoom, User user, Post post, Long unreadCount, String thumbnailUrl, boolean isBlocked) {
+        return toChatRoomResultDTO(chatRoom, user, post, unreadCount, thumbnailUrl, isBlocked, null);
+    }
+
+    public static ChatRoomResultDTO toChatRoomResultDTO(
+            ChatRoom chatRoom,
+            User user,
+            Post post,
+            Long unreadCount,
+            String thumbnailUrl,
+            boolean isBlocked,
+            FindCompletionInfoDTO findCompletion) {
 
         var opponentUser = buildOpponentUserDTO(user, isBlocked);
 
@@ -35,11 +48,16 @@ public class ChatRoomConverter {
                 .unreadCount(unreadCount)
                 .opponentUser(opponentUser)
                 .postInfo(postInfo)
+                .findCompletion(findCompletion)
                 .build();
     }
 
     public static ChatRoomResultDTO toChatRoomResultDTOFromSnapshot(
-            ChatRoom chatRoom, User opponent, Long unreadCount, boolean isBlocked) {
+            ChatRoom chatRoom,
+            User opponent,
+            Long unreadCount,
+            boolean isBlocked,
+            FindCompletionInfoDTO findCompletion) {
 
         var opponentUser = buildOpponentUserDTO(opponent, isBlocked);
 
@@ -59,6 +77,26 @@ public class ChatRoomConverter {
                 .unreadCount(unreadCount)
                 .opponentUser(opponentUser)
                 .postInfo(postInfo)
+                .findCompletion(findCompletion)
+                .build();
+    }
+
+    public static FindCompletionInfoDTO toFindCompletionInfoDTO(ChatRoom chatRoom, FindCompletion findCompletion) {
+        if (findCompletion == null) {
+            return FindCompletionInfoDTO.builder()
+                    .status(FindCompletionStatus.NONE)
+                    .build();
+        }
+
+        if (findCompletion.isCompletedIn(chatRoom.getId())) {
+            return FindCompletionInfoDTO.builder()
+                    .status(FindCompletionStatus.COMPLETED_HERE)
+                    .findCompletionId(findCompletion.getId())
+                    .build();
+        }
+
+        return FindCompletionInfoDTO.builder()
+                .status(FindCompletionStatus.COMPLETED_ELSEWHERE)
                 .build();
     }
 

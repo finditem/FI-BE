@@ -2,6 +2,7 @@ package com.fmi.domain.chatroom.web.dto;
 
 import com.fmi.domain.Enum.Category;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
+import com.fmi.domain.findcompletion.data.FindCompletionStatus;
 import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import java.time.LocalDateTime;
@@ -22,6 +23,16 @@ public class ChatRoomResponseDTO {
         private Long unreadCount;
         private opponentUserDTO opponentUser;
         private PostInfoDTO postInfo;
+        private FindCompletionInfoDTO findCompletion;
+    }
+
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class FindCompletionInfoDTO {
+        private FindCompletionStatus status;
+        private Long findCompletionId;
     }
 
     @Builder
