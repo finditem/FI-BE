@@ -66,6 +66,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/users/{userId}/meta")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/reviews/{reviewId}")
+                        .permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/posts/search/**",
