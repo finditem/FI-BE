@@ -70,7 +70,9 @@ public enum ErrorStatus implements BaseErrorCode {
     _PHONE_DUPLICATED(HttpStatus.CONFLICT, "USER409-PHONE_DUPLICATED", "이미 사용 중인 전화번호입니다."),
     _PREFERRED_LANGUAGE_REQUIRED(HttpStatus.BAD_REQUEST, "USER400-PREFERRED_LANGUAGE_REQUIRED", "선호 언어는 필수입니다."),
     _USER_PAGE_TYPE_INVALID(
-            HttpStatus.BAD_REQUEST, "USER400-PAGE_TYPE_INVALID", "type 파라미터는 posts, comments, favorites 중 하나여야 합니다."),
+            HttpStatus.BAD_REQUEST,
+            "USER400-PAGE_TYPE_INVALID",
+            "type 파라미터는 posts, comments, favorites, reviews 중 하나여야 합니다."),
 
     // 게시글 관련 응답
     _POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST404-NOT_FOUND", "존재하지 않는 게시글입니다."),

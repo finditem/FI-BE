@@ -4,6 +4,7 @@ import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.web.dto.response.CommentImageResponse;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
+import com.fmi.domain.review.web.dto.response.ReviewResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.PreferredLanguageResponse;
@@ -83,6 +84,7 @@ public class UserConverter {
             List<PostBriefResponse> posts,
             List<UserCommentSummaryResponse> comments,
             List<PostBriefResponse> favorites,
+            List<ReviewResponse> reviews,
             Long nextCursor,
             boolean hasNext) {
         return UserOtherPageResponse.builder()
@@ -92,6 +94,7 @@ public class UserConverter {
                 .posts(posts)
                 .comments(comments)
                 .favorites(favorites)
+                .reviews(reviews)
                 .nextCursor(nextCursor)
                 .hasNext(hasNext)
                 .build();

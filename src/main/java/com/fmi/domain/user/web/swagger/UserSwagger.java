@@ -256,12 +256,13 @@ public interface UserSwagger {
     ApiResponse<UserMetaResponse> getUserMeta(@PathVariable Long userId);
 
     @Operation(summary = "타인 페이지 조회", description = """
-                다른 사용자의 닉네임, 프로필 이미지, 게시글, 작성 댓글, 즐겨찾기 목록을 조회합니다.
+                다른 사용자의 닉네임, 프로필 이미지, 게시글, 작성 댓글, 즐겨찾기, 받은 후기 목록을 조회합니다.
 
                 **type 파라미터:**
                 - type=posts → 게시글만 조회
                 - type=comments → 댓글만 조회
                 - type=favorites → 즐겨찾기만 조회
+                - type=reviews → 받은 후기만 조회 (최신 작성순, 받은 사용자가 숨긴 후기 포함)
                 - type 미지정 → 기본 탭(posts) 조회
 
                 **페이지네이션:**
@@ -273,14 +274,14 @@ public interface UserSwagger {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "타인 페이지 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
-                description = "USER400-PAGE_TYPE_INVALID: type 파라미터는 posts, comments, favorites 중 하나여야 합니다",
+                description = "USER400-PAGE_TYPE_INVALID: type 파라미터는 posts, comments, favorites, reviews 중 하나여야 합니다",
                 content =
                         @Content(
                                 mediaType = "application/json",
                                 examples =
                                         @ExampleObject(
                                                 value =
-                                                        "{\"isSuccess\": false, \"code\": \"USER400-PAGE_TYPE_INVALID\", \"message\": \"type 파라미터는 posts, comments, favorites 중 하나여야 합니다.\"}"))),
+                                                        "{\"isSuccess\": false, \"code\": \"USER400-PAGE_TYPE_INVALID\", \"message\": \"type 파라미터는 posts, comments, favorites, reviews 중 하나여야 합니다.\"}"))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "USER404-NOT_FOUND: 존재하지 않는 회원입니다",

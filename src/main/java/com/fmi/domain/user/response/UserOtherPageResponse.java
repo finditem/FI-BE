@@ -1,6 +1,7 @@
 package com.fmi.domain.user.response;
 
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
+import com.fmi.domain.review.web.dto.response.ReviewResponse;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,7 @@ public class UserOtherPageResponse {
     private List<PostBriefResponse> posts;
     private List<UserCommentSummaryResponse> comments;
     private List<PostBriefResponse> favorites;
+    private List<ReviewResponse> reviews;
     private Long nextCursor;
     private boolean hasNext;
 }
