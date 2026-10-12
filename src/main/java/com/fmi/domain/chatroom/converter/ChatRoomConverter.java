@@ -82,10 +82,11 @@ public class ChatRoomConverter {
     }
 
     public static FindCompletionInfoDTO toFindCompletionInfoDTO(
-            ChatRoom chatRoom, FindCompletion findCompletion, boolean canWriteReview) {
+            ChatRoom chatRoom, FindCompletion findCompletion, boolean canComplete, boolean canWriteReview) {
         if (findCompletion == null) {
             return FindCompletionInfoDTO.builder()
                     .status(FindCompletionStatus.NONE)
+                    .canComplete(canComplete)
                     .build();
         }
 

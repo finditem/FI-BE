@@ -14,6 +14,7 @@ import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.findcompletion.data.FindCompletion;
 import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
@@ -181,7 +182,10 @@ public class ChatRoomService {
 
         FindCompletion completion = findFindCompletion(chatRoom);
         FindCompletionInfoDTO findCompletion = ChatRoomConverter.toFindCompletionInfoDTO(
-                chatRoom, completion, canWriteReview(chatRoom, completion, user, opponent, isBlocked));
+                chatRoom,
+                completion,
+                canComplete(chatRoom, completion, user, opponent, isBlocked),
+                canWriteReview(chatRoom, completion, user, opponent, isBlocked));
 
         // 게시글 완전 삭제 아닐 경우 -> fk로 최신 데이터
         if (!chatRoom.isSourcePostDeleted() && chatRoom.getPost() != null) {
@@ -203,6 +207,22 @@ public class ChatRoomService {
             return null;
         }
         return findCompletionRepository.findBySourcePostId(postId).orElse(null);
+    }
+
+    // 찾기 완료 검증(FindCompletionValidator)과 같은 조건일 때만 찾기 완료 버튼을 노출
+    private boolean canComplete(
+            ChatRoom chatRoom, FindCompletion completion, User user, User opponent, boolean isBlocked) {
+        Post post = chatRoom.getPost();
+        return completion == null
+                && post != null
+                && !chatRoom.isSourcePostDeleted()
+                && !post.isDeleted()
+                && post.getPostType() == PostType.LOST
+                && post.getPostStatus() == PostStatus.SEARCHING
+                && post.getUser() != null
+                && post.getUser().getId().equals(user.getId())
+                && opponent.getDeletedAt() == null
+                && !isBlocked;
     }
 
     // 이 채팅방에서 완료한 요청자가 아직 후기를 쓰지 않았을 때만 후기 작성 버튼을 노출

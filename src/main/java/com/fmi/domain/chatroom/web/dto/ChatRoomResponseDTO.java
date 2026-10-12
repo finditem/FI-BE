@@ -33,6 +33,7 @@ public class ChatRoomResponseDTO {
     public static class FindCompletionInfoDTO {
         private FindCompletionStatus status;
         private Long findCompletionId;
+        private boolean canComplete;
         private boolean canWriteReview;
     }
 
