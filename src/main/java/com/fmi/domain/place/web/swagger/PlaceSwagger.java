@@ -5,6 +5,8 @@ import com.fmi.domain.place.web.dto.response.HomePlaceResponse;
 import com.fmi.domain.place.web.dto.response.PlaceFavoriteResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,11 +17,27 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Place", description = "장소 탐색 API")
 public interface PlaceSwagger {
 
-    @Operation(summary = "홈 성수 콘텐츠 조회", description = "노출 가능한 최신 장소를 최대 5개 조회합니다.")
-    @ApiResponses(
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "홈 장소 조회 성공"))
+    @Operation(
+            summary = "홈 성수 콘텐츠 조회",
+            description =
+                    "노출 가능한 최신 장소를 최대 5개 조회합니다. language는 KO 또는 EN이며 생략하면 회원 선호 언어와 관계없이 KO입니다. 빈 값과 소문자는 PLACE400-INVALID_REQUEST로 거절합니다. 미등록 영문 필드는 한국어로 제공합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "홈 장소 조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "PLACE400-INVALID_REQUEST: 유효하지 않은 조회 언어")
+    })
     ApiResponse<HomePlaceResponse> getHomePlaces(
-            @RequestParam(required = false) PlaceType type, @AuthenticationPrincipal UserDetails userDetails);
+            @RequestParam(required = false) PlaceType type,
+            @Parameter(
+                            description = "장소 문자열의 언어. 생략하면 KO",
+                            schema =
+                                    @Schema(
+                                            allowableValues = {"KO", "EN"},
+                                            defaultValue = "KO"))
+                    @RequestParam(required = false)
+                    String language,
+            @AuthenticationPrincipal UserDetails userDetails);
 
     @Operation(summary = "가보고 싶은 장소 추가", description = "노출 가능한 장소를 가보고 싶은 장소로 저장합니다.")
     @ApiResponses(@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 저장 성공"))
@@ -27,8 +45,9 @@ public interface PlaceSwagger {
             @PathVariable Long placeId, @AuthenticationPrincipal UserDetails userDetails);
 
     @Operation(summary = "가보고 싶은 장소 취소", description = "가보고 싶은 장소 저장을 취소합니다.")
-    @ApiResponses(
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 저장 취소 성공"))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 저장 취소 성공")
+    })
     ApiResponse<PlaceFavoriteResponse> cancelFavorite(
             @PathVariable Long placeId, @AuthenticationPrincipal UserDetails userDetails);
 }

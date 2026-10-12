@@ -16,4 +16,7 @@ public record PlaceManagementDetail(
         String thumbnailUrl,
         LocalDate operationStartDate,
         LocalDate operationEndDate,
-        List<PlaceDailySchedule> dailySchedules) {}
+        List<PlaceDailySchedule> dailySchedules,
+        String nameEn,
+        String addressEn,
+        String stationEn) {}

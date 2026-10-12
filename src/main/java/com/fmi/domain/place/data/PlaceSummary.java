@@ -18,6 +18,38 @@ public record PlaceSummary(
         PlaceOperationState operationState,
         boolean favorite) {
 
+    public PlaceSummary translated(PlaceTranslation translation) {
+        if (translation == null) {
+            return this;
+        }
+        String displayName = name;
+        String displayAddress = address;
+        String displayStation = station;
+        if (translation.getTranslatedName() != null) {
+            displayName = translation.getTranslatedName();
+        }
+        if (translation.getTranslatedAddress() != null) {
+            displayAddress = translation.getTranslatedAddress();
+        }
+        if (translation.getTranslatedStation() != null) {
+            displayStation = translation.getTranslatedStation();
+        }
+        return new PlaceSummary(
+                placeId,
+                displayName,
+                displayAddress,
+                latitude,
+                longitude,
+                displayStation,
+                stationDistanceMeters,
+                type,
+                thumbnailUrl,
+                operationStartDate,
+                operationEndDate,
+                operationState,
+                favorite);
+    }
+
     public static PlaceSummary from(Place place, PlaceOperationState operationState, boolean favorite) {
         PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
         return new PlaceSummary(

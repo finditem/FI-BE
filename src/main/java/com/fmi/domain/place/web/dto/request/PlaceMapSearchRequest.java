@@ -1,6 +1,7 @@
 package com.fmi.domain.place.web.dto.request;
 
 import com.fmi.domain.place.data.enums.PlaceType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
@@ -20,4 +21,10 @@ public class PlaceMapSearchRequest {
     @Min(1) @Max(8) private int level = 6;
 
     @NotNull private PlaceType type;
+
+    @Schema(
+            description = "장소 문자열의 언어. 생략 시 KO, 빈 값과 소문자는 허용하지 않습니다.",
+            allowableValues = {"KO", "EN"},
+            defaultValue = "KO")
+    private String language;
 }

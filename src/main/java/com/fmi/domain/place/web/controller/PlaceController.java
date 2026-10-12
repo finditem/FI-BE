@@ -3,6 +3,7 @@ package com.fmi.domain.place.web.controller;
 import com.fmi.domain.place.data.enums.PlaceType;
 import com.fmi.domain.place.service.PlaceFavoriteService;
 import com.fmi.domain.place.service.PlaceService;
+import com.fmi.domain.place.web.PlaceLanguageResolver;
 import com.fmi.domain.place.web.dto.response.HomePlaceResponse;
 import com.fmi.domain.place.web.dto.response.PlaceFavoriteResponse;
 import com.fmi.domain.place.web.dto.response.PlaceSummaryResponse;
@@ -32,13 +33,16 @@ public class PlaceController implements PlaceSwagger {
     @Override
     @GetMapping
     public ApiResponse<HomePlaceResponse> getHomePlaces(
-            @RequestParam(required = false) PlaceType type, @AuthenticationPrincipal UserDetails userDetails) {
+            @RequestParam(required = false) PlaceType type,
+            @RequestParam(required = false) String language,
+            @AuthenticationPrincipal UserDetails userDetails) {
         Long userId = userDetails == null
                 ? null
                 : userQueryService.findUser(userDetails.getUsername()).getId();
-        return ApiResponse.onSuccess(new HomePlaceResponse(placeService.getHomePlaces(type, userId).stream()
-                .map(PlaceSummaryResponse::from)
-                .toList()));
+        return ApiResponse.onSuccess(new HomePlaceResponse(
+                placeService.getHomePlaces(type, userId, PlaceLanguageResolver.resolve(language)).stream()
+                        .map(PlaceSummaryResponse::from)
+                        .toList()));
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.fmi.domain.place.web.controller;
 
 import com.fmi.domain.place.service.PlaceFavoriteService;
+import com.fmi.domain.place.web.PlaceLanguageResolver;
 import com.fmi.domain.place.web.dto.request.FavoritePlaceRequest;
 import com.fmi.domain.place.web.dto.response.FavoritePlacePageResponse;
 import com.fmi.domain.place.web.swagger.MyFavoritePlaceSwagger;
@@ -26,6 +27,9 @@ public class MyFavoritePlaceController implements MyFavoritePlaceSwagger {
     public ApiResponse<FavoritePlacePageResponse> getFavorites(
             @Valid @ModelAttribute FavoritePlaceRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         return ApiResponse.onSuccess(FavoritePlacePageResponse.from(placeFavoriteService.getFavorites(
-                userDetails.getUsername(), request.getLastFavoriteUpdatedAt(), request.getSize())));
+                userDetails.getUsername(),
+                request.getLastFavoriteUpdatedAt(),
+                request.getSize(),
+                PlaceLanguageResolver.resolve(request.getLanguage()))));
     }
 }
