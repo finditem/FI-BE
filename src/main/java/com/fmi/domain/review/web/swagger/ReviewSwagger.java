@@ -43,7 +43,7 @@ public interface ReviewSwagger {
             @Valid @RequestBody ReviewCreateRequest request,
             @AuthenticationPrincipal UserDetails userDetails);
 
-    @Operation(summary = "후기 숨기기", description = "내가 받은 후기 또는 보낸 후기를 내 목록에서 숨깁니다. 상대방 목록에는 영향을 주지 않고, 복구할 수 없습니다.")
+    @Operation(summary = "후기 숨기기", description = "받은 후기 또는 보낸 후기를 목록에서 숨깁니다. 상대방 목록에는 영향을 주지 않고, 복구할 수 없습니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "후기 숨김 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -58,7 +58,8 @@ public interface ReviewSwagger {
     @Operation(
             summary = "내 후기 목록 조회",
             description = "마이페이지 후기 탭에서 받은 후기(type=RECEIVED) 또는 보낸 후기(type=SENT)를 최신 작성순으로 조회합니다. "
-                    + "내가 숨긴 후기는 제외합니다. 받은 후기의 user는 작성자, 보낸 후기의 user는 받은 사용자입니다.")
+                    + "내가 숨긴 후기는 제외합니다. 받은 후기의 user는 작성자, 보낸 후기의 user는 받은 사용자입니다.",
+            tags = {"User"})
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

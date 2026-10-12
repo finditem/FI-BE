@@ -171,7 +171,7 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
     class DescribeHiddenByRecipient {
 
         @Test
-        @DisplayName("내 받은 후기에서는 빼고 타인 프로필에서는 개수 없이 보여준다")
+        @DisplayName("받은 후기 탭에서는 빼고 타인 프로필에서는 개수 없이 보여준다")
         void itHidesOnlyFromRecipientOwnList() {
             // given
             User author = userRepository.save(User.builder()
