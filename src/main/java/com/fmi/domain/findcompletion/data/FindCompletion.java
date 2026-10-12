@@ -52,4 +52,8 @@ public class FindCompletion extends BaseEntity {
         this.requester = requester;
         this.helper = helper;
     }
+
+    public boolean isCompletedIn(Long chatRoomId) {
+        return chatRoom != null && chatRoom.getId().equals(chatRoomId);
+    }
 }

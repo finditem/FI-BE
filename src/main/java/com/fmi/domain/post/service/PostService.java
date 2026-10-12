@@ -178,6 +178,13 @@ public class PostService {
         post.updatePostStatus(request.postStatus());
     }
 
+    @Transactional
+    public void markAsFound(Post post) {
+        notifyFavoriteUsers(post, PostStatus.FOUND);
+
+        post.updatePostStatus(PostStatus.FOUND);
+    }
+
     //    @Transactional
     //    public void saveTemporaryPost(TemporaryPostDto request, UserDetails userDetails, List<MultipartFile> images) {
     //
