@@ -81,7 +81,8 @@ public class ChatRoomConverter {
                 .build();
     }
 
-    public static FindCompletionInfoDTO toFindCompletionInfoDTO(ChatRoom chatRoom, FindCompletion findCompletion) {
+    public static FindCompletionInfoDTO toFindCompletionInfoDTO(
+            ChatRoom chatRoom, FindCompletion findCompletion, boolean canWriteReview) {
         if (findCompletion == null) {
             return FindCompletionInfoDTO.builder()
                     .status(FindCompletionStatus.NONE)
@@ -92,6 +93,7 @@ public class ChatRoomConverter {
             return FindCompletionInfoDTO.builder()
                     .status(FindCompletionStatus.COMPLETED_HERE)
                     .findCompletionId(findCompletion.getId())
+                    .canWriteReview(canWriteReview)
                     .build();
         }
 

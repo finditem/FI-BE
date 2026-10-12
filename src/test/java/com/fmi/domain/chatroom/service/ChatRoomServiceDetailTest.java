@@ -17,6 +17,7 @@ import com.fmi.domain.post.data.PostStatus;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
+import com.fmi.domain.review.repository.ReviewRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.service.BlockService;
@@ -59,6 +60,9 @@ class ChatRoomServiceDetailTest {
 
     @Mock
     private FindCompletionRepository findCompletionRepository;
+
+    @Mock
+    private ReviewRepository reviewRepository;
 
     @InjectMocks
     private ChatRoomService chatRoomService;
