@@ -14,12 +14,15 @@ import com.fmi.domain.findcompletion.data.FindCompletion;
 import com.fmi.domain.findcompletion.data.FindCompletionStatus;
 import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.data.PostStatus;
+import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
 import com.fmi.domain.review.repository.ReviewRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.service.BlockService;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -224,5 +227,121 @@ class ChatRoomServiceTest {
 
         // then
         assertThat(result.getFindCompletion().isCanWriteReview()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 도움을 준 상대가 탈퇴했으면 canWriteReview = false")
+    void getChatRoomDetail_withdrawnOpponent_cannotWriteReview() {
+        // given
+        User withdrawnOpponent = User.builder()
+                .id(2L)
+                .email("other@test.com")
+                .nickname("상대")
+                .deletedAt(LocalDateTime.of(2026, 9, 11, 10, 0))
+                .build();
+        given(chatRoom.getOtherParticipant(currentUser.getId())).willReturn(withdrawnOpponent);
+        FindCompletion findCompletion = mock(FindCompletion.class);
+        given(findCompletion.getId()).willReturn(5L);
+        given(findCompletion.isCompletedIn(10L)).willReturn(true);
+        given(findCompletion.isRequestedBy(currentUser.getId())).willReturn(true);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().isCanWriteReview()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 상대와 차단 관계이면 canWriteReview = false")
+    void getChatRoomDetail_blockedOpponent_cannotWriteReview() {
+        // given
+        FindCompletion findCompletion = mock(FindCompletion.class);
+        given(findCompletion.getId()).willReturn(5L);
+        given(findCompletion.isCompletedIn(10L)).willReturn(true);
+        given(findCompletion.isRequestedBy(currentUser.getId())).willReturn(true);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
+        given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(true);
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().isCanWriteReview()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 분실물 게시글 작성자가 완료 전 채팅방을 조회하면 canComplete = true")
+    void getChatRoomDetail_lostPostAuthor_canComplete() {
+        // given
+        given(post.getUser()).willReturn(currentUser);
+        given(post.getPostType()).willReturn(PostType.LOST);
+        given(post.getPostStatus()).willReturn(PostStatus.SEARCHING);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.empty());
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().isCanComplete()).isTrue();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 게시글 작성자가 아니면 canComplete = false")
+    void getChatRoomDetail_notPostAuthor_cannotComplete() {
+        // given
+        given(post.getUser()).willReturn(opponent);
+        given(post.getPostType()).willReturn(PostType.LOST);
+        given(post.getPostStatus()).willReturn(PostStatus.SEARCHING);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.empty());
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().isCanComplete()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 상대와 차단 관계이면 canComplete = false")
+    void getChatRoomDetail_blockedOpponent_cannotComplete() {
+        // given
+        given(post.getUser()).willReturn(currentUser);
+        given(post.getPostType()).willReturn(PostType.LOST);
+        given(post.getPostStatus()).willReturn(PostStatus.SEARCHING);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.empty());
+        given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(true);
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().isCanComplete()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 이미 찾기 완료된 게시글이면 canComplete = false")
+    void getChatRoomDetail_completedPost_cannotComplete() {
+        // given
+        FindCompletion findCompletion = mock(FindCompletion.class);
+        given(findCompletion.getId()).willReturn(5L);
+        given(findCompletion.isCompletedIn(10L)).willReturn(true);
+        given(post.getUser()).willReturn(currentUser);
+        given(post.getPostType()).willReturn(PostType.LOST);
+        given(post.getPostStatus()).willReturn(PostStatus.FOUND);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().isCanComplete()).isFalse();
     }
 }

@@ -25,6 +25,9 @@ import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.repository.ReportRepository;
+import com.fmi.domain.review.data.ReviewPage;
+import com.fmi.domain.review.service.ReviewQueryService;
+import com.fmi.domain.review.web.dto.response.ReviewResponse;
 import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
@@ -80,6 +83,7 @@ public class UserService {
     private final InquiryCommentRepository inquiryCommentRepository;
     private final SocialAccountsRepository socialAccountsRepository;
     private final NicknameValidator nicknameValidator;
+    private final ReviewQueryService reviewQueryService;
 
     /**
      * 내 정보 조회
@@ -165,6 +169,7 @@ public class UserService {
         List<PostBriefResponse> posts = Collections.emptyList();
         List<UserCommentSummaryResponse> comments = Collections.emptyList();
         List<PostBriefResponse> favorites = Collections.emptyList();
+        List<ReviewResponse> reviews = Collections.emptyList();
         Long nextCursor = null;
         boolean hasNext = false;
 
@@ -240,9 +245,17 @@ public class UserService {
                             .getFavorite_id();
                 }
             }
+
+            case REVIEWS -> {
+                ReviewPage reviewPage = reviewQueryService.getProfileReceivedReviews(targetUser.getId(), cursor, size);
+                reviews = ReviewResponse.listFrom(reviewPage);
+                hasNext = reviewPage.hasNext();
+                nextCursor = reviewPage.nextCursor();
+            }
         }
 
-        return UserConverter.toUserOtherPageResponse(targetUser, posts, comments, favorites, nextCursor, hasNext);
+        return UserConverter.toUserOtherPageResponse(
+                targetUser, posts, comments, favorites, reviews, nextCursor, hasNext);
     }
 
     private Set<Long> getExcludedUserIds(User user) {

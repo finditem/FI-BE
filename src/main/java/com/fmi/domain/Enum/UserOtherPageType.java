@@ -9,7 +9,8 @@ import lombok.Getter;
 public enum UserOtherPageType {
     POSTS("posts"),
     COMMENTS("comments"),
-    FAVORITES("favorites");
+    FAVORITES("favorites"),
+    REVIEWS("reviews");
 
     private final String paramValue;
 

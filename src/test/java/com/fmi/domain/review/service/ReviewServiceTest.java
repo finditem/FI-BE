@@ -15,8 +15,11 @@ import com.fmi.domain.review.exception.ReviewErrorStatus;
 import com.fmi.domain.review.repository.ReviewRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.userblock.data.BlockedUser;
+import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.support.IntegrationTestSupport;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -48,6 +51,9 @@ class ReviewServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BlockedUserRepository blockedUserRepository;
 
     @Nested
     @DisplayName("후기를 작성할 때")
@@ -332,6 +338,87 @@ class ReviewServiceTest extends IntegrationTestSupport {
                         .isInstanceOf(GeneralException.class)
                         .extracting("code")
                         .isEqualTo(FindCompletionErrorStatus.NOT_FOUND);
+            }
+        }
+
+        @Nested
+        @DisplayName("받을 사용자가 탈퇴했으면")
+        class ContextWithWithdrawnRecipient {
+
+            @Test
+            @DisplayName("NOT_ALLOWED 예외를 던진다")
+            void itThrowsNotAllowed() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("후기탈퇴작성자")
+                        .email("후기탈퇴-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User helper = userRepository.save(User.builder()
+                        .nickname("후기탈퇴도움자")
+                        .email("후기탈퇴-helper@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .deletedAt(LocalDateTime.of(2026, 9, 11, 10, 0))
+                        .build());
+                FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                        .sourcePostId(910008L)
+                        .requester(author)
+                        .helper(helper)
+                        .build());
+
+                // when & then
+                assertThatThrownBy(() -> reviewService.write(
+                                findCompletion.getId(),
+                                author.getEmail(),
+                                ReviewEmotion.GRATEFUL,
+                                Set.of(ReviewHelpType.KIND_AND_WARM),
+                                null))
+                        .isInstanceOf(GeneralException.class)
+                        .extracting("code")
+                        .isEqualTo(ReviewErrorStatus.NOT_ALLOWED);
+            }
+        }
+
+        @Nested
+        @DisplayName("받을 사용자가 나를 차단했으면")
+        class ContextWithBlockedRecipient {
+
+            @Test
+            @DisplayName("NOT_ALLOWED 예외를 던진다")
+            void itThrowsNotAllowed() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("후기차단작성자")
+                        .email("후기차단-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User helper = userRepository.save(User.builder()
+                        .nickname("후기차단도움자")
+                        .email("후기차단-helper@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                        .sourcePostId(910009L)
+                        .requester(author)
+                        .helper(helper)
+                        .build());
+                blockedUserRepository.save(
+                        BlockedUser.builder().blocker(helper).blocked(author).build());
+
+                // when & then
+                assertThatThrownBy(() -> reviewService.write(
+                                findCompletion.getId(),
+                                author.getEmail(),
+                                ReviewEmotion.GRATEFUL,
+                                Set.of(ReviewHelpType.KIND_AND_WARM),
+                                null))
+                        .isInstanceOf(GeneralException.class)
+                        .extracting("code")
+                        .isEqualTo(ReviewErrorStatus.NOT_ALLOWED);
             }
         }
 

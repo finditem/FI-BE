@@ -23,7 +23,8 @@ public interface FindCompletionSwagger {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "403",
                 description = "CHATROOM403-ACCESS_DENIED: 채팅방 참여자가 아닙니다. "
-                        + "FIND_COMPLETION403-ACCESS_DENIED: 게시글 작성자가 아닙니다."),
+                        + "FIND_COMPLETION403-ACCESS_DENIED: 게시글 작성자가 아닙니다. "
+                        + "FIND_COMPLETION403-NOT_ALLOWED: 채팅 상대가 탈퇴했거나 차단 관계입니다."),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "CHATROOM404-NOT_FOUND: 존재하지 않는 채팅방입니다. POST404-NOT_FOUND: 게시글이 없거나 삭제되었습니다."),

@@ -1,15 +1,21 @@
 package com.fmi.domain.review.web.controller;
 
 import com.fmi.domain.review.data.Review;
+import com.fmi.domain.review.service.ReviewQueryService;
 import com.fmi.domain.review.service.ReviewService;
 import com.fmi.domain.review.web.dto.request.ReviewCreateRequest;
+import com.fmi.domain.review.web.dto.request.ReviewPageRequest;
+import com.fmi.domain.review.web.dto.response.ReviewDetailResponse;
 import com.fmi.domain.review.web.dto.response.ReviewIdResponse;
+import com.fmi.domain.review.web.dto.response.ReviewPageResponse;
 import com.fmi.domain.review.web.swagger.ReviewSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReviewController implements ReviewSwagger {
 
     private final ReviewService reviewService;
+    private final ReviewQueryService reviewQueryService;
 
     @Override
     @PostMapping("/find-completions/{findCompletionId}/review")
@@ -37,5 +44,21 @@ public class ReviewController implements ReviewSwagger {
     public ApiResponse<Void> hide(@PathVariable Long reviewId, @AuthenticationPrincipal UserDetails userDetails) {
         reviewService.hide(reviewId, userDetails.getUsername());
         return ApiResponse.onSuccess(null);
+    }
+
+    @Override
+    @GetMapping("/users/me/reviews")
+    public ApiResponse<ReviewPageResponse> getMyReviews(
+            @Valid @ModelAttribute ReviewPageRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+        return ApiResponse.onSuccess(ReviewPageResponse.from(reviewQueryService.getMyReviews(
+                userDetails.getUsername(), request.getType(), request.getCursor(), request.getSize())));
+    }
+
+    @Override
+    @GetMapping("/reviews/{reviewId}")
+    public ApiResponse<ReviewDetailResponse> getReview(
+            @PathVariable Long reviewId, @AuthenticationPrincipal UserDetails userDetails) {
+        return ApiResponse.onSuccess(
+                ReviewDetailResponse.from(reviewQueryService.getReview(reviewId, userDetails.getUsername())));
     }
 }
