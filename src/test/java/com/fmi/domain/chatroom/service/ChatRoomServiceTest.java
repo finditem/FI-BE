@@ -16,6 +16,7 @@ import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
+import com.fmi.domain.review.repository.ReviewRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.service.BlockService;
@@ -57,6 +58,9 @@ class ChatRoomServiceTest {
 
     @Mock
     private FindCompletionRepository findCompletionRepository;
+
+    @Mock
+    private ReviewRepository reviewRepository;
 
     @InjectMocks
     private ChatRoomService chatRoomService;
@@ -164,5 +168,61 @@ class ChatRoomServiceTest {
         // then
         assertThat(result.getFindCompletion().getStatus()).isEqualTo(FindCompletionStatus.COMPLETED_ELSEWHERE);
         assertThat(result.getFindCompletion().getFindCompletionId()).isNull();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 이 채팅방에서 완료한 요청자가 후기를 쓰지 않았으면 canWriteReview = true")
+    void getChatRoomDetail_requesterWithoutReview_canWriteReview() {
+        // given
+        FindCompletion findCompletion = mock(FindCompletion.class);
+        given(findCompletion.getId()).willReturn(5L);
+        given(findCompletion.isCompletedIn(10L)).willReturn(true);
+        given(findCompletion.isRequestedBy(currentUser.getId())).willReturn(true);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
+        given(reviewRepository.existsByFindCompletionId(5L)).willReturn(false);
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().isCanWriteReview()).isTrue();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 이미 후기를 작성했으면 canWriteReview = false")
+    void getChatRoomDetail_reviewWritten_cannotWriteReview() {
+        // given
+        FindCompletion findCompletion = mock(FindCompletion.class);
+        given(findCompletion.getId()).willReturn(5L);
+        given(findCompletion.isCompletedIn(10L)).willReturn(true);
+        given(findCompletion.isRequestedBy(currentUser.getId())).willReturn(true);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
+        given(reviewRepository.existsByFindCompletionId(5L)).willReturn(true);
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().isCanWriteReview()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getChatRoomDetail - 도움을 준 사용자가 조회하면 canWriteReview = false")
+    void getChatRoomDetail_helper_cannotWriteReview() {
+        // given
+        FindCompletion findCompletion = mock(FindCompletion.class);
+        given(findCompletion.getId()).willReturn(5L);
+        given(findCompletion.isCompletedIn(10L)).willReturn(true);
+        given(findCompletion.isRequestedBy(currentUser.getId())).willReturn(false);
+        given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
+        given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
+
+        // when
+        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+
+        // then
+        assertThat(result.getFindCompletion().isCanWriteReview()).isFalse();
     }
 }

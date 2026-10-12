@@ -17,6 +17,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
+import com.fmi.domain.review.repository.ReviewRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.service.BlockService;
@@ -47,6 +48,7 @@ public class ChatRoomService {
     private final PostImageService postImageService;
     private final BlockService blockService;
     private final FindCompletionRepository findCompletionRepository;
+    private final ReviewRepository reviewRepository;
 
     public Pair<ChatRoomResultDTO, Boolean> createChatRoom(Long postId, Long contactUserId) {
 
@@ -177,8 +179,9 @@ public class ChatRoomService {
 
         boolean isBlocked = blockService.isBlocked(user.getId(), opponent.getId());
 
-        FindCompletionInfoDTO findCompletion =
-                ChatRoomConverter.toFindCompletionInfoDTO(chatRoom, findFindCompletion(chatRoom));
+        FindCompletion completion = findFindCompletion(chatRoom);
+        FindCompletionInfoDTO findCompletion = ChatRoomConverter.toFindCompletionInfoDTO(
+                chatRoom, completion, canWriteReview(chatRoom, completion, user));
 
         // 게시글 완전 삭제 아닐 경우 -> fk로 최신 데이터
         if (!chatRoom.isSourcePostDeleted() && chatRoom.getPost() != null) {
@@ -200,5 +203,13 @@ public class ChatRoomService {
             return null;
         }
         return findCompletionRepository.findBySourcePostId(postId).orElse(null);
+    }
+
+    // 이 채팅방에서 완료한 요청자가 아직 후기를 쓰지 않았을 때만 후기 작성 버튼을 노출
+    private boolean canWriteReview(ChatRoom chatRoom, FindCompletion completion, User user) {
+        return completion != null
+                && completion.isCompletedIn(chatRoom.getId())
+                && completion.isRequestedBy(user.getId())
+                && !reviewRepository.existsByFindCompletionId(completion.getId());
     }
 }
