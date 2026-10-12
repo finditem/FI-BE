@@ -61,7 +61,7 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
 
     @Nested
     @DisplayName("내 후기 목록을 조회할 때")
-    class DescribeGetMyReceivedReviews {
+    class DescribeGetMyReviews {
 
         @Nested
         @DisplayName("요청 개수보다 후기가 많으면")
@@ -119,101 +119,149 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
                 assertThat(secondPage.nextCursor()).isNull();
             }
         }
-    }
 
-    @Nested
-    @DisplayName("보낸 후기 탭을 조회하면")
-    class DescribeGetMySentReviews {
+        @Nested
+        @DisplayName("type이 SENT이면")
+        class ContextWithSentType {
 
-        @Test
-        @DisplayName("내가 작성한 후기를 받은 사용자 정보와 함께 반환한다")
-        void itReturnsSentReviews() {
-            // given
-            User author = userRepository.save(User.builder()
-                    .nickname("보낸탭작성자")
-                    .email("sent-tab-author@test.com")
-                    .password("password")
-                    .role(Role.USER)
-                    .build());
-            User recipient = userRepository.save(User.builder()
-                    .nickname("보낸탭수신자")
-                    .email("sent-tab-recipient@test.com")
-                    .password("password")
-                    .role(Role.USER)
-                    .build());
-            FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
-                    .sourcePostId(940201L)
-                    .requester(author)
-                    .helper(recipient)
-                    .build());
-            Review review = reviewRepository.save(Review.builder()
-                    .findCompletion(findCompletion)
-                    .emotion(ReviewEmotion.GRATEFUL)
-                    .helpTypes(Set.of(ReviewHelpType.KIND_AND_WARM))
-                    .build());
+            @Test
+            @DisplayName("작성한 후기만 받은 사용자 정보와 함께 반환한다")
+            void itReturnsSentReviews() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("보낸탭작성자")
+                        .email("sent-tab-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User recipient = userRepository.save(User.builder()
+                        .nickname("보낸탭수신자")
+                        .email("sent-tab-recipient@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                        .sourcePostId(940201L)
+                        .requester(author)
+                        .helper(recipient)
+                        .build());
+                Review review = reviewRepository.save(Review.builder()
+                        .findCompletion(findCompletion)
+                        .emotion(ReviewEmotion.GRATEFUL)
+                        .helpTypes(Set.of(ReviewHelpType.KIND_AND_WARM))
+                        .build());
 
-            // when
-            ReviewPage sentPage = reviewQueryService.getMyReviews(author.getEmail(), ReviewListType.SENT, null, 10);
-            ReviewPage receivedPage =
-                    reviewQueryService.getMyReviews(author.getEmail(), ReviewListType.RECEIVED, null, 10);
+                // when
+                ReviewPage sentPage = reviewQueryService.getMyReviews(author.getEmail(), ReviewListType.SENT, null, 10);
+                ReviewPage receivedPage =
+                        reviewQueryService.getMyReviews(author.getEmail(), ReviewListType.RECEIVED, null, 10);
 
-            // then
-            assertThat(sentPage.reviews()).singleElement().satisfies(summary -> {
-                assertThat(summary.reviewId()).isEqualTo(review.getId());
-                assertThat(summary.userId()).isEqualTo(recipient.getId());
-            });
-            assertThat(sentPage.totalCount()).isEqualTo(1L);
-            assertThat(receivedPage.reviews()).isEmpty();
+                // then
+                assertThat(sentPage.reviews()).singleElement().satisfies(summary -> {
+                    assertThat(summary.reviewId()).isEqualTo(review.getId());
+                    assertThat(summary.userId()).isEqualTo(recipient.getId());
+                });
+                assertThat(sentPage.totalCount()).isEqualTo(1L);
+                assertThat(receivedPage.reviews()).isEmpty();
+            }
+        }
+
+        @Nested
+        @DisplayName("받은 사용자가 숨긴 후기가 있으면")
+        class ContextWithHiddenByRecipient {
+
+            @Test
+            @DisplayName("받은 후기 목록과 개수에서 뺀다")
+            void itExcludesHiddenReviews() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("내목록작성자")
+                        .email("my-hidden-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User recipient = userRepository.save(User.builder()
+                        .nickname("내목록수신자")
+                        .email("my-hidden-recipient@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                List<Review> reviews = new ArrayList<>();
+                for (int i = 0; i < 2; i++) {
+                    FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                            .sourcePostId(940101L + i)
+                            .requester(author)
+                            .helper(recipient)
+                            .build());
+                    reviews.add(reviewRepository.save(Review.builder()
+                            .findCompletion(findCompletion)
+                            .emotion(ReviewEmotion.GRATEFUL)
+                            .helpTypes(Set.of(ReviewHelpType.KIND_AND_WARM))
+                            .build()));
+                }
+                reviews.get(0).hideByRecipient();
+
+                // when
+                ReviewPage result =
+                        reviewQueryService.getMyReviews(recipient.getEmail(), ReviewListType.RECEIVED, null, 10);
+
+                // then
+                assertThat(result.reviews())
+                        .extracting(ReviewSummary::reviewId)
+                        .containsExactly(reviews.get(1).getId());
+                assertThat(result.totalCount()).isEqualTo(1L);
+            }
         }
     }
 
     @Nested
-    @DisplayName("받은 사용자가 숨긴 후기가 있으면")
-    class DescribeHiddenByRecipient {
+    @DisplayName("타인 프로필의 받은 후기를 조회할 때")
+    class DescribeGetProfileReceivedReviews {
 
-        @Test
-        @DisplayName("받은 후기 탭에서는 빼고 타인 프로필에서는 개수 없이 보여준다")
-        void itHidesOnlyFromRecipientOwnList() {
-            // given
-            User author = userRepository.save(User.builder()
-                    .nickname("프로필작성자")
-                    .email("profile-author@test.com")
-                    .password("password")
-                    .role(Role.USER)
-                    .build());
-            User recipient = userRepository.save(User.builder()
-                    .nickname("프로필수신자")
-                    .email("profile-recipient@test.com")
-                    .password("password")
-                    .role(Role.USER)
-                    .build());
-            List<Review> reviews = new ArrayList<>();
-            for (int i = 0; i < 2; i++) {
-                FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
-                        .sourcePostId(940101L + i)
-                        .requester(author)
-                        .helper(recipient)
+        @Nested
+        @DisplayName("받은 사용자가 숨긴 후기가 있으면")
+        class ContextWithHiddenByRecipient {
+
+            @Test
+            @DisplayName("숨긴 후기도 개수 없이 반환한다")
+            void itIncludesHiddenReviewsWithoutCount() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("프로필작성자")
+                        .email("profile-hidden-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
                         .build());
-                reviews.add(reviewRepository.save(Review.builder()
-                        .findCompletion(findCompletion)
-                        .emotion(ReviewEmotion.GRATEFUL)
-                        .helpTypes(Set.of(ReviewHelpType.KIND_AND_WARM))
-                        .build()));
+                User recipient = userRepository.save(User.builder()
+                        .nickname("프로필수신자")
+                        .email("profile-hidden-recipient@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                List<Review> reviews = new ArrayList<>();
+                for (int i = 0; i < 2; i++) {
+                    FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                            .sourcePostId(940301L + i)
+                            .requester(author)
+                            .helper(recipient)
+                            .build());
+                    reviews.add(reviewRepository.save(Review.builder()
+                            .findCompletion(findCompletion)
+                            .emotion(ReviewEmotion.GRATEFUL)
+                            .helpTypes(Set.of(ReviewHelpType.KIND_AND_WARM))
+                            .build()));
+                }
+                reviews.get(0).hideByRecipient();
+
+                // when
+                ReviewPage result = reviewQueryService.getProfileReceivedReviews(recipient.getId(), null, 10);
+
+                // then
+                assertThat(result.reviews())
+                        .extracting(ReviewSummary::reviewId)
+                        .containsExactly(reviews.get(1).getId(), reviews.get(0).getId());
+                assertThat(result.totalCount()).isNull();
             }
-            reviews.get(0).hideByRecipient();
-
-            // when
-            ReviewPage myPage =
-                    reviewQueryService.getMyReviews(recipient.getEmail(), ReviewListType.RECEIVED, null, 10);
-            ReviewPage profilePage = reviewQueryService.getProfileReceivedReviews(recipient.getId(), null, 10);
-
-            // then
-            assertThat(myPage.reviews())
-                    .extracting(ReviewSummary::reviewId)
-                    .containsExactly(reviews.get(1).getId());
-            assertThat(myPage.totalCount()).isEqualTo(1L);
-            assertThat(profilePage.reviews()).hasSize(2);
-            assertThat(profilePage.totalCount()).isNull();
         }
     }
 

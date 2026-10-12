@@ -154,22 +154,22 @@ class ReviewRepositoryTest extends IntegrationTestSupport {
         }
 
         @Nested
-        @DisplayName("받은 사용자가 숨긴 후기가 있으면")
-        class ContextWithHiddenByRecipient {
+        @DisplayName("받은 사용자가 숨긴 후기를 제외하도록 조회하면")
+        class ContextWithHiddenExcluded {
 
             @Test
-            @DisplayName("숨김 제외 조건일 때만 목록과 개수에서 뺀다")
-            void itExcludesHiddenOnlyWhenRequested() {
+            @DisplayName("숨긴 후기를 목록과 개수에서 뺀다")
+            void itExcludesHiddenReviews() {
                 // given
                 User author = userRepository.save(User.builder()
-                        .nickname("목록작성자")
-                        .email("hidden-author@test.com")
+                        .nickname("숨김제외작성자")
+                        .email("숨김제외-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
-                        .nickname("목록수신자")
-                        .email("hidden-recipient@test.com")
+                        .nickname("숨김제외수신자")
+                        .email("숨김제외-recipient@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
@@ -190,16 +190,60 @@ class ReviewRepositoryTest extends IntegrationTestSupport {
                 reviewRepository.flush();
 
                 // when
-                List<ReviewSummary> excluded = reviewRepository.findReceivedReviews(recipient.getId(), true, null, 10);
-                List<ReviewSummary> included = reviewRepository.findReceivedReviews(recipient.getId(), false, null, 10);
+                List<ReviewSummary> result = reviewRepository.findReceivedReviews(recipient.getId(), true, null, 10);
 
                 // then
-                assertThat(excluded)
+                assertThat(result)
                         .extracting(ReviewSummary::reviewId)
                         .containsExactly(reviews.get(1).getId());
                 assertThat(reviewRepository.countReceivedReviews(recipient.getId(), true))
                         .isEqualTo(1);
-                assertThat(included).hasSize(2);
+            }
+        }
+
+        @Nested
+        @DisplayName("받은 사용자가 숨긴 후기를 포함하도록 조회하면")
+        class ContextWithHiddenIncluded {
+
+            @Test
+            @DisplayName("숨긴 후기도 목록과 개수에 넣는다")
+            void itIncludesHiddenReviews() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("숨김포함작성자")
+                        .email("숨김포함-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User recipient = userRepository.save(User.builder()
+                        .nickname("숨김포함수신자")
+                        .email("숨김포함-recipient@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                List<Review> reviews = new ArrayList<>();
+                for (int i = 0; i < 2; i++) {
+                    FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                            .sourcePostId(930211L + i)
+                            .requester(author)
+                            .helper(recipient)
+                            .build());
+                    reviews.add(reviewRepository.save(Review.builder()
+                            .findCompletion(findCompletion)
+                            .emotion(ReviewEmotion.GRATEFUL)
+                            .helpTypes(Set.of(ReviewHelpType.KIND_AND_WARM))
+                            .build()));
+                }
+                reviews.get(0).hideByRecipient();
+                reviewRepository.flush();
+
+                // when
+                List<ReviewSummary> result = reviewRepository.findReceivedReviews(recipient.getId(), false, null, 10);
+
+                // then
+                assertThat(result)
+                        .extracting(ReviewSummary::reviewId)
+                        .containsExactly(reviews.get(1).getId(), reviews.get(0).getId());
                 assertThat(reviewRepository.countReceivedReviews(recipient.getId(), false))
                         .isEqualTo(2);
             }
