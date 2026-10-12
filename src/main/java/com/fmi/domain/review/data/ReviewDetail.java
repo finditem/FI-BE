@@ -11,4 +11,5 @@ public record ReviewDetail(
         LocalDateTime createdAt,
         ReviewUser author,
         ReviewUser recipient,
-        ReviewPostInfo post) {}
+        ReviewPostInfo post,
+        Long roomId) {}

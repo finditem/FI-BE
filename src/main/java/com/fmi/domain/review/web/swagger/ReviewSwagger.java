@@ -71,13 +71,17 @@ public interface ReviewSwagger {
 
     @Operation(
             summary = "후기 상세 조회",
-            description = "후기 내용, 보낸 사용자와 받은 사용자, 원본 게시글 정보를 조회합니다. 로그인하지 않아도 조회할 수 있습니다. "
+            description = "후기를 보낸 사용자나 받은 사용자가 후기 내용, 상대 사용자, 원본 게시글 정보와 채팅방 이동용 roomId를 조회합니다. "
                     + "원본 게시글이 삭제되었으면 post.deleted가 true이고, 썸네일은 삭제 시점의 스냅샷을 내려줍니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "REVIEW403-ACCESS_DENIED: 후기를 보낸 사용자나 받은 사용자가 아닙니다."),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "REVIEW404-NOT_FOUND: 후기를 찾을 수 없습니다.")
     })
-    ApiResponse<ReviewDetailResponse> getReview(@PathVariable Long reviewId);
+    ApiResponse<ReviewDetailResponse> getReview(
+            @PathVariable Long reviewId, @AuthenticationPrincipal UserDetails userDetails);
 }

@@ -17,7 +17,10 @@ public record ReviewDetailResponse(
         LocalDateTime createdAt,
         @Schema(description = "후기를 보낸 사용자") ReviewUserResponse author,
         @Schema(description = "후기를 받은 사용자") ReviewUserResponse recipient,
-        ReviewPostResponse post) {
+        ReviewPostResponse post,
+
+        @Schema(description = "채팅방 이동용 id")
+        Long roomId) {
 
     public static ReviewDetailResponse from(ReviewDetail detail) {
         return new ReviewDetailResponse(
@@ -28,7 +31,8 @@ public record ReviewDetailResponse(
                 detail.createdAt(),
                 ReviewUserResponse.from(detail.author()),
                 ReviewUserResponse.from(detail.recipient()),
-                ReviewPostResponse.from(detail.post()));
+                ReviewPostResponse.from(detail.post()),
+                detail.roomId());
     }
 
     public record ReviewPostResponse(

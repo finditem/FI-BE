@@ -56,7 +56,9 @@ public class ReviewController implements ReviewSwagger {
 
     @Override
     @GetMapping("/reviews/{reviewId}")
-    public ApiResponse<ReviewDetailResponse> getReview(@PathVariable Long reviewId) {
-        return ApiResponse.onSuccess(ReviewDetailResponse.from(reviewQueryService.getReview(reviewId)));
+    public ApiResponse<ReviewDetailResponse> getReview(
+            @PathVariable Long reviewId, @AuthenticationPrincipal UserDetails userDetails) {
+        return ApiResponse.onSuccess(
+                ReviewDetailResponse.from(reviewQueryService.getReview(reviewId, userDetails.getUsername())));
     }
 }

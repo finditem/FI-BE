@@ -267,7 +267,7 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
                         .build());
 
                 // when
-                ReviewDetail result = reviewQueryService.getReview(review.getId());
+                ReviewDetail result = reviewQueryService.getReview(review.getId(), author.getEmail());
 
                 // then
                 assertThat(result.emotion()).isEqualTo(ReviewEmotion.MOVED);
@@ -339,7 +339,7 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
                         .build());
 
                 // when
-                ReviewDetail result = reviewQueryService.getReview(review.getId());
+                ReviewDetail result = reviewQueryService.getReview(review.getId(), author.getEmail());
 
                 // then
                 assertThat(result.post().title()).isEqualTo("지갑을 잃어버렸어요");
@@ -390,7 +390,7 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
                         .build());
 
                 // when
-                ReviewDetail result = reviewQueryService.getReview(review.getId());
+                ReviewDetail result = reviewQueryService.getReview(review.getId(), author.getEmail());
 
                 // then
                 assertThat(result.post().title()).isEqualTo("스냅샷 제목");
@@ -437,10 +437,110 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
                 review.hideByRecipient();
 
                 // when
-                ReviewDetail result = reviewQueryService.getReview(review.getId());
+                ReviewDetail result = reviewQueryService.getReview(review.getId(), author.getEmail());
 
                 // then
                 assertThat(result.reviewId()).isEqualTo(review.getId());
+            }
+        }
+
+        @Nested
+        @DisplayName("후기를 주고받은 당사자가 조회하면")
+        class ContextWithParticipantViewer {
+
+            @Test
+            @DisplayName("채팅방 이동용 roomId를 반환한다")
+            void itReturnsChatRoomId() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("당사자작성자")
+                        .email("당사자-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User helper = userRepository.save(User.builder()
+                        .nickname("당사자도움자")
+                        .email("당사자-helper@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User other = userRepository.save(User.builder()
+                        .nickname("당사자제3자")
+                        .email("당사자-other@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                ChatRoom chatRoom = chatRoomRepository.save(ChatRoom.builder()
+                        .createdAt(LocalDateTime.of(2026, 9, 10, 11, 0))
+                        .build());
+                FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                        .sourcePostId(960004L)
+                        .chatRoom(chatRoom)
+                        .requester(author)
+                        .helper(helper)
+                        .build());
+                Review review = reviewRepository.save(Review.builder()
+                        .findCompletion(findCompletion)
+                        .emotion(ReviewEmotion.GRATEFUL)
+                        .helpTypes(Set.of(ReviewHelpType.KIND_AND_WARM))
+                        .build());
+
+                // when
+                ReviewDetail authorView = reviewQueryService.getReview(review.getId(), author.getEmail());
+                ReviewDetail helperView = reviewQueryService.getReview(review.getId(), helper.getEmail());
+
+                // then
+                assertThat(authorView.roomId()).isEqualTo(chatRoom.getId());
+                assertThat(helperView.roomId()).isEqualTo(chatRoom.getId());
+            }
+        }
+
+        @Nested
+        @DisplayName("후기를 주고받은 당사자가 아니면")
+        class ContextWithNonParticipantViewer {
+
+            @Test
+            @DisplayName("ACCESS_DENIED 예외를 던진다")
+            void itThrowsAccessDenied() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("제3자조회작성자")
+                        .email("제3자조회-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User helper = userRepository.save(User.builder()
+                        .nickname("제3자조회도움자")
+                        .email("제3자조회-helper@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User other = userRepository.save(User.builder()
+                        .nickname("제3자조회제3자")
+                        .email("제3자조회-other@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                ChatRoom chatRoom = chatRoomRepository.save(ChatRoom.builder()
+                        .createdAt(LocalDateTime.of(2026, 9, 10, 11, 0))
+                        .build());
+                FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                        .sourcePostId(960005L)
+                        .chatRoom(chatRoom)
+                        .requester(author)
+                        .helper(helper)
+                        .build());
+                Review review = reviewRepository.save(Review.builder()
+                        .findCompletion(findCompletion)
+                        .emotion(ReviewEmotion.GRATEFUL)
+                        .helpTypes(Set.of(ReviewHelpType.KIND_AND_WARM))
+                        .build());
+
+                // when & then
+                assertThatThrownBy(() -> reviewQueryService.getReview(review.getId(), other.getEmail()))
+                        .isInstanceOf(GeneralException.class)
+                        .extracting("code")
+                        .isEqualTo(ReviewErrorStatus.ACCESS_DENIED);
             }
         }
 
@@ -478,7 +578,7 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
 
                 try {
                     // when
-                    ReviewDetail result = reviewQueryService.getReview(review.getId());
+                    ReviewDetail result = reviewQueryService.getReview(review.getId(), author.getEmail());
 
                     // then
                     assertThat(result.helpTypes())
@@ -526,7 +626,7 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
                 review.delete(LocalDateTime.of(2026, 9, 11, 10, 0));
 
                 // when & then
-                assertThatThrownBy(() -> reviewQueryService.getReview(review.getId()))
+                assertThatThrownBy(() -> reviewQueryService.getReview(review.getId(), author.getEmail()))
                         .isInstanceOf(GeneralException.class)
                         .extracting("code")
                         .isEqualTo(ReviewErrorStatus.NOT_FOUND);

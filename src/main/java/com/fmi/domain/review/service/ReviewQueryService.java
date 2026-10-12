@@ -32,13 +32,18 @@ public class ReviewQueryService {
     private final PostRepository postRepository;
     private final PostImageService postImageService;
 
-    // 숨김 여부와 관계없이 조회한다. 숨김은 각자의 목록에서만 빼는 기능이다.
-    public ReviewDetail getReview(Long reviewId) {
+    // 후기를 주고받은 당사자만 조회할 수 있다. 숨김은 목록에서만 빼는 기능이라 상세 조회와 관계없다.
+    public ReviewDetail getReview(Long reviewId, String viewerEmail) {
+        User viewer = findUser(viewerEmail);
         Review review = reviewRepository
                 .findDetailById(reviewId)
                 .filter(Review::isActive)
                 .orElseThrow(() -> new GeneralException(ReviewErrorStatus.NOT_FOUND));
+        if (!review.isWrittenBy(viewer.getId()) && !review.isReceivedBy(viewer.getId())) {
+            throw new GeneralException(ReviewErrorStatus.ACCESS_DENIED);
+        }
 
+        ChatRoom chatRoom = review.getFindCompletion().getChatRoom();
         return new ReviewDetail(
                 review.getId(),
                 review.getEmotion(),
@@ -47,7 +52,8 @@ public class ReviewQueryService {
                 review.getCreatedAt(),
                 ReviewUser.from(review.getAuthor()),
                 ReviewUser.from(review.getRecipient()),
-                findPostInfo(review.getFindCompletion()));
+                findPostInfo(review.getFindCompletion()),
+                chatRoom == null ? null : chatRoom.getId());
     }
 
     // 마이페이지 후기 탭. 내가 숨긴 후기는 각 목록에서 제외한다.
