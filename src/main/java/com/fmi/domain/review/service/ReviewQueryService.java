@@ -6,6 +6,7 @@ import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
 import com.fmi.domain.review.data.Review;
 import com.fmi.domain.review.data.ReviewDetail;
+import com.fmi.domain.review.data.ReviewListType;
 import com.fmi.domain.review.data.ReviewPage;
 import com.fmi.domain.review.data.ReviewPostInfo;
 import com.fmi.domain.review.data.ReviewSummary;
@@ -49,17 +50,21 @@ public class ReviewQueryService {
                 findPostInfo(review.getFindCompletion()));
     }
 
-    // 내가 숨긴 후기는 내 받은 후기 목록에서만 제외한다.
-    public ReviewPage getMyReceivedReviews(String userEmail, Long cursor, int size) {
+    // 마이페이지 후기 탭. 내가 숨긴 후기는 각 목록에서 제외한다.
+    public ReviewPage getMyReviews(String userEmail, ReviewListType type, Long cursor, int size) {
         User user = findUser(userEmail);
-        List<ReviewSummary> rows = reviewRepository.findReceivedReviews(user.getId(), true, cursor, size + 1);
-        return toPage(rows, size, reviewRepository.countReceivedReviews(user.getId(), true));
-    }
-
-    public ReviewPage getMySentReviews(String userEmail, Long cursor, int size) {
-        User user = findUser(userEmail);
-        List<ReviewSummary> rows = reviewRepository.findSentReviews(user.getId(), cursor, size + 1);
-        return toPage(rows, size, reviewRepository.countSentReviews(user.getId()));
+        return switch (type) {
+            case RECEIVED ->
+                toPage(
+                        reviewRepository.findReceivedReviews(user.getId(), true, cursor, size + 1),
+                        size,
+                        reviewRepository.countReceivedReviews(user.getId(), true));
+            case SENT ->
+                toPage(
+                        reviewRepository.findSentReviews(user.getId(), cursor, size + 1),
+                        size,
+                        reviewRepository.countSentReviews(user.getId()));
+        };
     }
 
     // 타인 프로필에서는 받은 사용자가 숨긴 후기도 보여주고, 총 개수는 계산하지 않는다.

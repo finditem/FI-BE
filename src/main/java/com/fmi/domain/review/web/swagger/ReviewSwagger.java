@@ -55,24 +55,17 @@ public interface ReviewSwagger {
     })
     ApiResponse<Void> hide(@PathVariable Long reviewId, @AuthenticationPrincipal UserDetails userDetails);
 
-    @Operation(summary = "내 받은 후기 목록 조회", description = "내가 받은 후기를 최신 작성순으로 조회합니다. 내가 숨긴 후기는 제외합니다.")
+    @Operation(
+            summary = "내 후기 목록 조회",
+            description = "마이페이지 후기 탭에서 받은 후기(type=RECEIVED) 또는 보낸 후기(type=SENT)를 최신 작성순으로 조회합니다. "
+                    + "내가 숨긴 후기는 제외합니다. 받은 후기의 user는 작성자, 보낸 후기의 user는 받은 사용자입니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
-                description = "size가 1~50 범위를 벗어났습니다.")
+                description = "type이 RECEIVED, SENT가 아니거나 size가 1~50 범위를 벗어났습니다.")
     })
-    ApiResponse<ReviewPageResponse> getMyReceivedReviews(
-            @Valid @ModelAttribute ReviewPageRequest request, @AuthenticationPrincipal UserDetails userDetails);
-
-    @Operation(summary = "내 보낸 후기 목록 조회", description = "내가 작성한 후기를 최신 작성순으로 조회합니다. 내가 숨긴 후기는 제외합니다.")
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "size가 1~50 범위를 벗어났습니다.")
-    })
-    ApiResponse<ReviewPageResponse> getMySentReviews(
+    ApiResponse<ReviewPageResponse> getMyReviews(
             @Valid @ModelAttribute ReviewPageRequest request, @AuthenticationPrincipal UserDetails userDetails);
 
     @Operation(

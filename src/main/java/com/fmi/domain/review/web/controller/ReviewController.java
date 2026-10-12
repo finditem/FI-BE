@@ -47,19 +47,11 @@ public class ReviewController implements ReviewSwagger {
     }
 
     @Override
-    @GetMapping("/users/me/reviews/received")
-    public ApiResponse<ReviewPageResponse> getMyReceivedReviews(
+    @GetMapping("/users/me/reviews")
+    public ApiResponse<ReviewPageResponse> getMyReviews(
             @Valid @ModelAttribute ReviewPageRequest request, @AuthenticationPrincipal UserDetails userDetails) {
-        return ApiResponse.onSuccess(ReviewPageResponse.from(reviewQueryService.getMyReceivedReviews(
-                userDetails.getUsername(), request.getCursor(), request.getSize())));
-    }
-
-    @Override
-    @GetMapping("/users/me/reviews/sent")
-    public ApiResponse<ReviewPageResponse> getMySentReviews(
-            @Valid @ModelAttribute ReviewPageRequest request, @AuthenticationPrincipal UserDetails userDetails) {
-        return ApiResponse.onSuccess(ReviewPageResponse.from(reviewQueryService.getMySentReviews(
-                userDetails.getUsername(), request.getCursor(), request.getSize())));
+        return ApiResponse.onSuccess(ReviewPageResponse.from(reviewQueryService.getMyReviews(
+                userDetails.getUsername(), request.getType(), request.getCursor(), request.getSize())));
     }
 
     @Override

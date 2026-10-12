@@ -17,6 +17,7 @@ import com.fmi.domain.review.data.Review;
 import com.fmi.domain.review.data.ReviewDetail;
 import com.fmi.domain.review.data.ReviewEmotion;
 import com.fmi.domain.review.data.ReviewHelpType;
+import com.fmi.domain.review.data.ReviewListType;
 import com.fmi.domain.review.data.ReviewPage;
 import com.fmi.domain.review.data.ReviewSummary;
 import com.fmi.domain.review.exception.ReviewErrorStatus;
@@ -58,7 +59,7 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
     private ChatRoomRepository chatRoomRepository;
 
     @Nested
-    @DisplayName("내 받은 후기를 조회할 때")
+    @DisplayName("내 후기 목록을 조회할 때")
     class DescribeGetMyReceivedReviews {
 
         @Nested
@@ -96,9 +97,10 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
                 }
 
                 // when
-                ReviewPage firstPage = reviewQueryService.getMyReceivedReviews(recipient.getEmail(), null, 2);
-                ReviewPage secondPage =
-                        reviewQueryService.getMyReceivedReviews(recipient.getEmail(), firstPage.nextCursor(), 2);
+                ReviewPage firstPage =
+                        reviewQueryService.getMyReviews(recipient.getEmail(), ReviewListType.RECEIVED, null, 2);
+                ReviewPage secondPage = reviewQueryService.getMyReviews(
+                        recipient.getEmail(), ReviewListType.RECEIVED, firstPage.nextCursor(), 2);
 
                 // then
                 assertThat(firstPage.reviews())
@@ -115,6 +117,52 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
                 assertThat(secondPage.hasNext()).isFalse();
                 assertThat(secondPage.nextCursor()).isNull();
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("보낸 후기 탭을 조회하면")
+    class DescribeGetMySentReviews {
+
+        @Test
+        @DisplayName("내가 작성한 후기를 받은 사용자 정보와 함께 반환한다")
+        void itReturnsSentReviews() {
+            // given
+            User author = userRepository.save(User.builder()
+                    .nickname("보낸탭작성자")
+                    .email("sent-tab-author@test.com")
+                    .password("password")
+                    .role(Role.USER)
+                    .build());
+            User recipient = userRepository.save(User.builder()
+                    .nickname("보낸탭수신자")
+                    .email("sent-tab-recipient@test.com")
+                    .password("password")
+                    .role(Role.USER)
+                    .build());
+            FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                    .sourcePostId(940201L)
+                    .requester(author)
+                    .helper(recipient)
+                    .build());
+            Review review = reviewRepository.save(Review.builder()
+                    .findCompletion(findCompletion)
+                    .emotion(ReviewEmotion.GRATEFUL)
+                    .helpTypes(Set.of(ReviewHelpType.KIND_AND_WARM))
+                    .build());
+
+            // when
+            ReviewPage sentPage = reviewQueryService.getMyReviews(author.getEmail(), ReviewListType.SENT, null, 10);
+            ReviewPage receivedPage =
+                    reviewQueryService.getMyReviews(author.getEmail(), ReviewListType.RECEIVED, null, 10);
+
+            // then
+            assertThat(sentPage.reviews()).singleElement().satisfies(summary -> {
+                assertThat(summary.reviewId()).isEqualTo(review.getId());
+                assertThat(summary.userId()).isEqualTo(recipient.getId());
+            });
+            assertThat(sentPage.totalCount()).isEqualTo(1L);
+            assertThat(receivedPage.reviews()).isEmpty();
         }
     }
 
@@ -154,7 +202,8 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             reviews.get(0).hideByRecipient();
 
             // when
-            ReviewPage myPage = reviewQueryService.getMyReceivedReviews(recipient.getEmail(), null, 10);
+            ReviewPage myPage =
+                    reviewQueryService.getMyReviews(recipient.getEmail(), ReviewListType.RECEIVED, null, 10);
             ReviewPage profilePage = reviewQueryService.getProfileReceivedReviews(recipient.getId(), null, 10);
 
             // then
