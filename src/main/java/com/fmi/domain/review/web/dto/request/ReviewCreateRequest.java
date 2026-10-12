@@ -9,6 +9,11 @@ import java.util.Set;
 
 public record ReviewCreateRequest(
         @Schema(
+                description = "찾기 완료 id. 찾기 완료 응답이나 채팅방 상세의 findCompletion.findCompletionId 값",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotNull Long findCompletionId,
+
+        @Schema(
                 description = "감정 유형. MOVED(감동), GRATEFUL(감사), HEART_FLUTTERED(심쿵)",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull ReviewEmotion emotion,

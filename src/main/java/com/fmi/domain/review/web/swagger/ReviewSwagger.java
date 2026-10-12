@@ -26,7 +26,7 @@ public interface ReviewSwagger {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "후기 작성 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
-                description = "COMMON400: 감정 유형이나 도움 경험이 없거나 값이 올바르지 않습니다. "
+                description = "COMMON400: 찾기 완료 id, 감정 유형이나 도움 경험이 없거나 값이 올바르지 않습니다. "
                         + "REVIEW400-INVALID_CONTENT: 상세 후기가 300자를 넘습니다."),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "403",
@@ -40,9 +40,7 @@ public interface ReviewSwagger {
                 description = "REVIEW409-ALREADY_WRITTEN: 이미 후기를 작성했습니다.")
     })
     ApiResponse<ReviewIdResponse> write(
-            @PathVariable Long findCompletionId,
-            @Valid @RequestBody ReviewCreateRequest request,
-            @AuthenticationPrincipal UserDetails userDetails);
+            @Valid @RequestBody ReviewCreateRequest request, @AuthenticationPrincipal UserDetails userDetails);
 
     @Operation(summary = "후기 숨기기", description = "받은 후기 또는 보낸 후기를 목록에서 숨깁니다. 상대방 목록에는 영향을 주지 않고, 복구할 수 없습니다.")
     @ApiResponses({

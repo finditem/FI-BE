@@ -29,13 +29,15 @@ public class ReviewController implements ReviewSwagger {
     private final ReviewQueryService reviewQueryService;
 
     @Override
-    @PostMapping("/find-completions/{findCompletionId}/review")
+    @PostMapping("/reviews")
     public ApiResponse<ReviewIdResponse> write(
-            @PathVariable Long findCompletionId,
-            @Valid @RequestBody ReviewCreateRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @Valid @RequestBody ReviewCreateRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         Review review = reviewService.write(
-                findCompletionId, userDetails.getUsername(), request.emotion(), request.helpTypes(), request.content());
+                request.findCompletionId(),
+                userDetails.getUsername(),
+                request.emotion(),
+                request.helpTypes(),
+                request.content());
         return ApiResponse.onSuccess(ReviewIdResponse.from(review));
     }
 
