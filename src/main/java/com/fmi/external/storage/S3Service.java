@@ -1,4 +1,4 @@
-package com.fmi.global.service;
+package com.fmi.external.storage;
 
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

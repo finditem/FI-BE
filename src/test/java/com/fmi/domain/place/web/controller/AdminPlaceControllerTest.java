@@ -7,8 +7,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fmi.external.storage.S3Service;
 import com.fmi.global.dto.UploadedImage;
-import com.fmi.global.service.S3Service;
 import com.fmi.support.IntegrationTestSupport;
 import java.nio.charset.StandardCharsets;
 import java.util.List;

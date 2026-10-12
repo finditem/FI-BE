@@ -1,4 +1,4 @@
-package com.fmi.global.web.dto;
+package com.fmi.global.web.dto.request;
 
 import java.util.List;
 import lombok.AccessLevel;

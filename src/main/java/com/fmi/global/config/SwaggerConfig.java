@@ -1,4 +1,4 @@
-package com.fmi.config;
+package com.fmi.global.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

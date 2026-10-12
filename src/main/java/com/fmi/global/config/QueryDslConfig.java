@@ -1,4 +1,4 @@
-package com.fmi.config;
+package com.fmi.global.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;

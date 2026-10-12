@@ -10,7 +10,7 @@ import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.repository.PostImageRepository;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
-import com.fmi.global.service.S3Service;
+import com.fmi.external.storage.S3Service;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;

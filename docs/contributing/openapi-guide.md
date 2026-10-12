@@ -4,7 +4,7 @@
 
 ## 분류와 이름
 
-Swagger의 태그는 화면이나 Controller가 아니라 API가 다루는 업무 자원을 기준으로 정합니다. PR #572의 리뉴얼 기준 태그는 `Auth`, `User`, `Post`, `Place`, `Chat`, `Inquiry`, `Report`, `Block`, `Notice`, `Notification`, `System`입니다. 태그 설명과 표시 순서는 [`SwaggerConfig`](../../src/main/java/com/fmi/config/SwaggerConfig.java)에서 관리합니다.
+Swagger의 태그는 화면이나 Controller가 아니라 API가 다루는 업무 자원을 기준으로 정합니다. PR #572의 리뉴얼 기준 태그는 `Auth`, `User`, `Post`, `Place`, `Chat`, `Inquiry`, `Report`, `Block`, `Notice`, `Notification`, `System`입니다. 태그 설명과 표시 순서는 [`SwaggerConfig`](../../src/main/java/com/fmi/global/config/SwaggerConfig.java)에서 관리합니다.
 
 태그의 추가, 이름, 소속과 분류 변경은 프론트엔드 담당자와 영향 및 변경 시점을 합의한 뒤 반영합니다. 새 API는 기존 태그 사용을 우선합니다.
 

@@ -1,4 +1,4 @@
-package com.fmi.websocket;
+package com.fmi.domain.chatmessage.web.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

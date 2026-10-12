@@ -1,4 +1,4 @@
-package com.fmi.controller;
+package com.fmi.global.web.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
