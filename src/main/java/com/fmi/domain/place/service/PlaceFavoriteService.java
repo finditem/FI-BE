@@ -1,5 +1,6 @@
 package com.fmi.domain.place.service;
 
+import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.place.data.FavoritePlaceCandidate;
 import com.fmi.domain.place.data.FavoritePlacePage;
 import com.fmi.domain.place.data.Place;
@@ -7,10 +8,12 @@ import com.fmi.domain.place.data.PlaceDailySchedule;
 import com.fmi.domain.place.data.PlaceOperationPeriod;
 import com.fmi.domain.place.data.PlaceOperationState;
 import com.fmi.domain.place.data.PlaceSummary;
+import com.fmi.domain.place.data.PlaceTranslation;
 import com.fmi.domain.place.data.enums.PlaceType;
 import com.fmi.domain.place.exception.PlaceErrorStatus;
 import com.fmi.domain.place.repository.PlaceFavoriteStateRepository;
 import com.fmi.domain.place.repository.PlaceRepository;
+import com.fmi.domain.place.repository.PlaceTranslationRepository;
 import com.fmi.domain.place.service.internal.PlaceOperationStatusCalculator;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
@@ -34,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PlaceFavoriteService {
 
     private final PlaceService placeService;
+    private final PlaceTranslationRepository placeTranslationRepository;
     private final PlaceRepository placeRepository;
     private final PlaceFavoriteStateRepository placeFavoriteStateRepository;
     private final UserRepository userRepository;
@@ -65,6 +69,11 @@ public class PlaceFavoriteService {
     }
 
     public FavoritePlacePage getFavorites(String userEmail, LocalDateTime lastFavoriteUpdatedAt, int size) {
+        return getFavorites(userEmail, lastFavoriteUpdatedAt, size, LanguageCode.KO);
+    }
+
+    public FavoritePlacePage getFavorites(
+            String userEmail, LocalDateTime lastFavoriteUpdatedAt, int size, LanguageCode language) {
         if (size < 1 || size > 20) {
             throw new GeneralException(PlaceErrorStatus.INVALID_REQUEST);
         }
@@ -103,6 +112,15 @@ public class PlaceFavoriteService {
         boolean hasNext = visibleCandidates.size() > size;
         List<FavoritePlaceCandidate> pageCandidates =
                 visibleCandidates.stream().limit(size).toList();
+        List<Long> pageIds =
+                pageCandidates.stream().map(FavoritePlaceCandidate::placeId).toList();
+        Map<Long, PlaceTranslation> translations = Map.of();
+        if (language == LanguageCode.EN && !pageIds.isEmpty()) {
+            translations = placeTranslationRepository.findAllByPlace_IdInAndLanguageCode(pageIds, language).stream()
+                    .collect(Collectors.toMap(
+                            translation -> translation.getPlace().getId(), Function.identity()));
+        }
+        Map<Long, PlaceTranslation> translationsById = translations;
         List<PlaceSummary> places = pageCandidates.stream()
                 .map(candidate -> {
                     Place place = placesById.get(candidate.placeId());
@@ -111,7 +129,8 @@ public class PlaceFavoriteService {
                     PlaceType placeType = place.getType();
                     PlaceOperationState operationState =
                             placeOperationStatusCalculator.calculate(placeType, operationPeriod, dailySchedules, now);
-                    return PlaceSummary.from(place, operationState, true);
+                    return PlaceSummary.from(place, operationState, true)
+                            .translated(translationsById.get(place.getId()));
                 })
                 .toList();
         if (!hasNext) {

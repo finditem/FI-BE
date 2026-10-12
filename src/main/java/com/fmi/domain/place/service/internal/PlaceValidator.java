@@ -3,6 +3,7 @@ package com.fmi.domain.place.service.internal;
 import com.fmi.domain.place.data.PlaceDailySchedule;
 import com.fmi.domain.place.data.PlaceOperationPeriod;
 import com.fmi.domain.place.data.PlaceTimeRange;
+import com.fmi.domain.place.data.PlaceUpsertCommand;
 import com.fmi.domain.place.data.enums.PlaceBusinessHourType;
 import com.fmi.domain.place.data.enums.PlaceType;
 import com.fmi.domain.place.exception.PlaceErrorStatus;
@@ -14,6 +15,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PlaceValidator {
+    public void validateTranslations(PlaceUpsertCommand command) {
+        if ((command.nameEn() != null && command.nameEn().length() > 100)
+                || (command.addressEn() != null && command.addressEn().length() > 510)
+                || (command.stationEn() != null && command.stationEn().length() > 200)) {
+            throw new GeneralException(PlaceErrorStatus.INVALID_REQUEST);
+        }
+    }
 
     public void validateType(PlaceType currentType, PlaceType requestedType) {
         if (currentType != requestedType) {

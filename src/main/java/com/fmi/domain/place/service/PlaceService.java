@@ -1,5 +1,6 @@
 package com.fmi.domain.place.service;
 
+import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.map.enums.MapLevel;
 import com.fmi.domain.place.data.HomePlace;
 import com.fmi.domain.place.data.Place;
@@ -9,11 +10,13 @@ import com.fmi.domain.place.data.PlaceMapSearchResult;
 import com.fmi.domain.place.data.PlaceOperationPeriod;
 import com.fmi.domain.place.data.PlaceOperationState;
 import com.fmi.domain.place.data.PlaceSummary;
+import com.fmi.domain.place.data.PlaceTranslation;
 import com.fmi.domain.place.data.PlaceUpsertCommand;
 import com.fmi.domain.place.data.enums.PlaceType;
 import com.fmi.domain.place.exception.PlaceErrorStatus;
 import com.fmi.domain.place.repository.PlaceFavoriteRepository;
 import com.fmi.domain.place.repository.PlaceRepository;
+import com.fmi.domain.place.repository.PlaceTranslationRepository;
 import com.fmi.domain.place.service.internal.PlaceBusinessHourUpdater;
 import com.fmi.domain.place.service.internal.PlaceOperationStatusCalculator;
 import com.fmi.domain.place.service.internal.PlaceValidator;
@@ -30,7 +33,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +48,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class PlaceService {
 
     private final PlaceRepository placeRepository;
+    private final PlaceTranslationRepository placeTranslationRepository;
     private final PlaceFavoriteRepository placeFavoriteRepository;
     private final UserRepository userRepository;
     private final PlaceValidator placeValidator;
@@ -59,6 +66,7 @@ public class PlaceService {
                         .endDate(command.operationEndDate())
                         .build()
                 : null;
+        placeValidator.validateTranslations(command);
         placeValidator.validate(command.type(), operationPeriod, command.dailySchedules());
         UploadedImage uploadedThumbnail =
                 s3Service.uploadWithThumbnail(List.of(thumbnail)).get(0);
@@ -80,7 +88,13 @@ public class PlaceService {
             LocalDateTime closingAt = popupClosingAtCalculator.calculate(operationPeriod, dailySchedules);
             operationPeriod.scheduleClosingAt(closingAt);
         }
-        return placeRepository.save(place).getId();
+        placeRepository.save(place);
+        if (command.nameEn() != null || command.addressEn() != null || command.stationEn() != null) {
+            PlaceTranslation translation = PlaceTranslation.create(
+                    place, LanguageCode.EN, command.nameEn(), command.addressEn(), command.stationEn());
+            placeTranslationRepository.save(translation);
+        }
+        return place.getId();
     }
 
     public PlaceManagementDetail getManagementDetail(Long placeId) {
@@ -91,6 +105,9 @@ public class PlaceService {
         }
 
         PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
+        PlaceTranslation translation = placeTranslationRepository
+                .findByPlace_IdAndLanguageCode(placeId, LanguageCode.EN)
+                .orElse(null);
         return new PlaceManagementDetail(
                 place.getId(),
                 place.getName(),
@@ -103,10 +120,17 @@ public class PlaceService {
                 place.getThumbnailUrl(),
                 operationPeriod == null ? null : operationPeriod.getStartDate(),
                 operationPeriod == null ? null : operationPeriod.getEndDate(),
-                place.dailySchedules());
+                place.dailySchedules(),
+                translation == null ? null : translation.getTranslatedName(),
+                translation == null ? null : translation.getTranslatedAddress(),
+                translation == null ? null : translation.getTranslatedStation());
     }
 
     public List<PlaceSummary> getHomePlaces(PlaceType type, Long userId) {
+        return getHomePlaces(type, userId, LanguageCode.KO);
+    }
+
+    public List<PlaceSummary> getHomePlaces(PlaceType type, Long userId, LanguageCode language) {
         // 자정을 넘긴 전날 영업시간을 판단하기 위해 오늘과 전날 요일을 조회
         LocalDateTime now = LocalDateTime.now(clock);
         LocalDate today = now.toLocalDate();
@@ -116,9 +140,9 @@ public class PlaceService {
         // 타입별로 조회
         List<HomePlace> places;
         if (type == null) {
-            places = placeRepository.findHomePlaces(now, todayDayOfWeek, yesterdayDayOfWeek, userId);
+            places = placeRepository.findHomePlaces(now, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
         } else {
-            places = placeRepository.findHomePlaces(type, now, todayDayOfWeek, yesterdayDayOfWeek, userId);
+            places = placeRepository.findHomePlaces(type, now, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
         }
 
         // 운영 상태 계산
@@ -142,6 +166,11 @@ public class PlaceService {
 
     public PlaceMapSearchResult getMapPlaces(
             double latitude, double longitude, int level, PlaceType type, String userEmail) {
+        return getMapPlaces(latitude, longitude, level, type, userEmail, LanguageCode.KO);
+    }
+
+    public PlaceMapSearchResult getMapPlaces(
+            double latitude, double longitude, int level, PlaceType type, String userEmail, LanguageCode language) {
         MapLevel mapLevel = MapLevel.from(level);
         double latitudeDelta = mapLevel.getHalfHeightMeter() / 111_320.0;
         double latitudeRadian = Math.toRadians(latitude);
@@ -187,6 +216,13 @@ public class PlaceService {
                             placeFavoriteRepository.findFavoritePlaceIds(user.getId(), placeIds)));
         }
 
+        Map<Long, PlaceTranslation> translations = Map.of();
+        if (language == LanguageCode.EN && !placeIds.isEmpty()) {
+            translations = placeTranslationRepository.findAllByPlace_IdInAndLanguageCode(placeIds, language).stream()
+                    .collect(Collectors.toMap(
+                            translation -> translation.getPlace().getId(), Function.identity()));
+        }
+        Map<Long, PlaceTranslation> translationsById = translations;
         List<PlaceSummary> summaries = places.stream()
                 .map(place -> {
                     PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
@@ -196,13 +232,17 @@ public class PlaceService {
                             placeOperationStatusCalculator.calculate(placeType, operationPeriod, dailySchedules, now);
                     Long placeId = place.getId();
                     boolean favorite = favoritePlaceIds.contains(placeId);
-                    return PlaceSummary.from(place, operationState, favorite);
+                    return PlaceSummary.from(place, operationState, favorite).translated(translationsById.get(placeId));
                 })
                 .toList();
         return new PlaceMapSearchResult(summaries, visiblePlaces.size());
     }
 
     public PlaceSummary getPlaceSummary(Long placeId, String userEmail) {
+        return getPlaceSummary(placeId, userEmail, LanguageCode.KO);
+    }
+
+    public PlaceSummary getPlaceSummary(Long placeId, String userEmail, LanguageCode language) {
         LocalDateTime now = LocalDateTime.now(clock);
         LocalDate today = now.toLocalDate();
         DayOfWeek todayDayOfWeek = today.getDayOfWeek();
@@ -236,7 +276,13 @@ public class PlaceService {
         PlaceType placeType = place.getType();
         PlaceOperationState operationState =
                 placeOperationStatusCalculator.calculate(placeType, operationPeriod, dailySchedules, now);
-        return PlaceSummary.from(place, operationState, favorite);
+        PlaceTranslation translation = null;
+        if (language == LanguageCode.EN) {
+            translation = placeTranslationRepository
+                    .findByPlace_IdAndLanguageCode(placeId, language)
+                    .orElse(null);
+        }
+        return PlaceSummary.from(place, operationState, favorite).translated(translation);
     }
 
     @Transactional
@@ -254,6 +300,7 @@ public class PlaceService {
                         .endDate(command.operationEndDate())
                         .build()
                 : null;
+        placeValidator.validateTranslations(command);
         placeValidator.validate(command.type(), requestedPeriod, command.dailySchedules());
         String thumbnailUrl = place.getThumbnailUrl();
         if (newThumbnail != null) {
@@ -273,6 +320,19 @@ public class PlaceService {
                 command.stationDistanceMeters(),
                 thumbnailUrl,
                 place.getOperationPeriod());
+        PlaceTranslation translation = placeTranslationRepository
+                .findByPlace_IdAndLanguageCode(placeId, LanguageCode.EN)
+                .orElse(null);
+        if (command.nameEn() == null && command.addressEn() == null && command.stationEn() == null) {
+            if (translation != null) {
+                placeTranslationRepository.delete(translation);
+            }
+        } else if (translation == null) {
+            placeTranslationRepository.save(PlaceTranslation.create(
+                    place, LanguageCode.EN, command.nameEn(), command.addressEn(), command.stationEn()));
+        } else {
+            translation.revise(command.nameEn(), command.addressEn(), command.stationEn());
+        }
         placeBusinessHourUpdater.update(place, command.dailySchedules(), LocalDateTime.now(clock));
         if (place.getType() == PlaceType.POPUP) {
             PlaceOperationPeriod operationPeriod = place.getOperationPeriod();

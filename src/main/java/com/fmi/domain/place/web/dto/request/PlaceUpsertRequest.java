@@ -5,6 +5,7 @@ import com.fmi.domain.place.data.PlaceTimeRange;
 import com.fmi.domain.place.data.PlaceUpsertCommand;
 import com.fmi.domain.place.data.enums.PlaceBusinessHourType;
 import com.fmi.domain.place.data.enums.PlaceType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -26,7 +27,16 @@ public record PlaceUpsertRequest(
         @NotNull @PositiveOrZero Integer stationDistanceMeters,
         @NotNull PlaceType type,
         @NotNull @Size(min = 7, max = 7) List<@Valid WeeklySchedule> weeklySchedules,
-        @Valid OperationPeriod operationPeriod) {
+        @Valid OperationPeriod operationPeriod,
+
+        @Schema(description = "영문 이름, 최대 100자. 앞뒤 공백 제거, 빈 값은 미등록. 수정 시 생략 또는 null은 기존 값을 제거합니다.", maxLength = 100)
+        String nameEn,
+
+        @Schema(description = "영문 주소, 최대 510자. 앞뒤 공백 제거, 빈 값은 미등록. 수정 시 생략 또는 null은 기존 값을 제거합니다.", maxLength = 510)
+        String addressEn,
+
+        @Schema(description = "영문 역 이름, 최대 200자. 앞뒤 공백 제거, 빈 값은 미등록. 수정 시 생략 또는 null은 기존 값을 제거합니다.", maxLength = 200)
+        String stationEn) {
 
     public PlaceUpsertCommand toCommand() {
         return new PlaceUpsertCommand(
@@ -39,7 +49,10 @@ public record PlaceUpsertRequest(
                 type,
                 operationPeriod == null ? null : operationPeriod.startDate(),
                 operationPeriod == null ? null : operationPeriod.endDate(),
-                weeklySchedules.stream().map(WeeklySchedule::toDailySchedule).toList());
+                weeklySchedules.stream().map(WeeklySchedule::toDailySchedule).toList(),
+                nameEn,
+                addressEn,
+                stationEn);
     }
 
     public record WeeklySchedule(

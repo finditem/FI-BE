@@ -1,5 +1,6 @@
 package com.fmi.domain.place.web.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fmi.domain.place.data.PlaceDailySchedule;
 import com.fmi.domain.place.data.PlaceManagementDetail;
 import com.fmi.domain.place.data.PlaceTimeRange;
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public record PlaceManagementResponse(
         Long placeId,
         String name,
@@ -21,7 +23,10 @@ public record PlaceManagementResponse(
         PlaceType type,
         String thumbnailUrl,
         OperationPeriod operationPeriod,
-        List<WeeklySchedule> weeklySchedules) {
+        List<WeeklySchedule> weeklySchedules,
+        String nameEn,
+        String addressEn,
+        String stationEn) {
 
     public static PlaceManagementResponse from(PlaceManagementDetail detail) {
         OperationPeriod operationPeriod = detail.operationStartDate() == null
@@ -38,7 +43,10 @@ public record PlaceManagementResponse(
                 detail.type(),
                 detail.thumbnailUrl(),
                 operationPeriod,
-                detail.dailySchedules().stream().map(WeeklySchedule::from).toList());
+                detail.dailySchedules().stream().map(WeeklySchedule::from).toList(),
+                detail.nameEn(),
+                detail.addressEn(),
+                detail.stationEn());
     }
 
     public record WeeklySchedule(DayOfWeek dayOfWeek, boolean isClosed, List<TimeRange> timeRanges) {

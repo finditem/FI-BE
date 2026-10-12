@@ -5,6 +5,7 @@ import com.fmi.domain.map.web.dto.response.PostMarkerResponse;
 import com.fmi.domain.place.data.PlaceMapSearchResult;
 import com.fmi.domain.place.data.PlaceSummary;
 import com.fmi.domain.place.service.PlaceService;
+import com.fmi.domain.place.web.PlaceLanguageResolver;
 import com.fmi.domain.place.web.dto.request.NearbyPostMarkerRequest;
 import com.fmi.domain.place.web.dto.request.NearbyPostRequest;
 import com.fmi.domain.place.web.dto.request.PlaceMapSearchRequest;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -38,16 +40,24 @@ public class MainPlaceController implements MainPlaceSwagger {
             @Valid @ModelAttribute PlaceMapSearchRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         String userEmail = userDetails == null ? null : userDetails.getUsername();
         PlaceMapSearchResult result = placeService.getMapPlaces(
-                request.getLatitude(), request.getLongitude(), request.getLevel(), request.getType(), userEmail);
+                request.getLatitude(),
+                request.getLongitude(),
+                request.getLevel(),
+                request.getType(),
+                userEmail,
+                PlaceLanguageResolver.resolve(request.getLanguage()));
         return ApiResponse.onSuccess(PlaceMapResponse.from(result));
     }
 
     @Override
     @GetMapping("/{placeId}/summary")
     public ApiResponse<PlaceSummaryResponse> getSummary(
-            @PathVariable Long placeId, @AuthenticationPrincipal UserDetails userDetails) {
+            @PathVariable Long placeId,
+            @RequestParam(required = false) String language,
+            @AuthenticationPrincipal UserDetails userDetails) {
         String userEmail = userDetails == null ? null : userDetails.getUsername();
-        return ApiResponse.onSuccess(PlaceSummaryResponse.from(placeService.getPlaceSummary(placeId, userEmail)));
+        return ApiResponse.onSuccess(PlaceSummaryResponse.from(
+                placeService.getPlaceSummary(placeId, userEmail, PlaceLanguageResolver.resolve(language))));
     }
 
     @Override

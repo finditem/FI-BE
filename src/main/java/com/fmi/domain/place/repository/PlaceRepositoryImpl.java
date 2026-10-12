@@ -1,5 +1,6 @@
 package com.fmi.domain.place.repository;
 
+import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.place.data.HomePlace;
 import com.fmi.domain.place.data.enums.PlaceType;
 import java.time.DayOfWeek;
@@ -25,14 +26,15 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                 ORDER BY p.created_at DESC, p.id DESC
                 LIMIT 5
             )
-            SELECT selected.id, selected.name, selected.address,
-                   selected.latitude, selected.longitude, selected.station,
+            SELECT selected.id, COALESCE(pt.translated_name, selected.name) AS name, COALESCE(pt.translated_address, selected.address) AS address,
+                   selected.latitude, selected.longitude, COALESCE(pt.translated_station, selected.station) AS station,
                    selected.station_distance_meters, selected.type,
                    selected.thumbnail_url, selected.start_date, selected.end_date,
                    pbh.day_of_week, pbh.is_closed,
                    pbh.type AS business_hour_type, pbh.start_time, pbh.end_time,
                    CASE WHEN pf.id IS NOT NULL THEN TRUE ELSE FALSE END AS is_favorite
             FROM selected_places selected
+            LEFT JOIN place_translation pt ON pt.place_id = selected.id AND pt.language_code = ?
             JOIN place_business_hour pbh
               ON pbh.place_id = selected.id
              AND pbh.entity_status = 'ACTIVE'
@@ -59,14 +61,15 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                 ORDER BY p.created_at DESC, p.id DESC
                 LIMIT 5
             )
-            SELECT selected.id, selected.name, selected.address,
-                   selected.latitude, selected.longitude, selected.station,
+            SELECT selected.id, COALESCE(pt.translated_name, selected.name) AS name, COALESCE(pt.translated_address, selected.address) AS address,
+                   selected.latitude, selected.longitude, COALESCE(pt.translated_station, selected.station) AS station,
                    selected.station_distance_meters, selected.type,
                    selected.thumbnail_url, selected.start_date, selected.end_date,
                    pbh.day_of_week, pbh.is_closed,
                    pbh.type AS business_hour_type, pbh.start_time, pbh.end_time,
                    CASE WHEN pf.id IS NOT NULL THEN TRUE ELSE FALSE END AS is_favorite
             FROM selected_places selected
+            LEFT JOIN place_translation pt ON pt.place_id = selected.id AND pt.language_code = ?
             JOIN place_business_hour pbh
               ON pbh.place_id = selected.id
              AND pbh.entity_status = 'ACTIVE'
@@ -96,19 +99,32 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public List<HomePlace> findHomePlaces(LocalDateTime now, DayOfWeek today, DayOfWeek yesterday, Long userId) {
+    public List<HomePlace> findHomePlaces(
+            LocalDateTime now, DayOfWeek today, DayOfWeek yesterday, Long userId, LanguageCode language) {
         return jdbcTemplate.query(
-                FIND_HOME_PLACES, new HomePlaceResultSetExtractor(), now, today.name(), yesterday.name(), userId);
+                FIND_HOME_PLACES,
+                new HomePlaceResultSetExtractor(),
+                now,
+                language.name(),
+                today.name(),
+                yesterday.name(),
+                userId);
     }
 
     @Override
     public List<HomePlace> findHomePlaces(
-            PlaceType type, LocalDateTime now, DayOfWeek today, DayOfWeek yesterday, Long userId) {
+            PlaceType type,
+            LocalDateTime now,
+            DayOfWeek today,
+            DayOfWeek yesterday,
+            Long userId,
+            LanguageCode language) {
         return jdbcTemplate.query(
                 FIND_HOME_PLACES_BY_TYPE,
                 new HomePlaceResultSetExtractor(),
                 type.name(),
                 now,
+                language.name(),
                 today.name(),
                 yesterday.name(),
                 userId);
