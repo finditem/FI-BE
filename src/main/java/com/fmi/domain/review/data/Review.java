@@ -87,4 +87,20 @@ public class Review extends BaseEntity {
     public Set<ReviewHelpType> getHelpTypes() {
         return Collections.unmodifiableSet(helpTypes);
     }
+
+    public boolean isWrittenBy(Long userId) {
+        return author != null && author.getId().equals(userId);
+    }
+
+    public boolean isReceivedBy(Long userId) {
+        return recipient != null && recipient.getId().equals(userId);
+    }
+
+    public void hideByAuthor() {
+        this.hiddenByAuthor = true;
+    }
+
+    public void hideByRecipient() {
+        this.hiddenByRecipient = true;
+    }
 }
