@@ -13,6 +13,8 @@ import com.fmi.domain.review.data.ReviewEmotion;
 import com.fmi.domain.review.data.ReviewHelpType;
 import com.fmi.domain.review.exception.ReviewErrorStatus;
 import com.fmi.domain.review.repository.ReviewRepository;
+import com.fmi.domain.temperature.data.TemperatureActivityType;
+import com.fmi.domain.temperature.repository.TemperatureActivityRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.data.BlockedUser;
@@ -54,6 +56,9 @@ class ReviewServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private BlockedUserRepository blockedUserRepository;
+
+    @Autowired
+    private TemperatureActivityRepository temperatureActivityRepository;
 
     @Nested
     @DisplayName("후기를 작성할 때")
@@ -101,6 +106,54 @@ class ReviewServiceTest extends IntegrationTestSupport {
                 assertThat(saved.getHelpTypes())
                         .containsExactlyInAnyOrder(ReviewHelpType.KIND_AND_WARM, ReviewHelpType.QUICK_RESPONSE);
                 assertThat(saved.getContent()).isEqualTo("정말 감사합니다");
+            }
+        }
+
+        @Nested
+        @DisplayName("후기가 저장되면")
+        class ContextWithTemperature {
+
+            @Test
+            @DisplayName("받은 사용자에게 따뜻한 후기 활동을 기록하고 숨겨도 기록을 유지한다")
+            void itRecordsReviewReceivedForRecipient() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("온도작성자")
+                        .email("temperature-review-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User helper = userRepository.save(User.builder()
+                        .nickname("온도도움자")
+                        .email("temperature-review-helper@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                        .sourcePostId(910901L)
+                        .requester(author)
+                        .helper(helper)
+                        .build());
+
+                // when
+                Review result = reviewService.write(
+                        findCompletion.getId(),
+                        author.getEmail(),
+                        ReviewEmotion.GRATEFUL,
+                        Set.of(ReviewHelpType.KIND_AND_WARM),
+                        null);
+                reviewService.hide(result.getId(), helper.getEmail());
+
+                // then
+                assertThat(temperatureActivityRepository.findAll().stream()
+                                .filter(activity -> activity.getSourceId().equals(result.getId())
+                                        && activity.getActivityType() == TemperatureActivityType.REVIEW_RECEIVED))
+                        .singleElement()
+                        .satisfies(activity -> {
+                            assertThat(activity.getUserId()).isEqualTo(helper.getId());
+                            assertThat(activity.getDeltaTenths()).isEqualTo(10);
+                            assertThat(activity.getOccurredAt()).isEqualTo(result.getCreatedAt());
+                        });
             }
         }
 

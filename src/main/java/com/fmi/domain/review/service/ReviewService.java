@@ -9,6 +9,8 @@ import com.fmi.domain.review.data.ReviewHelpType;
 import com.fmi.domain.review.exception.ReviewErrorStatus;
 import com.fmi.domain.review.repository.ReviewRepository;
 import com.fmi.domain.review.service.internal.ReviewValidator;
+import com.fmi.domain.temperature.data.TemperatureActivityType;
+import com.fmi.domain.temperature.service.TemperatureService;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -27,6 +29,7 @@ public class ReviewService {
     private final FindCompletionRepository findCompletionRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewValidator reviewValidator;
+    private final TemperatureService temperatureService;
 
     @Transactional
     public Review write(
@@ -52,6 +55,11 @@ public class ReviewService {
                 .content(normalizedContent)
                 .build();
         save(review);
+        temperatureService.record(
+                TemperatureActivityType.REVIEW_RECEIVED,
+                review.getRecipient().getId(),
+                review.getId(),
+                review.getCreatedAt());
         return review;
     }
 

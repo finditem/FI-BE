@@ -9,6 +9,7 @@ import com.fmi.domain.post.converter.util.PostConverter;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
 import com.fmi.domain.post.data.PostStatus;
+import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.internal.PostValidator;
 import com.fmi.domain.post.web.dto.request.PostCreateRequest;
@@ -18,6 +19,8 @@ import com.fmi.domain.post.web.dto.request.PostUpdateRequest;
 import com.fmi.domain.post.web.dto.response.PostCreateResponse;
 import com.fmi.domain.post.web.dto.response.PostUpdateResponse;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
+import com.fmi.domain.temperature.data.TemperatureActivityType;
+import com.fmi.domain.temperature.service.TemperatureService;
 import com.fmi.domain.user.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -46,6 +49,7 @@ public class PostService {
     private final PostUpdateRateLimiter postUpdateRateLimiter;
     private final PostTranslationService postTranslationService;
     private final PostValidator postValidator;
+    private final TemperatureService temperatureService;
 
     // 게시글 생성
     @Transactional
@@ -58,6 +62,11 @@ public class PostService {
         Post post = PostConverter.toEntity(request, user);
 
         Post savePost = postRepository.save(post);
+
+        if (savePost.getPostType() == PostType.FOUND) {
+            temperatureService.record(
+                    TemperatureActivityType.FOUND_POST, user.getId(), savePost.getId(), savePost.getCreatedAt());
+        }
 
         postImageService.createPostImageAtS3AndDB(images, savePost);
 

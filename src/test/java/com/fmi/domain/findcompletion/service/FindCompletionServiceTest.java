@@ -20,6 +20,8 @@ import com.fmi.domain.post.data.Radius;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
+import com.fmi.domain.temperature.data.TemperatureActivityType;
+import com.fmi.domain.temperature.repository.TemperatureActivityRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.data.BlockedUser;
@@ -69,6 +71,9 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private BlockedUserRepository blockedUserRepository;
+
+    @Autowired
+    private TemperatureActivityRepository temperatureActivityRepository;
 
     @Nested
     @DisplayName("채팅방에서 찾기 완료를 처리할 때")
@@ -129,6 +134,63 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
                 assertThat(saved.getHelper().getId()).isEqualTo(helper.getId());
                 assertThat(postRepository.findById(post.getId()).orElseThrow().getPostStatus())
                         .isEqualTo(PostStatus.FOUND);
+            }
+
+            @Test
+            @DisplayName("도움을 준 사용자에게 반환 완료 활동을 기록한다")
+            void itRecordsReturnCompletedForHelper() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("온도작성자")
+                        .email("temperature-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User helper = userRepository.save(User.builder()
+                        .nickname("온도도움자")
+                        .email("temperature-helper@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                Post post = postRepository.save(Post.create(
+                        "휴대폰을 잃어버렸어요",
+                        "서울 성동구",
+                        37.5422,
+                        127.0549,
+                        PostType.LOST,
+                        Category.ELECTRONICS,
+                        "검은색 휴대폰입니다.",
+                        false,
+                        LocalDateTime.of(2026, 9, 10, 10, 0),
+                        Radius.DISTANCE_1000,
+                        author));
+                ChatRoom chatRoom = ChatRoom.builder()
+                        .post(post)
+                        .createdAt(LocalDateTime.of(2026, 9, 10, 11, 0))
+                        .build();
+                chatRoom.initFromPost(post);
+                chatRoom.addParticipant(
+                        ChatRoomParticipant.builder().user(author).build());
+                chatRoom.addParticipant(
+                        ChatRoomParticipant.builder().user(helper).build());
+                chatRoomRepository.save(chatRoom);
+
+                // when
+                FindCompletion result = findCompletionService.complete(chatRoom.getId(), author.getEmail());
+
+                // then
+                assertThat(temperatureActivityRepository.findAll().stream()
+                                .filter(activity -> activity.getSourceId().equals(result.getId())
+                                        && activity.getActivityType() == TemperatureActivityType.RETURN_COMPLETED))
+                        .singleElement()
+                        .satisfies(activity -> {
+                            assertThat(activity.getUserId()).isEqualTo(helper.getId());
+                            assertThat(activity.getDeltaTenths()).isEqualTo(20);
+                            assertThat(activity.getOccurredAt()).isEqualTo(result.getCreatedAt());
+                        });
+                assertThat(temperatureActivityRepository.findAll().stream()
+                                .filter(activity -> activity.getUserId().equals(author.getId())))
+                        .isEmpty();
             }
 
             @Test
