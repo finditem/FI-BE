@@ -16,8 +16,11 @@ import com.fmi.domain.auth.web.dto.AccountDeleteRequest;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.user.service.UserStatisticsRecorder;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient;
 import com.fmi.external.storage.S3Service;
+import java.time.Clock;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,6 +56,12 @@ class WithdrawalServiceTest {
 
     @Mock
     private KakaoOAuthClient kakaoOAuthClient;
+
+    @Spy
+    private Clock clock = Clock.system(ZoneId.of("Asia/Seoul"));
+
+    @Mock
+    private UserStatisticsRecorder userStatisticsRecorder;
 
     @InjectMocks
     private WithdrawalService withdrawalService;
@@ -82,7 +92,7 @@ class WithdrawalServiceTest {
                         .build();
                 AccountDeleteRequest request = new AccountDeleteRequest();
                 request.setReasons(List.of(WithdrawalReason.NOT_USING));
-                when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+                when(userRepository.findActiveByEmailForUpdate(email)).thenReturn(Optional.of(user));
                 when(s3Service.isValidS3Url(profileImage)).thenReturn(true);
                 when(socialAccountsRepository.findByUser(user)).thenReturn(Optional.of(kakaoAccount));
 
@@ -94,7 +104,7 @@ class WithdrawalServiceTest {
                 order.verify(kakaoOAuthClient).unlinkUser("kakao-user-id");
                 order.verify(userRepository).save(user);
                 order.verify(refreshTokenStore).revokeAllForUser(email);
-                order.verify(postService).softDeleteAllByUser(user);
+                order.verify(postService).softDeleteAllByUser(eq(user), any());
                 order.verify(authEmailNotifier).sendWithdrawal(eq(email), eq("찾아줘토끼"), any());
                 assertThat(user.getDeletedAt()).isNotNull();
                 assertThat(user.getWithdrawalReason()).isEqualTo("NOT_USING");

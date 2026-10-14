@@ -19,6 +19,7 @@ import com.fmi.domain.auth.service.internal.RejoinPolicy;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.user.service.UserStatisticsRecorder;
 import com.fmi.domain.user.service.internal.NicknameValidator;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -63,6 +64,10 @@ class AuthServiceTest {
     private final Clock clock = Clock.fixed(Instant.parse("2026-08-23T03:00:00Z"), ZoneOffset.UTC);
 
     private final AtomicReference<User> savedUser = new AtomicReference<>();
+
+    @Mock
+    private UserStatisticsRecorder userStatisticsRecorder;
+
     private PasswordValidator passwordValidator;
     private RejoinPolicy rejoinPolicy;
     private AuthService authService;
@@ -73,6 +78,8 @@ class AuthServiceTest {
         rejoinPolicy = new RejoinPolicy(clock, Set.of());
         authService = new AuthService(
                 userRepository,
+                userStatisticsRecorder,
+                clock,
                 passwordEncoder,
                 nicknameValidator,
                 signupEmailVerificationService,
@@ -80,7 +87,9 @@ class AuthServiceTest {
                 rejoinPolicy,
                 eventPublisher);
         lenient().when(userRepository.existsByNickname(anyString())).thenReturn(false);
-        lenient().when(userRepository.findByEmailIncludingDeleted(anyString())).thenReturn(Optional.empty());
+        lenient()
+                .when(userRepository.findByEmailIncludingDeletedForUpdate(anyString()))
+                .thenReturn(Optional.empty());
         lenient()
                 .when(signupEmailVerificationService.isEmailVerified(anyString()))
                 .thenReturn(true);
@@ -143,7 +152,7 @@ class AuthServiceTest {
                         .withdrawalReason("NOT_USING")
                         .temporaryPassword("temporary-password")
                         .build();
-                when(userRepository.findByEmailIncludingDeleted(request.getEmail()))
+                when(userRepository.findByEmailIncludingDeletedForUpdate(request.getEmail()))
                         .thenReturn(Optional.of(withdrawnUser));
 
                 // when

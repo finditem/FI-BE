@@ -1,5 +1,7 @@
 package com.fmi.domain.post.service.internal;
 
+import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.exception.PostStatisticsErrorStatus;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.time.Clock;
@@ -12,6 +14,12 @@ import org.springframework.stereotype.Component;
 public class PostValidator {
 
     private final Clock clock;
+
+    public void validatePublicationTransition(Post post, Boolean temporarySave) {
+        if (!post.isTemporarySave() && Boolean.TRUE.equals(temporarySave)) {
+            throw new GeneralException(PostStatisticsErrorStatus.PUBLICATION_CANNOT_BE_REVERTED);
+        }
+    }
 
     public void validateDate(LocalDateTime date) {
         if (date != null && date.isAfter(LocalDateTime.now(clock))) {

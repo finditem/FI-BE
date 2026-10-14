@@ -88,6 +88,10 @@ public class User {
     @Builder.Default
     private List<ChatRoomParticipant> chatRoomParticipants = new ArrayList<>();
 
+    public boolean isStatisticsMember() {
+        return role == Role.USER && deletedAt == null && privacyPolicyAgreed && termsOfServiceAgreed;
+    }
+
     public void updateUserInfo(String email) {
         if (email != null) {
             this.email = email;

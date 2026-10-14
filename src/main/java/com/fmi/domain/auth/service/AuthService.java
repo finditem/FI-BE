@@ -9,9 +9,12 @@ import com.fmi.domain.auth.service.internal.RejoinPolicy;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.user.service.UserStatisticsRecorder;
 import com.fmi.domain.user.service.internal.NicknameValidator;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserStatisticsRecorder userStatisticsRecorder;
+    private final Clock clock;
     private final PasswordEncoder passwordEncoder;
     private final NicknameValidator nicknameValidator;
     private final SignupEmailVerificationService signupEmailVerificationService;
@@ -67,6 +72,8 @@ public class AuthService {
             user.markEmailVerified();
         }
         User savedUser = userRepository.save(user);
+        LocalDateTime occurredAt = LocalDateTime.now(clock);
+        userStatisticsRecorder.recordSignup(savedUser, occurredAt);
         eventPublisher.publishEvent(UserSignedUpEvent.from(savedUser));
 
         return savedUser;
@@ -90,7 +97,7 @@ public class AuthService {
     }
 
     private Optional<User> findRejoinUser(String email) {
-        Optional<User> existingUser = userRepository.findByEmailIncludingDeleted(email);
+        Optional<User> existingUser = userRepository.findByEmailIncludingDeletedForUpdate(email);
         if (existingUser.isEmpty()) {
             return existingUser;
         }
