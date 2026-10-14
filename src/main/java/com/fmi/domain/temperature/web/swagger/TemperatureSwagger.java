@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 
-@Tag(name = "Temperature", description = "찾길 온도 API")
+@Tag(name = "User")
 public interface TemperatureSwagger {
 
     @Operation(
