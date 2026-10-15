@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "관리자 신고 응답")
+@Schema(description = "운영진 신고 응답")
 public class AdminReportResponse {
 
     @Schema(description = "신고 ID", example = "1")
@@ -29,7 +29,7 @@ public class AdminReportResponse {
     @Schema(description = "신고 타입", example = "SPAM")
     private ReportType reportType;
 
-    @Schema(description = "처리 상태", example = "PENDING")
+    @Schema(description = "신고 상태", example = "PENDING")
     private ReportStatus status;
 
     @Schema(description = "신고 사유", example = "스팸 게시글입니다.")

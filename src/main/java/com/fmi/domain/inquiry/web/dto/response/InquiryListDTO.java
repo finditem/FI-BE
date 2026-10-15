@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "문의 목록 응답")
 public class InquiryListDTO {
-    @Schema(description = "유저 닉네임", example = "홍길동")
+    @Schema(description = "회원 닉네임", example = "홍길동")
     private String nickname;
 
     @Schema(description = "문의 ID", example = "1")
@@ -30,7 +30,7 @@ public class InquiryListDTO {
     @Schema(description = "문의 타입", example = "ACCOUNT")
     private InquiryType inquiryType;
 
-    @Schema(description = "처리 상태", example = "ANSWERED")
+    @Schema(description = "문의 상태", example = "ANSWERED")
     private InquiryStatus status;
 
     @Schema(description = "생성 시간", example = "2024-01-01T00:00:00")
