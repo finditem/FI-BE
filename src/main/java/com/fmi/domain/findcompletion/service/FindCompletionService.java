@@ -8,6 +8,8 @@ import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.findcompletion.service.internal.FindCompletionValidator;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.service.PostService;
+import com.fmi.domain.temperature.data.TemperatureActivityType;
+import com.fmi.domain.temperature.service.TemperatureService;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -26,6 +28,7 @@ public class FindCompletionService {
     private final FindCompletionRepository findCompletionRepository;
     private final FindCompletionValidator findCompletionValidator;
     private final PostService postService;
+    private final TemperatureService temperatureService;
 
     @Transactional
     public FindCompletion complete(Long chatRoomId, String userEmail) {
@@ -46,6 +49,11 @@ public class FindCompletionService {
                 .helper(chatRoom.getOtherParticipant(requester.getId()))
                 .build();
         save(findCompletion);
+        temperatureService.record(
+                TemperatureActivityType.RETURN_COMPLETED,
+                findCompletion.getHelper().getId(),
+                findCompletion.getId(),
+                findCompletion.getCreatedAt());
 
         postService.markAsFound(post);
         return findCompletion;
