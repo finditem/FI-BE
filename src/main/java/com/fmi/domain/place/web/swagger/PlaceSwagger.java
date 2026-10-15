@@ -19,7 +19,8 @@ public interface PlaceSwagger {
 
     @Operation(
             summary = "장소 목록 조회",
-            description = "지도 카테고리를 선택하지 않은 화면에 노출할 최신 장소를 최대 5개 조회합니다. language는 KO 또는 EN이며 생략하면 회원 선호 언어와 관계없이 KO입니다. 빈 값과 소문자는 PLACE400-INVALID_REQUEST로 거절합니다. 미등록 영문 필드는 한국어로 제공합니다.")
+            description =
+                    "지도 카테고리를 선택하지 않은 화면에 노출할 최신 장소를 최대 5개 조회합니다. language는 KO 또는 EN이며 생략하면 회원 선호 언어와 관계없이 KO입니다. 빈 값과 소문자는 PLACE400-INVALID_REQUEST로 거절합니다. 미등록 영문 필드는 한국어로 제공합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "홈 장소 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

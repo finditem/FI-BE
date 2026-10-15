@@ -16,9 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "Place", description = "장소 탐색, 장소 좋아요와 운영진 장소 관리를 제공합니다.")
 public interface AdminPlaceSwagger {
 
-    @Operation(
-            summary = "운영진 장소 등록",
-            description = "운영진이 장소를 등록합니다. 영문 이름, 주소와 역 이름은 선택 입력이며 미등록 영문은 null로 반환합니다.")
+    @Operation(summary = "운영진 장소 등록", description = "운영진이 장소를 등록합니다. 영문 이름, 주소와 역 이름은 선택 입력이며 미등록 영문은 null로 반환합니다.")
     @ApiResponses(@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 등록 성공"))
     ResponseEntity<ApiResponse<PlaceManagementResponse>> create(
             @Valid @RequestPart("request") PlaceUpsertRequest request,

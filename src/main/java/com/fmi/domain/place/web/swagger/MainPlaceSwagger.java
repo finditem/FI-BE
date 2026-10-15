@@ -27,7 +27,8 @@ public interface MainPlaceSwagger {
 
     @Operation(
             summary = "지도 범위 내 장소 목록 조회",
-            description = "현재 지도 범위 안의 장소 마커와 장소 목록을 함께 조회합니다. language는 KO 또는 EN이며 생략하면 회원 선호 언어와 관계없이 KO입니다. 빈 값과 소문자는 PLACE400-INVALID_REQUEST로 거절합니다. 미등록 영문 필드는 한국어로 제공합니다.")
+            description =
+                    "현재 지도 범위 안의 장소 마커와 장소 목록을 함께 조회합니다. language는 KO 또는 EN이며 생략하면 회원 선호 언어와 관계없이 KO입니다. 빈 값과 소문자는 PLACE400-INVALID_REQUEST로 거절합니다. 미등록 영문 필드는 한국어로 제공합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "지도 장소 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -40,7 +41,8 @@ public interface MainPlaceSwagger {
 
     @Operation(
             summary = "장소 단일 요약 조회",
-            description = "placeId로 장소 한 건의 화면 표시용 요약 정보를 조회합니다. language는 KO 또는 EN이며 생략하면 회원 선호 언어와 관계없이 KO입니다. 빈 값과 소문자는 PLACE400-INVALID_REQUEST로 거절합니다. 미등록 영문 필드는 한국어로 제공합니다.")
+            description =
+                    "placeId로 장소 한 건의 화면 표시용 요약 정보를 조회합니다. language는 KO 또는 EN이며 생략하면 회원 선호 언어와 관계없이 KO입니다. 빈 값과 소문자는 PLACE400-INVALID_REQUEST로 거절합니다. 미등록 영문 필드는 한국어로 제공합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 단일 요약 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
