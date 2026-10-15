@@ -22,9 +22,10 @@ import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
 import com.fmi.domain.temperature.data.TemperatureActivityType;
 import com.fmi.domain.temperature.service.TemperatureService;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.service.UserQueryService;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -42,14 +43,15 @@ public class PostService {
     private final PostRepository postRepository;
     private final NotificationService notificationService;
     private final PostFavoriteRepository postFavoriteRepository;
-    private final UserQueryService userQueryService;
     private final PostImageService postImageService;
-    private final PostQueryService postQueryService;
     private final ChatRoomRepository chatRoomRepository;
     private final PostUpdateRateLimiter postUpdateRateLimiter;
     private final PostTranslationService postTranslationService;
     private final PostValidator postValidator;
     private final TemperatureService temperatureService;
+    private final UserRepository userRepository;
+    private final PostStatisticsRecorder postStatisticsRecorder;
+    private final Clock clock;
 
     // 게시글 생성
     @Transactional
@@ -57,8 +59,10 @@ public class PostService {
             PostCreateRequest request, UserDetails userDetails, List<MultipartFile> images) {
         postValidator.validateDate(request.date());
 
-        User user = userQueryService.findUser(userDetails.getUsername());
-
+        User user = userRepository
+                .findActiveByEmailForUpdate(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        LocalDateTime occurredAt = LocalDateTime.now(clock);
         Post post = PostConverter.toEntity(request, user);
 
         Post savePost = postRepository.save(post);
@@ -71,7 +75,9 @@ public class PostService {
         postImageService.createPostImageAtS3AndDB(images, savePost);
 
         notificationService.notifyCategoriesForPost(post);
-
+        if (!post.isTemporarySave()) {
+            postStatisticsRecorder.recordPublication(post.getPostType(), occurredAt);
+        }
         return PostConverter.toCreateResponse(post);
     }
 
@@ -81,9 +87,16 @@ public class PostService {
             Long postId, PostUpdateRequest request, UserDetails userDetails, List<MultipartFile> images) {
         postValidator.validateDate(request.date());
 
-        Post post = postQueryService.findById(postId);
-
+        userRepository
+                .findActiveByEmailForUpdate(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        Post post = postRepository
+                .findActiveByIdForUpdate(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
         checkPostAccessDenied(post, userDetails.getUsername());
+        postValidator.validatePublicationTransition(post, request.temporarySave());
+        boolean wasTemporary = post.isTemporarySave();
+        LocalDateTime occurredAt = LocalDateTime.now(clock);
 
         postUpdateRateLimiter.checkAndRecord(postId);
 
@@ -116,31 +129,62 @@ public class PostService {
             notifyFavoriteUsers(post, post.getPostStatus());
         }
 
+        if (wasTemporary && !post.isTemporarySave()) {
+            postStatisticsRecorder.recordPublication(post.getPostType(), occurredAt);
+        }
         return PostConverter.toUpdateResponse(post);
     }
 
     @Transactional
     public void deletePost(Long postId, UserDetails userDetails) {
-        Post post = postQueryService.findById(postId);
+        userRepository
+                .findActiveByEmailForUpdate(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        Post post = postRepository
+                .findActiveByIdForUpdate(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
         checkPostAccessDenied(post, userDetails.getUsername());
 
         String thumbnailImageUrl = postImageService.findThumbnailImageUrl(post);
         List<ChatRoom> chatRooms = chatRoomRepository.findAllByPost(post);
         chatRooms.forEach(room -> room.snapshotFromPost(post, thumbnailImageUrl));
 
-        post.softDelete();
+        LocalDateTime occurredAt = LocalDateTime.now(clock);
+        post.softDelete(occurredAt);
         postImageService.deleteAllImageByPost(post);
         postFavoriteRepository.deleteAllByPostId(postId);
+        if (!post.isTemporarySave()) postStatisticsRecorder.recordRemoval(1, occurredAt);
     }
 
     @Transactional
     public void softDeleteAllByUser(User user) {
-        postRepository.softDeleteAllByUser(user, LocalDateTime.now());
+        LocalDateTime occurredAt = LocalDateTime.now(clock);
+        softDeleteAllByUser(user, occurredAt);
+    }
+
+    @Transactional
+    public void softDeleteAllByUser(User user, LocalDateTime occurredAt) {
+        // 탈퇴 흐름은 이미 회원 잠금을 소유하며, 탈퇴 직후 행도 다시 잠글 수 있습니다.
+        userRepository
+                .findByIdForUpdate(user.getId())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        List<Post> posts = postRepository.findActiveByUserForUpdate(user);
+        long removedCount = 0;
+        for (Post post : posts) {
+            if (!post.isTemporarySave()) removedCount++;
+            post.softDelete(occurredAt);
+        }
+        postStatisticsRecorder.recordRemoval(removedCount, occurredAt);
     }
 
     @Transactional
     public void updateRadius(Long postId, PostRadiusUpdateRequest request, UserDetails userDetails) {
-        Post post = postQueryService.findById(postId);
+        userRepository
+                .findActiveByEmailForUpdate(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        Post post = postRepository
+                .findActiveByIdForUpdate(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
         checkPostAccessDenied(post, userDetails.getUsername());
         post.updateRadius(request.radius());
     }
@@ -175,8 +219,12 @@ public class PostService {
 
     @Transactional
     public void updatePostStatus(Long postId, PostStatusUpdateRequest request, UserDetails userDetails) {
-        User user = userQueryService.findUser(userDetails.getUsername());
-        Post post = postQueryService.findById(postId);
+        User user = userRepository
+                .findActiveByEmailForUpdate(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        Post post = postRepository
+                .findActiveByIdForUpdate(postId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
 
         checkPostAccessDenied(post, user.getEmail());
 

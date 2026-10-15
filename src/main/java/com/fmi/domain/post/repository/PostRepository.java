@@ -3,12 +3,14 @@ package com.fmi.domain.post.repository;
 import com.fmi.domain.map.repository.PostMapCustom;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.user.data.User;
+import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,6 +20,14 @@ import org.springframework.stereotype.Repository;
 public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryCustom, PostMapCustom {
 
     Optional<Post> findByIdAndDeletedFalse(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Post p WHERE p.id = :id AND p.deleted = false")
+    Optional<Post> findActiveByIdForUpdate(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.deleted = false ORDER BY p.id")
+    List<Post> findActiveByUserForUpdate(@Param("user") User user);
 
     @Modifying(flushAutomatically = true)
     @Query("update Post p set p.viewCount = p.viewCount + 1 where p.id = :postId and p.deleted = false")
@@ -107,10 +117,10 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             """)
     Slice<Post> findUserActivities(
             @Param("user") User user,
-            @Param("startDate") java.time.LocalDateTime startDate,
-            @Param("endDate") java.time.LocalDateTime endDate,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
             @Param("keyword") String keyword,
-            @Param("cursor") java.time.LocalDateTime cursor,
+            @Param("cursor") LocalDateTime cursor,
             Pageable pageable);
 
     // 콘텐츠 활용 동의 유저 게시글 - 최신순

@@ -74,7 +74,19 @@ public enum ErrorStatus implements BaseErrorCode {
             "USER400-PAGE_TYPE_INVALID",
             "type 파라미터는 posts, comments, favorites, reviews 중 하나여야 합니다."),
 
+    // 관리자 통계 관련 응답
+    _ADMIN_STATISTICS_INVALID_DATE_RANGE(
+            HttpStatus.BAD_REQUEST, "ADMIN_STATISTICS400-INVALID_DATE_RANGE", "시작일은 종료일보다 늦을 수 없습니다."),
+    _ADMIN_STATISTICS_BEFORE_AVAILABLE_DATE(
+            HttpStatus.BAD_REQUEST, "ADMIN_STATISTICS400-BEFORE_AVAILABLE_DATE", "통계 도입일 이전은 조회할 수 없습니다."),
+    _ADMIN_STATISTICS_FUTURE_END_DATE(
+            HttpStatus.BAD_REQUEST, "ADMIN_STATISTICS400-FUTURE_END_DATE", "미래 날짜는 조회할 수 없습니다."),
+    _ADMIN_STATISTICS_NOT_INITIALIZED(
+            HttpStatus.SERVICE_UNAVAILABLE, "ADMIN_STATISTICS503-NOT_INITIALIZED", "통계가 초기화되지 않았습니다."),
+
     // 게시글 관련 응답
+    _POST_PUBLICATION_CANNOT_BE_REVERTED(
+            HttpStatus.BAD_REQUEST, "POST400-PUBLICATION_CANNOT_BE_REVERTED", "공개한 게시글은 임시저장으로 되돌릴 수 없습니다."),
     _POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST404-NOT_FOUND", "존재하지 않는 게시글입니다."),
     _POST_ACCESS_DENIED(HttpStatus.FORBIDDEN, "POST403-ACCESS_DENIED", "해당 글에 접근 권한이 없습니다"),
     _POST_FAVORITE_NOT_FOUND(HttpStatus.NOT_FOUND, "POST-FAVORITE-NOT_FOUND", "해당 게시글에 대한 즐겨찾기를 하지 않았습니다."),

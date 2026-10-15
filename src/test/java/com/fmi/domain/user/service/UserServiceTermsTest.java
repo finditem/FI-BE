@@ -43,7 +43,7 @@ class UserServiceTermsTest {
                 request.setTermsOfServiceAgreed(true);
                 request.setContentPolicyAgreed(true);
                 request.setMarketingConsent(false);
-                when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+                when(userRepository.findActiveByEmailForUpdate(email)).thenReturn(Optional.of(user));
 
                 userService.agreeTerms(email, request);
 

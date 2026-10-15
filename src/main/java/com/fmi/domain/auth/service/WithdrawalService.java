@@ -9,10 +9,12 @@ import com.fmi.domain.auth.web.dto.AccountDeleteRequest;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.user.service.UserStatisticsRecorder;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient;
 import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class WithdrawalService {
 
     private final UserRepository userRepository;
+    private final UserStatisticsRecorder userStatisticsRecorder;
+    private final Clock clock;
     private final S3Service s3Service;
     private final AuthEmailNotifier authEmailNotifier;
     private final RefreshTokenStore refreshTokenStore;
@@ -35,8 +39,9 @@ public class WithdrawalService {
     private final KakaoOAuthClient kakaoOAuthClient;
 
     public void delete(String email, AccountDeleteRequest request) {
-        User user =
-                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userRepository
+                .findActiveByEmailForUpdate(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         deleteProfileImage(user);
         validateOtherReason(request);
@@ -45,10 +50,12 @@ public class WithdrawalService {
                 .filter(account -> account.getProvider() == Provider.KAKAO)
                 .ifPresent(account -> kakaoOAuthClient.unlinkUser(account.getProviderId()));
 
-        user.withdraw(request.getReasons(), request.getOtherReason(), LocalDateTime.now());
+        LocalDateTime occurredAt = LocalDateTime.now(clock);
+        user.withdraw(request.getReasons(), request.getOtherReason(), occurredAt);
         userRepository.save(user);
         refreshTokenStore.revokeAllForUser(email);
-        postService.softDeleteAllByUser(user);
+        postService.softDeleteAllByUser(user, occurredAt);
+        userStatisticsRecorder.recordWithdrawal(user, occurredAt);
         sendDeletionEmail(user);
         log.info("사용자 탈퇴 완료: userId={}, email={}, reasons={}", user.getId(), email, request.getReasons());
     }

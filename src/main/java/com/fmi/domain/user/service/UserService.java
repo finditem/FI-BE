@@ -49,6 +49,7 @@ import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -84,6 +85,8 @@ public class UserService {
     private final SocialAccountsRepository socialAccountsRepository;
     private final NicknameValidator nicknameValidator;
     private final ReviewQueryService reviewQueryService;
+    private final UserStatisticsRecorder userStatisticsRecorder;
+    private final Clock clock;
 
     /**
      * 내 정보 조회
@@ -102,15 +105,20 @@ public class UserService {
      */
     @Transactional
     public void agreeTerms(String email, com.fmi.domain.user.web.dto.TermsAgreeRequest request) {
-        User user =
-                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
+        User user = userRepository
+                .findActiveByEmailForUpdate(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        boolean wasMember = user.isStatisticsMember();
         user.agreeTerms(
                 request.isPrivacyPolicyAgreed(),
                 request.isTermsOfServiceAgreed(),
                 request.isContentPolicyAgreed(),
                 request.isMarketingConsent());
         userRepository.save(user);
+        if (!wasMember && user.isStatisticsMember()) {
+            LocalDateTime occurredAt = LocalDateTime.now(clock);
+            userStatisticsRecorder.recordSignup(user, occurredAt);
+        }
     }
 
     /**

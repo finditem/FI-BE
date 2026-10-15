@@ -206,8 +206,11 @@ public class Post {
     }
 
     public void softDelete() {
+        softDelete(LocalDateTime.now());
+    }
+
+    public void softDelete(LocalDateTime now) {
         this.deleted = true;
-        LocalDateTime now = LocalDateTime.now();
         this.updatedAt = now;
         this.deletedAt = now;
     }

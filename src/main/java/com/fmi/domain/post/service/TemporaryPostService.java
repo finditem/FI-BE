@@ -7,6 +7,7 @@ import com.fmi.domain.post.web.dto.request.TemporaryPostCreateRequest;
 import com.fmi.domain.post.web.dto.response.image.PostImageResponse;
 import com.fmi.domain.post.web.dto.response.temp.TemporaryPostResponse;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.service.UserQueryService;
@@ -22,12 +23,15 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class TemporaryPostService {
     private final PostRepository postRepository;
+    private final UserRepository userRepository;
     private final UserQueryService userQueryService;
     private final PostImageService postImageService;
 
     @Transactional
     public void create(TemporaryPostCreateRequest request, UserDetails userDetails, List<MultipartFile> newImageList) {
-        User user = userQueryService.findUser(userDetails.getUsername());
+        User user = userRepository
+                .findActiveByEmailForUpdate(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
         Post post = postRepository
                 .findByUserAndTemporarySaveTrueAndDeletedFalse(user)
@@ -92,7 +96,9 @@ public class TemporaryPostService {
 
     @Transactional
     public void deleteTemporaryPost(UserDetails userDetails) {
-        User user = userQueryService.findUser(userDetails.getUsername());
+        User user = userRepository
+                .findActiveByEmailForUpdate(userDetails.getUsername())
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
         Post post = postRepository
                 .findByUserAndTemporarySaveTrueAndDeletedFalse(user)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._TEMP_POST_NOT_FOUND));

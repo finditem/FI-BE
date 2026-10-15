@@ -9,8 +9,12 @@ import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
-import com.fmi.service.UserQueryService;
+import com.fmi.domain.user.repository.UserRepository;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -34,16 +39,19 @@ class PostServiceDeleteTest {
     private PostFavoriteRepository postFavoriteRepository;
 
     @Mock
-    private UserQueryService userQueryService;
-
-    @Mock
     private PostImageService postImageService;
 
     @Mock
-    private PostQueryService postQueryService;
+    private ChatRoomRepository chatRoomRepository;
 
     @Mock
-    private ChatRoomRepository chatRoomRepository;
+    private UserRepository userRepository;
+
+    @Mock
+    private PostStatisticsRecorder postStatisticsRecorder;
+
+    @Spy
+    private Clock clock = Clock.system(ZoneId.of("Asia/Seoul"));
 
     @InjectMocks
     private PostService postService;
@@ -74,7 +82,8 @@ class PostServiceDeleteTest {
         ChatRoom room2 = mock(ChatRoom.class);
         String thumbnailUrl = "https://s3.example.com/thumb.jpg";
 
-        given(postQueryService.findById(10L)).willReturn(post);
+        given(userRepository.findActiveByEmailForUpdate("author@test.com")).willReturn(Optional.of(author));
+        given(postRepository.findActiveByIdForUpdate(10L)).willReturn(Optional.of(post));
         given(postImageService.findThumbnailImageUrl(post)).willReturn(thumbnailUrl);
         given(chatRoomRepository.findAllByPost(post)).willReturn(List.of(room1, room2));
 
@@ -87,7 +96,8 @@ class PostServiceDeleteTest {
     @Test
     @DisplayName("deletePost - 썸네일 URL은 이미지 삭제 전에 먼저 캡처된다")
     void deletePost_thumbnailCapturedBeforeImageDeletion() {
-        given(postQueryService.findById(10L)).willReturn(post);
+        given(userRepository.findActiveByEmailForUpdate("author@test.com")).willReturn(Optional.of(author));
+        given(postRepository.findActiveByIdForUpdate(10L)).willReturn(Optional.of(post));
         given(postImageService.findThumbnailImageUrl(post)).willReturn("https://s3.example.com/thumb.jpg");
         given(chatRoomRepository.findAllByPost(post)).willReturn(List.of());
 
@@ -101,13 +111,14 @@ class PostServiceDeleteTest {
     @Test
     @DisplayName("deletePost - 연관 채팅방이 없어도 정상 동작한다")
     void deletePost_noRelatedChatRooms_noError() {
-        given(postQueryService.findById(10L)).willReturn(post);
+        given(userRepository.findActiveByEmailForUpdate("author@test.com")).willReturn(Optional.of(author));
+        given(postRepository.findActiveByIdForUpdate(10L)).willReturn(Optional.of(post));
         given(postImageService.findThumbnailImageUrl(post)).willReturn(null);
         given(chatRoomRepository.findAllByPost(post)).willReturn(List.of());
 
         postService.deletePost(10L, userDetails);
 
-        verify(post).softDelete();
+        verify(post).softDelete(any(LocalDateTime.class));
         verify(postImageService).deleteAllImageByPost(post);
     }
 
@@ -116,7 +127,8 @@ class PostServiceDeleteTest {
     void deletePost_noThumbnail_snapshotWithNullUrl() {
         ChatRoom room = mock(ChatRoom.class);
 
-        given(postQueryService.findById(10L)).willReturn(post);
+        given(userRepository.findActiveByEmailForUpdate("author@test.com")).willReturn(Optional.of(author));
+        given(postRepository.findActiveByIdForUpdate(10L)).willReturn(Optional.of(post));
         given(postImageService.findThumbnailImageUrl(post)).willReturn(null);
         given(chatRoomRepository.findAllByPost(post)).willReturn(List.of(room));
 
