@@ -56,7 +56,7 @@ class PostStatisticsServiceTest extends IntegrationTestSupport {
         jdbc.execute("DROP TABLE IF EXISTS post_statistics");
         try (var c = jdbc.getDataSource().getConnection()) {
             ScriptUtils.executeSqlScript(
-                    c, new ClassPathResource("db/migration/V15__create_user_and_post_statistics.sql"));
+                    c, new ClassPathResource("db/migration/V16__create_user_and_post_statistics.sql"));
         }
         jdbc.update(
                 "INSERT INTO post_statistics (statistics_date,started_at,opening_post_count) VALUES ('2026-09-08','2026-09-08 12:00:00',100)");

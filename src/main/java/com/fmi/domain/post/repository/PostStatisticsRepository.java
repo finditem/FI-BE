@@ -12,8 +12,8 @@ public interface PostStatisticsRepository
 
     @Modifying(flushAutomatically = true)
     @Query(value = """
- INSERT INTO post_statistics (statistics_date, lost_post_count, found_post_count, removed_count)
- VALUES (:date, :lostPostCount, :foundPostCount, :removedCount)
+ INSERT INTO post_statistics (statistics_date, opening_post_count, lost_post_count, found_post_count, removed_count)
+ VALUES (:date, 0, :lostPostCount, :foundPostCount, :removedCount)
  ON DUPLICATE KEY UPDATE lost_post_count = lost_post_count + :lostPostCount, found_post_count = found_post_count + :foundPostCount, removed_count = removed_count + :removedCount
  """, nativeQuery = true)
     void increment(

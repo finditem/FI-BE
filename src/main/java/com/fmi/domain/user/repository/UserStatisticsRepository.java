@@ -12,8 +12,8 @@ public interface UserStatisticsRepository
 
     @Modifying(flushAutomatically = true)
     @Query(value = """
- INSERT INTO user_statistics (statistics_date, signup_count, withdrawal_count)
- VALUES (:date, :signupCount, :withdrawalCount)
+ INSERT INTO user_statistics (statistics_date, opening_user_count, signup_count, withdrawal_count)
+ VALUES (:date, 0, :signupCount, :withdrawalCount)
  ON DUPLICATE KEY UPDATE signup_count = signup_count + :signupCount, withdrawal_count = withdrawal_count + :withdrawalCount
  """, nativeQuery = true)
     void increment(

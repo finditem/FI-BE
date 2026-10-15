@@ -1,6 +1,6 @@
 -- 관련 쓰기 요청, 배치와 모든 기존 트랜잭션을 중지한 뒤 단일 실행자로 실행합니다.
 -- 운영 데이터베이스를 명시적으로 선택한 MySQL CLI에서 실행합니다.
--- 테이블 생성은 Flyway V15의 책임이며 이 파일은 자동 실행하지 않습니다.
+-- 테이블 생성은 Flyway V16의 책임이며 이 파일은 자동 실행하지 않습니다.
 DELIMITER $$
 CREATE PROCEDURE initialize_statistics()
 BEGIN

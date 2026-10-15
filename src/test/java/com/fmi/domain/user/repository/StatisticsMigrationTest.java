@@ -28,13 +28,13 @@ class StatisticsMigrationTest {
                 .load()
                 .clean();
         try (var input =
-                new ClassPathResource("db/migration/V15__create_user_and_post_statistics.sql").getInputStream()) {
-            Files.copy(input, migrations.resolve("V15__create_user_and_post_statistics.sql"));
+                new ClassPathResource("db/migration/V16__create_user_and_post_statistics.sql").getInputStream()) {
+            Files.copy(input, migrations.resolve("V16__create_user_and_post_statistics.sql"));
         }
     }
 
     @Test
-    @DisplayName("V15 단독 적용은 빈 DB에 통계 테이블 두 개를 생성한다")
+    @DisplayName("V16 단독 적용은 빈 DB에 통계 테이블 두 개를 생성한다")
     void itCreatesBothTablesInEmptyDatabase() throws Exception {
         Flyway migration = Flyway.configure()
                 .dataSource(mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword())
@@ -58,7 +58,7 @@ class StatisticsMigrationTest {
     }
 
     @Test
-    @DisplayName("버전 14로 표시한 기존 스키마에 V15를 추가하고 기존 행을 보존한다")
+    @DisplayName("버전 15로 표시한 기존 스키마에 V16를 추가하고 기존 행을 보존한다")
     void itAddsTablesWithoutChangingExistingData() throws Exception {
         try (var connection =
                         DriverManager.getConnection(mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword());
@@ -70,7 +70,7 @@ class StatisticsMigrationTest {
                 .dataSource(mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword())
                 .locations("filesystem:" + migrations)
                 .baselineOnMigrate(true)
-                .baselineVersion("14")
+                .baselineVersion("15")
                 .load();
         assertThat(migration.migrate().migrationsExecuted).isEqualTo(1);
         migration.validate();
