@@ -1,8 +1,14 @@
 package com.fmi.domain.review.service;
 
+import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.findcompletion.data.FindCompletion;
 import com.fmi.domain.findcompletion.exception.FindCompletionErrorStatus;
 import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
+import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.review.data.Review;
 import com.fmi.domain.review.data.ReviewEmotion;
 import com.fmi.domain.review.data.ReviewHelpType;
@@ -30,6 +36,8 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ReviewValidator reviewValidator;
     private final TemperatureService temperatureService;
+    private final NotificationService notificationService;
+    private final PostRepository postRepository;
 
     @Transactional
     public Review write(
@@ -60,6 +68,13 @@ public class ReviewService {
                 review.getRecipient().getId(),
                 review.getId(),
                 review.getCreatedAt());
+        notificationService.createNotification(
+                review.getRecipient(),
+                NotificationType.REVIEW,
+                "새로운 후기가 도착했어요.",
+                findPostTitle(findCompletion),
+                ReferenceType.REVIEW,
+                review.getId());
         return review;
     }
 
@@ -82,6 +97,14 @@ public class ReviewService {
             return;
         }
         throw new GeneralException(ReviewErrorStatus.ACCESS_DENIED);
+    }
+
+    private String findPostTitle(FindCompletion findCompletion) {
+        ChatRoom chatRoom = findCompletion.getChatRoom();
+        return postRepository
+                .findById(findCompletion.getSourcePostId())
+                .map(Post::getTitle)
+                .orElseGet(() -> chatRoom == null ? null : chatRoom.getSourceTitle());
     }
 
     private String normalize(String content) {

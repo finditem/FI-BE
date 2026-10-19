@@ -9,7 +9,8 @@ public enum ReferenceType {
     CHAT("채팅"),
     INQUIRY("문의"),
     NOTICE("공지사항"),
-    REPORT("신고");
+    REPORT("신고"),
+    REVIEW("후기");
 
     private final String description;
 

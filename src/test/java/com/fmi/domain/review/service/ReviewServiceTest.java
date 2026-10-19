@@ -4,10 +4,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.fmi.domain.Enum.Category;
 import com.fmi.domain.Enum.Role;
+import com.fmi.domain.chatroom.data.ChatRoom;
+import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.findcompletion.data.FindCompletion;
 import com.fmi.domain.findcompletion.exception.FindCompletionErrorStatus;
 import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
+import com.fmi.domain.notification.data.enums.NotificationType;
+import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.notification.repository.NotificationRepository;
+import com.fmi.domain.post.data.Post;
+import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.Radius;
+import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.review.data.Review;
 import com.fmi.domain.review.data.ReviewEmotion;
 import com.fmi.domain.review.data.ReviewHelpType;
@@ -59,6 +69,15 @@ class ReviewServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private TemperatureActivityRepository temperatureActivityRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private ChatRoomRepository chatRoomRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @Nested
     @DisplayName("후기를 작성할 때")
@@ -154,6 +173,112 @@ class ReviewServiceTest extends IntegrationTestSupport {
                             assertThat(activity.getDeltaTenths()).isEqualTo(10);
                             assertThat(activity.getOccurredAt()).isEqualTo(result.getCreatedAt());
                         });
+            }
+        }
+
+        @Nested
+        @DisplayName("게시글이 남아 있는 후기가 저장되면")
+        class ContextWithNotification {
+
+            @Test
+            @DisplayName("받은 사용자에게 게시글 제목을 담은 후기 알림을 저장한다")
+            void itNotifiesRecipientWithPostTitle() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("알림작성자")
+                        .email("notification-review-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User helper = userRepository.save(User.builder()
+                        .nickname("알림도움자")
+                        .email("notification-review-helper@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                Post post = postRepository.save(Post.create(
+                        "지갑을 잃어버렸어요",
+                        "서울 성동구",
+                        37.5422,
+                        127.0549,
+                        PostType.LOST,
+                        Category.WALLET,
+                        "검은색 지갑입니다.",
+                        false,
+                        LocalDateTime.of(2026, 9, 10, 10, 0),
+                        Radius.DISTANCE_1000,
+                        author));
+                FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                        .sourcePostId(post.getId())
+                        .requester(author)
+                        .helper(helper)
+                        .build());
+
+                // when
+                Review result = reviewService.write(
+                        findCompletion.getId(),
+                        author.getEmail(),
+                        ReviewEmotion.GRATEFUL,
+                        Set.of(ReviewHelpType.KIND_AND_WARM),
+                        null);
+
+                // then
+                assertThat(notificationRepository.findByUserAndReferenceIdAndType(
+                                helper, result.getId(), NotificationType.REVIEW))
+                        .hasValueSatisfying(notification -> {
+                            assertThat(notification.getTitle()).isEqualTo("새로운 후기가 도착했어요.");
+                            assertThat(notification.getMessage()).isEqualTo("지갑을 잃어버렸어요");
+                            assertThat(notification.getReferenceType()).isEqualTo(ReferenceType.REVIEW);
+                            assertThat(notification.isRead()).isFalse();
+                        });
+            }
+        }
+
+        @Nested
+        @DisplayName("게시글 없이 채팅방 스냅샷만 남은 후기가 저장되면")
+        class ContextWithNotificationFromSnapshot {
+
+            @Test
+            @DisplayName("스냅샷 제목을 담은 후기 알림을 저장한다")
+            void itNotifiesRecipientWithSnapshotTitle() {
+                // given
+                User author = userRepository.save(User.builder()
+                        .nickname("스냅샷알림작성자")
+                        .email("snapshot-notification-author@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                User helper = userRepository.save(User.builder()
+                        .nickname("스냅샷알림도움자")
+                        .email("snapshot-notification-helper@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                ChatRoom chatRoom = chatRoomRepository.save(ChatRoom.builder()
+                        .createdAt(LocalDateTime.of(2026, 9, 10, 11, 0))
+                        .sourceTitle("스냅샷 제목")
+                        .sourcePostDeleted(true)
+                        .build());
+                FindCompletion findCompletion = findCompletionRepository.save(FindCompletion.builder()
+                        .sourcePostId(Long.MAX_VALUE)
+                        .chatRoom(chatRoom)
+                        .requester(author)
+                        .helper(helper)
+                        .build());
+
+                // when
+                Review result = reviewService.write(
+                        findCompletion.getId(),
+                        author.getEmail(),
+                        ReviewEmotion.GRATEFUL,
+                        Set.of(ReviewHelpType.KIND_AND_WARM),
+                        null);
+
+                // then
+                assertThat(notificationRepository.findByUserAndReferenceIdAndType(
+                                helper, result.getId(), NotificationType.REVIEW))
+                        .hasValueSatisfying(notification ->
+                                assertThat(notification.getMessage()).isEqualTo("스냅샷 제목"));
             }
         }
 
@@ -543,6 +668,10 @@ class ReviewServiceTest extends IntegrationTestSupport {
                             .isTrue();
                 } finally {
                     executor.shutdownNow();
+                    notificationRepository.deleteAll(notificationRepository.findAll().stream()
+                            .filter(notification ->
+                                    notification.getUser().getId().equals(helper.getId()))
+                            .toList());
                     reviewRepository.deleteAll(reviewRepository.findAll().stream()
                             .filter(review -> review.isWrittenBy(author.getId()))
                             .toList());

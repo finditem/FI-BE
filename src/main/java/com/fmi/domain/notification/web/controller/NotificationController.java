@@ -75,7 +75,7 @@ public class NotificationController {
             @RequestParam(required = false, defaultValue = "false") Boolean unreadOnly,
             @Parameter(
                             description =
-                                    "알림 타입 필터 (COMMENT, REPLY, MENTION, CHAT, CHAT_REMINDER, INQUIRY_REPLY, REPORT_RESULT, FAVORITE, CATEGORY, NOTICE, SYSTEM, LIKE)")
+                                    "알림 타입 필터 (COMMENT, CHAT, CHAT_REMINDER, INQUIRY_REPLY, REPORT_RESULT, FAVORITE, CATEGORY, NOTICE, REVIEW, SYSTEM)")
                     @RequestParam(required = false)
                     NotificationType notificationType,
             @RequestParam(required = false) Long cursor,
