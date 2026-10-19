@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -65,7 +66,8 @@ public interface ReviewSwagger {
                 description = "COMMON400: type이 RECEIVED, SENT가 아니거나 size가 1~50 범위를 벗어났습니다.")
     })
     ApiResponse<ReviewPageResponse> getMyReviews(
-            @Valid @ModelAttribute ReviewPageRequest request, @AuthenticationPrincipal UserDetails userDetails);
+            @ParameterObject @Valid @ModelAttribute ReviewPageRequest request,
+            @AuthenticationPrincipal UserDetails userDetails);
 
     @Operation(
             summary = "후기 상세 조회",
