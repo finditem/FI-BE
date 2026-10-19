@@ -301,10 +301,10 @@ Table notification {
   is_read boolean
   message varchar(500)
   reference_id bigint
-  reference_type varchar(50) [note: 'CHAT, COMMENT, INQUIRY, NOTICE, POST, REPORT']
+  reference_type varchar(50) [note: 'CHAT, COMMENT, INQUIRY, NOTICE, POST, REPORT, REVIEW']
   room_id bigint
   title varchar(200) [not null]
-  type varchar(50) [not null, note: 'CATEGORY, CHAT, CHAT_REMINDER, COMMENT, FAVORITE, INQUIRY_REPLY, NOTICE, REPORT_RESULT, SYSTEM']
+  type varchar(50) [not null, note: 'CATEGORY, CHAT, CHAT_REMINDER, COMMENT, FAVORITE, INQUIRY_REPLY, NOTICE, REPORT_RESULT, REVIEW, SYSTEM']
   user_id bigint [not null]
 }
 
