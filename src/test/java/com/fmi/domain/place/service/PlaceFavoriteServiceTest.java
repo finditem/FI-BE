@@ -36,6 +36,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -401,12 +403,21 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
                 FavoritePlacePage second =
                         placeFavoriteService.getFavorites(user.getEmail(), first.nextFavoriteUpdatedAt(), 2);
 
+                FavoritePlacePage emptyPage =
+                        placeFavoriteService.getFavorites(user.getEmail(), sameUpdatedAt.minusDays(1), 1);
+
                 // then
+                assertThat(emptyPage.places()).isEmpty();
+                assertThat(emptyPage.totalCount()).isEqualTo(3);
+                assertThat(emptyPage.hasNext()).isFalse();
+                assertThat(emptyPage.nextFavoriteUpdatedAt()).isNull();
                 assertThat(first.places())
                         .extracting(summary -> summary.placeId())
                         .containsExactly(
                                 visiblePlaces.get(2).getId(),
                                 visiblePlaces.get(1).getId());
+                assertThat(first.totalCount()).isEqualTo(3);
+                assertThat(second.totalCount()).isEqualTo(3);
                 assertThat(first.hasNext()).isTrue();
                 assertThat(first.nextFavoriteUpdatedAt()).isEqualTo(sameUpdatedAt.plusMinutes(2));
                 assertThat(second.places())
@@ -414,6 +425,86 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
                         .containsExactly(visiblePlaces.get(0).getId());
                 assertThat(second.hasNext()).isFalse();
                 assertThat(second.nextFavoriteUpdatedAt()).isNull();
+            }
+        }
+
+        @Nested
+        @DisplayName("좋아요 장소가 없으면")
+        class ContextWithoutFavorites {
+
+            @Test
+            @DisplayName("빈 목록과 전체 개수 0을 반환한다")
+            void itReturnsZeroCount() {
+                // given
+                User user = userRepository.save(User.builder()
+                        .nickname("빈목록사용자")
+                        .email("favorite-empty@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+
+                // when
+                FavoritePlacePage page = placeFavoriteService.getFavorites(user.getEmail(), null, 20);
+
+                // then
+                assertThat(page.totalCount()).isZero();
+                assertThat(page.places()).isEmpty();
+                assertThat(page.hasNext()).isFalse();
+                assertThat(page.nextFavoriteUpdatedAt()).isNull();
+            }
+        }
+
+        @Nested
+        @DisplayName("팝업의 마지막 영업 종료 시각 전후이면")
+        class ContextAtPopupClosing {
+
+            @ParameterizedTest
+            @CsvSource({"-1, 0", "0, 0", "1, 1"})
+            @DisplayName("마감 전인 팝업만 목록과 전체 개수에 포함한다")
+            void itCountsOnlyPopupBeforeClosing(long secondsUntilClosing, long expectedCount) {
+                // given
+                User user = userRepository.save(User.builder()
+                        .nickname("팝업찜사용자" + secondsUntilClosing)
+                        .email("favorite-boundary-" + secondsUntilClosing + "@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                LocalDateTime now = LocalDateTime.of(2026, 9, 10, 12, 0);
+                PlaceOperationPeriod period = PlaceOperationPeriod.builder()
+                        .startDate(LocalDate.of(2026, 9, 1))
+                        .endDate(LocalDate.of(2026, 9, 10))
+                        .build();
+                period.scheduleClosingAt(now.plusSeconds(secondsUntilClosing));
+                Place popup = Place.builder()
+                        .name("마감 경계 팝업")
+                        .address("서울 성동구")
+                        .latitude(37.5421)
+                        .longitude(127.0549)
+                        .station("성수역")
+                        .stationDistanceMeters(100)
+                        .type(PlaceType.POPUP)
+                        .thumbnailUrl("thumbnail-url")
+                        .operationPeriod(period)
+                        .build();
+                Arrays.stream(DayOfWeek.values())
+                        .forEach(day -> popup.addBusinessHour(PlaceBusinessHour.builder()
+                                .dayOfWeek(day)
+                                .closed(false)
+                                .timeRange(new PlaceTimeRange(
+                                        PlaceBusinessHourType.BUSINESS, LocalTime.of(10, 0), LocalTime.of(22, 0)))
+                                .build()));
+                placeRepository.save(popup);
+                placeFavoriteRepository.saveAndFlush(PlaceFavorite.builder()
+                        .userId(user.getId())
+                        .placeId(popup.getId())
+                        .build());
+
+                // when
+                FavoritePlacePage page = placeFavoriteService.getFavorites(user.getEmail(), null, 20);
+
+                // then
+                assertThat(page.totalCount()).isEqualTo(expectedCount);
+                assertThat(page.places()).hasSize((int) expectedCount);
             }
         }
 
