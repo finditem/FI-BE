@@ -476,6 +476,7 @@ public class NotificationService {
             case INQUIRY -> "/inquiry/" + referenceId;
             case NOTICE -> "/notice/" + referenceId;
             case REPORT -> "/report/" + referenceId;
+            case REVIEW -> "/mypage/reviews/" + referenceId;
         };
     }
 
