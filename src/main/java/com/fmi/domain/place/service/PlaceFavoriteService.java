@@ -11,6 +11,7 @@ import com.fmi.domain.place.data.PlaceSummary;
 import com.fmi.domain.place.data.PlaceTranslation;
 import com.fmi.domain.place.data.enums.PlaceType;
 import com.fmi.domain.place.exception.PlaceErrorStatus;
+import com.fmi.domain.place.repository.PlaceFavoriteRepository;
 import com.fmi.domain.place.repository.PlaceFavoriteStateRepository;
 import com.fmi.domain.place.repository.PlaceRepository;
 import com.fmi.domain.place.repository.PlaceTranslationRepository;
@@ -40,6 +41,7 @@ public class PlaceFavoriteService {
     private final PlaceTranslationRepository placeTranslationRepository;
     private final PlaceRepository placeRepository;
     private final PlaceFavoriteStateRepository placeFavoriteStateRepository;
+    private final PlaceFavoriteRepository placeFavoriteRepository;
     private final UserRepository userRepository;
     private final PlaceOperationStatusCalculator placeOperationStatusCalculator;
     private final Clock clock;
@@ -80,15 +82,16 @@ public class PlaceFavoriteService {
         User user = userRepository
                 .findByEmail(userEmail)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        LocalDateTime now = LocalDateTime.now(clock);
+        long totalCount = placeFavoriteRepository.countFavorites(user.getId(), now);
         List<FavoritePlaceCandidate> candidates =
                 placeFavoriteStateRepository.findFavorites(user.getId(), lastFavoriteUpdatedAt);
         if (candidates.isEmpty()) {
-            return new FavoritePlacePage(List.of(), false, null);
+            return new FavoritePlacePage(List.of(), totalCount, false, null);
         }
 
         List<Long> candidateIds =
                 candidates.stream().map(FavoritePlaceCandidate::placeId).toList();
-        LocalDateTime now = LocalDateTime.now(clock);
         LocalDate today = now.toLocalDate();
         DayOfWeek todayDayOfWeek = today.getDayOfWeek();
         DayOfWeek yesterdayDayOfWeek = today.minusDays(1).getDayOfWeek();
@@ -134,10 +137,10 @@ public class PlaceFavoriteService {
                 })
                 .toList();
         if (!hasNext) {
-            return new FavoritePlacePage(places, false, null);
+            return new FavoritePlacePage(places, totalCount, false, null);
         }
 
         FavoritePlaceCandidate nextCursor = pageCandidates.get(pageCandidates.size() - 1);
-        return new FavoritePlacePage(places, true, nextCursor.favoriteUpdatedAt());
+        return new FavoritePlacePage(places, totalCount, true, nextCursor.favoriteUpdatedAt());
     }
 }
