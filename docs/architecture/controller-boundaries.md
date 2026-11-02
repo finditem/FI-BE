@@ -57,4 +57,4 @@ HTTP API의 Controller 구성과 분리 시점을 정할 때 적용합니다. Se
 
 ## 분리 검증
 
-기존 API를 이동할 때는 [Refactoring](../contributing/refactoring.md)과 [Testing](../contributing/testing.md)을 따릅니다. 이동한 API의 매핑, 인증과 권한, 입력 검증, 성공과 오류 응답을 검증하고 OpenAPI에서 API 누락과 중복을 확인합니다. 문서만 변경한 경우 실제 API 동작이 바뀌었다고 설명하지 않습니다.
+기존 API를 이동할 때는 [Refactoring](../contributing/refactoring.md)을 따르고, 자동 테스트의 범위는 [Testing의 테스트 범위](../contributing/testing.md#테스트-범위)를 따릅니다. 코드 변경 검토에서 이동 전후의 매핑, 인증과 권한, 입력 검증과 응답 계약이 유지되는지 확인하고, OpenAPI에서 API 누락과 중복을 확인합니다. 문서만 변경한 경우 실제 API 동작이 바뀌었다고 설명하지 않습니다.

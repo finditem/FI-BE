@@ -42,23 +42,7 @@ Git hook에서 Commitlint로 커밋 메시지를 검사합니다.
 
 ### 서비스 클래스 이름
 
-서비스 이름은 `[도메인 대상] + [유스케이스 역할] + Service`로 작성합니다.
-
-```text
-// 비권장
-PostQueryService
-UserCommandService
-
-// 권장
-PostSearchService
-PostDetailService
-UserRegistrationService
-UserProfileChangeService
-```
-
-하나의 `QueryService`나 `CommandService`가 서로 다른 유스케이스를 함께 담당한다면 클래스 분리가 필요한지도 검토합니다.
-
-조회와 명령의 분리 자체가 아키텍처상의 책임인 경우에는 팀 논의를 거쳐 예외로 사용할 수 있습니다.
+Service 명명 기준은 [서비스 분리 기준의 이름과 조회 경계](../architecture/service-boundaries.md#이름과-조회-경계)를 따릅니다.
 
 ### internal 클래스 이름
 
