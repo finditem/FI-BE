@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | `web` | 요청 형식과 Bean Validation | [Domain Boundaries](../architecture/domain-boundaries.md) |
 | `service/internal` Validator | 업무 조건, 권한과 상태 검증 | [Domain Boundaries](../architecture/domain-boundaries.md) |
-| `repository` | Entity, Projection, Optional 또는 빈 컬렉션 반환 | [Domain Boundaries](../architecture/domain-boundaries.md) |
+| `repository` | 부재를 반환 계약으로 표현하고 기술 예외 전달 | [Repository 분리 기준](../architecture/repository-boundaries.md#책임과-데이터-소유권) |
 | `service` | 조회 부재의 업무 의미, transaction, 외부 실패 뒤 결과 | [Domain Boundaries](../architecture/domain-boundaries.md) |
 
 ## As-is / To-be 예시

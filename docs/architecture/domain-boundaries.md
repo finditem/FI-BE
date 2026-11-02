@@ -81,9 +81,7 @@ domain/
 
 ### Repository
 
-Repository는 조회 결과를 Entity, Projection, `Optional` 또는 빈 컬렉션으로 반환합니다. 조회 결과가 없다는 이유로 도메인 오류 코드나 비즈니스 예외를 생성하지 않습니다.
-
-조회 결과가 반드시 필요한 유스케이스는 Service 또는 `service/internal`의 Reader에서 결과를 확인하고 비즈니스 예외로 변환합니다. Repository는 데이터베이스 접근 중 발생한 기술 예외만 전달하거나 영속성 계층의 예외로 변환할 수 있습니다.
+Repository의 업무별 구성, 기술별 구현 구조와 예외 책임은 [Repository 분리 기준](repository-boundaries.md)을 따릅니다. 조회 기술과 결과 타입은 [Persistence](persistence.md)를 따릅니다.
 
 ### Web 계층
 

@@ -44,7 +44,7 @@ HTTP API의 기능별 구성과 Controller 분리 시점은 [Controller 분리 �
 
 ## 기술과 데이터
 
-[Stack](stack.md)에 Java 17, Spring Boot 3.5와 외부 시스템을 정리했습니다. MySQL 스키마는 `src/main/resources/db/migration`의 Flyway migration이 기준입니다. JPA 관계, QueryDSL, DB 제약과 실제 MySQL 검증 기준은 [Persistence](persistence.md)를 따릅니다.
+[Stack](stack.md)에 Java 17, Spring Boot 3.5와 외부 시스템을 정리했습니다. MySQL 스키마는 `src/main/resources/db/migration`의 Flyway migration이 기준입니다. Repository 구성과 기술별 구현 구조는 [Repository 분리 기준](repository-boundaries.md)을 따릅니다. 조회 기술과 결과 타입, JPA 관계, DB 제약과 실제 MySQL 검증 기준은 [Persistence](persistence.md)를 따릅니다.
 
 예를 들어 게시글 코드는 [`PostService`](../../src/main/java/com/fmi/domain/post/service/PostService.java), [`PostValidator`](../../src/main/java/com/fmi/domain/post/service/internal/PostValidator.java), [`PostRepository`](../../src/main/java/com/fmi/domain/post/repository/PostRepository.java)에서 업무 흐름과 책임을 확인할 수 있습니다. 구현 사례이며 필수 클래스 구성은 아닙니다.
 
