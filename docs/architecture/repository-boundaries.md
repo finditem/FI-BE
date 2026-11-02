@@ -71,6 +71,14 @@ PostStatisticsJdbcRepository
 
 같은 인터페이스에 구현체가 여러 개라면 사용할 구현체를 명시적으로 선택합니다. 여러 기술을 사용한다는 이유만으로 같은 업무 계약을 중복 정의하지 않습니다.
 
+### Redis
+
+- Redis 저장과 조회 구현은 소유 업무의 `repository/redis`에 둡니다. 여러 도메인의 구현을 공통 Redis 패키지로 모으지 않습니다.
+- Service에 Redis 접근이 섞여 있으면 키 구성, TTL 설정, Redis 명령과 Lua 실행, 저장 결과 매핑을 저장소 구현으로 분리합니다. 업무 판단과 유스케이스 처리 순서는 Service에 둡니다.
+- 외부 연동이 소유하는 Redis 데이터 접근은 해당 `external` 연동 영역의 `repository/redis`에 둡니다.
+- 저장소 전용 예약 정보와 처리 결과 타입은 해당 저장소가 소유하며 중첩 타입으로 둘 수 있습니다. 서비스 실행 결과 타입과 구분합니다.
+- Redis 구현을 배치하기 위해 기존 JPA Repository를 `repository/jpa`로 이동하지 않습니다.
+
 ## 책임과 데이터 소유권
 
 Repository는 데이터 접근과 결과 매핑을 담당합니다. 조회 결과가 없으면 `Optional`, 빈 컬렉션 등 반환 계약으로 표현하며, 그 이유로 업무 예외를 만들지 않습니다. 부재의 의미와 업무 오류는 Service 또는 `service/internal`의 Reader가 판단합니다. Repository는 데이터 접근 중 발생한 기술 예외를 전달하거나 영속성 계층의 예외로 변환할 수 있습니다.
