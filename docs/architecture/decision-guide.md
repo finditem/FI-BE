@@ -4,9 +4,14 @@
 
 | 고민 | 먼저 볼 기준 | 결정 조건 |
 | --- | --- | --- |
+| 업무 패키지 구성 | [Domain Boundaries](domain-boundaries.md#업무-패키지-구성) | 기존 업무의 보조 기능입니까? 별도의 권한, 생명주기와 처리 흐름을 갖는 하위 업무입니까? |
+| 생성 검증과 매핑 | [Domain Boundaries](domain-boundaries.md#생성-검증과-객체-생성) | 필요한 데이터를 조회하고 Validator로 업무 조건을 확인한 뒤 Converter로 생성합니까? 상태 변경 검증과 VO 자체 검증 위치는 별도 논의합니다. |
+| Service 분리 | [서비스 분리 기준](service-boundaries.md) | 독립적인 업무 책임이 있고 의존성, 변경 또는 테스트에서 혼재 문제가 확인됩니까? |
+| Controller 분리 | [Controller 분리 기준](controller-boundaries.md) | 독립적인 API 기능이 있고 의존성, 계약 변경 또는 권한 요구의 혼재 문제가 확인됩니까? |
 | 새 도메인 또는 `global` | [Domain Boundaries](domain-boundaries.md) | 데이터 owner와 변경 이유가 분명합니까? 경계가 애매하면 팀과 논의합니다. |
 | `service/internal` 분리 | [Domain Boundaries](domain-boundaries.md) | 조회, 검증, 계산 등의 독립 책임과 재사용 필요가 실제로 있습니까? 분리 시점은 팀과 논의합니다. |
-| JPA Repository, QueryDSL, native SQL | [Persistence](persistence.md) | 단순 저장입니까, 목록과 집계입니까? 복잡한 QueryDSL보다 SQL이 의도를 명확히 드러냅니까? 선택 이유를 작업 보고에서 설명하고 MySQL 테스트를 작성합니다. |
+| Repository 구성과 분리 | [Repository 분리 기준](repository-boundaries.md) | 기존 업무 Repository 또는 기본 Repository의 책임입니까? 업무 고유의 조회가 독립적인 책임을 이룹니까? |
+| JPA Repository, QueryDSL, native SQL, JDBC | [Persistence](persistence.md#조회-기술-선택) | 단순 저장입니까, 목록과 집계입니까? 복잡한 QueryDSL보다 SQL이 의도를 명확히 드러냅니까? 선택 이유를 작업 보고에서 설명하고 MySQL 테스트를 작성합니다. |
 | JPA 연관관계 | [Persistence](persistence.md) | ID만 필요합니까, 연관 객체의 의미와 데이터가 필요합니까? 필요한 관계를 매핑하고 조회 시 N+1과 과도한 로딩을 방지합니다. |
 | DB 제약 | [Persistence](persistence.md) | 참조 무결성과 유일성을 동시 요청에서도 보장해야 합니까? |
 | port와 외부 client | [Domain Boundaries](domain-boundaries.md) | 도입 기준은 팀 논의 대상입니다. 공급자 API를 업무 규칙으로 끌어오지 않습니다. |

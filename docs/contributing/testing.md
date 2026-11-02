@@ -138,6 +138,18 @@ class AuthServiceTest {
 
 Mock 호출 횟수만으로 DB commit, rollback, JPA flush, QueryDSL 결과나 외부 시스템의 실제 계약을 증명했다고 쓰지 않습니다. 반대로 이미 순수 정책 테스트가 설명한 모든 입력 조합을 통합 테스트에서 반복하지 않습니다.
 
+## 생성 검증과 객체 생성 테스트
+
+[Entity 생성 절차](../architecture/domain-boundaries.md#생성-검증과-객체-생성)에 따라 검증 책임과 생성 경로를 나눠 확인합니다.
+
+- Validator의 권한, 중복, 상태 등 생성 업무 조건은 단위 테스트로 검증합니다. 허용, 거절과 경계값을 확인하고 일반 게시와 임시저장처럼 조건이 다른 경로를 구분합니다.
+- Bean Validation을 통과한 입력과 non-null 내부 인자에 대한 중복 검사를 Validator 테스트에 요구하지 않습니다.
+- Converter는 검증된 입력의 필드 매핑과 초기 상태를 확인합니다. Validator의 거절 조건을 Converter나 Entity 생성자 테스트에서 반복하지 않습니다.
+- Service 통합 테스트에서는 검증 실패 시 저장과 외부 효과가 발생하지 않는지 확인합니다. 검증 성공 시 Converter로 생성한 Entity의 저장 결과를 확인합니다.
+- 새로운 생성 경로가 해당 Validator와 Converter를 거치는지 확인합니다. 단위 테스트에서 확인한 모든 입력 조합을 Service 통합 테스트에서 반복하지 않습니다.
+
+상태 변경 검증과 VO 자체 검증의 위치는 별도 논의 대상입니다. 이 생성 정책을 근거로 해당 검증을 옮기거나 기존 회귀 테스트를 제거하지 않습니다. 순수 Policy의 판단은 필요한 객체와 값을 직접 전달해 검증합니다.
+
 ## 정책 테스트는 결정 경계를 보여줍니다
 
 정책 테스트는 경계값, 상태 조합과 거절 이유를 검증합니다. 기준값은 [업무 정책](../policies/overview.md)과 구현에서 확인합니다.
@@ -211,6 +223,17 @@ assertThat(placeBusinessHourRepository.findAllByPlaceId(placeId)).hasSize(7);
 발췌에서 `schedules` 준비는 생략했습니다. MySQL 저장 결과를 검증하며 S3는 대체하므로 실제 S3 프로토콜은 검증하지 않습니다.
 
 레거시 사례: [`AuthServiceTest`](../../src/test/java/com/fmi/domain/auth/service/AuthServiceTest.java)는 Repository를 mock으로 대체하므로 DB 저장, 제약과 rollback을 검증하지 않습니다. 새 테스트는 [테스트 범위](#테스트-범위)를 따릅니다.
+
+## 정기 작업과 이벤트 검증
+
+[Scheduler, Listener와 Event](../architecture/domain-boundaries.md#scheduler-listener와-event)에서 정한 작업별 트랜잭션과 실패 계약을 검증합니다.
+
+- 정기 작업은 고정한 `Clock`으로 처리 대상의 기준 시각과 경계값을 검증합니다. 실제 실행 주기가 지나기를 기다리는 방식으로 업무 동작을 검증하지 않습니다.
+- 중복 실행과 재실행, 개별 처리 실패와 전체 실패 후 남은 DB 상태와 외부 효과를 확인합니다. 묶음별 트랜잭션은 앞선 묶음의 커밋과 실패한 묶음의 rollback을 구분합니다.
+- 같은 트랜잭션으로 처리하는 DB 변경은 후속 처리 실패 시 함께 rollback되는지 실제 MySQL로 확인합니다.
+- `AFTER_COMMIT` 처리는 발행 트랜잭션을 실제 커밋하여 실행 결과를 확인하고, rollback 시 후속 작업이 실행되지 않는지 검증합니다. 테스트 종료 시 자동 rollback만으로 커밋 후 동작을 검증하지 않습니다.
+- 커밋 후 DB 변경은 수신 Service의 별도 트랜잭션에서 저장되는지 확인합니다. 후속 작업 실패 시 발행 측의 커밋 상태와 재처리 결과를 구분하여 검증합니다.
+- 비동기 처리는 완료를 명시적으로 기다려 결과를 확인합니다. 전달 보장을 위한 저장과 재처리를 도입한 작업은 유실 방지와 중복 처리 결과를 검증합니다.
 
 ## 이름과 Given, When, Then
 
