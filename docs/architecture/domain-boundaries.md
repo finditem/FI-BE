@@ -72,6 +72,9 @@ domain/
 | 영역 | 책임 |
 | --- | --- |
 | `web` | HTTP 요청과 응답 |
+| `scheduler` | 정기 실행 설정과 Service 호출 |
+| `listener` | 이벤트 수신, 입력 변환과 Service 호출 |
+| `event` | 발행하는 이벤트의 사실과 값 전달 |
 | `service` | 유스케이스 흐름과 트랜잭션 |
 | `data` | Entity, VO, enum과 순수 Policy |
 | `repository` | 데이터 접근과 결과 매핑 |
@@ -202,6 +205,48 @@ Entity 생성은 [Validator 검증 후 Converter로 생성하는 순서](#생성
 
 JSON 요청과 응답 구조를 표현하는 `web` 계층의 DTO는 중첩 `record`를 사용할 수 있습니다.
 
+### Scheduler, Listener와 Event
+
+Scheduler와 Listener는 Controller처럼 얇은 진입점으로 둡니다. [업무 패키지 구성](#업무-패키지-구성)에 따라 해당 업무 또는 하위 업무 안에 필요한 패키지만 생성합니다.
+
+```text
+domain/<업무>/
+├── web/
+├── scheduler/
+├── listener/
+├── event/
+├── service/
+├── data/
+└── repository/
+```
+
+#### 스케줄러
+
+- Scheduler는 실행 주기와 시간대를 명시하고 Service를 호출합니다. 대상 조회, 업무 검증, 상태 변경, Repository 접근과 외부 호출 조정은 Service에 둡니다.
+- 삭제 기준일 같은 업무 판단은 Service가 주입받은 `Clock`을 기준으로 계산합니다.
+- 처리량에 따라 전체 또는 묶음별 트랜잭션을 선택하고 Service에 경계를 둡니다.
+- 중복 실행, 개별 실패와 전체 실패, 재실행 시 결과를 작업별로 정의합니다. 분산 잠금과 자동 재시도를 모든 작업에 일괄 적용하지 않습니다.
+
+다음은 책임 배치의 가상 예시입니다.
+
+```text
+PostCleanupScheduler
+  → PostCleanupService
+      → 대상 조회
+      → 관련 데이터와 이미지 정리
+```
+
+#### 이벤트
+
+- 이벤트는 발행 업무의 `event`에 두고 `PostPublishedEvent`처럼 발생한 사실로 이름을 짓습니다.
+- Entity나 HTTP DTO 대신 발생한 사실과 수신 처리에 필요한 식별자와 값만 담습니다.
+- Listener는 수신 업무의 `listener`에 두며 이벤트 수신, 필요한 입력 변환과 수신 Service 호출을 담당합니다.
+- 반드시 함께 성공해야 하는 DB 변경은 Service 직접 호출과 같은 트랜잭션으로 처리합니다.
+- 커밋 성공 후 수행할 후속 작업은 `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)`을 검토합니다.
+- 커밋 후 실행과 비동기 실행은 별개입니다. 모든 Listener에 `@Async`를 붙이지 않습니다.
+- 커밋 후 처리에서 DB를 변경한다면 수신 Service에 별도의 트랜잭션 경계를 둡니다.
+- 프로세스 내부 이벤트는 전달을 영구 보장하지 않습니다. 유실을 허용할 수 없는 작업은 재처리 방법과 저장 방식을 별도로 결정합니다.
+
 ### 객체 생성과 변환
 
 Entity 생성 매핑은 Converter가 담당합니다. Builder를 이용한 생성도 Converter에서 수행하며 [Lombok과 Builder 규칙](../contributing/code-style.md#lombok과-builder)을 따릅니다. 생성 순서는 [생성 검증과 객체 생성](#생성-검증과-객체-생성)을 따릅니다.
@@ -225,9 +270,9 @@ Entity 생성 매핑은 Converter가 담당합니다. Builder를 이용한 생�
 ## 의존성 방향
 
 ```text
-web → service → internal (선택) → repository
-                    ↓
-                entity / vo
+web / scheduler / listener → service → internal (선택) → repository
+                                ↓
+                            entity / vo
 ```
 
 패키지와 모듈 사이에 순환 의존성을 만들지 않습니다.
