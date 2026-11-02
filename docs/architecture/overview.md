@@ -38,6 +38,8 @@ src/main/java/com/fmi/
 
 새 코드의 배치 기준입니다. 레거시 처리 기준은 [AGENTS.md](../../AGENTS.md#레거시-코드와-리팩터링), 패키지 책임은 [Domain Boundaries](domain-boundaries.md)를 따릅니다.
 
+Service의 기능별 구성, QueryService 분리 시점과 이름은 [서비스 분리 기준](service-boundaries.md)을 따릅니다.
+
 ## 기술과 데이터
 
 [Stack](stack.md)에 Java 17, Spring Boot 3.5와 외부 시스템을 정리했습니다. MySQL 스키마는 `src/main/resources/db/migration`의 Flyway migration이 기준입니다. JPA 관계, QueryDSL, DB 제약과 실제 MySQL 검증 기준은 [Persistence](persistence.md)를 따릅니다.

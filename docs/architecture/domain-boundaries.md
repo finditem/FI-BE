@@ -107,28 +107,7 @@ Bean Validation은 요청값의 존재 여부와 일반적인 입력 형식을 �
 
 Service는 업무 정책, 처리 순서, 상태 변경과 트랜잭션 경계를 표현합니다.
 
-```java
-@Service
-@RequiredArgsConstructor
-public class PostService {
-
-    private final PostReader postReader;
-    private final PostValidator postValidator;
-    private final EventPublisher eventPublisher;
-
-    @Transactional
-    public void publish(Long postId, Long authorId) {
-        Post post = postReader.read(postId);
-
-        postValidator.validate(post, authorId);
-        post.publish();
-
-        eventPublisher.publish(PostPublishedEvent.from(post));
-    }
-}
-```
-
-알림 도메인은 `PostPublishedEvent`를 구독할 수 있습니다.
+기능별 구성, 조회와 변경의 분리 시점, 명명 기준은 [서비스 분리 기준](service-boundaries.md)을 따릅니다.
 
 #### 검증과 상태 변경
 
