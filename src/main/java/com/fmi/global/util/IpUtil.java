@@ -1,4 +1,4 @@
-package com.fmi.utils;
+package com.fmi.global.util;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;

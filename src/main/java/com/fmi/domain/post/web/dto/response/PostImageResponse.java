@@ -1,4 +1,4 @@
-package com.fmi.domain.post.web.dto.response.image;
+package com.fmi.domain.post.web.dto.response;
 
 import com.fmi.domain.post.data.enums.ImageType;
 
