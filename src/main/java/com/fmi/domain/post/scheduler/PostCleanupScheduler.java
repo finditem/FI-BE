@@ -1,4 +1,4 @@
-package com.fmi.domain.post.service;
+package com.fmi.domain.post.scheduler;
 
 import com.fmi.domain.comment.data.CommentImage;
 import com.fmi.domain.comment.repository.CommentImageRepository;

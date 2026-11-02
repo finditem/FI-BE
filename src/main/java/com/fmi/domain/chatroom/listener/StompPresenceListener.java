@@ -1,4 +1,4 @@
-package com.fmi.domain.chatroom;
+package com.fmi.domain.chatroom.listener;
 
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import lombok.RequiredArgsConstructor;

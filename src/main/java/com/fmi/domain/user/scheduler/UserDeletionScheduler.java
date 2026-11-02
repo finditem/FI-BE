@@ -1,4 +1,4 @@
-package com.fmi.domain.user.service;
+package com.fmi.domain.user.scheduler;
 
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;

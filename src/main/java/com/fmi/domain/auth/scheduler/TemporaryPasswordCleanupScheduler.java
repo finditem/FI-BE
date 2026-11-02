@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.service;
+package com.fmi.domain.auth.scheduler;
 
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;

@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.service;
+package com.fmi.domain.auth.scheduler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
