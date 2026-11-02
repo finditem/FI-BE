@@ -1,4 +1,4 @@
-package com.fmi.domain.findcompletion.data;
+package com.fmi.domain.findcompletion.data.enums;
 
 public enum FindCompletionStatus {
     NONE,

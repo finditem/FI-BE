@@ -7,7 +7,7 @@ import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.findcompletion.data.FindCompletion;
-import com.fmi.domain.findcompletion.data.FindCompletionStatus;
+import com.fmi.domain.findcompletion.data.enums.FindCompletionStatus;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.user.data.User;
 import java.util.List;

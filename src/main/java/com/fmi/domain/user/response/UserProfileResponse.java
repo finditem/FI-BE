@@ -1,6 +1,6 @@
 package com.fmi.domain.user.response;
 
-import com.fmi.domain.Enum.Role;
+import com.fmi.domain.user.data.enums.Role;
 import lombok.*;
 
 @Getter

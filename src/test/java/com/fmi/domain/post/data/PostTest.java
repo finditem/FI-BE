@@ -2,7 +2,10 @@ package com.fmi.domain.post.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fmi.domain.Enum.Category;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
+import com.fmi.domain.post.data.enums.Radius;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

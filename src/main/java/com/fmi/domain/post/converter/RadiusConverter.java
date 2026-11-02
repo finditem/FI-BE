@@ -1,6 +1,6 @@
 package com.fmi.domain.post.converter;
 
-import com.fmi.domain.post.data.Radius;
+import com.fmi.domain.post.data.enums.Radius;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import java.util.Objects;

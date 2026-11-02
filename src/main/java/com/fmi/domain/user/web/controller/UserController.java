@@ -1,12 +1,11 @@
 package com.fmi.domain.user.web.controller;
 
-import com.fmi.domain.Enum.ActivityType;
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.Enum.UserOtherPageType;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
+import com.fmi.domain.user.data.enums.ActivityType;
+import com.fmi.domain.user.data.enums.UserOtherPageType;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyActivityPageResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
@@ -19,6 +18,7 @@ import com.fmi.domain.user.web.dto.PreferredLanguageUpdateRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.domain.user.web.swagger.UserSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.enums.SortType;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.fmi.domain.chatmessage.web.dto;
 
-import com.fmi.domain.Enum.LanguageCode;
+import com.fmi.domain.user.data.enums.LanguageCode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.time.LocalDate;

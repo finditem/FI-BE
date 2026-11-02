@@ -1,8 +1,8 @@
 package com.fmi.domain.post.web.dto.response;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import java.time.LocalDateTime;
 
 public record PostBriefResponse(

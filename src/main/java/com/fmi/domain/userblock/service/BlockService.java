@@ -1,7 +1,7 @@
 package com.fmi.domain.userblock.service;
 
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.data.BlockedUser;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;

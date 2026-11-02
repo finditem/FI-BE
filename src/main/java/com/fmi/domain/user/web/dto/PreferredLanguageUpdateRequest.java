@@ -1,6 +1,6 @@
 package com.fmi.domain.user.web.dto;
 
-import com.fmi.domain.Enum.LanguageCode;
+import com.fmi.domain.user.data.enums.LanguageCode;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

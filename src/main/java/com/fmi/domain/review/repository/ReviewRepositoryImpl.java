@@ -3,8 +3,8 @@ package com.fmi.domain.review.repository;
 import static com.fmi.domain.review.data.QReview.review;
 
 import com.fmi.domain.review.data.QReview;
-import com.fmi.domain.review.data.ReviewHelpType;
 import com.fmi.domain.review.data.ReviewSummary;
+import com.fmi.domain.review.data.enums.ReviewHelpType;
 import com.fmi.domain.user.data.QUser;
 import com.fmi.global.data.EntityStatus;
 import com.querydsl.core.Tuple;

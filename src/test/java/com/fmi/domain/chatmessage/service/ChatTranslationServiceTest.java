@@ -10,7 +10,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.chatmessage.service.ChatTranslationSourceService.Source;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Outcome;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Status;
@@ -20,6 +19,7 @@ import com.fmi.domain.chatmessage.web.dto.ChatTranslationRequest.TranslateReques
 import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.TranslationResponseDTO;
 import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.UsageResponseDTO;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.LanguageCode;
 import com.fmi.external.translation.client.TranslationClient;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

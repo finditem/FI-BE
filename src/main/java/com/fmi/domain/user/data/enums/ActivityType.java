@@ -1,4 +1,4 @@
-package com.fmi.domain.Enum;
+package com.fmi.domain.user.data.enums;
 
 public enum ActivityType {
     POST,

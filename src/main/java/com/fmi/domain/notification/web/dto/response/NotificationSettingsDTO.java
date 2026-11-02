@@ -1,6 +1,6 @@
 package com.fmi.domain.notification.web.dto.response;
 
-import com.fmi.domain.Enum.Category;
+import com.fmi.domain.post.data.enums.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Set;
 import lombok.AllArgsConstructor;

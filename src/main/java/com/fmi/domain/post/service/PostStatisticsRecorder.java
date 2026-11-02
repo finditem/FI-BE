@@ -1,6 +1,6 @@
 package com.fmi.domain.post.service;
 
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.repository.PostStatisticsRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;

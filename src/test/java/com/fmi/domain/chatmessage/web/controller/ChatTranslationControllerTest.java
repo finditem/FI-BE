@@ -11,11 +11,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.chatmessage.service.ChatTranslationService;
 import com.fmi.domain.chatmessage.web.dto.ChatTranslationRequest.TranslateRequestDTO;
 import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.TranslationResponseDTO;
 import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.UsageResponseDTO;
+import com.fmi.domain.user.data.enums.LanguageCode;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.ExceptionAdvice;
 import com.fmi.global.apiPayload.exception.GeneralException;

@@ -1,4 +1,4 @@
-package com.fmi.domain.Enum;
+package com.fmi.domain.auth.data.enums;
 
 public enum Provider {
     KAKAO,

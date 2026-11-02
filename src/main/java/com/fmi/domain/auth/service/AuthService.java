@@ -1,13 +1,13 @@
 package com.fmi.domain.auth.service;
 
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.admin.web.dto.AdminSignupRequest;
-import com.fmi.domain.auth.data.RejoinType;
+import com.fmi.domain.auth.data.enums.RejoinType;
 import com.fmi.domain.auth.event.UserSignedUpEvent;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.service.internal.RejoinPolicy;
 import com.fmi.domain.auth.web.dto.SignupRequest;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.user.service.UserStatisticsRecorder;
 import com.fmi.domain.user.service.internal.NicknameValidator;

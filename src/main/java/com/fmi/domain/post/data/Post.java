@@ -1,6 +1,9 @@
 package com.fmi.domain.post.data;
 
-import com.fmi.domain.Enum.Category;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
+import com.fmi.domain.post.data.enums.Radius;
 import com.fmi.domain.user.data.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

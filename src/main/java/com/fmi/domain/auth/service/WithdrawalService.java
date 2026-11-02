@@ -1,7 +1,7 @@
 package com.fmi.domain.auth.service;
 
-import com.fmi.domain.Enum.Provider;
-import com.fmi.domain.Enum.WithdrawalReason;
+import com.fmi.domain.auth.data.enums.Provider;
+import com.fmi.domain.auth.data.enums.WithdrawalReason;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.auth.security.token.RefreshTokenStore;
 import com.fmi.domain.auth.service.internal.AuthEmailNotifier;

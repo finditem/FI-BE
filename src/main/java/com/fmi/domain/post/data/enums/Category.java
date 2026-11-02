@@ -1,4 +1,4 @@
-package com.fmi.domain.Enum;
+package com.fmi.domain.post.data.enums;
 
 public enum Category {
     ELECTRONICS, // 전자기기

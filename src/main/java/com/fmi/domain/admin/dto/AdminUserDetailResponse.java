@@ -1,7 +1,7 @@
 package com.fmi.domain.admin.dto;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.Role;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.user.data.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.List;

@@ -10,7 +10,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-import com.fmi.domain.Enum.LanguageCode;
+import com.fmi.domain.user.data.enums.LanguageCode;
 import com.fmi.global.apiPayload.code.ErrorReasonDTO;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.place.data.PlaceDailySchedule;
 import com.fmi.domain.place.data.PlaceFavorite;
 import com.fmi.domain.place.data.PlaceSummary;
@@ -18,6 +17,7 @@ import com.fmi.domain.place.repository.PlaceBusinessHourRepository;
 import com.fmi.domain.place.repository.PlaceFavoriteRepository;
 import com.fmi.domain.place.repository.PlaceRepository;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.external.storage.S3Service;
 import com.fmi.global.dto.UploadedImage;

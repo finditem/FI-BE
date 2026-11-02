@@ -2,13 +2,13 @@ package com.fmi.domain.chatmessage.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.chatmessage.service.ChatTranslationSourceService.Source;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Outcome;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Status;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Ticket;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Usage;
 import com.fmi.domain.chatmessage.web.dto.ChatTranslationRequest.TranslateRequestDTO;
+import com.fmi.domain.user.data.enums.LanguageCode;
 import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.time.Clock;

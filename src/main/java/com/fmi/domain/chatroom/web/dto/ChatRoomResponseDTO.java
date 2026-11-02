@@ -1,10 +1,10 @@
 package com.fmi.domain.chatroom.web.dto;
 
-import com.fmi.domain.Enum.Category;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
-import com.fmi.domain.findcompletion.data.FindCompletionStatus;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.findcompletion.data.enums.FindCompletionStatus;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.List;

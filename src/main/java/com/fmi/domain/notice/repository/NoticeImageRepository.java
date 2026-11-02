@@ -17,7 +17,7 @@ public interface NoticeImageRepository extends JpaRepository<NoticeImage, Long> 
     @Query("""
             SELECT ni FROM NoticeImage ni
             WHERE ni.notice.noticeId IN :noticeIds
-              AND ni.imageType = com.fmi.domain.post.data.ImageType.THUMBNAIL
+              AND ni.imageType = com.fmi.domain.post.data.enums.ImageType.THUMBNAIL
             """)
     List<NoticeImage> findThumbnailsByNoticeIds(@Param("noticeIds") List<Long> noticeIds);
 

@@ -1,8 +1,8 @@
 package com.fmi.domain.post.service;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.repository.PostHotQueryRepository;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import java.util.*;

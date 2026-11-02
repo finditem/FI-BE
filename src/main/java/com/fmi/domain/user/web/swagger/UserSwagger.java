@@ -1,12 +1,11 @@
 package com.fmi.domain.user.web.swagger;
 
-import com.fmi.domain.Enum.ActivityType;
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.Enum.UserOtherPageType;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
+import com.fmi.domain.user.data.enums.ActivityType;
+import com.fmi.domain.user.data.enums.UserOtherPageType;
 import com.fmi.domain.user.response.ImageUploadResponse;
 import com.fmi.domain.user.response.MyActivityPageResponse;
 import com.fmi.domain.user.response.MyCommentPageResponse;
@@ -17,6 +16,7 @@ import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.web.dto.PreferredLanguageUpdateRequest;
 import com.fmi.domain.user.web.dto.UserUpdateRequest;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.enums.SortType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;

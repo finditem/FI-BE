@@ -1,6 +1,6 @@
 package com.fmi.domain.post.web.dto.response;
 
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.PostType;
 
 public record PostShareResponse(
         String title,

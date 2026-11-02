@@ -1,8 +1,8 @@
 package com.fmi.domain.map.web.dto.response;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 

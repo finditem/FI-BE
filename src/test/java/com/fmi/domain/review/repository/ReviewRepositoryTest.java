@@ -2,14 +2,14 @@ package com.fmi.domain.review.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.findcompletion.data.FindCompletion;
 import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.review.data.Review;
-import com.fmi.domain.review.data.ReviewEmotion;
-import com.fmi.domain.review.data.ReviewHelpType;
 import com.fmi.domain.review.data.ReviewSummary;
+import com.fmi.domain.review.data.enums.ReviewEmotion;
+import com.fmi.domain.review.data.enums.ReviewHelpType;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.support.IntegrationTestSupport;
 import java.time.LocalDateTime;

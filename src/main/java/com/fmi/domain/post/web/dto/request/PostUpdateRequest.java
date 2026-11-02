@@ -1,8 +1,8 @@
 package com.fmi.domain.post.web.dto.request;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.Radius;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.Radius;
 import com.fmi.domain.post.web.dto.validation.ValidThumbnailKeep;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;

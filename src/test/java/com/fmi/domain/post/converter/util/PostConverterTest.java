@@ -2,10 +2,10 @@ package com.fmi.domain.post.converter.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fmi.domain.Enum.Category;
 import com.fmi.domain.post.data.Post;
-import com.fmi.domain.post.data.PostType;
-import com.fmi.domain.post.data.Radius;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostType;
+import com.fmi.domain.post.data.enums.Radius;
 import com.fmi.domain.post.web.dto.response.PostGetResponse;
 import java.time.LocalDateTime;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.fmi.domain.Enum;
+package com.fmi.global.enums;
 
 public enum SortType {
     MOST_VIEWED, // 조회 많은 순

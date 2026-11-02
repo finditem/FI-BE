@@ -452,7 +452,7 @@ public class NotificationService {
     /**
      * 카테고리 이름 반환
      */
-    private String getCategoryName(com.fmi.domain.Enum.Category category) {
+    private String getCategoryName(com.fmi.domain.post.data.enums.Category category) {
         return switch (category) {
             case ELECTRONICS -> "전자기기";
             case WALLET -> "지갑";

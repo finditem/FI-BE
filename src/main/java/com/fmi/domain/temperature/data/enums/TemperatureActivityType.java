@@ -1,4 +1,4 @@
-package com.fmi.domain.temperature.data;
+package com.fmi.domain.temperature.data.enums;
 
 import lombok.Getter;
 

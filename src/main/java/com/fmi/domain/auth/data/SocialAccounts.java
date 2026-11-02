@@ -1,6 +1,6 @@
 package com.fmi.domain.auth.data;
 
-import com.fmi.domain.Enum.Provider;
+import com.fmi.domain.auth.data.enums.Provider;
 import com.fmi.domain.user.data.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

@@ -1,10 +1,10 @@
 package com.fmi.domain.map.repository;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.map.enums.MapLevel;
+import com.fmi.domain.map.data.enums.MapLevel;
 import com.fmi.domain.map.web.dto.response.*;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import java.util.List;
 import java.util.Set;
 

@@ -1,5 +1,6 @@
 package com.fmi.domain.post.data;
 
+import com.fmi.domain.post.data.enums.ImageType;
 import jakarta.persistence.*;
 import lombok.*;
 

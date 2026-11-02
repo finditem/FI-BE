@@ -3,13 +3,13 @@ package com.fmi.domain.temperature.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.temperature.data.TemperatureActivity;
-import com.fmi.domain.temperature.data.TemperatureActivityType;
 import com.fmi.domain.temperature.data.UserTemperature;
+import com.fmi.domain.temperature.data.enums.TemperatureActivityType;
 import com.fmi.domain.temperature.repository.TemperatureActivityRepository;
 import com.fmi.domain.temperature.repository.UserTemperatureRepository;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.support.IntegrationTestSupport;
 import java.time.LocalDateTime;

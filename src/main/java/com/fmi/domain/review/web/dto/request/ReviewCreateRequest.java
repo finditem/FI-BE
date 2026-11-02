@@ -1,7 +1,7 @@
 package com.fmi.domain.review.web.dto.request;
 
-import com.fmi.domain.review.data.ReviewEmotion;
-import com.fmi.domain.review.data.ReviewHelpType;
+import com.fmi.domain.review.data.enums.ReviewEmotion;
+import com.fmi.domain.review.data.enums.ReviewHelpType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

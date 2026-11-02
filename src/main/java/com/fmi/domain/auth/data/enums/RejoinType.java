@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.data;
+package com.fmi.domain.auth.data.enums;
 
 public enum RejoinType {
     EMAIL,

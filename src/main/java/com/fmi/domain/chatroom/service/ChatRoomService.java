@@ -2,7 +2,6 @@ package com.fmi.domain.chatroom.service;
 
 import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.*;
 
-import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
 import com.fmi.domain.chatroom.converter.ChatRoomConverter;
@@ -14,8 +13,8 @@ import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.findcompletion.data.FindCompletion;
 import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.post.data.Post;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
 import com.fmi.domain.review.repository.ReviewRepository;
@@ -24,6 +23,7 @@ import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.global.enums.SortType;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;

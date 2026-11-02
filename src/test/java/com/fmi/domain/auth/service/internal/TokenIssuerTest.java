@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.fmi.domain.Enum.Provider;
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.IssuedTokens;
+import com.fmi.domain.auth.data.enums.Provider;
 import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;

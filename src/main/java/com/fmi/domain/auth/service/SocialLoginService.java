@@ -1,9 +1,9 @@
 package com.fmi.domain.auth.service;
 
 import com.fmi.domain.auth.converter.AuthConverter;
-import com.fmi.domain.auth.data.RejoinType;
 import com.fmi.domain.auth.data.SocialAccounts;
 import com.fmi.domain.auth.data.SocialLoginCommand;
+import com.fmi.domain.auth.data.enums.RejoinType;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.auth.service.internal.RejoinPolicy;
 import com.fmi.domain.user.data.User;

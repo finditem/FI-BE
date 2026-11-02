@@ -1,6 +1,6 @@
 package com.fmi.domain.user.repository;
 
-import com.fmi.domain.Enum.Category;
+import com.fmi.domain.post.data.enums.Category;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.data.UserCategory;
 import java.util.List;

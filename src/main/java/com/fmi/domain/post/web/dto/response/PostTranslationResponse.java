@@ -1,6 +1,6 @@
 package com.fmi.domain.post.web.dto.response;
 
-import com.fmi.domain.Enum.LanguageCode;
+import com.fmi.domain.user.data.enums.LanguageCode;
 import lombok.*;
 
 @Getter

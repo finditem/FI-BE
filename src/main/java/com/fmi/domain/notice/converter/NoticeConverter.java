@@ -4,7 +4,7 @@ import com.fmi.domain.notice.data.Notice;
 import com.fmi.domain.notice.data.NoticeImage;
 import com.fmi.domain.notice.web.dto.NoticeListDTO;
 import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
-import com.fmi.domain.post.data.ImageType;
+import com.fmi.domain.post.data.enums.ImageType;
 import java.util.List;
 import org.springframework.stereotype.Component;
 

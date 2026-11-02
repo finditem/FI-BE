@@ -1,8 +1,8 @@
 package com.fmi.domain.chatroom.repository;
 
-import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.PostType;
+import com.fmi.global.enums.SortType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 

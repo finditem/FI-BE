@@ -1,6 +1,6 @@
 package com.fmi.external.translation.client;
 
-import com.fmi.domain.Enum.LanguageCode;
+import com.fmi.domain.user.data.enums.LanguageCode;
 
 public interface TranslationClient {
     default String translate(String text, LanguageCode targetLang) {

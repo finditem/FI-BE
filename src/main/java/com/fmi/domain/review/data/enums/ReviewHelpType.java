@@ -1,4 +1,4 @@
-package com.fmi.domain.review.data;
+package com.fmi.domain.review.data.enums;
 
 import lombok.Getter;
 

@@ -9,9 +9,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fmi.domain.Enum.Role;
-import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.auth.data.IssuedTokens;
+import com.fmi.domain.auth.data.enums.WithdrawalReason;
 import com.fmi.domain.auth.security.cookie.AuthCookieFactory;
 import com.fmi.domain.auth.security.cookie.AuthCookieResolver;
 import com.fmi.domain.auth.service.AuthService;
@@ -24,6 +23,7 @@ import com.fmi.domain.auth.web.dto.PasswordChangeRequest;
 import com.fmi.domain.auth.web.dto.PasswordVerifyRequest;
 import com.fmi.domain.auth.web.response.LoginResponse;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.service.NicknameService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;

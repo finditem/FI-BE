@@ -1,7 +1,7 @@
 package com.fmi.domain.user.service;
 
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserStatisticsRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;

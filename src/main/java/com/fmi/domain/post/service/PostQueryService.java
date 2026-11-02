@@ -1,15 +1,14 @@
 package com.fmi.domain.post.service;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.comment.service.CommentQueryService;
 import com.fmi.domain.post.converter.util.PostConverter;
 import com.fmi.domain.post.converter.util.PostImageConverter;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.repository.PostImageRepository;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.web.dto.response.*;
@@ -22,6 +21,7 @@ import com.fmi.domain.user.data.User;
 import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.global.enums.SortType;
 import com.fmi.service.UserQueryService;
 import com.fmi.utils.IpUtil;
 import java.text.Normalizer;

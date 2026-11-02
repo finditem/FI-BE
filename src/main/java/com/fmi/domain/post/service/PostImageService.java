@@ -1,9 +1,9 @@
 package com.fmi.domain.post.service;
 
 import com.fmi.domain.post.converter.util.PostImageConverter;
-import com.fmi.domain.post.data.ImageType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
+import com.fmi.domain.post.data.enums.ImageType;
 import com.fmi.domain.post.repository.PostImageRepository;
 import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;

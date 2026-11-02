@@ -1,8 +1,8 @@
 package com.fmi.domain.post.repository;
 
-import com.fmi.domain.post.data.ImageType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
+import com.fmi.domain.post.data.enums.ImageType;
 import io.lettuce.core.dynamic.annotation.Param;
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +22,7 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long>, Pos
             select pi
             from PostImage pi
             where pi.post.id in :postIds
-              and pi.imageType = com.fmi.domain.post.data.ImageType.THUMBNAIL
+              and pi.imageType = com.fmi.domain.post.data.enums.ImageType.THUMBNAIL
             """)
     List<PostImage> findThumbnailImagesByPostIds(@Param("postIds") List<Long> postIds);
 

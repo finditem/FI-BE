@@ -1,6 +1,6 @@
 package com.fmi.domain.auth.web.dto;
 
-import com.fmi.domain.Enum.WithdrawalReason;
+import com.fmi.domain.auth.data.enums.WithdrawalReason;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;

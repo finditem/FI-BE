@@ -1,7 +1,6 @@
 package com.fmi.domain.map.service;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.map.enums.MapLevel;
+import com.fmi.domain.map.data.enums.MapLevel;
 import com.fmi.domain.map.exception.MapErrorStatus;
 import com.fmi.domain.map.web.dto.request.LocationMapPostRequest;
 import com.fmi.domain.map.web.dto.request.MapPostRequest;
@@ -9,8 +8,9 @@ import com.fmi.domain.map.web.dto.request.PostMarkerRequest;
 import com.fmi.domain.map.web.dto.request.RecentFoundPostRequest;
 import com.fmi.domain.map.web.dto.response.*;
 import com.fmi.domain.post.data.Post;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.HotPostService;
 import com.fmi.domain.post.service.PostQueryService;

@@ -1,4 +1,4 @@
-package com.fmi.domain.post.data;
+package com.fmi.domain.post.data.enums;
 
 public enum PostStatus {
     SEARCHING, // 찾는중

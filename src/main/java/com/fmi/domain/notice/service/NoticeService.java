@@ -18,7 +18,7 @@ import com.fmi.domain.noticecommentlike.repository.NoticeCommentLikeRepository;
 import com.fmi.domain.noticelike.data.NoticeLike;
 import com.fmi.domain.noticelike.repository.NoticeLikeRepository;
 import com.fmi.domain.notification.service.NotificationService;
-import com.fmi.domain.post.data.ImageType;
+import com.fmi.domain.post.data.enums.ImageType;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.CursorPageResponse;
