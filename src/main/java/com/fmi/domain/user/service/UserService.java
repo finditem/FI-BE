@@ -48,7 +48,6 @@ import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.enums.SortType;
-import com.fmi.service.UserQueryService;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

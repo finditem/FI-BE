@@ -3,7 +3,6 @@ package com.fmi.domain.post.web.dto.response;
 import com.fmi.domain.post.data.enums.Category;
 import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.data.enums.Radius;
-import com.fmi.domain.post.web.dto.response.PostImageResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 

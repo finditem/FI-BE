@@ -1,4 +1,4 @@
-package com.fmi.service;
+package com.fmi.domain.user.service;
 
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;

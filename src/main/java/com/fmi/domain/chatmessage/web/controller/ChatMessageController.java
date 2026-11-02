@@ -5,9 +5,9 @@ import static com.fmi.domain.chatmessage.web.dto.request.ChatMessageRequest.Send
 import com.fmi.domain.chatmessage.service.ChatMessageService;
 import com.fmi.domain.chatmessage.web.dto.response.ChatMessageResponse;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.service.UserQueryService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
-import com.fmi.service.UserQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;

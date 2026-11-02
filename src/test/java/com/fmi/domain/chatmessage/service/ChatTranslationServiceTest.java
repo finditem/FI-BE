@@ -20,10 +20,10 @@ import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.Trans
 import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.UsageResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.data.enums.LanguageCode;
+import com.fmi.domain.user.service.UserQueryService;
 import com.fmi.external.translation.client.TranslationClient;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.service.UserQueryService;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;

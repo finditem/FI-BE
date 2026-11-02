@@ -25,7 +25,6 @@ import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.service.UserQueryService;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
