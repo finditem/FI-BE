@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | 업무 패키지 구성 | [Domain Boundaries](domain-boundaries.md#업무-패키지-구성) | 기존 업무의 보조 기능입니까? 별도의 권한, 생명주기와 처리 흐름을 갖는 하위 업무입니까? |
 | Service 분리 | [서비스 분리 기준](service-boundaries.md) | 독립적인 업무 책임이 있고 의존성, 변경 또는 테스트에서 혼재 문제가 확인됩니까? |
+| Controller 분리 | [Controller 분리 기준](controller-boundaries.md) | 독립적인 API 기능이 있고 의존성, 계약 변경 또는 권한 요구의 혼재 문제가 확인됩니까? |
 | 새 도메인 또는 `global` | [Domain Boundaries](domain-boundaries.md) | 데이터 owner와 변경 이유가 분명합니까? 경계가 애매하면 팀과 논의합니다. |
 | `service/internal` 분리 | [Domain Boundaries](domain-boundaries.md) | 조회, 검증, 계산 등의 독립 책임과 재사용 필요가 실제로 있습니까? 분리 시점은 팀과 논의합니다. |
 | JPA Repository, QueryDSL, native SQL | [Persistence](persistence.md) | 단순 저장입니까, 목록과 집계입니까? 복잡한 QueryDSL보다 SQL이 의도를 명확히 드러냅니까? 선택 이유를 작업 보고에서 설명하고 MySQL 테스트를 작성합니다. |

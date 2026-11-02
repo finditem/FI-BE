@@ -87,6 +87,8 @@ Repository는 조회 결과를 Entity, Projection, `Optional` 또는 빈 컬렉�
 
 ### Web 계층
 
+Controller의 기능별 구성, 분리 시점과 Service 연결은 [Controller 분리 기준](controller-boundaries.md)을 따릅니다.
+
 요청 DTO는 `web/dto/request`, 응답 DTO는 `web/dto/response`에 둡니다.
 
 파일 이름은 역할에 따라 `[기능명]Request.java` 또는 `[기능명]Response.java`로 작성합니다. DTO는 `class`와 `record` 중 하나를 자유롭게 사용할 수 있습니다.
