@@ -105,7 +105,7 @@ PopupClosingDateTimeCalculator
 
 | 클래스 | 책임 |
 | --- | --- |
-| `OrderFactory` | 주문 Aggregate를 생성합니다. |
+| `OrderConverter` | 검증된 입력을 주문 Entity로 매핑합니다. |
 | `OrderNumberGenerator` | 신규 주문 번호를 생성합니다. |
 | `InventoryAllocator` | 주문 항목별 재고를 예약하고 할당합니다. |
 | `CouponEligibilityValidator` | 주문에서 쿠폰을 사용할 수 있는지 검증합니다. |
@@ -121,7 +121,7 @@ public class OrderService {
 
         InventoryAllocation allocation = inventoryAllocator.allocate(command.items());
         OrderPrice price = orderPriceCalculator.calculate(command, allocation);
-        Order order = orderFactory.create(command, price, orderNumberGenerator.generate());
+        Order order = orderConverter.toEntity(command, price, orderNumberGenerator.generate());
 
         orderRepository.save(order);
         orderCreatedEventPublisher.publish(order);
@@ -161,6 +161,26 @@ public class OrderService {
 | `CouponQuotaAllocator` | 선착순 또는 한정 수량 쿠폰의 사용 가능 수량을 확보합니다. |
 | `CouponUsageManager` | 쿠폰 사용, 취소, 복구 상태를 관리합니다. |
 | `CouponAppliedEventPublisher` | 쿠폰 적용 이벤트를 발행합니다. |
+
+## Entity와 VO 작성
+
+업무 모델의 배치와 책임은 [Domain Boundaries](../architecture/domain-boundaries.md#업무-모델의-구성)를 따릅니다. Entity 생성 검증은 [생성 절차](../architecture/domain-boundaries.md#생성-검증과-객체-생성)에 따라 Validator에서 수행하고 Converter로 생성합니다. 상태 변경 검증과 VO 자체 검증의 위치는 이 생성 정책으로 확정하지 않습니다.
+
+- VO는 불변으로 작성합니다. 가변 컬렉션이나 객체를 보관하거나 반환하면 방어적 복사 등으로 내부 값이 외부에서 변경되지 않게 합니다.
+- 판단과 기록에 필요한 현재 시각은 메서드나 생성 인자로 전달합니다. Entity와 VO 내부에서 `now()`, 시스템 시계 또는 요청 컨텍스트를 직접 조회하지 않습니다.
+- Converter는 검증된 값을 매핑하고 초기 상태를 설정합니다. DB 조회, 업무 검증과 외부 호출을 수행하지 않으며 검증된 값의 의미를 바꾸지 않습니다.
+- 입력 정규화는 검증 전에 수행하고 [기존 null 검사 기준](#null-fallback-예외와-retry)을 유지합니다.
+
+### Lombok과 Builder
+
+- Entity에는 `@Getter`, `@AllArgsConstructor`, `@Builder`를 사용할 수 있습니다.
+- JPA 기본 생성자는 `@NoArgsConstructor(access = AccessLevel.PROTECTED)`로 선언합니다.
+- Builder를 이용한 Entity 생성은 Converter에서 수행합니다.
+- 식별자와 시스템 관리 필드를 임의로 지정하지 않습니다.
+- 생성 후 변경에는 업무 메서드를 사용합니다. 클래스 단위 `@Setter`, `@Data`와 `toBuilder`는 사용하지 않습니다.
+- Entity 생성자와 Builder에 Validator의 생성 검증을 중복하지 않습니다.
+
+전체 필드 생성자와 Builder는 검증 우회를 기술적으로 막지 않습니다. 새로운 생성 경로에서도 Validator를 거쳐 Converter로 생성하는지 코드 리뷰와 테스트로 확인합니다.
 
 ## 메서드 이름
 
@@ -330,7 +350,7 @@ tokenStore.save(userId, accessToken);
 
 | 값의 의미 | 위치 |
 | --- | --- |
-| 상태와 불변식이 있는 업무 개념 | `data`의 Entity 또는 Value Object |
+| 상태와 불변식이 있는 업무 개념 | 소유 업무 `data`의 Entity 또는 Value Object. [모델 작성 기준](#entity와-vo-작성) 적용 |
 | 유스케이스 실행 결과 | `service`가 소유하는 결과 타입 |
 | 목록과 집계의 조회 결과 | `repository`의 Projection 또는 Result |
 | HTTP 요청과 응답 | `web/dto/request`, `web/dto/response` |

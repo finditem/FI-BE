@@ -23,7 +23,7 @@ service -> external                       외부 API, 스토리지, 메시징
 src/main/java/com/fmi/
 ├── domain/
 │   ├── post/
-│   │   ├── data/          # Entity, 값 객체와 상태
+│   │   ├── data/          # Entity, VO, enum, 순수 Policy
 │   │   ├── repository/    # JPA와 QueryDSL
 │   │   ├── service/       # 유스케이스와 transaction
 │   │   │   └── internal/  # 필요할 때만 분리
@@ -31,6 +31,7 @@ src/main/java/com/fmi/
 │   │   └── exception/     # 도메인 오류
 │   └── ...
 ├── global/                # 공통 기술 코드
+│   └── enums/             # 공통 Enum
 └── external/              # 외부 기술 연동
 ```
 
