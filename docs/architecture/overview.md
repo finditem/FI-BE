@@ -34,6 +34,8 @@ src/main/java/com/fmi/
 └── external/              # 외부 기술 연동
 ```
 
+업무 영역과 하위 업무의 패키지 구성은 [업무 패키지 구성](domain-boundaries.md#업무-패키지-구성)을 따릅니다. 위 구조는 업무 내부 계층을 표시한 예시입니다.
+
 새 코드의 배치 기준입니다. 레거시 처리 기준은 [AGENTS.md](../../AGENTS.md#레거시-코드와-리팩터링), 패키지 책임은 [Domain Boundaries](domain-boundaries.md)를 따릅니다.
 
 ## 기술과 데이터
