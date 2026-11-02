@@ -351,11 +351,11 @@ tokenStore.save(userId, accessToken);
 | 값의 의미 | 위치 |
 | --- | --- |
 | 상태와 불변식이 있는 업무 개념 | 소유 업무 `data`의 Entity 또는 Value Object. [모델 작성 기준](#entity와-vo-작성) 적용 |
-| 유스케이스 실행 결과 | `service`가 소유하는 결과 타입 |
+| 유스케이스 실행 결과 | `service/result`의 `*Result` record. [서비스 결과 타입](../architecture/domain-boundaries.md#서비스-결과-타입) 적용 |
 | 목록과 집계의 조회 결과 | `repository`의 Projection 또는 Result |
 | HTTP 요청과 응답 | `web/dto/request`, `web/dto/response` |
 
-한 메서드에서만 쓴다는 이유로 `service/internal` 클래스 안에 임시 중첩 `record`를 만들지 않습니다. 최상위 HTTP response DTO는 별도 파일에 둡니다. 단순하고 불변인 DTO에는 `record`를 사용할 수 있지만 기존 class DTO를 형식만 맞추려고 바꾸지 않습니다.
+최상위 HTTP response DTO는 별도 파일에 둡니다. 단순하고 불변인 HTTP DTO에는 `record`를 사용할 수 있지만 기존 class DTO를 형식만 맞추려고 바꾸지 않습니다.
 
 응답 DTO의 `from`은 Service 결과를 부수 효과 없이 매핑합니다. Repository, 외부 API와 `Clock`을 호출하지 않습니다. 업무 판단은 Service, cookie와 header 설정은 Controller에 둡니다.
 
