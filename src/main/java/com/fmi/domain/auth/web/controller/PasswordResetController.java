@@ -1,7 +1,7 @@
 package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.auth.service.PasswordService;
-import com.fmi.domain.auth.web.dto.PasswordResetRequest;
+import com.fmi.domain.auth.web.dto.request.PasswordResetRequest;
 import com.fmi.domain.auth.web.swagger.PasswordResetSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;

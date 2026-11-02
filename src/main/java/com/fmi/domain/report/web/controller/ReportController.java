@@ -2,9 +2,9 @@ package com.fmi.domain.report.web.controller;
 
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.service.ReportService;
-import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
-import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
-import com.fmi.domain.report.web.dto.response.ReportListDTO;
+import com.fmi.domain.report.web.dto.request.ReportCreateRequest;
+import com.fmi.domain.report.web.dto.response.ReportDetailResponse;
+import com.fmi.domain.report.web.dto.response.ReportListResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -67,7 +67,7 @@ public class ReportController {
                 description = "REPORT409-ALREADY_EXISTS: 이미 신고한 대상입니다")
     })
     public ApiResponse<Long> createReport(
-            @Valid @RequestBody ReportCreateRequestDTO request, @AuthenticationPrincipal UserDetails userDetails) {
+            @Valid @RequestBody ReportCreateRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         Long reportId = reportService.createReport(request, userDetails);
         return ApiResponse.onSuccess(reportId);
     }
@@ -87,13 +87,13 @@ public class ReportController {
                 responseCode = "404",
                 description = "REPORT404-NOT_FOUND: 존재하지 않는 신고입니다")
     })
-    public ApiResponse<ReportDetailDTO> getMyReportDetail(
+    public ApiResponse<ReportDetailResponse> getMyReportDetail(
             @AuthenticationPrincipal UserDetails userDetails, @PathVariable Long reportId) {
 
         User user = userRepository
                 .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        ReportDetailDTO detail = reportService.getMyReportDetail(user, reportId);
+        ReportDetailResponse detail = reportService.getMyReportDetail(user, reportId);
         return ApiResponse.onSuccess(detail);
     }
 
@@ -106,7 +106,7 @@ public class ReportController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 내역 조회 성공")
     })
-    public ApiResponse<CursorPageResponse<ReportListDTO>> getMyReports(
+    public ApiResponse<CursorPageResponse<ReportListResponse>> getMyReports(
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "신고 상태 필터 (PENDING=접수, REVIEWED=처리중, RESOLVED=처리완료)")
                     @RequestParam(required = false)
@@ -122,7 +122,7 @@ public class ReportController {
         User user = userRepository
                 .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        CursorPageResponse<ReportListDTO> reports =
+        CursorPageResponse<ReportListResponse> reports =
                 reportService.getMyReportsCursor(user, status, answered, keyword, cursor, size);
         return ApiResponse.onSuccess(reports);
     }

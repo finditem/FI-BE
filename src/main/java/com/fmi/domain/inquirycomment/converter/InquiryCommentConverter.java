@@ -3,8 +3,8 @@ package com.fmi.domain.inquirycomment.converter;
 import com.fmi.domain.inquiry.data.Inquiry;
 import com.fmi.domain.inquirycomment.data.InquiryComment;
 import com.fmi.domain.inquirycomment.data.InquiryCommentImage;
-import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
-import com.fmi.domain.inquirycomment.web.dto.CreateInquiryCommentDto;
+import com.fmi.domain.inquirycomment.web.dto.request.InquiryCommentCreateRequest;
+import com.fmi.domain.inquirycomment.web.dto.response.InquiryCommentResponse;
 import com.fmi.domain.user.data.User;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,7 +17,7 @@ public class InquiryCommentConverter {
      * DTO를 엔티티로 변환
      */
     public InquiryComment toCommentEntity(
-            CreateInquiryCommentDto dto, User user, Inquiry inquiry, InquiryComment parent, String email) {
+            InquiryCommentCreateRequest dto, User user, Inquiry inquiry, InquiryComment parent, String email) {
         InquiryComment.InquiryCommentBuilder builder = InquiryComment.builder()
                 .inquiry(inquiry)
                 .user(user)

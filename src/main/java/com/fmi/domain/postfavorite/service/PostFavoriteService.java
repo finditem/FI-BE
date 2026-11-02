@@ -4,7 +4,7 @@ import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.postfavorite.data.PostFavorite;
 import com.fmi.domain.postfavorite.repository.PostFavoriteRepository;
-import com.fmi.domain.postfavorite.response.PostFavoriteResponse;
+import com.fmi.domain.postfavorite.web.dto.response.PostFavoriteResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

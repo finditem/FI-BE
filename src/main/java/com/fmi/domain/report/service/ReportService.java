@@ -18,9 +18,9 @@ import com.fmi.domain.report.event.ReportEvent;
 import com.fmi.domain.report.repository.ReportAnswerImageRepository;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.report.service.internal.ReportEmailNotifier;
-import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
-import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
-import com.fmi.domain.report.web.dto.response.ReportListDTO;
+import com.fmi.domain.report.web.dto.request.ReportCreateRequest;
+import com.fmi.domain.report.web.dto.response.ReportDetailResponse;
+import com.fmi.domain.report.web.dto.response.ReportListResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
@@ -62,7 +62,7 @@ public class ReportService {
      * 신고하기 (통합)
      */
     @Transactional
-    public Long createReport(ReportCreateRequestDTO request, UserDetails userDetails) {
+    public Long createReport(ReportCreateRequest request, UserDetails userDetails) {
         User user = userRepository
                 .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
@@ -112,7 +112,7 @@ public class ReportService {
     /**
      * 내 신고 내역 조회
      */
-    public Page<ReportListDTO> getMyReports(User user, ReportStatus status, Boolean answered, Pageable pageable) {
+    public Page<ReportListResponse> getMyReports(User user, ReportStatus status, Boolean answered, Pageable pageable) {
         Page<Report> reports;
 
         if (status != null && answered != null) {
@@ -134,7 +134,7 @@ public class ReportService {
     /**
      * 내 신고 내역 조회 (커서 기반)
      */
-    public CursorPageResponse<ReportListDTO> getMyReportsCursor(
+    public CursorPageResponse<ReportListResponse> getMyReportsCursor(
             User user, ReportStatus status, Boolean answered, String keyword, Long cursor, int size) {
         int fetchSize = size + 1;
         Pageable limit = PageRequest.of(0, fetchSize);
@@ -173,7 +173,7 @@ public class ReportService {
         List<Report> content = hasNext ? reports.subList(0, size) : reports;
         Long nextCursor = hasNext ? content.get(content.size() - 1).getReportId() : null;
 
-        List<ReportListDTO> responseList = content.stream()
+        List<ReportListResponse> responseList = content.stream()
                 .map(report -> {
                     String targetTitle = getTargetTitle(report.getTargetType(), report.getTargetId());
                     return reportConverter.toListDTO(report, targetTitle);
@@ -186,7 +186,7 @@ public class ReportService {
     /**
      * 내 신고 상세 조회
      */
-    public ReportDetailDTO getMyReportDetail(User user, Long reportId) {
+    public ReportDetailResponse getMyReportDetail(User user, Long reportId) {
         Report report = reportRepository
                 .findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));
@@ -380,7 +380,7 @@ public class ReportService {
     /**
      * 채팅 신고면 상대방 차단
      */
-    private void autoBlockOnChatReport(ReportCreateRequestDTO request, User reporter) {
+    private void autoBlockOnChatReport(ReportCreateRequest request, User reporter) {
         if (request.getTargetType() != ReportTargetType.CHAT) {
             return;
         }

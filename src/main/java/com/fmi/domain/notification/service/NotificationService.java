@@ -7,9 +7,9 @@ import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.repository.NotificationRepository;
 import com.fmi.domain.notification.repository.NotificationSettingsRepository;
-import com.fmi.domain.notification.web.dto.request.NotificationSettingsUpdateDTO;
-import com.fmi.domain.notification.web.dto.response.NotificationListDTO;
-import com.fmi.domain.notification.web.dto.response.NotificationSettingsDTO;
+import com.fmi.domain.notification.web.dto.request.NotificationSettingsUpdateRequest;
+import com.fmi.domain.notification.web.dto.response.NotificationListResponse;
+import com.fmi.domain.notification.web.dto.response.NotificationSettingsResponse;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserCategoryRepository;
@@ -45,7 +45,7 @@ public class NotificationService {
     /**
      * 내 알림 목록 조회
      */
-    public Page<NotificationListDTO> getMyNotifications(
+    public Page<NotificationListResponse> getMyNotifications(
             User user, Boolean unreadOnly, NotificationType notificationType, Pageable pageable) {
         Page<Notification> notifications;
 
@@ -65,7 +65,7 @@ public class NotificationService {
     /**
      * 내 알림 목록 조회 (커서 기반)
      */
-    public CursorPageResponse<NotificationListDTO> getMyNotificationsCursor(
+    public CursorPageResponse<NotificationListResponse> getMyNotificationsCursor(
             User user, Boolean unreadOnly, NotificationType notificationType, Long cursor, int size) {
         int fetchSize = size + 1;
         Pageable limit = PageRequest.of(0, fetchSize);
@@ -86,7 +86,7 @@ public class NotificationService {
         List<Notification> content = hasNext ? notifications.subList(0, size) : notifications;
         Long nextCursor = hasNext ? content.get(content.size() - 1).getNotificationId() : null;
 
-        List<NotificationListDTO> responseList =
+        List<NotificationListResponse> responseList =
                 content.stream().map(notificationConverter::toListDTO).toList();
 
         return new CursorPageResponse<>(responseList, nextCursor, hasNext);
@@ -103,7 +103,7 @@ public class NotificationService {
      * 읽지 않은 알림 DTO 목록 조회 (SSE 재연결 시 전송용, 최대 50건)
      */
     @Transactional(readOnly = true)
-    public List<NotificationListDTO> getUnreadNotificationDTOs(User user) {
+    public List<NotificationListResponse> getUnreadNotificationDTOs(User user) {
         Pageable limit = PageRequest.of(0, 50);
         List<Notification> unread = notificationRepository.findByUserAndIsReadFalseCursor(user, null, limit);
         return unread.stream().map(notificationConverter::toListDTO).toList();
@@ -214,7 +214,7 @@ public class NotificationService {
      * 알림 설정 조회
      */
     @Transactional
-    public NotificationSettingsDTO getSettings(User user) {
+    public NotificationSettingsResponse getSettings(User user) {
         NotificationSettings settings =
                 notificationSettingsRepository.findByUser(user).orElseGet(() -> createDefaultSettings(user));
 
@@ -230,7 +230,7 @@ public class NotificationService {
      * 알림 설정 변경
      */
     @Transactional
-    public NotificationSettingsDTO updateSettings(User user, NotificationSettingsUpdateDTO request) {
+    public NotificationSettingsResponse updateSettings(User user, NotificationSettingsUpdateRequest request) {
         // User 엔티티를 최신 상태로 조회
         User freshUser = userRepository
                 .findById(user.getId())
@@ -284,7 +284,7 @@ public class NotificationService {
      */
     @Deprecated
     @Transactional
-    public NotificationSettingsDTO updateBasicSettings(
+    public NotificationSettingsResponse updateBasicSettings(
             User user, Boolean commentEnabled, Boolean chatEnabled, Boolean categoryEnabled) {
         // User 엔티티를 최신 상태로 조회
         User freshUser = userRepository

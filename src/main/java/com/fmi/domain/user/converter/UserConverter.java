@@ -6,13 +6,13 @@ import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.review.web.dto.response.ReviewResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.data.enums.LanguageCode;
-import com.fmi.domain.user.response.ImageUploadResponse;
-import com.fmi.domain.user.response.PreferredLanguageResponse;
-import com.fmi.domain.user.response.UserCommentSummaryResponse;
-import com.fmi.domain.user.response.UserOtherPageResponse;
-import com.fmi.domain.user.response.UserProfileResponse;
+import com.fmi.domain.user.web.dto.response.ImageUploadResponse;
+import com.fmi.domain.user.web.dto.response.PreferredLanguageResponse;
 import com.fmi.domain.user.web.dto.response.UserCommentResponse;
+import com.fmi.domain.user.web.dto.response.UserCommentSummaryResponse;
+import com.fmi.domain.user.web.dto.response.UserOtherPageResponse;
 import com.fmi.domain.user.web.dto.response.UserPostResponse;
+import com.fmi.domain.user.web.dto.response.UserProfileResponse;
 import java.util.List;
 import org.springframework.stereotype.Component;
 

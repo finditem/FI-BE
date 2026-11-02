@@ -15,9 +15,9 @@ import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Outcome;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Status;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Ticket;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Usage;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationRequest.TranslateRequestDTO;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.TranslationResponseDTO;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.UsageResponseDTO;
+import com.fmi.domain.chatmessage.web.dto.request.ChatTranslationRequest.TranslateRequest;
+import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.TranslationResponse;
+import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.UsageResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.data.enums.LanguageCode;
 import com.fmi.external.translation.client.TranslationClient;
@@ -63,12 +63,12 @@ class ChatTranslationServiceTest {
     private static final String TRANSLATED_TEXT = "Have you seen my wallet";
     private static final Instant RESET_AT = Instant.parse("2026-09-09T15:00:00Z");
 
-    private final TranslateRequestDTO request = new TranslateRequestDTO(UUID.randomUUID(), UUID.randomUUID());
+    private final TranslateRequest request = new TranslateRequest(UUID.randomUUID(), UUID.randomUUID());
     private final Source source = new Source(USER_ID, ORIGINAL_TEXT, LanguageCode.EN);
     private final Usage usage =
             new Usage(LocalDate.of(2026, 9, 9), 19, RedisTranslationQuotaStore.LIMIT, RESET_AT, true);
 
-    private final UsageResponseDTO usageResponse = new UsageResponseDTO(
+    private final UsageResponse usageResponse = new UsageResponse(
             usage.usageDate(), usage.usedCount(), usage.limit(), usage.resetAt(), usage.canTranslate());
 
     private Ticket givenReservation(Status status) {
@@ -107,7 +107,7 @@ class ChatTranslationServiceTest {
             given(translationQuotaStore.complete(ticket, TRANSLATED_TEXT))
                     .willReturn(new Outcome(Status.SUCCEEDED, usage, LanguageCode.EN, TRANSLATED_TEXT));
 
-            TranslationResponseDTO response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
+            TranslationResponse response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
 
             assertThat(response.messageId()).isEqualTo(MESSAGE_ID);
             assertThat(response.requestId()).isEqualTo(request.requestId());
@@ -136,10 +136,10 @@ class ChatTranslationServiceTest {
             given(translationQuotaStore.usageAfterCompletion(USER_ID, usage))
                     .willReturn(new Usage(today, 0, 20, nextReset, true));
 
-            TranslationResponseDTO response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
+            TranslationResponse response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
 
             assertThat(response.translatedText()).isEqualTo(TRANSLATED_TEXT);
-            assertThat(response.usage()).isEqualTo(new UsageResponseDTO(today, 0, 20, nextReset, true));
+            assertThat(response.usage()).isEqualTo(new UsageResponse(today, 0, 20, nextReset, true));
             InOrder order = inOrder(translationQuotaStore);
             order.verify(translationQuotaStore).complete(ticket, TRANSLATED_TEXT);
             order.verify(translationQuotaStore).usageAfterCompletion(USER_ID, usage);
@@ -171,7 +171,7 @@ class ChatTranslationServiceTest {
                     .willReturn(replay);
             given(translationQuotaStore.usage(USER_ID)).willReturn(usage);
 
-            TranslationResponseDTO response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
+            TranslationResponse response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
 
             assertThat(response.translatedText()).isEqualTo(TRANSLATED_TEXT);
             assertThat(response.usage()).isEqualTo(usageResponse);
@@ -250,10 +250,10 @@ class ChatTranslationServiceTest {
             Usage currentUsage = new Usage(usage.usageDate(), 20, 20, RESET_AT, false);
             given(translationQuotaStore.usage(USER_ID)).willReturn(currentUsage);
 
-            TranslationResponseDTO response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
+            TranslationResponse response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
 
             assertThat(response.translatedText()).isEqualTo(TRANSLATED_TEXT);
-            assertThat(response.usage()).isEqualTo(new UsageResponseDTO(usage.usageDate(), 20, 20, RESET_AT, false));
+            assertThat(response.usage()).isEqualTo(new UsageResponse(usage.usageDate(), 20, 20, RESET_AT, false));
             verifyNoInteractions(translationClient);
             verify(translationQuotaStore, never()).complete(any(), any());
             verify(translationQuotaStore, never()).fail(any());
@@ -267,10 +267,10 @@ class ChatTranslationServiceTest {
             Instant nextReset = Instant.parse("2026-09-10T15:00:00Z");
             given(translationQuotaStore.usage(USER_ID)).willReturn(new Usage(today, 0, 20, nextReset, true));
 
-            TranslationResponseDTO response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
+            TranslationResponse response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
 
             assertThat(response.translatedText()).isEqualTo(TRANSLATED_TEXT);
-            assertThat(response.usage()).isEqualTo(new UsageResponseDTO(today, 0, 20, nextReset, true));
+            assertThat(response.usage()).isEqualTo(new UsageResponse(today, 0, 20, nextReset, true));
             verifyNoInteractions(translationClient);
             verify(translationQuotaStore, never()).complete(any(), any());
             verify(translationQuotaStore, never()).fail(any());
@@ -299,7 +299,7 @@ class ChatTranslationServiceTest {
             given(translationQuotaStore.complete(ticket, TRANSLATED_TEXT))
                     .willReturn(new Outcome(Status.SUCCEEDED, usage, LanguageCode.EN, TRANSLATED_TEXT));
 
-            TranslationResponseDTO response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
+            TranslationResponse response = chatTranslationService.translate(ROOM_ID, MESSAGE_ID, EMAIL, request);
 
             assertThat(response.translatedText()).isEqualTo(TRANSLATED_TEXT);
             verifyNoInteractions(translationClient);
@@ -394,7 +394,7 @@ class ChatTranslationServiceTest {
                     .willReturn(User.builder().id(USER_ID).email(EMAIL).build());
             given(translationQuotaStore.usage(USER_ID)).willReturn(usage);
 
-            UsageResponseDTO result = chatTranslationService.usage(EMAIL);
+            UsageResponse result = chatTranslationService.usage(EMAIL);
 
             assertThat(result).isEqualTo(usageResponse);
             verifyNoInteractions(translationClient, chatTranslationSourceService);

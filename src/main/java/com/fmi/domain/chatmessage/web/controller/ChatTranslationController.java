@@ -1,9 +1,9 @@
 package com.fmi.domain.chatmessage.web.controller;
 
 import com.fmi.domain.chatmessage.service.ChatTranslationService;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationRequest.TranslateRequestDTO;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.TranslationResponseDTO;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.UsageResponseDTO;
+import com.fmi.domain.chatmessage.web.dto.request.ChatTranslationRequest.TranslateRequest;
+import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.TranslationResponse;
+import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.UsageResponse;
 import com.fmi.domain.chatmessage.web.swagger.ChatTranslationApi;
 import com.fmi.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
@@ -24,11 +24,11 @@ public class ChatTranslationController implements ChatTranslationApi {
 
     @Override
     @PostMapping("/chats/{roomId}/messages/{messageId}/translations")
-    public ApiResponse<TranslationResponseDTO> translate(
+    public ApiResponse<TranslationResponse> translate(
             @PathVariable Long roomId,
             @PathVariable Long messageId,
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody TranslateRequestDTO request) {
+            @Valid @RequestBody TranslateRequest request) {
 
         String email = userDetails.getUsername();
 
@@ -37,7 +37,7 @@ public class ChatTranslationController implements ChatTranslationApi {
 
     @Override
     @GetMapping("/users/me/chat-translation-usage")
-    public ApiResponse<UsageResponseDTO> usage(@AuthenticationPrincipal UserDetails userDetails) {
+    public ApiResponse<UsageResponse> usage(@AuthenticationPrincipal UserDetails userDetails) {
 
         String email = userDetails.getUsername();
 

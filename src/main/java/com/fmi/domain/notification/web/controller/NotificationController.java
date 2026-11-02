@@ -3,8 +3,8 @@ package com.fmi.domain.notification.web.controller;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.notification.service.SseEmitterService;
-import com.fmi.domain.notification.web.dto.response.NotificationListDTO;
-import com.fmi.domain.notification.web.dto.response.NotificationSettingsDTO;
+import com.fmi.domain.notification.web.dto.response.NotificationListResponse;
+import com.fmi.domain.notification.web.dto.response.NotificationSettingsResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -70,7 +70,7 @@ public class NotificationController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 목록 조회 성공")
     })
-    public ApiResponse<CursorPageResponse<NotificationListDTO>> getMyNotifications(
+    public ApiResponse<CursorPageResponse<NotificationListResponse>> getMyNotifications(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false, defaultValue = "false") Boolean unreadOnly,
             @Parameter(
@@ -84,7 +84,7 @@ public class NotificationController {
         User user = userRepository
                 .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        CursorPageResponse<NotificationListDTO> notifications =
+        CursorPageResponse<NotificationListResponse> notifications =
                 notificationService.getMyNotificationsCursor(user, unreadOnly, notificationType, cursor, size);
         return ApiResponse.onSuccess(notifications);
     }
@@ -98,11 +98,11 @@ public class NotificationController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 설정 조회 성공")
     })
-    public ApiResponse<NotificationSettingsDTO> getSettings(@AuthenticationPrincipal UserDetails userDetails) {
+    public ApiResponse<NotificationSettingsResponse> getSettings(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository
                 .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        NotificationSettingsDTO settings = notificationService.getSettings(user);
+        NotificationSettingsResponse settings = notificationService.getSettings(user);
         return ApiResponse.onSuccess(settings);
     }
 
@@ -118,13 +118,13 @@ public class NotificationController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 설정 변경 성공")
     })
-    public ApiResponse<NotificationSettingsDTO> updateSettings(
+    public ApiResponse<NotificationSettingsResponse> updateSettings(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody com.fmi.domain.notification.web.dto.request.NotificationSettingsUpdateDTO request) {
+            @RequestBody com.fmi.domain.notification.web.dto.request.NotificationSettingsUpdateRequest request) {
         User user = userRepository
                 .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        NotificationSettingsDTO settings = notificationService.updateSettings(user, request);
+        NotificationSettingsResponse settings = notificationService.updateSettings(user, request);
         return ApiResponse.onSuccess(settings);
     }
 

@@ -1,19 +1,19 @@
 package com.fmi.domain.chatmessage.converter;
 
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.MessageImageResponseDTO;
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.MessageResponseDTO;
+import static com.fmi.domain.chatmessage.web.dto.response.ChatMessageResponse.MessageImageResponse;
+import static com.fmi.domain.chatmessage.web.dto.response.ChatMessageResponse.MessageResponse;
 
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.data.MessageImage;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
-import com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO;
+import com.fmi.domain.chatmessage.web.dto.response.ChatMessageResponse;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ChatMessageConverter {
 
-    public static MessageResponseDTO messageResponseDTO(ChatMessage chatMessage) {
-        return MessageResponseDTO.builder()
+    public static MessageResponse messageResponseDTO(ChatMessage chatMessage) {
+        return MessageResponse.builder()
                 .messageId(chatMessage.getId())
                 .messageType(chatMessage.getMessageType())
                 .content(chatMessage.getContent())
@@ -23,8 +23,8 @@ public class ChatMessageConverter {
                 .build();
     }
 
-    public static MessageImageResponseDTO messageImageResponseDTO(ChatMessage chatMessage) {
-        return MessageImageResponseDTO.builder()
+    public static MessageImageResponse messageImageResponseDTO(ChatMessage chatMessage) {
+        return MessageImageResponse.builder()
                 .messageId(chatMessage.getId())
                 .messageType(chatMessage.getMessageType())
                 .roomId(chatMessage.getChatRoom().getId())
@@ -36,9 +36,10 @@ public class ChatMessageConverter {
                 .build();
     }
 
-    public static ChatMessageResponseDTO.MessageDTO GetMessageResponseDTO(ChatMessage message, List<String> imageUrls) {
+    public static ChatMessageResponse.MessageItemResponse GetMessageResponseDTO(
+            ChatMessage message, List<String> imageUrls) {
 
-        return ChatMessageResponseDTO.MessageDTO.builder()
+        return ChatMessageResponse.MessageItemResponse.builder()
                 .messageId(message.getId())
                 .messageType(message.getMessageType().name())
                 .senderId(message.getUser().getId())

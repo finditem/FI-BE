@@ -7,10 +7,10 @@ import com.fmi.domain.inquirycomment.data.InquiryComment;
 import com.fmi.domain.inquirycomment.data.InquiryCommentImage;
 import com.fmi.domain.inquirycomment.repository.InquiryCommentImageRepository;
 import com.fmi.domain.inquirycomment.repository.InquiryCommentRepository;
-import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
-import com.fmi.domain.inquirycomment.response.InquiryCommentSliceResponse;
 import com.fmi.domain.inquirycomment.service.internal.InquiryCommentEmailNotifier;
-import com.fmi.domain.inquirycomment.web.dto.CreateInquiryCommentDto;
+import com.fmi.domain.inquirycomment.web.dto.request.InquiryCommentCreateRequest;
+import com.fmi.domain.inquirycomment.web.dto.response.InquiryCommentResponse;
+import com.fmi.domain.inquirycomment.web.dto.response.InquiryCommentSliceResponse;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationService;
@@ -51,7 +51,7 @@ public class InquiryCommentService {
      */
     @Transactional
     public InquiryCommentResponse createComment(
-            CreateInquiryCommentDto dto, List<MultipartFile> images, UserDetails userDetails, Long inquiryId) {
+            InquiryCommentCreateRequest dto, List<MultipartFile> images, UserDetails userDetails, Long inquiryId) {
         Inquiry inquiry = inquiryRepository
                 .findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
@@ -158,7 +158,7 @@ public class InquiryCommentService {
      */
     @Transactional
     public InquiryCommentResponse updateComment(
-            CreateInquiryCommentDto dto, List<MultipartFile> images, UserDetails userDetails, Long commentId) {
+            InquiryCommentCreateRequest dto, List<MultipartFile> images, UserDetails userDetails, Long commentId) {
         InquiryComment comment = inquiryCommentRepository
                 .findById(commentId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));

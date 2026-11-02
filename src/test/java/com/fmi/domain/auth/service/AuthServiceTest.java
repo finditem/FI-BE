@@ -11,11 +11,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fmi.domain.admin.web.dto.AdminSignupRequest;
+import com.fmi.domain.admin.web.dto.request.AdminSignupRequest;
 import com.fmi.domain.auth.event.UserSignedUpEvent;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.service.internal.RejoinPolicy;
-import com.fmi.domain.auth.web.dto.SignupRequest;
+import com.fmi.domain.auth.web.dto.request.SignupRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;

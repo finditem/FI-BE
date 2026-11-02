@@ -12,9 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fmi.domain.chatmessage.service.ChatTranslationService;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationRequest.TranslateRequestDTO;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.TranslationResponseDTO;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.UsageResponseDTO;
+import com.fmi.domain.chatmessage.web.dto.request.ChatTranslationRequest.TranslateRequest;
+import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.TranslationResponse;
+import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.UsageResponse;
 import com.fmi.domain.user.data.enums.LanguageCode;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.ExceptionAdvice;
@@ -71,8 +71,8 @@ class ChatTranslationControllerTest {
         return "{\"requestId\":\"" + requestId + "\",\"roomVisitId\":\"" + roomVisitId + "\"}";
     }
 
-    private UsageResponseDTO usage(int usedCount, boolean canTranslate) {
-        return new UsageResponseDTO(
+    private UsageResponse usage(int usedCount, boolean canTranslate) {
+        return new UsageResponse(
                 LocalDate.of(2026, 9, 9), usedCount, 20, Instant.parse("2026-09-09T15:00:00Z"), canTranslate);
     }
 
@@ -84,7 +84,7 @@ class ChatTranslationControllerTest {
         @DisplayName("번역 결과와 사용량을 기존 공통 응답 규격으로 반환한다")
         void returnsTranslationAndUsageInCommonEnvelope() throws Exception {
             when(chatTranslationService.translate(eq(ROOM_ID), eq(MESSAGE_ID), eq(EMAIL), any()))
-                    .thenReturn(new TranslationResponseDTO(
+                    .thenReturn(new TranslationResponse(
                             MESSAGE_ID, requestId, roomVisitId, LanguageCode.EN, "translated", usage(1, true)));
 
             mockMvc.perform(post(TRANSLATE_URL)
@@ -99,7 +99,7 @@ class ChatTranslationControllerTest {
                     .andExpect(jsonPath("$.result.usage.usedCount").value(1));
 
             verify(chatTranslationService)
-                    .translate(ROOM_ID, MESSAGE_ID, EMAIL, new TranslateRequestDTO(requestId, roomVisitId));
+                    .translate(ROOM_ID, MESSAGE_ID, EMAIL, new TranslateRequest(requestId, roomVisitId));
         }
 
         @Test

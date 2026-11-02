@@ -1,36 +1,36 @@
 package com.fmi.domain.admin.web.controller;
 
-import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
-import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
-import com.fmi.domain.admin.dto.AdminGuestInquiryReplyRequestDTO;
-import com.fmi.domain.admin.dto.AdminInquiryDetailDTO;
-import com.fmi.domain.admin.dto.AdminInquiryResponse;
-import com.fmi.domain.admin.dto.AdminReportResponse;
-import com.fmi.domain.admin.dto.AdminUserDetailResponse;
 import com.fmi.domain.admin.service.AdminService;
-import com.fmi.domain.admin.web.dto.AdminIpBlockRequest;
-import com.fmi.domain.admin.web.dto.AdminSignupRequest;
+import com.fmi.domain.admin.web.dto.request.AdminGuestInquiryReplyRequest;
+import com.fmi.domain.admin.web.dto.request.AdminIpBlockRequest;
+import com.fmi.domain.admin.web.dto.request.AdminSignupRequest;
+import com.fmi.domain.admin.web.dto.response.AdminDeletedUserResponse;
+import com.fmi.domain.admin.web.dto.response.AdminGuestInquiryPageResponse;
+import com.fmi.domain.admin.web.dto.response.AdminInquiryDetailResponse;
+import com.fmi.domain.admin.web.dto.response.AdminInquiryResponse;
+import com.fmi.domain.admin.web.dto.response.AdminReportResponse;
+import com.fmi.domain.admin.web.dto.response.AdminUserDetailResponse;
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.data.enums.WithdrawalReason;
 import com.fmi.domain.auth.service.AuthService;
-import com.fmi.domain.auth.web.response.SignupResponse;
+import com.fmi.domain.auth.web.dto.response.SignupResponse;
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.service.InquiryService;
-import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
+import com.fmi.domain.inquiry.web.dto.response.InquiryDetailResponse;
 import com.fmi.domain.notice.service.NoticeService;
-import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
-import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
-import com.fmi.domain.notice.web.dto.NoticeUpdateRequestDTO;
+import com.fmi.domain.notice.web.dto.request.NoticeCreateRequest;
+import com.fmi.domain.notice.web.dto.request.NoticeUpdateRequest;
+import com.fmi.domain.notice.web.dto.response.NoticeResponse;
 import com.fmi.domain.post.data.enums.Category;
 import com.fmi.domain.post.data.enums.PostStatus;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.service.ReportService;
-import com.fmi.domain.report.web.dto.ReportStatusUpdateRequestDTO;
-import com.fmi.domain.report.web.dto.request.ReportAnswerRequestDTO;
-import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
+import com.fmi.domain.report.web.dto.request.ReportAnswerRequest;
+import com.fmi.domain.report.web.dto.request.ReportStatusUpdateRequest;
+import com.fmi.domain.report.web.dto.response.ReportResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.enums.SortType;
@@ -81,8 +81,8 @@ public class AdminController {
                                                 value =
                                                         "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}")))
     })
-    public ApiResponse<InquiryDetailDTO> getGuestInquiryDetail(@PathVariable Long inquiryId) {
-        InquiryDetailDTO response = adminService.getGuestInquiryDetail(inquiryId);
+    public ApiResponse<InquiryDetailResponse> getGuestInquiryDetail(@PathVariable Long inquiryId) {
+        InquiryDetailResponse response = adminService.getGuestInquiryDetail(inquiryId);
         return ApiResponse.onSuccess(response);
     }
 
@@ -143,9 +143,9 @@ public class AdminController {
                                                 value =
                                                         "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}")))
     })
-    public ApiResponse<AdminInquiryDetailDTO> getInquiryDetail(
+    public ApiResponse<AdminInquiryDetailResponse> getInquiryDetail(
             @PathVariable Long inquiryId, @AuthenticationPrincipal UserDetails userDetails) {
-        AdminInquiryDetailDTO response = adminService.getInquiryDetail(inquiryId, userDetails);
+        AdminInquiryDetailResponse response = adminService.getInquiryDetail(inquiryId, userDetails);
         return ApiResponse.onSuccess(response);
     }
 
@@ -181,8 +181,8 @@ public class AdminController {
                                                 value =
                                                         "{\"isSuccess\": false, \"code\": \"REPORT404-NOT_FOUND\", \"message\": \"존재하지 않는 신고입니다.\"}")))
     })
-    public ApiResponse<ReportResponseDTO> getReportDetail(@PathVariable Long reportId) {
-        ReportResponseDTO response = adminService.getReportDetail(reportId);
+    public ApiResponse<ReportResponse> getReportDetail(@PathVariable Long reportId) {
+        ReportResponse response = adminService.getReportDetail(reportId);
         return ApiResponse.onSuccess(response);
     }
 
@@ -211,7 +211,7 @@ public class AdminController {
     @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "공지 생성 성공")
     })
     public ApiResponse<Long> createNotice(
-            @Valid @RequestBody NoticeCreateRequestDTO request, @AuthenticationPrincipal UserDetails userDetails) {
+            @Valid @RequestBody NoticeCreateRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         Long id = noticeService.createNotice(request, userDetails.getUsername());
         return ApiResponse.onSuccess(id);
     }
@@ -221,8 +221,8 @@ public class AdminController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "임시저장 조회 성공")
     })
-    public ApiResponse<NoticeResponseDTO> getDraftNotice(@AuthenticationPrincipal UserDetails userDetails) {
-        NoticeResponseDTO response = noticeService.getDraftNotice(userDetails.getUsername());
+    public ApiResponse<NoticeResponse> getDraftNotice(@AuthenticationPrincipal UserDetails userDetails) {
+        NoticeResponse response = noticeService.getDraftNotice(userDetails.getUsername());
         return ApiResponse.onSuccess(response);
     }
 
@@ -250,9 +250,9 @@ public class AdminController {
                                                 value =
                                                         "{\"isSuccess\": false, \"code\": \"NOTICE404-NOT_FOUND\", \"message\": \"존재하지 않는 공지사항입니다.\"}")))
     })
-    public ApiResponse<NoticeResponseDTO> updateNotice(
-            @PathVariable Long noticeId, @Valid @RequestBody NoticeUpdateRequestDTO request) {
-        NoticeResponseDTO response = noticeService.updateNotice(noticeId, request);
+    public ApiResponse<NoticeResponse> updateNotice(
+            @PathVariable Long noticeId, @Valid @RequestBody NoticeUpdateRequest request) {
+        NoticeResponse response = noticeService.updateNotice(noticeId, request);
         return ApiResponse.onSuccess(response);
     }
 
@@ -311,7 +311,7 @@ public class AdminController {
                                                         "{\"isSuccess\": false, \"code\": \"COMMON400\", \"message\": \"잘못된 요청입니다.\"}")))
     })
     public ApiResponse<String> replyToGuestInquiry(
-            @PathVariable Long inquiryId, @Valid @RequestBody AdminGuestInquiryReplyRequestDTO request) {
+            @PathVariable Long inquiryId, @Valid @RequestBody AdminGuestInquiryReplyRequest request) {
         inquiryService.replyToGuestInquiry(inquiryId, request.getContent());
         return ApiResponse.onSuccess("OK");
     }
@@ -333,7 +333,7 @@ public class AdminController {
     })
     public ApiResponse<String> updateInquiryStatus(
             @PathVariable Long inquiryId,
-            @Valid @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryStatusUpdateRequestDTO request) {
+            @Valid @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryStatusUpdateRequest request) {
         inquiryService.updateStatus(inquiryId, request.getStatus());
         return ApiResponse.onSuccess("OK");
     }
@@ -396,7 +396,7 @@ public class AdminController {
                                                         "{\"isSuccess\": false, \"code\": \"REPORT404-NOT_FOUND\", \"message\": \"존재하지 않는 신고입니다.\"}")))
     })
     public ApiResponse<String> updateReportStatus(
-            @PathVariable Long reportId, @Valid @RequestBody ReportStatusUpdateRequestDTO request) {
+            @PathVariable Long reportId, @Valid @RequestBody ReportStatusUpdateRequest request) {
         reportService.updateStatus(reportId, request.getStatus());
         return ApiResponse.onSuccess("OK");
     }
@@ -418,7 +418,7 @@ public class AdminController {
     })
     public ApiResponse<String> answerReport(
             @PathVariable Long reportId,
-            @Valid @RequestBody ReportAnswerRequestDTO request,
+            @Valid @RequestBody ReportAnswerRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         reportService.answerReport(reportId, request.getAdminAnswer(), request.getImages(), userDetails);
         return ApiResponse.onSuccess("OK");

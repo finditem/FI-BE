@@ -7,10 +7,10 @@ import com.fmi.domain.noticecomment.data.NoticeComment;
 import com.fmi.domain.noticecomment.data.NoticeCommentImage;
 import com.fmi.domain.noticecomment.repository.NoticeCommentImageRepository;
 import com.fmi.domain.noticecomment.repository.NoticeCommentRepository;
-import com.fmi.domain.noticecomment.response.NoticeCommentPageResponse;
-import com.fmi.domain.noticecomment.response.NoticeCommentResponse;
-import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
-import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
+import com.fmi.domain.noticecomment.web.dto.request.NoticeCommentCreateRequest;
+import com.fmi.domain.noticecomment.web.dto.response.NoticeCommentPageResponse;
+import com.fmi.domain.noticecomment.web.dto.response.NoticeCommentResponse;
+import com.fmi.domain.noticecomment.web.dto.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecommentlike.data.NoticeCommentLike;
 import com.fmi.domain.noticecommentlike.repository.NoticeCommentLikeRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
@@ -50,7 +50,7 @@ public class NoticeCommentService {
 
     @Transactional
     public NoticeCommentResponse createComment(
-            Long noticeId, CreateNoticeCommentDto dto, List<MultipartFile> images, UserDetails userDetails) {
+            Long noticeId, NoticeCommentCreateRequest dto, List<MultipartFile> images, UserDetails userDetails) {
         if (userDetails == null) {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }
@@ -202,7 +202,7 @@ public class NoticeCommentService {
 
     @Transactional
     public NoticeCommentResponse updateComment(
-            Long commentId, CreateNoticeCommentDto dto, List<MultipartFile> images, UserDetails userDetails) {
+            Long commentId, NoticeCommentCreateRequest dto, List<MultipartFile> images, UserDetails userDetails) {
         if (userDetails == null) {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED);
         }

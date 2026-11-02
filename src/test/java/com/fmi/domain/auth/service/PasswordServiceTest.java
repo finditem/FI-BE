@@ -16,7 +16,7 @@ import com.fmi.domain.auth.security.token.RefreshTokenStore;
 import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
 import com.fmi.domain.auth.service.internal.PasswordGenerator;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
-import com.fmi.domain.auth.web.dto.PasswordVerifyRequest;
+import com.fmi.domain.auth.web.dto.request.PasswordVerifyRequest;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import java.time.Clock;

@@ -1,6 +1,6 @@
 package com.fmi.domain.auth.web.swagger;
 
-import com.fmi.domain.auth.web.dto.PasswordResetRequest;
+import com.fmi.domain.auth.web.dto.request.PasswordResetRequest;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

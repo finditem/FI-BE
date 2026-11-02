@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
-import com.fmi.domain.user.web.dto.TermsAgreeRequest;
+import com.fmi.domain.user.web.dto.request.TermsAgreeRequest;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

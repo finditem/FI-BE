@@ -9,11 +9,11 @@ import com.fmi.domain.inquiry.event.InquiryEvent;
 import com.fmi.domain.inquiry.repository.InquiryImageRepository;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.inquiry.service.internal.InquiryEmailNotifier;
-import com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO;
-import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
-import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
-import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
+import com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequest;
+import com.fmi.domain.inquiry.web.dto.response.InquiryDetailResponse;
+import com.fmi.domain.inquiry.web.dto.response.InquiryListResponse;
 import com.fmi.domain.inquirycomment.service.InquiryCommentService;
+import com.fmi.domain.inquirycomment.web.dto.response.InquiryCommentResponse;
 import com.fmi.domain.ipblock.service.IpBlacklistService;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
@@ -61,7 +61,7 @@ public class InquiryService {
      * 1:1 개인 문의 생성 (하위 호환)
      */
     @Transactional
-    public Long createInquiry(InquiryCreateRequestDTO request, UserDetails userDetails, String clientIp) {
+    public Long createInquiry(InquiryCreateRequest request, UserDetails userDetails, String clientIp) {
         return createInquiry(request, userDetails, clientIp, null);
     }
 
@@ -70,7 +70,7 @@ public class InquiryService {
      */
     @Transactional
     public Long createInquiry(
-            InquiryCreateRequestDTO request, UserDetails userDetails, String clientIp, List<MultipartFile> images) {
+            InquiryCreateRequest request, UserDetails userDetails, String clientIp, List<MultipartFile> images) {
 
         User user = null;
         String resolvedEmail;
@@ -125,7 +125,8 @@ public class InquiryService {
     /**
      * 내 문의 내역 조회
      */
-    public Page<InquiryListDTO> getMyInquiries(User user, InquiryStatus status, Boolean answered, Pageable pageable) {
+    public Page<InquiryListResponse> getMyInquiries(
+            User user, InquiryStatus status, Boolean answered, Pageable pageable) {
         Page<Inquiry> inquiries;
 
         if (status != null) {
@@ -146,7 +147,7 @@ public class InquiryService {
     /**
      * 내 문의 내역 조회 (커서 기반)
      */
-    public CursorPageResponse<InquiryListDTO> getMyInquiriesCursor(
+    public CursorPageResponse<InquiryListResponse> getMyInquiriesCursor(
             User user, InquiryStatus status, Boolean answered, String keyword, Long cursor, int size) {
         int fetchSize = size + 1;
         Pageable limit = PageRequest.of(0, fetchSize);
@@ -189,7 +190,7 @@ public class InquiryService {
         List<Inquiry> content = hasNext ? inquiries.subList(0, size) : inquiries;
         Long nextCursor = hasNext ? content.get(content.size() - 1).getId() : null;
 
-        List<InquiryListDTO> responseList =
+        List<InquiryListResponse> responseList =
                 content.stream().map(inquiryConverter::toListDTO).toList();
 
         return new CursorPageResponse<>(responseList, nextCursor, hasNext);
@@ -200,7 +201,7 @@ public class InquiryService {
      * - 회원 문의: user로 확인
      * - 관리자: 항상 접근 가능
      */
-    public InquiryDetailDTO getInquiryDetail(Long inquiryId, UserDetails userDetails) {
+    public InquiryDetailResponse getInquiryDetail(Long inquiryId, UserDetails userDetails) {
         Inquiry inquiry = inquiryRepository
                 .findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));

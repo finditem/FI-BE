@@ -2,8 +2,8 @@ package com.fmi.domain.chatmessage.service;
 
 import static com.fmi.domain.chatmessage.converter.ChatMessageConverter.messageImageResponseDTO;
 import static com.fmi.domain.chatmessage.converter.ChatMessageConverter.messageResponseDTO;
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessageRequestDTO;
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO.*;
+import static com.fmi.domain.chatmessage.web.dto.request.ChatMessageRequest.SendMessageRequest;
+import static com.fmi.domain.chatmessage.web.dto.response.ChatMessageResponse.*;
 
 import com.fmi.domain.chatmessage.converter.ChatMessageConverter;
 import com.fmi.domain.chatmessage.data.ChatMessage;
@@ -52,7 +52,7 @@ public class ChatMessageService {
     private final BlockService blockService;
     private final ChatNotificationService chatNotificationService;
 
-    public MessageResponseDTO sendMessage(Long roomId, Long senderId, SendMessageRequestDTO req) {
+    public MessageResponse sendMessage(Long roomId, Long senderId, SendMessageRequest req) {
         var room = chatRoomRepository
                 .findById(roomId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
@@ -79,13 +79,13 @@ public class ChatMessageService {
 
         updateParticipantsOnNewMessage(room.getId(), chatMessage);
 
-        MessageResponseDTO responseDTO = messageResponseDTO(chatMessage);
+        MessageResponse responseDTO = messageResponseDTO(chatMessage);
         broker.convertAndSendToUser(recipient.getId().toString(), "/queue/messages", responseDTO);
         broker.convertAndSendToUser(sender.getId().toString(), "/queue/messages", responseDTO);
         return responseDTO;
     }
 
-    public MessageImageResponseDTO sendImageMessage(Long roomId, List<MultipartFile> images, Long userId) {
+    public MessageImageResponse sendImageMessage(Long roomId, List<MultipartFile> images, Long userId) {
 
         if (images == null || images.isEmpty()) {
             throw new GeneralException(ErrorStatus._IMAGE_NOT_PROVIDED);
@@ -122,7 +122,7 @@ public class ChatMessageService {
         updateParticipantsOnNewMessage(room.getId(), savedMessage);
 
         // DTO로 변환하여 WebSocket 브로드캐스팅
-        MessageImageResponseDTO responseDTO = messageImageResponseDTO(savedMessage);
+        MessageImageResponse responseDTO = messageImageResponseDTO(savedMessage);
         broker.convertAndSendToUser(recipient.getId().toString(), "/queue/messages", responseDTO);
         broker.convertAndSendToUser(sender.getId().toString(), "/queue/messages", responseDTO);
         return responseDTO;
@@ -153,7 +153,7 @@ public class ChatMessageService {
                 if (isPresent) {
                     // 방안에 있음 -> 즉시 읽음. DB unreadCount = 0
                     pt.readMessages(newMessage.getId());
-                    ReadReceiptDTO receiptDTO = ReadReceiptDTO.builder()
+                    ReadReceiptResponse receiptDTO = ReadReceiptResponse.builder()
                             .roomId(roomId)
                             .readerId(pt.getUser().getId())
                             .lastReadMessageId(newMessage.getId())
@@ -167,7 +167,7 @@ public class ChatMessageService {
                 }
             }
             // 갱신된 정보로 DTO 생성
-            ListUpdateDTO listUpdateDTO = ListUpdateDTO.builder()
+            ListUpdateResponse listUpdateDTO = ListUpdateResponse.builder()
                     .roomId(roomId)
                     .messageType(newMessage.getMessageType())
                     .lastMessage(newMessage.getContent())
@@ -180,7 +180,7 @@ public class ChatMessageService {
     }
 
     @Transactional(readOnly = true)
-    public MessageSliceResponseDTO messageSlice(Long roomId, Long senderId, Long cursorId) {
+    public MessageSliceResponse messageSlice(Long roomId, Long senderId, Long cursorId) {
         ChatRoomParticipant me = chatRoomParticipantRepository
                 .findByChatRoom_IdAndUser_Id(roomId, senderId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._MESSAGE_NOT_ALLOWED));
@@ -221,7 +221,7 @@ public class ChatMessageService {
 
         // DTO로 변환
         Map<Long, List<String>> finalImagesMap = imagesMap;
-        List<MessageDTO> messageDtos = finalMessages.stream()
+        List<MessageItemResponse> messageDtos = finalMessages.stream()
                 .map(message -> {
                     // 맵에서 해당 메시지의 이미지 리스트를 찾음 (없으면 빈 리스트)
                     List<String> imageUrls = finalImagesMap.getOrDefault(message.getId(), Collections.emptyList());
@@ -235,7 +235,7 @@ public class ChatMessageService {
             nextCursorId = finalMessages.get(finalMessages.size() - 1).getId();
         }
 
-        return MessageSliceResponseDTO.builder()
+        return MessageSliceResponse.builder()
                 .messages(messageDtos)
                 .nextCursor(nextCursorId)
                 .build();
@@ -262,7 +262,7 @@ public class ChatMessageService {
 
         User recipient = chatRoom.getOtherParticipant(userId);
 
-        ReadReceiptDTO receiptDTO = ReadReceiptDTO.builder()
+        ReadReceiptResponse receiptDTO = ReadReceiptResponse.builder()
                 .roomId(roomId)
                 .readerId(chatRoomParticipant.getUser().getId())
                 .lastReadMessageId(lastMessageId)

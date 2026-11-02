@@ -6,16 +6,16 @@ import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.user.data.enums.ActivityType;
 import com.fmi.domain.user.data.enums.UserOtherPageType;
-import com.fmi.domain.user.response.ImageUploadResponse;
-import com.fmi.domain.user.response.MyActivityPageResponse;
-import com.fmi.domain.user.response.MyCommentPageResponse;
-import com.fmi.domain.user.response.PreferredLanguageResponse;
-import com.fmi.domain.user.response.UserMetaResponse;
-import com.fmi.domain.user.response.UserOtherPageResponse;
-import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.service.UserService;
-import com.fmi.domain.user.web.dto.PreferredLanguageUpdateRequest;
-import com.fmi.domain.user.web.dto.UserUpdateRequest;
+import com.fmi.domain.user.web.dto.request.PreferredLanguageUpdateRequest;
+import com.fmi.domain.user.web.dto.request.UserUpdateRequest;
+import com.fmi.domain.user.web.dto.response.ImageUploadResponse;
+import com.fmi.domain.user.web.dto.response.MyActivityPageResponse;
+import com.fmi.domain.user.web.dto.response.MyCommentPageResponse;
+import com.fmi.domain.user.web.dto.response.PreferredLanguageResponse;
+import com.fmi.domain.user.web.dto.response.UserMetaResponse;
+import com.fmi.domain.user.web.dto.response.UserOtherPageResponse;
+import com.fmi.domain.user.web.dto.response.UserProfileResponse;
 import com.fmi.domain.user.web.swagger.UserSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.enums.SortType;
@@ -56,7 +56,7 @@ public class UserController implements UserSwagger {
     @Override
     public ApiResponse<Void> agreeTerms(
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody com.fmi.domain.user.web.dto.TermsAgreeRequest request) {
+            @Valid @RequestBody com.fmi.domain.user.web.dto.request.TermsAgreeRequest request) {
         String email = userDetails.getUsername();
         userService.agreeTerms(email, request);
         return ApiResponse.onSuccess(null);

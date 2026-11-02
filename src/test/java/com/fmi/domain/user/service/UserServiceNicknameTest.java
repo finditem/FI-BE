@@ -20,7 +20,7 @@ import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.user.service.internal.NicknameValidator;
-import com.fmi.domain.user.web.dto.UserUpdateRequest;
+import com.fmi.domain.user.web.dto.request.UserUpdateRequest;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;

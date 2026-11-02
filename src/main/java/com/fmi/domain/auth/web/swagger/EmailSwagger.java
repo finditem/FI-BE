@@ -1,8 +1,8 @@
 package com.fmi.domain.auth.web.swagger;
 
-import com.fmi.domain.auth.web.dto.EmailSendRequest;
-import com.fmi.domain.auth.web.dto.EmailVerifyRequest;
-import com.fmi.domain.auth.web.response.EmailVerifyResponse;
+import com.fmi.domain.auth.web.dto.request.EmailSendRequest;
+import com.fmi.domain.auth.web.dto.request.EmailVerifyRequest;
+import com.fmi.domain.auth.web.dto.response.EmailVerifyResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

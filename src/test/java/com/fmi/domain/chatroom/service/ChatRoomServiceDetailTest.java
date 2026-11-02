@@ -9,7 +9,7 @@ import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
-import com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResultDTO;
+import com.fmi.domain.chatroom.web.dto.response.ChatRoomResponse.ChatRoomResultResponse;
 import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.enums.Category;
@@ -103,7 +103,7 @@ class ChatRoomServiceDetailTest {
         given(postImageService.findThumbnailImageUrl(post)).willReturn("https://s3.example.com/new-thumb.jpg");
         given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(false);
 
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         assertThat(result.getPostInfo().getTitle()).isEqualTo("최신 제목");
         assertThat(result.getPostInfo().getThumbnailUrl()).isEqualTo("https://s3.example.com/new-thumb.jpg");
@@ -129,7 +129,7 @@ class ChatRoomServiceDetailTest {
         given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
         given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(false);
 
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         assertThat(result.getPostInfo().getTitle()).isEqualTo("삭제 전 제목");
         assertThat(result.getPostInfo().getThumbnailUrl()).isEqualTo("https://s3.example.com/old-thumb.jpg");
@@ -185,7 +185,7 @@ class ChatRoomServiceDetailTest {
         given(postImageService.findThumbnailImageUrl(post)).willReturn(null);
         given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(false);
 
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         assertThat(result.getPostInfo().getPostStatus()).isEqualTo(PostStatus.FOUND);
     }
@@ -210,7 +210,7 @@ class ChatRoomServiceDetailTest {
         given(chatRoomRepository.findById(10L)).willReturn(Optional.of(chatRoom));
         given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(false);
 
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         assertThat(result.getPostInfo().getTitle()).isEqualTo("삭제된 게시글");
         assertThat(result.getPostInfo().isDeleted()).isTrue();
@@ -249,7 +249,7 @@ class ChatRoomServiceDetailTest {
         given(blockService.isBlocked(currentUser.getId(), withdrawnOpponent.getId()))
                 .willReturn(false);
 
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         assertThat(result.getOpponentUser().isWithdrawn()).isTrue();
         assertThat(result.getOpponentUser().getOpponentUserId()).isEqualTo(2L);
@@ -291,7 +291,7 @@ class ChatRoomServiceDetailTest {
         given(blockService.isBlocked(currentUser.getId(), activeOpponent.getId()))
                 .willReturn(false);
 
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         assertThat(result.getOpponentUser().isWithdrawn()).isFalse();
         assertThat(result.getOpponentUser().getNickname()).isEqualTo("상대");
@@ -322,7 +322,7 @@ class ChatRoomServiceDetailTest {
         given(postImageService.findThumbnailImageUrl(post)).willReturn(null);
         given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(false);
 
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         assertThat(result.getUnreadCount()).isEqualTo(3L);
     }

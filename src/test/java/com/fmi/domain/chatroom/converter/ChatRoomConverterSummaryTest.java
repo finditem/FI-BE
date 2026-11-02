@@ -1,6 +1,6 @@
 package com.fmi.domain.chatroom.converter;
 
-import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomSummaryDTO;
+import static com.fmi.domain.chatroom.web.dto.response.ChatRoomResponse.ChatRoomSummaryResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -53,7 +53,7 @@ class ChatRoomConverterSummaryTest {
 
         Map<Long, String> thumbnailMap = Map.of(99L, "https://s3.example.com/live-thumb.jpg");
 
-        ChatRoomSummaryDTO result = ChatRoomConverter.toChatRoomSummaryDTO(participant, contactUser, thumbnailMap);
+        ChatRoomSummaryResponse result = ChatRoomConverter.toChatRoomSummaryDTO(participant, contactUser, thumbnailMap);
 
         assertThat(result.getPostInfo().getTitle()).isEqualTo("최신 제목");
         assertThat(result.getPostInfo().getThumbnailUrl()).isEqualTo("https://s3.example.com/live-thumb.jpg");
@@ -81,7 +81,7 @@ class ChatRoomConverterSummaryTest {
         given(participant.getUnreadCount()).willReturn(0L);
         given(participant.getLastMessageSentAt()).willReturn(null);
 
-        ChatRoomSummaryDTO result = ChatRoomConverter.toChatRoomSummaryDTO(participant, contactUser, Map.of());
+        ChatRoomSummaryResponse result = ChatRoomConverter.toChatRoomSummaryDTO(participant, contactUser, Map.of());
 
         assertThat(result.getPostInfo().getTitle()).isEqualTo("삭제 전 제목");
         assertThat(result.getPostInfo().getThumbnailUrl()).isEqualTo("https://s3.example.com/snapshot-thumb.jpg");
@@ -110,7 +110,7 @@ class ChatRoomConverterSummaryTest {
         given(participant.getLastMessageSentAt()).willReturn(null);
 
         // NPE 없이 실행되어야 함
-        ChatRoomSummaryDTO result = ChatRoomConverter.toChatRoomSummaryDTO(participant, contactUser, Map.of());
+        ChatRoomSummaryResponse result = ChatRoomConverter.toChatRoomSummaryDTO(participant, contactUser, Map.of());
 
         assertThat(result).isNotNull();
         assertThat(result.getPostInfo().getThumbnailUrl()).isNull();
@@ -139,7 +139,7 @@ class ChatRoomConverterSummaryTest {
         given(participant.getUnreadCount()).willReturn(0L);
         given(participant.getLastMessageSentAt()).willReturn(null);
 
-        ChatRoomSummaryDTO result =
+        ChatRoomSummaryResponse result =
                 ChatRoomConverter.toChatRoomSummaryDTO(participant, contactUser, Map.of(99L, "thumb.jpg"));
 
         assertThat(result.getPostInfo().getPostStatus()).isEqualTo(PostStatus.FOUND);

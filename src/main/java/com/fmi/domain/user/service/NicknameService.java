@@ -1,7 +1,7 @@
 package com.fmi.domain.user.service;
 
 import com.fmi.domain.user.service.internal.NicknameValidator;
-import com.fmi.domain.user.web.response.CheckResponse;
+import com.fmi.domain.user.web.dto.response.CheckResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
