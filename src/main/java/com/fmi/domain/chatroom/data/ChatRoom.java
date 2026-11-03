@@ -1,9 +1,9 @@
 package com.fmi.domain.chatroom.data;
 
-import com.fmi.domain.Enum.Category;
 import com.fmi.domain.post.data.Post;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.user.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

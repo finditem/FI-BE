@@ -1,9 +1,5 @@
 package com.fmi.domain.user.service;
 
-import com.fmi.domain.Enum.ActivityType;
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.Enum.UserOtherPageType;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.comment.data.Comment;
 import com.fmi.domain.comment.repository.CommentRepository;
@@ -15,8 +11,9 @@ import com.fmi.domain.inquiry.repository.InquiryRepository;
 import com.fmi.domain.inquirycomment.data.InquiryComment;
 import com.fmi.domain.inquirycomment.repository.InquiryCommentRepository;
 import com.fmi.domain.post.data.Post;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
@@ -30,25 +27,27 @@ import com.fmi.domain.review.service.ReviewQueryService;
 import com.fmi.domain.review.web.dto.response.ReviewResponse;
 import com.fmi.domain.user.converter.UserConverter;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.ActivityType;
+import com.fmi.domain.user.data.enums.UserOtherPageType;
 import com.fmi.domain.user.repository.UserRepository;
-import com.fmi.domain.user.response.ActivityResponse;
-import com.fmi.domain.user.response.DailyActivityResponse;
-import com.fmi.domain.user.response.ImageUploadResponse;
-import com.fmi.domain.user.response.MyActivityPageResponse;
-import com.fmi.domain.user.response.MyCommentPageResponse;
-import com.fmi.domain.user.response.PreferredLanguageResponse;
-import com.fmi.domain.user.response.UserCommentSummaryResponse;
-import com.fmi.domain.user.response.UserMetaResponse;
-import com.fmi.domain.user.response.UserOtherPageResponse;
-import com.fmi.domain.user.response.UserProfileResponse;
 import com.fmi.domain.user.service.internal.NicknameValidator;
-import com.fmi.domain.user.web.dto.PreferredLanguageUpdateRequest;
-import com.fmi.domain.user.web.dto.UserUpdateRequest;
+import com.fmi.domain.user.web.dto.request.PreferredLanguageUpdateRequest;
+import com.fmi.domain.user.web.dto.request.UserUpdateRequest;
+import com.fmi.domain.user.web.dto.response.ActivityResponse;
+import com.fmi.domain.user.web.dto.response.DailyActivityResponse;
+import com.fmi.domain.user.web.dto.response.ImageUploadResponse;
+import com.fmi.domain.user.web.dto.response.MyActivityPageResponse;
+import com.fmi.domain.user.web.dto.response.MyCommentPageResponse;
+import com.fmi.domain.user.web.dto.response.PreferredLanguageResponse;
+import com.fmi.domain.user.web.dto.response.UserCommentSummaryResponse;
+import com.fmi.domain.user.web.dto.response.UserMetaResponse;
+import com.fmi.domain.user.web.dto.response.UserOtherPageResponse;
+import com.fmi.domain.user.web.dto.response.UserProfileResponse;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
 import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.service.UserQueryService;
+import com.fmi.global.enums.SortType;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -104,7 +103,7 @@ public class UserService {
      * 약관 동의 처리
      */
     @Transactional
-    public void agreeTerms(String email, com.fmi.domain.user.web.dto.TermsAgreeRequest request) {
+    public void agreeTerms(String email, com.fmi.domain.user.web.dto.request.TermsAgreeRequest request) {
         User user = userRepository
                 .findActiveByEmailForUpdate(email)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));

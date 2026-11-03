@@ -1,22 +1,22 @@
 package com.fmi.domain.user.web.swagger;
 
-import com.fmi.domain.Enum.ActivityType;
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.Enum.UserOtherPageType;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
-import com.fmi.domain.user.response.ImageUploadResponse;
-import com.fmi.domain.user.response.MyActivityPageResponse;
-import com.fmi.domain.user.response.MyCommentPageResponse;
-import com.fmi.domain.user.response.PreferredLanguageResponse;
-import com.fmi.domain.user.response.UserMetaResponse;
-import com.fmi.domain.user.response.UserOtherPageResponse;
-import com.fmi.domain.user.response.UserProfileResponse;
-import com.fmi.domain.user.web.dto.PreferredLanguageUpdateRequest;
-import com.fmi.domain.user.web.dto.UserUpdateRequest;
+import com.fmi.domain.user.data.enums.ActivityType;
+import com.fmi.domain.user.data.enums.UserOtherPageType;
+import com.fmi.domain.user.web.dto.request.PreferredLanguageUpdateRequest;
+import com.fmi.domain.user.web.dto.request.UserUpdateRequest;
+import com.fmi.domain.user.web.dto.response.ImageUploadResponse;
+import com.fmi.domain.user.web.dto.response.MyActivityPageResponse;
+import com.fmi.domain.user.web.dto.response.MyCommentPageResponse;
+import com.fmi.domain.user.web.dto.response.PreferredLanguageResponse;
+import com.fmi.domain.user.web.dto.response.UserMetaResponse;
+import com.fmi.domain.user.web.dto.response.UserOtherPageResponse;
+import com.fmi.domain.user.web.dto.response.UserProfileResponse;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.enums.SortType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -102,7 +102,7 @@ public interface UserSwagger {
     })
     ApiResponse<Void> agreeTerms(
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody com.fmi.domain.user.web.dto.TermsAgreeRequest request);
+            @Valid @RequestBody com.fmi.domain.user.web.dto.request.TermsAgreeRequest request);
 
     @Operation(summary = "선호 언어 조회", description = "현재 로그인한 사용자의 선호 언어를 조회합니다. (KO: 한국어, EN: 영어)")
     @ApiResponses({

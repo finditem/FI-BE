@@ -1,7 +1,7 @@
 package com.fmi.domain.post.repository;
 
-import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.post.data.PostTranslation;
+import com.fmi.domain.user.data.enums.LanguageCode;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

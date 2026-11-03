@@ -8,7 +8,7 @@ import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.findcompletion.service.internal.FindCompletionValidator;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.service.PostService;
-import com.fmi.domain.temperature.data.TemperatureActivityType;
+import com.fmi.domain.temperature.data.enums.TemperatureActivityType;
 import com.fmi.domain.temperature.service.TemperatureService;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;

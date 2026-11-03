@@ -2,15 +2,15 @@ package com.fmi.domain.post.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.Role;
-import com.fmi.domain.post.data.PostType;
-import com.fmi.domain.post.data.Radius;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostType;
+import com.fmi.domain.post.data.enums.Radius;
 import com.fmi.domain.post.web.dto.request.PostCreateRequest;
 import com.fmi.domain.post.web.dto.response.PostCreateResponse;
-import com.fmi.domain.temperature.data.TemperatureActivityType;
+import com.fmi.domain.temperature.data.enums.TemperatureActivityType;
 import com.fmi.domain.temperature.repository.TemperatureActivityRepository;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.support.IntegrationTestSupport;
 import java.time.LocalDateTime;

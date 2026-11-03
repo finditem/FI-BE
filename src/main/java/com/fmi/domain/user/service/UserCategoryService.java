@@ -1,6 +1,6 @@
 package com.fmi.domain.user.service;
 
-import com.fmi.domain.Enum.Category;
+import com.fmi.domain.post.data.enums.Category;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.data.UserCategory;
 import com.fmi.domain.user.repository.UserCategoryRepository;

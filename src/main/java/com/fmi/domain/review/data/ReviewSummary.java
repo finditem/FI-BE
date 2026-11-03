@@ -1,5 +1,6 @@
 package com.fmi.domain.review.data;
 
+import com.fmi.domain.review.data.enums.ReviewEmotion;
 import java.time.LocalDateTime;
 
 public record ReviewSummary(

@@ -1,13 +1,13 @@
 package com.fmi.domain.postfavorite.web.controller;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
-import com.fmi.domain.postfavorite.response.PostFavoriteResponse;
 import com.fmi.domain.postfavorite.service.PostFavoriteService;
+import com.fmi.domain.postfavorite.web.dto.response.PostFavoriteResponse;
 import com.fmi.global.apiPayload.ApiResponse;
+import com.fmi.global.enums.SortType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;

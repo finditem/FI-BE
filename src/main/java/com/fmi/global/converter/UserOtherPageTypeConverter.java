@@ -1,6 +1,6 @@
 package com.fmi.global.converter;
 
-import com.fmi.domain.Enum.UserOtherPageType;
+import com.fmi.domain.user.data.enums.UserOtherPageType;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;

@@ -6,13 +6,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.when;
 
-import com.fmi.domain.Enum.Provider;
-import com.fmi.domain.Enum.WithdrawalReason;
 import com.fmi.domain.auth.data.SocialAccounts;
+import com.fmi.domain.auth.data.enums.Provider;
+import com.fmi.domain.auth.data.enums.WithdrawalReason;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.auth.security.token.RefreshTokenStore;
 import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
-import com.fmi.domain.auth.web.dto.AccountDeleteRequest;
+import com.fmi.domain.auth.web.dto.request.AccountDeleteRequest;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;

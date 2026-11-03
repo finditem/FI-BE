@@ -1,14 +1,12 @@
 package com.fmi.domain.admin.service;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.SortType;
-import com.fmi.domain.Enum.WithdrawalReason;
-import com.fmi.domain.admin.dto.AdminDeletedUserResponse;
-import com.fmi.domain.admin.dto.AdminGuestInquiryPageResponse;
-import com.fmi.domain.admin.dto.AdminInquiryDetailDTO;
-import com.fmi.domain.admin.dto.AdminInquiryResponse;
-import com.fmi.domain.admin.dto.AdminReportResponse;
-import com.fmi.domain.admin.dto.AdminUserDetailResponse;
+import com.fmi.domain.admin.web.dto.response.AdminDeletedUserResponse;
+import com.fmi.domain.admin.web.dto.response.AdminGuestInquiryPageResponse;
+import com.fmi.domain.admin.web.dto.response.AdminInquiryDetailResponse;
+import com.fmi.domain.admin.web.dto.response.AdminInquiryResponse;
+import com.fmi.domain.admin.web.dto.response.AdminReportResponse;
+import com.fmi.domain.admin.web.dto.response.AdminUserDetailResponse;
+import com.fmi.domain.auth.data.enums.WithdrawalReason;
 import com.fmi.domain.comment.repository.CommentRepository;
 import com.fmi.domain.inquiry.converter.InquiryConverter;
 import com.fmi.domain.inquiry.data.Inquiry;
@@ -17,13 +15,14 @@ import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.data.enums.InquiryType;
 import com.fmi.domain.inquiry.repository.InquiryImageRepository;
 import com.fmi.domain.inquiry.repository.InquiryRepository;
-import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
-import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
+import com.fmi.domain.inquiry.web.dto.response.InquiryDetailResponse;
 import com.fmi.domain.inquirycomment.service.InquiryCommentService;
+import com.fmi.domain.inquirycomment.web.dto.response.InquiryCommentResponse;
 import com.fmi.domain.ipblock.service.IpBlacklistService;
 import com.fmi.domain.post.converter.util.PostConverter;
 import com.fmi.domain.post.data.Post;
-import com.fmi.domain.post.data.PostStatus;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.HotPostService;
 import com.fmi.domain.post.service.PostImageService;
@@ -37,7 +36,7 @@ import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.repository.ReportAnswerImageRepository;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.report.service.ReportService;
-import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
+import com.fmi.domain.report.web.dto.response.ReportResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.data.UserCategory;
 import com.fmi.domain.user.repository.UserCategoryRepository;
@@ -45,6 +44,7 @@ import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.global.enums.SortType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -179,7 +179,7 @@ public class AdminService {
     /**
      * 문의 상세 조회 (관리자용 - 비공개 문의도 조회 가능)
      */
-    public AdminInquiryDetailDTO getInquiryDetail(Long inquiryId, UserDetails userDetails) {
+    public AdminInquiryDetailResponse getInquiryDetail(Long inquiryId, UserDetails userDetails) {
         Inquiry inquiry = inquiryRepository
                 .findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
@@ -192,7 +192,7 @@ public class AdminService {
         return inquiryConverter.toAdminDetailDTO(inquiry, comments, imageUrls);
     }
 
-    public InquiryDetailDTO getGuestInquiryDetail(Long inquiryId) {
+    public InquiryDetailResponse getGuestInquiryDetail(Long inquiryId) {
         Inquiry inquiry = inquiryRepository
                 .findById(inquiryId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._INQUIRY_NOT_FOUND));
@@ -215,7 +215,7 @@ public class AdminService {
     /**
      * 신고 상세 조회 (관리자용)
      */
-    public ReportResponseDTO getReportDetail(Long reportId) {
+    public ReportResponse getReportDetail(Long reportId) {
         Report report = reportRepository
                 .findById(reportId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._REPORT_NOT_FOUND));

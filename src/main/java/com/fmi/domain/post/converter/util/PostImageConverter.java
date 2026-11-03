@@ -1,9 +1,9 @@
 package com.fmi.domain.post.converter.util;
 
-import com.fmi.domain.post.data.ImageType;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.post.data.PostImage;
-import com.fmi.domain.post.web.dto.response.image.PostImageResponse;
+import com.fmi.domain.post.data.enums.ImageType;
+import com.fmi.domain.post.web.dto.response.PostImageResponse;
 import com.fmi.global.dto.UploadedImage;
 import java.util.List;
 import java.util.Objects;

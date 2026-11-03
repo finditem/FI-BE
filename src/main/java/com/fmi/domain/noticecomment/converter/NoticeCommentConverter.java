@@ -3,9 +3,9 @@ package com.fmi.domain.noticecomment.converter;
 import com.fmi.domain.notice.data.Notice;
 import com.fmi.domain.noticecomment.data.NoticeComment;
 import com.fmi.domain.noticecomment.data.NoticeCommentImage;
-import com.fmi.domain.noticecomment.response.NoticeCommentImageResponse;
-import com.fmi.domain.noticecomment.response.NoticeCommentResponse;
-import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
+import com.fmi.domain.noticecomment.web.dto.request.NoticeCommentCreateRequest;
+import com.fmi.domain.noticecomment.web.dto.response.NoticeCommentImageResponse;
+import com.fmi.domain.noticecomment.web.dto.response.NoticeCommentResponse;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.web.dto.response.UserCommentResponse;
 import java.time.LocalDateTime;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class NoticeCommentConverter {
 
-    public NoticeComment toEntity(CreateNoticeCommentDto dto, User user, Notice notice, NoticeComment parent) {
+    public NoticeComment toEntity(NoticeCommentCreateRequest dto, User user, Notice notice, NoticeComment parent) {
         return NoticeComment.builder()
                 .user(user)
                 .notice(notice)

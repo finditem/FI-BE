@@ -2,7 +2,7 @@ package com.fmi.domain.temperature.service;
 
 import com.fmi.domain.temperature.data.Temperature;
 import com.fmi.domain.temperature.data.TemperatureActivity;
-import com.fmi.domain.temperature.data.TemperatureActivityType;
+import com.fmi.domain.temperature.data.enums.TemperatureActivityType;
 import com.fmi.domain.temperature.repository.TemperatureActivityRepository;
 import com.fmi.domain.temperature.repository.UserTemperatureRepository;
 import java.time.Clock;

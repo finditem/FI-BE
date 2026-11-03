@@ -2,13 +2,16 @@ package com.fmi.domain.post.repository;
 
 import static com.fmi.domain.post.data.QPostImage.postImage;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.post.data.*;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.ImageType;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
 import com.fmi.domain.userblock.repository.BlockedUserRepository;
+import com.fmi.global.enums.SortType;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;

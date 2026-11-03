@@ -1,14 +1,14 @@
 package com.fmi.domain.chatroom.repository;
 
-import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.chatmessage.data.QChatMessage;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.data.QChatRoom;
 import com.fmi.domain.chatroom.data.QChatRoomParticipant;
 import com.fmi.domain.chatroom.data.enums.ParticipantState;
-import com.fmi.domain.post.data.PostType;
 import com.fmi.domain.post.data.QPost;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.user.data.QUser;
+import com.fmi.global.enums.SortType;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;

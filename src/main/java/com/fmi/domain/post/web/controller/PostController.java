@@ -1,21 +1,21 @@
 package com.fmi.domain.post.web.controller;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.service.PostQueryService;
 import com.fmi.domain.post.service.PostService;
 import com.fmi.domain.post.service.PostTranslationService;
 import com.fmi.domain.post.service.TemporaryPostService;
 import com.fmi.domain.post.web.dto.request.*;
 import com.fmi.domain.post.web.dto.response.*;
-import com.fmi.domain.post.web.dto.response.temp.TemporaryPostResponse;
+import com.fmi.domain.post.web.dto.response.TemporaryPostResponse;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.ApiResponse;
-import com.fmi.utils.IpUtil;
+import com.fmi.global.enums.SortType;
+import com.fmi.global.util.IpUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;

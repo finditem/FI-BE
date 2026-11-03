@@ -1,8 +1,8 @@
 package com.fmi.domain.chatmessage.web.swagger;
 
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationRequest.TranslateRequestDTO;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.TranslationResponseDTO;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.UsageResponseDTO;
+import com.fmi.domain.chatmessage.web.dto.request.ChatTranslationRequest.TranslateRequest;
+import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.TranslationResponse;
+import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.UsageResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,7 +41,7 @@ public interface ChatTranslationApi {
                 content =
                         @Content(
                                 mediaType = "application/json",
-                                schema = @Schema(implementation = TranslationResponseDTO.class))),
+                                schema = @Schema(implementation = TranslationResponse.class))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
                 description = "TRANSLATION400-TEXT_REQUIRED: 본문이 있는 텍스트 메시지만 번역할 수 있습니다",
@@ -78,8 +78,8 @@ public interface ChatTranslationApi {
         @Parameter(name = "roomId", description = "번역할 메시지가 속한 채팅방의 ID", required = true),
         @Parameter(name = "messageId", description = "번역할 메시지의 ID", required = true)
     })
-    ApiResponse<TranslationResponseDTO> translate(
-            Long roomId, Long messageId, UserDetails userDetails, TranslateRequestDTO request);
+    ApiResponse<TranslationResponse> translate(
+            Long roomId, Long messageId, UserDetails userDetails, TranslateRequest request);
 
     @Operation(
             summary = "오늘의 채팅 번역 사용량 조회",
@@ -91,11 +91,11 @@ public interface ChatTranslationApi {
                 content =
                         @Content(
                                 mediaType = "application/json",
-                                schema = @Schema(implementation = UsageResponseDTO.class))),
+                                schema = @Schema(implementation = UsageResponse.class))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "503",
                 description = "TRANSLATION503-UNAVAILABLE: 번역 상태를 확인할 수 없습니다",
                 content = @Content)
     })
-    ApiResponse<UsageResponseDTO> usage(UserDetails userDetails);
+    ApiResponse<UsageResponse> usage(UserDetails userDetails);
 }

@@ -1,8 +1,7 @@
 package com.fmi.domain.chatroom.service;
 
-import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.*;
+import static com.fmi.domain.chatroom.web.dto.response.ChatRoomResponse.*;
 
-import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
 import com.fmi.domain.chatroom.converter.ChatRoomConverter;
@@ -14,8 +13,8 @@ import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.findcompletion.data.FindCompletion;
 import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.post.data.Post;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
 import com.fmi.domain.review.repository.ReviewRepository;
@@ -24,6 +23,7 @@ import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.service.BlockService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.global.enums.SortType;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +51,7 @@ public class ChatRoomService {
     private final FindCompletionRepository findCompletionRepository;
     private final ReviewRepository reviewRepository;
 
-    public Pair<ChatRoomResultDTO, Boolean> createChatRoom(Long postId, Long contactUserId) {
+    public Pair<ChatRoomResultResponse, Boolean> createChatRoom(Long postId, Long contactUserId) {
 
         Post post =
                 postRepository.findById(postId).orElseThrow(() -> new GeneralException(ErrorStatus._POST_NOT_FOUND));
@@ -82,7 +82,7 @@ public class ChatRoomService {
 
             Long unreadCount = existingRoom.getParticipant(contactUserId).getUnreadCount();
 
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(
+            ChatRoomResultResponse dto = ChatRoomConverter.toChatRoomResultDTO(
                     existingRoom, opponentUser, post, unreadCount, thumbnailImageUrl, isBlocked);
 
             return Pair.of(dto, false);
@@ -110,14 +110,14 @@ public class ChatRoomService {
 
             chatRoomRepository.save(newRoom);
 
-            ChatRoomResultDTO dto = ChatRoomConverter.toChatRoomResultDTO(
+            ChatRoomResultResponse dto = ChatRoomConverter.toChatRoomResultDTO(
                     newRoom, opponentUser, post, 0L, thumbnailImageUrl, isBlocked);
 
             return Pair.of(dto, true);
         }
     }
 
-    public MyChatListDTO getMyPostChatRooms(
+    public MyChatListResponse getMyPostChatRooms(
             User user, Long cursorId, int size, PostType type, String address, SortType sort) {
 
         PageRequest pageable = PageRequest.of(0, size);
@@ -128,7 +128,7 @@ public class ChatRoomService {
         return buildChatListResponse(participantSlice, user);
     }
 
-    private MyChatListDTO buildChatListResponse(Slice<ChatRoomParticipant> participantSlice, User user) {
+    private MyChatListResponse buildChatListResponse(Slice<ChatRoomParticipant> participantSlice, User user) {
         List<ChatRoomParticipant> participants = participantSlice.getContent();
 
         List<Long> postIds = participants.stream()
@@ -140,7 +140,7 @@ public class ChatRoomService {
 
         Map<Long, String> thumbnailMap = postImageService.findThumbnailUrlMap(postIds);
 
-        List<ChatRoomSummaryDTO> summaryDTOs =
+        List<ChatRoomSummaryResponse> summaryDTOs =
                 ChatRoomConverter.toChatRoomSummaryListDTO(participants, user, thumbnailMap);
 
         Long nextCursor = null;
@@ -149,7 +149,7 @@ public class ChatRoomService {
             nextCursor = participants.get(participants.size() - 1).getId();
         }
 
-        return new MyChatListDTO(summaryDTOs, nextCursor);
+        return new MyChatListResponse(summaryDTOs, nextCursor);
     }
 
     public void leaveChatRoom(Long roomId, Long userId) {
@@ -169,7 +169,7 @@ public class ChatRoomService {
         chatRoomParticipant.leftChatRoom(lastMsgId);
     }
 
-    public ChatRoomResultDTO getChatRoomDetail(Long roomId, User user) {
+    public ChatRoomResultResponse getChatRoomDetail(Long roomId, User user) {
         ChatRoom chatRoom = chatRoomRepository
                 .findById(roomId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._CHATROOM_NOT_FOUND));
@@ -181,7 +181,7 @@ public class ChatRoomService {
         boolean isBlocked = blockService.isBlocked(user.getId(), opponent.getId());
 
         FindCompletion completion = findFindCompletion(chatRoom);
-        FindCompletionInfoDTO findCompletion = ChatRoomConverter.toFindCompletionInfoDTO(
+        FindCompletionInfoResponse findCompletion = ChatRoomConverter.toFindCompletionInfoDTO(
                 chatRoom,
                 completion,
                 canComplete(chatRoom, completion, user, opponent, isBlocked),

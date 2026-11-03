@@ -1,5 +1,7 @@
 package com.fmi.domain.review.data;
 
+import com.fmi.domain.review.data.enums.ReviewEmotion;
+import com.fmi.domain.review.data.enums.ReviewHelpType;
 import java.time.LocalDateTime;
 import java.util.Set;
 

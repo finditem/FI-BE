@@ -84,13 +84,21 @@ domain/
 
 ### 업무 모델의 구성
 
-각 업무의 `data`에는 Entity, VO, enum과 순수 Policy를 함께 둡니다. 타입 종류나 파일 개수만으로 `entity`, `vo`, `enums`, `policy` 하위 패키지를 만들지 않습니다. 객체들이 별도의 업무 규칙과 생명주기를 형성하면 하위 업무 패키지 분리를 먼저 검토합니다.
+각 업무의 `data`에는 Entity, VO와 순수 Policy를 두고, Enum은 `data/enums`에 둡니다. 타입 종류나 파일 개수만으로 `entity`, `vo`, `policy` 하위 패키지를 만들지 않습니다. 객체들이 별도의 업무 규칙과 생명주기를 형성하면 하위 업무 패키지 분리를 먼저 검토합니다.
 
 여러 업무에서 사용하더라도 의미를 소유한 업무에 둡니다. 사용처가 많다는 이유로 `global`로 옮기지 않습니다.
 
 ### Enum 배치
 
-도메인 enum은 해당 업무의 `data`에 둡니다. 여러 업무가 동일한 의미로 공유하며 특정 업무에 소유권이 없는 공통 enum은 `global/enums`에 둡니다. 도메인 소유 enum을 다른 업무가 참조한다는 이유로 공통화하지 않습니다.
+도메인 Enum은 해당 업무의 `data/enums`에 둡니다. 여러 업무에서 공통 조회나 처리 기준으로 공유하는 Enum은 `global/enums`에 둡니다. 특정 업무의 상태나 종류를 정의하는 Enum은 다른 업무에서도 참조하더라도 소유 도메인에 둡니다.
+
+배치 기준 예시이며 현재 구현 경로와 다를 수 있습니다.
+
+| Enum | 배치 |
+| --- | --- |
+| `PlaceType` | `domain/place/data/enums` |
+| `LanguageCode` | `domain/user/data/enums` |
+| `SortType` | `global/enums` |
 
 ### 생성 검증과 객체 생성
 

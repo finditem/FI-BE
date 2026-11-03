@@ -25,7 +25,8 @@ service -> domain/<발행 업무>/event        발생한 사실 발행
 src/main/java/com/fmi/
 ├── domain/
 │   ├── post/
-│   │   ├── data/          # Entity, VO, enum, 순수 Policy
+│   │   ├── data/          # Entity, VO, 순수 Policy
+│   │   │   └── enums/     # 도메인 Enum
 │   │   ├── repository/    # JPA와 QueryDSL
 │   │   ├── service/       # 유스케이스와 transaction
 │   │   │   └── internal/  # 필요할 때만 분리

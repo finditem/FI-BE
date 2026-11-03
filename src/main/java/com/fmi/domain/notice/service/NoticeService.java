@@ -7,18 +7,18 @@ import com.fmi.domain.notice.data.enums.NoticeCategory;
 import com.fmi.domain.notice.data.enums.NoticeSortType;
 import com.fmi.domain.notice.repository.NoticeImageRepository;
 import com.fmi.domain.notice.repository.NoticeRepository;
-import com.fmi.domain.notice.web.dto.NoticeCreateRequestDTO;
-import com.fmi.domain.notice.web.dto.NoticeListDTO;
-import com.fmi.domain.notice.web.dto.NoticeMetaResponse;
-import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
-import com.fmi.domain.notice.web.dto.NoticeUpdateRequestDTO;
+import com.fmi.domain.notice.web.dto.request.NoticeCreateRequest;
+import com.fmi.domain.notice.web.dto.request.NoticeUpdateRequest;
+import com.fmi.domain.notice.web.dto.response.NoticeListResponse;
+import com.fmi.domain.notice.web.dto.response.NoticeMetaResponse;
+import com.fmi.domain.notice.web.dto.response.NoticeResponse;
 import com.fmi.domain.noticecomment.repository.NoticeCommentImageRepository;
 import com.fmi.domain.noticecomment.repository.NoticeCommentRepository;
 import com.fmi.domain.noticecommentlike.repository.NoticeCommentLikeRepository;
 import com.fmi.domain.noticelike.data.NoticeLike;
 import com.fmi.domain.noticelike.repository.NoticeLikeRepository;
 import com.fmi.domain.notification.service.NotificationService;
-import com.fmi.domain.post.data.ImageType;
+import com.fmi.domain.post.data.enums.ImageType;
 import com.fmi.domain.user.data.User;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.CursorPageResponse;
@@ -55,7 +55,7 @@ public class NoticeService {
     /**
      * 공지사항 목록 조회 (카테고리/키워드 필터)
      */
-    public Page<NoticeListDTO> getNoticeList(
+    public Page<NoticeListResponse> getNoticeList(
             NoticeCategory category, String keyword, NoticeSortType sortType, Pageable pageable) {
         Page<Notice> notices;
         if (keyword != null && !keyword.isBlank()) {
@@ -115,7 +115,7 @@ public class NoticeService {
     /**
      * 공지사항 목록 조회 (커서 기반)
      */
-    public CursorPageResponse<NoticeListDTO> getNoticeListCursor(
+    public CursorPageResponse<NoticeListResponse> getNoticeListCursor(
             NoticeCategory category, String keyword, NoticeSortType sortType, Long cursor, int size) {
         int fetchSize = size + 1;
         String categoryStr = category != null ? category.name() : null;
@@ -171,7 +171,7 @@ public class NoticeService {
 
         Map<Long, String> finalThumbnailMap = thumbnailMap;
         Map<Long, Long> finalCommentCountMap = commentCountMap;
-        List<NoticeListDTO> responseList = content.stream()
+        List<NoticeListResponse> responseList = content.stream()
                 .map(notice -> noticeConverter.toListDTO(
                         notice,
                         finalThumbnailMap.get(notice.getNoticeId()),
@@ -209,7 +209,7 @@ public class NoticeService {
      * @param userIdentifier 사용자 식별자 (이메일 또는 IP 주소)
      */
     @Transactional
-    public NoticeResponseDTO getNoticeDetail(Long noticeId, String userIdentifier) {
+    public NoticeResponse getNoticeDetail(Long noticeId, String userIdentifier) {
         Notice notice = noticeRepository
                 .findById(noticeId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
@@ -245,7 +245,7 @@ public class NoticeService {
 
         List<NoticeImage> images = noticeImageRepository.findByNotice(notice);
         int commentCount = (int) noticeCommentRepository.countByNoticeNoticeId(noticeId);
-        NoticeResponseDTO response = noticeConverter.toResponseDTO(notice, images, commentCount);
+        NoticeResponse response = noticeConverter.toResponseDTO(notice, images, commentCount);
         // Redis 조회수로 덮어쓰기
         response.setViewCount(currentViewCount.intValue());
 
@@ -268,7 +268,7 @@ public class NoticeService {
      * 공지 생성 (관리자)
      */
     @Transactional
-    public Long createNotice(NoticeCreateRequestDTO request, String authorEmail) {
+    public Long createNotice(NoticeCreateRequest request, String authorEmail) {
         User author = userRepository
                 .findByEmail(authorEmail)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
@@ -305,7 +305,7 @@ public class NoticeService {
      * 공지사항 수정 (관리자)
      */
     @Transactional
-    public NoticeResponseDTO updateNotice(Long noticeId, NoticeUpdateRequestDTO request) {
+    public NoticeResponse updateNotice(Long noticeId, NoticeUpdateRequest request) {
         Notice notice = noticeRepository
                 .findById(noticeId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOTICE_NOT_FOUND));
@@ -398,7 +398,7 @@ public class NoticeService {
     /**
      * 임시저장 공지사항 단건 조회 (관리자용 - 유저당 1건)
      */
-    public NoticeResponseDTO getDraftNotice(String authorEmail) {
+    public NoticeResponse getDraftNotice(String authorEmail) {
         Notice draft = noticeRepository
                 .findFirstByDraftTrueAndAuthorEmailOrderByUpdatedAtDesc(authorEmail)
                 .orElse(null);

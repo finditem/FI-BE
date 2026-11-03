@@ -1,13 +1,13 @@
 package com.fmi.domain.chatroom.converter;
 
-import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.*;
+import static com.fmi.domain.chatroom.web.dto.response.ChatRoomResponse.*;
 
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.findcompletion.data.FindCompletion;
-import com.fmi.domain.findcompletion.data.FindCompletionStatus;
+import com.fmi.domain.findcompletion.data.enums.FindCompletionStatus;
 import com.fmi.domain.post.data.Post;
 import com.fmi.domain.user.data.User;
 import java.util.List;
@@ -16,23 +16,23 @@ import java.util.stream.Collectors;
 
 public class ChatRoomConverter {
 
-    public static ChatRoomResultDTO toChatRoomResultDTO(
+    public static ChatRoomResultResponse toChatRoomResultDTO(
             ChatRoom chatRoom, User user, Post post, Long unreadCount, String thumbnailUrl, boolean isBlocked) {
         return toChatRoomResultDTO(chatRoom, user, post, unreadCount, thumbnailUrl, isBlocked, null);
     }
 
-    public static ChatRoomResultDTO toChatRoomResultDTO(
+    public static ChatRoomResultResponse toChatRoomResultDTO(
             ChatRoom chatRoom,
             User user,
             Post post,
             Long unreadCount,
             String thumbnailUrl,
             boolean isBlocked,
-            FindCompletionInfoDTO findCompletion) {
+            FindCompletionInfoResponse findCompletion) {
 
         var opponentUser = buildOpponentUserDTO(user, isBlocked);
 
-        var postInfo = PostInfoDTO.builder()
+        var postInfo = PostInfoResponse.builder()
                 .postId(post.getId())
                 .postType(post.getPostType())
                 .category(post.getCategory())
@@ -43,7 +43,7 @@ public class ChatRoomConverter {
                 .deleted(post.isDeleted())
                 .build();
 
-        return ChatRoomResultDTO.builder()
+        return ChatRoomResultResponse.builder()
                 .roomId(chatRoom.getId())
                 .unreadCount(unreadCount)
                 .opponentUser(opponentUser)
@@ -52,16 +52,16 @@ public class ChatRoomConverter {
                 .build();
     }
 
-    public static ChatRoomResultDTO toChatRoomResultDTOFromSnapshot(
+    public static ChatRoomResultResponse toChatRoomResultDTOFromSnapshot(
             ChatRoom chatRoom,
             User opponent,
             Long unreadCount,
             boolean isBlocked,
-            FindCompletionInfoDTO findCompletion) {
+            FindCompletionInfoResponse findCompletion) {
 
         var opponentUser = buildOpponentUserDTO(opponent, isBlocked);
 
-        var postInfo = PostInfoDTO.builder()
+        var postInfo = PostInfoResponse.builder()
                 .postId(chatRoom.getSourcePostId())
                 .postType(chatRoom.getSourcePostType())
                 .category(chatRoom.getSourceCategory())
@@ -72,7 +72,7 @@ public class ChatRoomConverter {
                 .deleted(true)
                 .build();
 
-        return ChatRoomResultDTO.builder()
+        return ChatRoomResultResponse.builder()
                 .roomId(chatRoom.getId())
                 .unreadCount(unreadCount)
                 .opponentUser(opponentUser)
@@ -81,29 +81,29 @@ public class ChatRoomConverter {
                 .build();
     }
 
-    public static FindCompletionInfoDTO toFindCompletionInfoDTO(
+    public static FindCompletionInfoResponse toFindCompletionInfoDTO(
             ChatRoom chatRoom, FindCompletion findCompletion, boolean canComplete, boolean canWriteReview) {
         if (findCompletion == null) {
-            return FindCompletionInfoDTO.builder()
+            return FindCompletionInfoResponse.builder()
                     .status(FindCompletionStatus.NONE)
                     .canComplete(canComplete)
                     .build();
         }
 
         if (findCompletion.isCompletedIn(chatRoom.getId())) {
-            return FindCompletionInfoDTO.builder()
+            return FindCompletionInfoResponse.builder()
                     .status(FindCompletionStatus.COMPLETED_HERE)
                     .findCompletionId(findCompletion.getId())
                     .canWriteReview(canWriteReview)
                     .build();
         }
 
-        return FindCompletionInfoDTO.builder()
+        return FindCompletionInfoResponse.builder()
                 .status(FindCompletionStatus.COMPLETED_ELSEWHERE)
                 .build();
     }
 
-    public static List<ChatRoomSummaryDTO> toChatRoomSummaryListDTO(
+    public static List<ChatRoomSummaryResponse> toChatRoomSummaryListDTO(
             List<ChatRoomParticipant> participants, User currentUser, Map<Long, String> thumbnailMap) {
         return participants.stream()
                 .map(pt -> {
@@ -114,17 +114,17 @@ public class ChatRoomConverter {
                 .collect(Collectors.toList());
     }
 
-    public static ChatRoomSummaryDTO toChatRoomSummaryDTO(
+    public static ChatRoomSummaryResponse toChatRoomSummaryDTO(
             ChatRoomParticipant participant, User contactUser, Map<Long, String> thumbnailMap) {
 
-        ContactUserDTO contactUserDTO = buildContactUserDTO(contactUser);
+        ContactUserResponse contactUserDTO = buildContactUserDTO(contactUser);
 
         ChatRoom room = participant.getChatRoom();
 
-        PostInfoDTO postInfoDTO;
+        PostInfoResponse postInfoDTO;
         if (!room.isSourcePostDeleted() && room.getPost() != null) {
             Post post = room.getPost();
-            postInfoDTO = PostInfoDTO.builder()
+            postInfoDTO = PostInfoResponse.builder()
                     .postId(post.getId())
                     .postType(post.getPostType())
                     .category(post.getCategory())
@@ -135,7 +135,7 @@ public class ChatRoomConverter {
                     .deleted(false)
                     .build();
         } else {
-            postInfoDTO = PostInfoDTO.builder()
+            postInfoDTO = PostInfoResponse.builder()
                     .postId(room.getSourcePostId())
                     .postType(room.getSourcePostType())
                     .category(room.getSourceCategory())
@@ -156,7 +156,7 @@ public class ChatRoomConverter {
             messageType = lastMessage.getMessageType();
         }
 
-        return ChatRoomSummaryDTO.builder()
+        return ChatRoomSummaryResponse.builder()
                 .roomId(participant.getChatRoom().getId())
                 .contactUser(contactUserDTO)
                 .postInfo(postInfoDTO)
@@ -171,11 +171,11 @@ public class ChatRoomConverter {
         return message.getMessageType() == MessageType.IMAGE;
     }
 
-    private static ContactUserDTO buildContactUserDTO(User user) {
+    private static ContactUserResponse buildContactUserDTO(User user) {
         boolean withdrawn = user.getDeletedAt() != null;
 
         if (withdrawn) {
-            return ContactUserDTO.builder()
+            return ContactUserResponse.builder()
                     .userId(user.getId())
                     .nickname(null)
                     .profileImageUrl(null)
@@ -183,7 +183,7 @@ public class ChatRoomConverter {
                     .build();
         }
 
-        return ContactUserDTO.builder()
+        return ContactUserResponse.builder()
                 .userId(user.getId())
                 .nickname(user.getNickname())
                 .profileImageUrl(user.getProfile_img())
@@ -191,12 +191,11 @@ public class ChatRoomConverter {
                 .build();
     }
 
-    private static opponentUserDTO buildOpponentUserDTO(User user, boolean isBlocked) {
+    private static OpponentUserResponse buildOpponentUserDTO(User user, boolean isBlocked) {
         boolean withdrawn = user.getDeletedAt() != null;
 
         if (withdrawn) {
-            return opponentUserDTO
-                    .builder()
+            return OpponentUserResponse.builder()
                     .opponentUserId(user.getId())
                     .nickname(null)
                     .profileImageUrl(null)
@@ -206,8 +205,7 @@ public class ChatRoomConverter {
                     .build();
         }
 
-        return opponentUserDTO
-                .builder()
+        return OpponentUserResponse.builder()
                 .opponentUserId(user.getId())
                 .nickname(user.getNickname())
                 .profileImageUrl(user.getProfile_img())

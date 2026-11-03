@@ -1,13 +1,13 @@
 package com.fmi.domain.chatmessage.web.controller;
 
-import static com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO.SendMessageRequestDTO;
+import static com.fmi.domain.chatmessage.web.dto.request.ChatMessageRequest.SendMessageRequest;
 
 import com.fmi.domain.chatmessage.service.ChatMessageService;
-import com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO;
+import com.fmi.domain.chatmessage.web.dto.response.ChatMessageResponse;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.service.UserQueryService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
-import com.fmi.service.UserQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -38,7 +38,7 @@ public class ChatMessageController {
 
     @MessageMapping("/chats/{roomId}/send")
     public void sendMessage(
-            @DestinationVariable Long roomId, Principal principal, @Payload SendMessageRequestDTO requestDTO) {
+            @DestinationVariable Long roomId, Principal principal, @Payload SendMessageRequest requestDTO) {
         Long userId = Long.parseLong(principal.getName());
         log.info("메세지 보낸 userId = {}", userId);
         chatMessageService.sendMessage(roomId, userId, requestDTO);
@@ -86,13 +86,13 @@ public class ChatMessageController {
         @Parameter(name = "cursor", description = "이전 페이지 응답의 nextCursor 값. 첫 페이지 조회 시 생략.", required = false)
     })
     @GetMapping("/{roomId}/messages")
-    public ApiResponse<ChatMessageResponseDTO.MessageSliceResponseDTO> listMessages(
+    public ApiResponse<ChatMessageResponse.MessageSliceResponse> listMessages(
             @PathVariable Long roomId,
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long cursor) {
         String email = userDetails.getUsername();
         User user = userService.findUser(email);
-        ChatMessageResponseDTO.MessageSliceResponseDTO messageSliceResponseDTO =
+        ChatMessageResponse.MessageSliceResponse messageSliceResponseDTO =
                 chatMessageService.messageSlice(roomId, user.getId(), cursor);
         return ApiResponse.of(SuccessStatus._MESSAGE_LIST_FETCHED, messageSliceResponseDTO);
     }

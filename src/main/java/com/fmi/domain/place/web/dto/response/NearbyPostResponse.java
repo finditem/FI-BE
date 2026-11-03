@@ -1,10 +1,10 @@
 package com.fmi.domain.place.web.dto.response;
 
-import com.fmi.domain.Enum.Category;
 import com.fmi.domain.map.web.dto.response.MapPostPageResponse;
 import com.fmi.domain.map.web.dto.response.MapPostResponse;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;

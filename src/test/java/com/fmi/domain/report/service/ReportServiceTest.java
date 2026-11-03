@@ -5,7 +5,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
 import com.fmi.domain.comment.repository.CommentRepository;
@@ -18,8 +17,9 @@ import com.fmi.domain.report.data.enums.ReportType;
 import com.fmi.domain.report.repository.ReportAnswerImageRepository;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.report.service.internal.ReportEmailNotifier;
-import com.fmi.domain.report.web.dto.request.ReportCreateRequestDTO;
+import com.fmi.domain.report.web.dto.request.ReportCreateRequest;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.domain.userblock.service.BlockService;
 import java.util.Optional;
@@ -109,8 +109,7 @@ class ReportServiceTest {
     @DisplayName("채팅 신고 시 상대방이 자동으로 차단된다")
     void createReport_chat_autoBlocksOpponent() {
         // given
-        ReportCreateRequestDTO request =
-                new ReportCreateRequestDTO(ReportTargetType.CHAT, 10L, ReportType.SPAM, "스팸 메시지");
+        ReportCreateRequest request = new ReportCreateRequest(ReportTargetType.CHAT, 10L, ReportType.SPAM, "스팸 메시지");
 
         given(userRepository.findByEmail(reporter.getEmail())).willReturn(Optional.of(reporter));
         given(reportRepository.findByReporterAndTargetTypeAndTargetId(reporter, ReportTargetType.CHAT, 10L))
@@ -137,8 +136,7 @@ class ReportServiceTest {
     @DisplayName("채팅 외 신고(게시글)는 자동 차단이 발생하지 않는다")
     void createReport_nonChat_doesNotBlock() {
         // given
-        ReportCreateRequestDTO request =
-                new ReportCreateRequestDTO(ReportTargetType.POST, 99L, ReportType.SPAM, "스팸 게시글");
+        ReportCreateRequest request = new ReportCreateRequest(ReportTargetType.POST, 99L, ReportType.SPAM, "스팸 게시글");
 
         given(userRepository.findByEmail(reporter.getEmail())).willReturn(Optional.of(reporter));
         given(reportRepository.findByReporterAndTargetTypeAndTargetId(reporter, ReportTargetType.POST, 99L))

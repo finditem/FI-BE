@@ -1,10 +1,10 @@
 package com.fmi.domain.review.web.dto.response;
 
-import com.fmi.domain.review.data.ReviewEmotion;
-import com.fmi.domain.review.data.ReviewHelpType;
 import com.fmi.domain.review.data.ReviewPage;
 import com.fmi.domain.review.data.ReviewSummary;
 import com.fmi.domain.review.data.ReviewUser;
+import com.fmi.domain.review.data.enums.ReviewEmotion;
+import com.fmi.domain.review.data.enums.ReviewHelpType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.List;

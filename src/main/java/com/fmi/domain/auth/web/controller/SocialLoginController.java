@@ -1,14 +1,14 @@
 package com.fmi.domain.auth.web.controller;
 
-import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.auth.data.IssuedTokens;
 import com.fmi.domain.auth.data.SocialLoginCommand;
+import com.fmi.domain.auth.data.enums.Provider;
 import com.fmi.domain.auth.security.cookie.AuthCookieFactory;
 import com.fmi.domain.auth.service.SocialLoginService;
 import com.fmi.domain.auth.service.TokenService;
-import com.fmi.domain.auth.web.dto.AppleLoginRequest;
-import com.fmi.domain.auth.web.dto.KakaoLoginRequest;
-import com.fmi.domain.auth.web.response.LoginResponse;
+import com.fmi.domain.auth.web.dto.request.AppleLoginRequest;
+import com.fmi.domain.auth.web.dto.request.KakaoLoginRequest;
+import com.fmi.domain.auth.web.dto.response.LoginResponse;
 import com.fmi.domain.auth.web.swagger.KakaoAuthSwagger;
 import com.fmi.domain.user.data.User;
 import com.fmi.external.oauth.apple.AppleOAuthClient;

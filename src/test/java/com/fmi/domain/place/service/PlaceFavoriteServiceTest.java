@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.place.data.FavoritePlacePage;
 import com.fmi.domain.place.data.Place;
 import com.fmi.domain.place.data.PlaceBusinessHour;
@@ -17,6 +16,7 @@ import com.fmi.domain.place.exception.PlaceErrorStatus;
 import com.fmi.domain.place.repository.PlaceFavoriteRepository;
 import com.fmi.domain.place.repository.PlaceRepository;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.support.IntegrationTestSupport;

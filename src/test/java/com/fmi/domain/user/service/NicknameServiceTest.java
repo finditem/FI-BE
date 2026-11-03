@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import com.fmi.domain.user.service.internal.NicknameValidator;
-import com.fmi.domain.user.web.response.CheckResponse;
+import com.fmi.domain.user.web.dto.response.CheckResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

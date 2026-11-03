@@ -1,6 +1,6 @@
 package com.fmi.domain.user.web.controller;
 
-import com.fmi.domain.Enum.Category;
+import com.fmi.domain.post.data.enums.Category;
 import com.fmi.domain.user.service.UserCategoryService;
 import com.fmi.domain.user.web.dto.response.UserCategoryResponse;
 import com.fmi.domain.user.web.swagger.UserCategorySwagger;

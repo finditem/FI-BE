@@ -1,17 +1,17 @@
 package com.fmi.domain.chatroom.web.controller;
 
-import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResultDTO;
-import static com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.MyChatListDTO;
+import static com.fmi.domain.chatroom.web.dto.response.ChatRoomResponse.ChatRoomResultResponse;
+import static com.fmi.domain.chatroom.web.dto.response.ChatRoomResponse.MyChatListResponse;
 
-import com.fmi.domain.Enum.SortType;
 import com.fmi.domain.chatmessage.service.ChatNotificationService;
 import com.fmi.domain.chatroom.service.ChatRoomPresenceService;
 import com.fmi.domain.chatroom.service.ChatRoomService;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.service.UserQueryService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.SuccessStatus;
-import com.fmi.service.UserQueryService;
+import com.fmi.global.enums.SortType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -55,13 +55,13 @@ public class ChatRoomController {
                 description = "POST_NOT_FOUND: 존재하지 않는 게시글입니다."),
     })
     @PostMapping("/posts/{postId}/chats")
-    public ResponseEntity<ApiResponse<ChatRoomResultDTO>> createChatRoom(
+    public ResponseEntity<ApiResponse<ChatRoomResultResponse>> createChatRoom(
             @PathVariable("postId") Long postId, @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
         User user = userService.findUser(email);
-        Pair<ChatRoomResultDTO, Boolean> result = chatRoomService.createChatRoom(postId, user.getId());
+        Pair<ChatRoomResultResponse, Boolean> result = chatRoomService.createChatRoom(postId, user.getId());
 
-        ChatRoomResultDTO responseDTO = result.getFirst();
+        ChatRoomResultResponse responseDTO = result.getFirst();
         boolean isNew = result.getSecond();
 
         if (isNew) {
@@ -89,7 +89,7 @@ public class ChatRoomController {
         @Parameter(name = "sort", description = "최신순/오래된순(LATEST/OLDEST) 정렬. 기본값 : 최신순(LATEST)", required = false),
     })
     @GetMapping("/users/me/chats")
-    public ApiResponse<MyChatListDTO> getMyPostChatRooms(
+    public ApiResponse<MyChatListResponse> getMyPostChatRooms(
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(name = "type", required = false) PostType type,
@@ -98,7 +98,7 @@ public class ChatRoomController {
             @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.findUser(userDetails.getUsername());
 
-        MyChatListDTO responseDTO = chatRoomService.getMyPostChatRooms(user, cursor, size, type, address, sort);
+        MyChatListResponse responseDTO = chatRoomService.getMyPostChatRooms(user, cursor, size, type, address, sort);
         return ApiResponse.of(SuccessStatus._CHATROOM_LIST_FETCHED, responseDTO);
     }
 
@@ -136,12 +136,12 @@ public class ChatRoomController {
                 description = "CHATROOM_NOT_FOUND: 존재하지 않는 채팅방입니다.")
     })
     @GetMapping("/chats/{roomId}")
-    public ApiResponse<ChatRoomResultDTO> getChatRoomDetail(
+    public ApiResponse<ChatRoomResultResponse> getChatRoomDetail(
             @PathVariable("roomId") Long roomId, @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
         User user = userService.findUser(email);
 
-        ChatRoomResultDTO responseDTO = chatRoomService.getChatRoomDetail(roomId, user);
+        ChatRoomResultResponse responseDTO = chatRoomService.getChatRoomDetail(roomId, user);
 
         return ApiResponse.of(SuccessStatus._CHATROOM_FOUND, responseDTO);
     }

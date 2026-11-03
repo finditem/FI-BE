@@ -9,8 +9,8 @@ import static org.mockito.Mockito.times;
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
-import com.fmi.domain.chatmessage.web.dto.ChatMessageRequestDTO;
-import com.fmi.domain.chatmessage.web.dto.ChatMessageResponseDTO;
+import com.fmi.domain.chatmessage.web.dto.request.ChatMessageRequest;
+import com.fmi.domain.chatmessage.web.dto.response.ChatMessageResponse;
 import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
@@ -110,7 +110,7 @@ class ChatMessageServiceTest {
         given(mockRoom.getOtherParticipant(1L)).willReturn(recipient);
 
         // when
-        chatMessageService.sendMessage(123L, 1L, new ChatMessageRequestDTO.SendMessageRequestDTO("테스트 메세지"));
+        chatMessageService.sendMessage(123L, 1L, new ChatMessageRequest.SendMessageRequest("테스트 메세지"));
 
         // then
         assertThat(recipientPt.getUnreadCount()).isEqualTo(1);
@@ -118,7 +118,7 @@ class ChatMessageServiceTest {
         then(broker)
                 .should(times(1))
                 .convertAndSendToUser(
-                        eq("2"), eq("/queue/list-updates"), any(ChatMessageResponseDTO.ListUpdateDTO.class));
+                        eq("2"), eq("/queue/list-updates"), any(ChatMessageResponse.ListUpdateResponse.class));
     }
 
     @Test
@@ -138,7 +138,7 @@ class ChatMessageServiceTest {
         given(mockRoom.getOtherParticipant(1L)).willReturn(recipient);
 
         // when
-        chatMessageService.sendMessage(123L, 1L, new ChatMessageRequestDTO.SendMessageRequestDTO("테스트 메시지"));
+        chatMessageService.sendMessage(123L, 1L, new ChatMessageRequest.SendMessageRequest("테스트 메시지"));
 
         // then
         // unreadCount가 0으로 유지되었는지 확인
@@ -150,12 +150,12 @@ class ChatMessageServiceTest {
                 .convertAndSendToUser(
                         eq("1"), // 메세지 보낸 사람에게
                         eq("/queue/read-receipts"), // 읽음 전송
-                        any(ChatMessageResponseDTO.ReadReceiptDTO.class));
+                        any(ChatMessageResponse.ReadReceiptResponse.class));
 
         then(broker)
                 .should(times(1))
                 .convertAndSendToUser(
-                        eq("2"), eq("/queue/list-updates"), any(ChatMessageResponseDTO.ListUpdateDTO.class));
+                        eq("2"), eq("/queue/list-updates"), any(ChatMessageResponse.ListUpdateResponse.class));
     }
 
     @Test

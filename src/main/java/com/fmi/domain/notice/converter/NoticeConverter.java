@@ -2,21 +2,21 @@ package com.fmi.domain.notice.converter;
 
 import com.fmi.domain.notice.data.Notice;
 import com.fmi.domain.notice.data.NoticeImage;
-import com.fmi.domain.notice.web.dto.NoticeListDTO;
-import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
-import com.fmi.domain.post.data.ImageType;
+import com.fmi.domain.notice.web.dto.response.NoticeListResponse;
+import com.fmi.domain.notice.web.dto.response.NoticeResponse;
+import com.fmi.domain.post.data.enums.ImageType;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
 public class NoticeConverter {
 
-    public NoticeListDTO toListDTO(Notice notice, String thumbnailUrl, boolean isHot, int commentCount) {
+    public NoticeListResponse toListDTO(Notice notice, String thumbnailUrl, boolean isHot, int commentCount) {
         String summary = notice.getContent() != null && notice.getContent().length() > 100
                 ? notice.getContent().substring(0, 100) + "..."
                 : notice.getContent();
 
-        return NoticeListDTO.builder()
+        return NoticeListResponse.builder()
                 .noticeId(notice.getNoticeId())
                 .title(notice.getTitle())
                 .category(notice.getCategory())
@@ -32,27 +32,27 @@ public class NoticeConverter {
                 .build();
     }
 
-    public NoticeListDTO toListDTO(Notice notice, String thumbnailUrl) {
+    public NoticeListResponse toListDTO(Notice notice, String thumbnailUrl) {
         return toListDTO(notice, thumbnailUrl, false, 0);
     }
 
-    public NoticeListDTO toListDTO(Notice notice) {
+    public NoticeListResponse toListDTO(Notice notice) {
         return toListDTO(notice, null, false, 0);
     }
 
-    public NoticeResponseDTO toResponseDTO(Notice notice) {
+    public NoticeResponse toResponseDTO(Notice notice) {
         return toResponseDTO(notice, List.of());
     }
 
-    public NoticeResponseDTO toResponseDTO(Notice notice, List<NoticeImage> images) {
+    public NoticeResponse toResponseDTO(Notice notice, List<NoticeImage> images) {
         return toResponseDTO(notice, images, 0, false);
     }
 
-    public NoticeResponseDTO toResponseDTO(Notice notice, List<NoticeImage> images, int commentCount) {
+    public NoticeResponse toResponseDTO(Notice notice, List<NoticeImage> images, int commentCount) {
         return toResponseDTO(notice, images, commentCount, false);
     }
 
-    public NoticeResponseDTO toResponseDTO(Notice notice, List<NoticeImage> images, int commentCount, boolean isHot) {
+    public NoticeResponse toResponseDTO(Notice notice, List<NoticeImage> images, int commentCount, boolean isHot) {
         List<String> imageUrls = images.stream().map(NoticeImage::getImgUrl).toList();
 
         String thumbnailUrl = images.stream()
@@ -61,7 +61,7 @@ public class NoticeConverter {
                 .findFirst()
                 .orElse(imageUrls.isEmpty() ? null : imageUrls.get(0));
 
-        return NoticeResponseDTO.builder()
+        return NoticeResponse.builder()
                 .noticeId(notice.getNoticeId())
                 .title(notice.getTitle())
                 .content(notice.getContent())

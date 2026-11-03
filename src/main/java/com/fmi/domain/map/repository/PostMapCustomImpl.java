@@ -1,9 +1,12 @@
 package com.fmi.domain.map.repository;
 
-import com.fmi.domain.Enum.Category;
-import com.fmi.domain.map.enums.MapLevel;
+import com.fmi.domain.map.data.enums.MapLevel;
 import com.fmi.domain.map.web.dto.response.*;
 import com.fmi.domain.post.data.*;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.ImageType;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;

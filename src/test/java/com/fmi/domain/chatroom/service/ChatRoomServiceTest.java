@@ -9,13 +9,13 @@ import com.fmi.domain.chatroom.data.ChatRoom;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.chatroom.repository.ChatRoomRepository;
-import com.fmi.domain.chatroom.web.dto.ChatRoomResponseDTO.ChatRoomResultDTO;
+import com.fmi.domain.chatroom.web.dto.response.ChatRoomResponse.ChatRoomResultResponse;
 import com.fmi.domain.findcompletion.data.FindCompletion;
-import com.fmi.domain.findcompletion.data.FindCompletionStatus;
+import com.fmi.domain.findcompletion.data.enums.FindCompletionStatus;
 import com.fmi.domain.findcompletion.repository.FindCompletionRepository;
 import com.fmi.domain.post.data.Post;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.post.repository.PostRepository;
 import com.fmi.domain.post.service.PostImageService;
 import com.fmi.domain.review.repository.ReviewRepository;
@@ -102,7 +102,7 @@ class ChatRoomServiceTest {
         given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(true);
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getOpponentUser().isBlocked()).isTrue();
@@ -116,7 +116,7 @@ class ChatRoomServiceTest {
         given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(false);
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getOpponentUser().isBlocked()).isFalse();
@@ -130,7 +130,7 @@ class ChatRoomServiceTest {
         given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.empty());
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().getStatus()).isEqualTo(FindCompletionStatus.NONE);
@@ -148,7 +148,7 @@ class ChatRoomServiceTest {
         given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().getStatus()).isEqualTo(FindCompletionStatus.COMPLETED_HERE);
@@ -166,7 +166,7 @@ class ChatRoomServiceTest {
         given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().getStatus()).isEqualTo(FindCompletionStatus.COMPLETED_ELSEWHERE);
@@ -186,7 +186,7 @@ class ChatRoomServiceTest {
         given(reviewRepository.existsByFindCompletionId(5L)).willReturn(false);
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().isCanWriteReview()).isTrue();
@@ -205,7 +205,7 @@ class ChatRoomServiceTest {
         given(reviewRepository.existsByFindCompletionId(5L)).willReturn(true);
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().isCanWriteReview()).isFalse();
@@ -223,7 +223,7 @@ class ChatRoomServiceTest {
         given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().isCanWriteReview()).isFalse();
@@ -248,7 +248,7 @@ class ChatRoomServiceTest {
         given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().isCanWriteReview()).isFalse();
@@ -267,7 +267,7 @@ class ChatRoomServiceTest {
         given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(true);
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().isCanWriteReview()).isFalse();
@@ -284,7 +284,7 @@ class ChatRoomServiceTest {
         given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.empty());
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().isCanComplete()).isTrue();
@@ -301,7 +301,7 @@ class ChatRoomServiceTest {
         given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.empty());
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().isCanComplete()).isFalse();
@@ -319,7 +319,7 @@ class ChatRoomServiceTest {
         given(blockService.isBlocked(currentUser.getId(), opponent.getId())).willReturn(true);
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().isCanComplete()).isFalse();
@@ -339,7 +339,7 @@ class ChatRoomServiceTest {
         given(findCompletionRepository.findBySourcePostId(99L)).willReturn(Optional.of(findCompletion));
 
         // when
-        ChatRoomResultDTO result = chatRoomService.getChatRoomDetail(10L, currentUser);
+        ChatRoomResultResponse result = chatRoomService.getChatRoomDetail(10L, currentUser);
 
         // then
         assertThat(result.getFindCompletion().isCanComplete()).isFalse();

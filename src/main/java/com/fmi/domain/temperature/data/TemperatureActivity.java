@@ -1,5 +1,6 @@
 package com.fmi.domain.temperature.data;
 
+import com.fmi.domain.temperature.data.enums.TemperatureActivityType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

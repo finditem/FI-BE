@@ -1,9 +1,9 @@
 package com.fmi.domain.inquirycomment.web.controller;
 
-import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
-import com.fmi.domain.inquirycomment.response.InquiryCommentSliceResponse;
 import com.fmi.domain.inquirycomment.service.InquiryCommentService;
-import com.fmi.domain.inquirycomment.web.dto.CreateInquiryCommentDto;
+import com.fmi.domain.inquirycomment.web.dto.request.InquiryCommentCreateRequest;
+import com.fmi.domain.inquirycomment.web.dto.response.InquiryCommentResponse;
+import com.fmi.domain.inquirycomment.web.dto.response.InquiryCommentSliceResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -40,7 +40,7 @@ public class InquiryCommentController {
                 description = "INQUIRY404-NOT_FOUND: 존재하지 않는 문의입니다")
     })
     public ResponseEntity<ApiResponse<InquiryCommentResponse>> createComment(
-            @RequestPart("comment") CreateInquiryCommentDto request,
+            @RequestPart("comment") InquiryCommentCreateRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long inquiryId) {
@@ -82,7 +82,7 @@ public class InquiryCommentController {
                 description = "COMMENT404-NOT_FOUND: 존재하지 않는 댓글입니다")
     })
     public ResponseEntity<ApiResponse<InquiryCommentResponse>> updateComment(
-            @RequestPart("comment") CreateInquiryCommentDto request,
+            @RequestPart("comment") InquiryCommentCreateRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long inquiryId,

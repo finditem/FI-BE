@@ -1,6 +1,6 @@
 package com.fmi.domain.review.web.dto.request;
 
-import com.fmi.domain.review.data.ReviewListType;
+import com.fmi.domain.review.data.enums.ReviewListType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

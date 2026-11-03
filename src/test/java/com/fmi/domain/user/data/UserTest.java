@@ -3,9 +3,9 @@ package com.fmi.domain.user.data;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.fmi.domain.Enum.LanguageCode;
-import com.fmi.domain.Enum.Role;
-import com.fmi.domain.Enum.WithdrawalReason;
+import com.fmi.domain.auth.data.enums.WithdrawalReason;
+import com.fmi.domain.user.data.enums.LanguageCode;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.time.LocalDateTime;

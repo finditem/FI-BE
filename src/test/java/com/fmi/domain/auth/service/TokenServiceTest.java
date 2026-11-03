@@ -9,15 +9,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.fmi.domain.Enum.Provider;
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.data.IssuedTokens;
 import com.fmi.domain.auth.data.SocialAccounts;
+import com.fmi.domain.auth.data.enums.Provider;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
 import com.fmi.domain.auth.security.token.RefreshTokenStore;
 import com.fmi.domain.auth.service.internal.TokenIssuer;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

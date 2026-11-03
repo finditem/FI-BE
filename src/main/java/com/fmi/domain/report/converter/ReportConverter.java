@@ -1,9 +1,9 @@
 package com.fmi.domain.report.converter;
 
 import com.fmi.domain.report.data.Report;
-import com.fmi.domain.report.web.dto.response.ReportDetailDTO;
-import com.fmi.domain.report.web.dto.response.ReportListDTO;
-import com.fmi.domain.report.web.dto.response.ReportResponseDTO;
+import com.fmi.domain.report.web.dto.response.ReportDetailResponse;
+import com.fmi.domain.report.web.dto.response.ReportListResponse;
+import com.fmi.domain.report.web.dto.response.ReportResponse;
 import com.fmi.domain.user.data.User;
 import java.util.Collections;
 import java.util.List;
@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ReportConverter {
 
-    public ReportListDTO toListDTO(Report report, String targetTitle) {
-        return ReportListDTO.builder()
+    public ReportListResponse toListDTO(Report report, String targetTitle) {
+        return ReportListResponse.builder()
                 .nickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
                 .reportId(report.getReportId())
                 .targetType(report.getTargetType())
@@ -28,9 +28,9 @@ public class ReportConverter {
                 .build();
     }
 
-    public ReportDetailDTO toDetailDTO(Report report, String targetTitle) {
+    public ReportDetailResponse toDetailDTO(Report report, String targetTitle) {
         User admin = report.getAdmin();
-        return ReportDetailDTO.builder()
+        return ReportDetailResponse.builder()
                 .nickname(report.getReporter() != null ? report.getReporter().getNickname() : null)
                 .reportId(report.getReportId())
                 .targetType(report.getTargetType())
@@ -48,9 +48,9 @@ public class ReportConverter {
                 .build();
     }
 
-    public ReportResponseDTO toResponseDTO(Report report, String targetTitle, List<String> answerImageUrls) {
+    public ReportResponse toResponseDTO(Report report, String targetTitle, List<String> answerImageUrls) {
         User admin = report.getAdmin();
-        return ReportResponseDTO.builder()
+        return ReportResponse.builder()
                 .reportId(report.getReportId())
                 .targetType(report.getTargetType())
                 .targetId(report.getTargetId())

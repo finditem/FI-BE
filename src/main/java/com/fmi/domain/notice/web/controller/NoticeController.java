@@ -3,9 +3,9 @@ package com.fmi.domain.notice.web.controller;
 import com.fmi.domain.notice.data.enums.NoticeCategory;
 import com.fmi.domain.notice.data.enums.NoticeSortType;
 import com.fmi.domain.notice.service.NoticeService;
-import com.fmi.domain.notice.web.dto.NoticeListDTO;
-import com.fmi.domain.notice.web.dto.NoticeMetaResponse;
-import com.fmi.domain.notice.web.dto.NoticeResponseDTO;
+import com.fmi.domain.notice.web.dto.response.NoticeListResponse;
+import com.fmi.domain.notice.web.dto.response.NoticeMetaResponse;
+import com.fmi.domain.notice.web.dto.response.NoticeResponse;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.user.repository.UserRepository;
@@ -48,7 +48,7 @@ public class NoticeController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "공지사항 목록 조회 성공")
     })
-    public ApiResponse<CursorPageResponse<NoticeListDTO>> getNoticeList(
+    public ApiResponse<CursorPageResponse<NoticeListResponse>> getNoticeList(
             @RequestParam(required = false) NoticeCategory category,
             @RequestParam(required = false) String keyword,
             @Parameter(description = "정렬 기준 (LATEST=최신순, OLDEST=오래된순, MOST_VIEWED=조회많은순)")
@@ -57,7 +57,7 @@ public class NoticeController {
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size) {
 
-        CursorPageResponse<NoticeListDTO> notices =
+        CursorPageResponse<NoticeListResponse> notices =
                 noticeService.getNoticeListCursor(category, keyword, sortType, cursor, size);
         return ApiResponse.onSuccess(notices);
     }
@@ -98,7 +98,7 @@ public class NoticeController {
                                                 value =
                                                         "{\"isSuccess\": false, \"code\": \"NOTICE404-NOT_FOUND\", \"message\": \"존재하지 않는 공지사항입니다.\"}")))
     })
-    public ApiResponse<NoticeResponseDTO> getNoticeDetail(@PathVariable Long noticeId, HttpServletRequest request) {
+    public ApiResponse<NoticeResponse> getNoticeDetail(@PathVariable Long noticeId, HttpServletRequest request) {
 
         // 사용자 식별자 추출
         String userIdentifier;
@@ -115,7 +115,7 @@ public class NoticeController {
             userIdentifier = getClientIpAddress(request);
         }
 
-        NoticeResponseDTO notice = noticeService.getNoticeDetail(noticeId, userIdentifier);
+        NoticeResponse notice = noticeService.getNoticeDetail(noticeId, userIdentifier);
 
         UserDetails userDetails = (authentication != null && authentication.getPrincipal() instanceof UserDetails)
                 ? (UserDetails) authentication.getPrincipal()

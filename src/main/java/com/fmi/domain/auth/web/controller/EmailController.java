@@ -2,9 +2,9 @@ package com.fmi.domain.auth.web.controller;
 
 import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.service.SignupEmailVerificationService;
-import com.fmi.domain.auth.web.dto.EmailSendRequest;
-import com.fmi.domain.auth.web.dto.EmailVerifyRequest;
-import com.fmi.domain.auth.web.response.EmailVerifyResponse;
+import com.fmi.domain.auth.web.dto.request.EmailSendRequest;
+import com.fmi.domain.auth.web.dto.request.EmailVerifyRequest;
+import com.fmi.domain.auth.web.dto.response.EmailVerifyResponse;
 import com.fmi.domain.auth.web.swagger.EmailSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;

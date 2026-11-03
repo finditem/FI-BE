@@ -2,11 +2,14 @@ package com.fmi.domain.post.service;
 
 import static org.assertj.core.api.Assertions.*;
 
-import com.fmi.domain.Enum.*;
 import com.fmi.domain.post.data.*;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostType;
+import com.fmi.domain.post.data.enums.Radius;
 import com.fmi.domain.post.repository.*;
 import com.fmi.domain.post.web.dto.request.*;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.exception.GeneralException;

@@ -1,15 +1,15 @@
 package com.fmi.domain.chatmessage.service;
 
-import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.chatmessage.data.ChatMessage;
 import com.fmi.domain.chatmessage.data.enums.MessageType;
 import com.fmi.domain.chatmessage.repository.ChatMessageRepository;
 import com.fmi.domain.chatroom.data.ChatRoomParticipant;
 import com.fmi.domain.chatroom.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.LanguageCode;
+import com.fmi.domain.user.service.UserQueryService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

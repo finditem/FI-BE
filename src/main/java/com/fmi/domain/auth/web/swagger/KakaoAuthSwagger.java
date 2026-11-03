@@ -1,7 +1,7 @@
 package com.fmi.domain.auth.web.swagger;
 
-import com.fmi.domain.auth.web.dto.KakaoLoginRequest;
-import com.fmi.domain.auth.web.response.LoginResponse;
+import com.fmi.domain.auth.web.dto.request.KakaoLoginRequest;
+import com.fmi.domain.auth.web.dto.response.LoginResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

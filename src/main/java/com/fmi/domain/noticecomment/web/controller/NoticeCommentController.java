@@ -1,10 +1,10 @@
 package com.fmi.domain.noticecomment.web.controller;
 
-import com.fmi.domain.noticecomment.response.NoticeCommentPageResponse;
-import com.fmi.domain.noticecomment.response.NoticeCommentResponse;
-import com.fmi.domain.noticecomment.response.NoticeCommentSliceResponse;
 import com.fmi.domain.noticecomment.service.NoticeCommentService;
-import com.fmi.domain.noticecomment.web.dto.CreateNoticeCommentDto;
+import com.fmi.domain.noticecomment.web.dto.request.NoticeCommentCreateRequest;
+import com.fmi.domain.noticecomment.web.dto.response.NoticeCommentPageResponse;
+import com.fmi.domain.noticecomment.web.dto.response.NoticeCommentResponse;
+import com.fmi.domain.noticecomment.web.dto.response.NoticeCommentSliceResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -48,7 +48,7 @@ public class NoticeCommentController {
     })
     public ResponseEntity<ApiResponse<NoticeCommentResponse>> createComment(
             @PathVariable Long noticeId,
-            @RequestPart("request") @Valid CreateNoticeCommentDto request,
+            @RequestPart("request") @Valid NoticeCommentCreateRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -125,7 +125,7 @@ public class NoticeCommentController {
     })
     public ResponseEntity<ApiResponse<NoticeCommentResponse>> updateComment(
             @PathVariable Long commentId,
-            @RequestPart("request") @Valid CreateNoticeCommentDto request,
+            @RequestPart("request") @Valid NoticeCommentCreateRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal UserDetails userDetails) {
 

@@ -1,18 +1,18 @@
 package com.fmi.domain.inquiry.converter;
 
-import com.fmi.domain.admin.dto.AdminInquiryDetailDTO;
+import com.fmi.domain.admin.web.dto.response.AdminInquiryDetailResponse;
 import com.fmi.domain.inquiry.data.Inquiry;
-import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
-import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
-import com.fmi.domain.inquirycomment.response.InquiryCommentResponse;
+import com.fmi.domain.inquiry.web.dto.response.InquiryDetailResponse;
+import com.fmi.domain.inquiry.web.dto.response.InquiryListResponse;
+import com.fmi.domain.inquirycomment.web.dto.response.InquiryCommentResponse;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
 public class InquiryConverter {
 
-    public InquiryListDTO toListDTO(Inquiry inquiry) {
-        return InquiryListDTO.builder()
+    public InquiryListResponse toListDTO(Inquiry inquiry) {
+        return InquiryListResponse.builder()
                 .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
                 .inquiryId(inquiry.getId())
                 .title(inquiry.getTitle())
@@ -23,8 +23,8 @@ public class InquiryConverter {
                 .build();
     }
 
-    public InquiryDetailDTO toDetailDTO(Inquiry inquiry) {
-        return InquiryDetailDTO.builder()
+    public InquiryDetailResponse toDetailDTO(Inquiry inquiry) {
+        return InquiryDetailResponse.builder()
                 .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
                 .email(inquiry.getEmail())
                 .inquiryId(inquiry.getId())
@@ -35,8 +35,8 @@ public class InquiryConverter {
                 .build();
     }
 
-    public InquiryDetailDTO toDetailDTO(Inquiry inquiry, List<InquiryCommentResponse> comments) {
-        return InquiryDetailDTO.builder()
+    public InquiryDetailResponse toDetailDTO(Inquiry inquiry, List<InquiryCommentResponse> comments) {
+        return InquiryDetailResponse.builder()
                 .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
                 .email(inquiry.getEmail())
                 .inquiryId(inquiry.getId())
@@ -48,9 +48,9 @@ public class InquiryConverter {
                 .build();
     }
 
-    public InquiryDetailDTO toDetailDTO(
+    public InquiryDetailResponse toDetailDTO(
             Inquiry inquiry, List<InquiryCommentResponse> comments, List<String> imageUrls) {
-        return InquiryDetailDTO.builder()
+        return InquiryDetailResponse.builder()
                 .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
                 .email(inquiry.getEmail())
                 .inquiryId(inquiry.getId())
@@ -63,13 +63,13 @@ public class InquiryConverter {
                 .build();
     }
 
-    public AdminInquiryDetailDTO toAdminDetailDTO(Inquiry inquiry, List<InquiryCommentResponse> comments) {
+    public AdminInquiryDetailResponse toAdminDetailDTO(Inquiry inquiry, List<InquiryCommentResponse> comments) {
         return toAdminDetailDTO(inquiry, comments, List.of());
     }
 
-    public AdminInquiryDetailDTO toAdminDetailDTO(
+    public AdminInquiryDetailResponse toAdminDetailDTO(
             Inquiry inquiry, List<InquiryCommentResponse> comments, List<String> imageUrls) {
-        return AdminInquiryDetailDTO.builder()
+        return AdminInquiryDetailResponse.builder()
                 .nickname(inquiry.getUser() != null ? inquiry.getUser().getNickname() : null)
                 .email(
                         inquiry.getEmail() != null

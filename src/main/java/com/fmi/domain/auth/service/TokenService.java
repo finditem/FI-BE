@@ -1,7 +1,7 @@
 package com.fmi.domain.auth.service;
 
-import com.fmi.domain.Enum.Provider;
 import com.fmi.domain.auth.data.IssuedTokens;
+import com.fmi.domain.auth.data.enums.Provider;
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
 import com.fmi.domain.auth.security.token.RefreshTokenStore;

@@ -5,14 +5,15 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fmi.domain.Enum.LanguageCode;
-import com.fmi.domain.Enum.Role;
 import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
 import com.fmi.domain.place.data.*;
-import com.fmi.domain.place.data.enums.*;
+import com.fmi.domain.place.data.enums.PlaceBusinessHourType;
+import com.fmi.domain.place.data.enums.PlaceType;
 import com.fmi.domain.place.repository.*;
 import com.fmi.domain.place.web.dto.response.PlaceManagementResponse;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.LanguageCode;
+import com.fmi.domain.user.data.enums.Role;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.exception.GeneralException;

@@ -2,10 +2,10 @@ package com.fmi.domain.post.repository;
 
 import static com.fmi.domain.post.data.QPost.post;
 
-import com.fmi.domain.Enum.Category;
 import com.fmi.domain.comment.data.QComment;
-import com.fmi.domain.post.data.PostStatus;
-import com.fmi.domain.post.data.PostType;
+import com.fmi.domain.post.data.enums.Category;
+import com.fmi.domain.post.data.enums.PostStatus;
+import com.fmi.domain.post.data.enums.PostType;
 import com.fmi.domain.postfavorite.data.QPostFavorite;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;

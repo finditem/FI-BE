@@ -1,6 +1,5 @@
 package com.fmi.domain.place.service;
 
-import com.fmi.domain.Enum.LanguageCode;
 import com.fmi.domain.place.data.FavoritePlaceCandidate;
 import com.fmi.domain.place.data.FavoritePlacePage;
 import com.fmi.domain.place.data.Place;
@@ -17,6 +16,7 @@ import com.fmi.domain.place.repository.PlaceRepository;
 import com.fmi.domain.place.repository.PlaceTranslationRepository;
 import com.fmi.domain.place.service.internal.PlaceOperationStatusCalculator;
 import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.data.enums.LanguageCode;
 import com.fmi.domain.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;

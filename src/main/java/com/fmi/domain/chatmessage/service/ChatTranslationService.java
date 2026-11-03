@@ -5,13 +5,13 @@ import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Outcome;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Status;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Ticket;
 import com.fmi.domain.chatmessage.service.RedisTranslationQuotaStore.Usage;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationRequest.TranslateRequestDTO;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.TranslationResponseDTO;
-import com.fmi.domain.chatmessage.web.dto.ChatTranslationResponse.UsageResponseDTO;
+import com.fmi.domain.chatmessage.web.dto.request.ChatTranslationRequest.TranslateRequest;
+import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.TranslationResponse;
+import com.fmi.domain.chatmessage.web.dto.response.ChatTranslationResponse.UsageResponse;
+import com.fmi.domain.user.service.UserQueryService;
 import com.fmi.external.translation.client.TranslationClient;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import com.fmi.service.UserQueryService;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class ChatTranslationService {
     private final TranslationClient translationClient;
     private final UserQueryService userQueryService;
 
-    public TranslationResponseDTO translate(Long roomId, Long messageId, String email, TranslateRequestDTO request) {
+    public TranslationResponse translate(Long roomId, Long messageId, String email, TranslateRequest request) {
         Source source = chatTranslationSourceService.find(roomId, messageId, email);
         Ticket ticket = translationQuotaStore.reserve(source, roomId, messageId, request);
         Outcome outcome = ticket.outcome();
@@ -50,12 +50,12 @@ public class ChatTranslationService {
         return toResponse(messageId, request, outcome, usage);
     }
 
-    public UsageResponseDTO usage(String email) {
+    public UsageResponse usage(String email) {
         return toUsageResponse(
                 translationQuotaStore.usage(userQueryService.findUser(email).getId()));
     }
 
-    private String translateOrRelease(Ticket ticket, Source source, TranslateRequestDTO request) {
+    private String translateOrRelease(Ticket ticket, Source source, TranslateRequest request) {
         try {
             String translatedText = translationClient.translate(source.text(), source.language());
             if (translatedText == null || translatedText.isBlank()) {
@@ -69,7 +69,7 @@ public class ChatTranslationService {
         }
     }
 
-    private void releaseQuietly(Ticket ticket, TranslateRequestDTO request) {
+    private void releaseQuietly(Ticket ticket, TranslateRequest request) {
         try {
             translationQuotaStore.fail(ticket);
         } catch (RuntimeException compensationFailure) {
@@ -77,9 +77,8 @@ public class ChatTranslationService {
         }
     }
 
-    private TranslationResponseDTO toResponse(
-            Long messageId, TranslateRequestDTO request, Outcome outcome, Usage usage) {
-        return new TranslationResponseDTO(
+    private TranslationResponse toResponse(Long messageId, TranslateRequest request, Outcome outcome, Usage usage) {
+        return new TranslationResponse(
                 messageId,
                 request.requestId(),
                 request.roomVisitId(),
@@ -88,8 +87,8 @@ public class ChatTranslationService {
                 toUsageResponse(usage));
     }
 
-    private UsageResponseDTO toUsageResponse(Usage usage) {
-        return new UsageResponseDTO(
+    private UsageResponse toUsageResponse(Usage usage) {
+        return new UsageResponse(
                 usage.usageDate(), usage.usedCount(), usage.limit(), usage.resetAt(), usage.canTranslate());
     }
 

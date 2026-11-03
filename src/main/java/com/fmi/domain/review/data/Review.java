@@ -1,6 +1,8 @@
 package com.fmi.domain.review.data;
 
 import com.fmi.domain.findcompletion.data.FindCompletion;
+import com.fmi.domain.review.data.enums.ReviewEmotion;
+import com.fmi.domain.review.data.enums.ReviewHelpType;
 import com.fmi.domain.user.data.User;
 import com.fmi.global.data.BaseEntity;
 import jakarta.persistence.CollectionTable;

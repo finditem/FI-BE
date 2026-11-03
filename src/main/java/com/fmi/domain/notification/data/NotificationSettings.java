@@ -1,6 +1,6 @@
 package com.fmi.domain.notification.data;
 
-import com.fmi.domain.Enum.Category;
+import com.fmi.domain.post.data.enums.Category;
 import com.fmi.domain.user.data.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

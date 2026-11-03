@@ -2,8 +2,8 @@ package com.fmi.domain.inquiry.web.controller;
 
 import com.fmi.domain.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.service.InquiryService;
-import com.fmi.domain.inquiry.web.dto.response.InquiryDetailDTO;
-import com.fmi.domain.inquiry.web.dto.response.InquiryListDTO;
+import com.fmi.domain.inquiry.web.dto.response.InquiryDetailResponse;
+import com.fmi.domain.inquiry.web.dto.response.InquiryListResponse;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.user.data.User;
@@ -69,7 +69,7 @@ public class InquiryController {
                                                         "{\"isSuccess\": false, \"code\": \"INQUIRY403-IP_BLOCKED\", \"message\": \"차단된 IP입니다.\"}")))
     })
     public ApiResponse<Long> createInquiry(
-            @Valid @RequestPart("inquiry") com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequestDTO request,
+            @Valid @RequestPart("inquiry") com.fmi.domain.inquiry.web.dto.request.InquiryCreateRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest httpServletRequest) {
@@ -88,7 +88,7 @@ public class InquiryController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 문의 내역 조회 성공")
     })
-    public ApiResponse<CursorPageResponse<InquiryListDTO>> getMyInquiries(
+    public ApiResponse<CursorPageResponse<InquiryListResponse>> getMyInquiries(
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "문의 상태 필터 (RECEIVED=접수 대기, PENDING=처리 중, ANSWERED=답변 완료)")
                     @RequestParam(required = false)
@@ -102,7 +102,7 @@ public class InquiryController {
         User user = userRepository
                 .findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        CursorPageResponse<InquiryListDTO> inquiries =
+        CursorPageResponse<InquiryListResponse> inquiries =
                 inquiryService.getMyInquiriesCursor(user, status, answered, keyword, cursor, size);
         return ApiResponse.onSuccess(inquiries);
     }
@@ -137,10 +137,10 @@ public class InquiryController {
                                                 value =
                                                         "{\"isSuccess\": false, \"code\": \"INQUIRY404-NOT_FOUND\", \"message\": \"존재하지 않는 문의입니다.\"}")))
     })
-    public ApiResponse<InquiryDetailDTO> getInquiryDetail(
+    public ApiResponse<InquiryDetailResponse> getInquiryDetail(
             @PathVariable Long inquiryId, @AuthenticationPrincipal UserDetails userDetails) {
 
-        InquiryDetailDTO inquiry = inquiryService.getInquiryDetail(inquiryId, userDetails);
+        InquiryDetailResponse inquiry = inquiryService.getInquiryDetail(inquiryId, userDetails);
 
         // 문의 조회 시 관련 알림 자동 읽음처리
         if (userDetails != null) {
