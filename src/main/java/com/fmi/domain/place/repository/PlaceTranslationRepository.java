@@ -1,7 +1,7 @@
 package com.fmi.domain.place.repository;
 
 import com.fmi.domain.place.data.PlaceTranslation;
-import com.fmi.domain.user.data.enums.LanguageCode;
+import com.fmi.domain.user.user.data.enums.LanguageCode;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;

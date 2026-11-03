@@ -1,0 +1,16 @@
+package com.fmi.domain.post.post.repository;
+
+import com.fmi.domain.post.post.data.PostTranslation;
+import com.fmi.domain.user.user.data.enums.LanguageCode;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface PostTranslationRepository extends JpaRepository<PostTranslation, Long> {
+
+    Optional<PostTranslation> findByPost_IdAndLanguageCode(Long postId, LanguageCode languageCode);
+
+    List<PostTranslation> findAllByPost_Id(Long postId);
+}

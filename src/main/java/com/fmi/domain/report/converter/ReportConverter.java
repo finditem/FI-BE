@@ -4,7 +4,7 @@ import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.web.dto.response.ReportDetailResponse;
 import com.fmi.domain.report.web.dto.response.ReportListResponse;
 import com.fmi.domain.report.web.dto.response.ReportResponse;
-import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.user.data.User;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.stereotype.Component;

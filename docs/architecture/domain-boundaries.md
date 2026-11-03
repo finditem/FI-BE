@@ -43,29 +43,46 @@ com.fmi
 
 상위 패키지는 사용자가 인식하는 큰 업무 영역을 기준으로 구성합니다. 서로 관련된 하위 업무는 같은 상위 패키지에 둡니다.
 
-- 기존 업무를 보조하는 기능은 해당 업무에 포함합니다. Entity, API 또는 Service가 따로 있다는 이유만으로 하위 업무 패키지를 만들지 않습니다.
+- 기존 업무를 보조하는 기능은 해당 업무의 계층에 포함합니다. Entity, API 또는 Service가 따로 있다는 이유만으로 하위 업무 패키지를 만들지 않습니다.
 - 별도의 권한, 생명주기, 정책과 처리 흐름을 갖는 기능은 하위 업무 패키지로 분리할 수 있습니다. 코드 규모보다 업무 규칙의 독립성을 기준으로 판단합니다.
-- 분리한 하위 업무는 자신의 `data`, `service`, `repository`, `web` 등을 소유합니다. 실제로 필요한 패키지만 만듭니다.
+- 하위 업무를 분리한 상위 패키지는 업무를 묶는 용도로만 사용합니다. 상위 패키지 바로 아래에 `data`, `service`, `repository`, `web` 등의 계층 패키지를 함께 두지 않습니다.
+- 기본 업무도 다른 하위 업무와 같은 깊이에 둡니다. 예를 들어 `user/user`, `user/block`, `user/temperature`로 구성합니다.
+- 하위 업무가 없는 영역은 `auth/data`, `auth/service`처럼 업무 패키지 바로 아래에 계층을 둡니다.
+- 각 업무는 자신의 `data`, `service`, `repository`, `web` 등을 소유합니다. 실제로 필요한 패키지만 만듭니다.
+- 패키지를 통합해도 책임이 다른 Service, Repository와 Controller를 하나의 클래스로 합치지 않습니다.
 - 같은 상위 패키지에 속하더라도 다른 하위 업무의 내부 구현을 자유롭게 변경하지 않습니다. 상태 변경은 소유 업무가 제공하는 기능을 통해 수행합니다.
 
-다음은 게시글 영역의 배치 예시이며 현재 코드의 패키지 구조를 나타내지 않습니다. `post/post`, `post/postcomment`라는 이름은 업무 경계와 별도로 팀에서 선택하는 명명 방식입니다.
+현재 업무 패키지는 다음과 같이 구성합니다. 계층 패키지는 각 말단 업무 안에 둡니다.
 
 ```text
 domain/
-└── post/                  # 게시글 업무 영역
-    ├── post/              # 게시글과 즐겨찾기
-    │   ├── data/
-    │   ├── service/
-    │   ├── repository/
-    │   └── web/
-    └── postcomment/       # 게시글 댓글
-        ├── data/
-        ├── service/
-        ├── repository/
-        └── web/
+├── auth/
+├── user/
+│   ├── user/
+│   ├── block/
+│   └── temperature/
+├── post/
+│   ├── post/
+│   ├── comment/
+│   ├── findcompletion/
+│   └── review/
+├── chat/
+│   ├── room/
+│   └── message/
+├── notice/
+│   ├── notice/
+│   └── comment/
+├── inquiry/
+├── report/
+├── place/
+├── notification/
+├── admin/
+└── ipblock/
 ```
 
-게시글 즐겨찾기는 게시글에 대한 사용자 선택을 관리하는 보조 기능으로 게시글 업무에 포함합니다. 댓글은 작성과 삭제, 작성자 권한 등 자체 규칙과 처리 흐름을 갖는 하위 업무로 구분합니다. 하위 업무의 분리는 별도 서버, DB 또는 완전히 독립된 도메인을 뜻하지 않습니다.
+게시글 즐겨찾기와 지도 조회는 `post/post`의 각 계층에 포함합니다. 게시글 댓글 좋아요는 `post/comment`, 공지 좋아요는 `notice/notice`, 공지 댓글 좋아요는 `notice/comment`, 문의 답변은 `inquiry`의 각 계층에 포함합니다.
+
+하위 업무의 분리는 별도 서버, DB 또는 완전히 독립된 도메인을 뜻하지 않습니다.
 
 ## 업무 내부 구성
 
@@ -97,7 +114,7 @@ domain/
 | Enum | 배치 |
 | --- | --- |
 | `PlaceType` | `domain/place/data/enums` |
-| `LanguageCode` | `domain/user/data/enums` |
+| `LanguageCode` | `domain/user/user/data/enums` |
 | `SortType` | `global/enums` |
 
 ### 생성 검증과 객체 생성

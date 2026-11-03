@@ -10,7 +10,7 @@ import com.fmi.domain.auth.web.dto.request.AppleLoginRequest;
 import com.fmi.domain.auth.web.dto.request.KakaoLoginRequest;
 import com.fmi.domain.auth.web.dto.response.LoginResponse;
 import com.fmi.domain.auth.web.swagger.KakaoAuthSwagger;
-import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.user.data.User;
 import com.fmi.external.oauth.apple.AppleOAuthClient;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient.KakaoToken;

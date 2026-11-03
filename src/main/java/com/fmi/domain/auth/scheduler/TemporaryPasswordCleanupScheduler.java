@@ -1,7 +1,7 @@
 package com.fmi.domain.auth.scheduler;
 
-import com.fmi.domain.user.data.User;
-import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.user.user.data.User;
+import com.fmi.domain.user.user.repository.UserRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;

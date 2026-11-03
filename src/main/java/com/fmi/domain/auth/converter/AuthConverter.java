@@ -3,8 +3,8 @@ package com.fmi.domain.auth.converter;
 import com.fmi.domain.auth.web.dto.response.EmailVerifyResponse;
 import com.fmi.domain.auth.web.dto.response.LoginResponse;
 import com.fmi.domain.auth.web.dto.response.SignupResponse;
-import com.fmi.domain.user.data.User;
-import com.fmi.domain.user.data.enums.Role;
+import com.fmi.domain.user.user.data.User;
+import com.fmi.domain.user.user.data.enums.Role;
 import org.springframework.stereotype.Component;
 
 @Component

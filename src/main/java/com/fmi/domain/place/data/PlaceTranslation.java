@@ -1,6 +1,6 @@
 package com.fmi.domain.place.data;
 
-import com.fmi.domain.user.data.enums.LanguageCode;
+import com.fmi.domain.user.user.data.enums.LanguageCode;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;

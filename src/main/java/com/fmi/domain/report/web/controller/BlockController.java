@@ -1,9 +1,9 @@
 package com.fmi.domain.report.web.controller;
 
-import com.fmi.domain.user.data.User;
-import com.fmi.domain.user.repository.UserRepository;
-import com.fmi.domain.userblock.service.BlockService;
-import com.fmi.domain.userblock.web.dto.response.BlockedUserResponse;
+import com.fmi.domain.user.block.service.BlockService;
+import com.fmi.domain.user.block.web.dto.response.BlockedUserResponse;
+import com.fmi.domain.user.user.data.User;
+import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;

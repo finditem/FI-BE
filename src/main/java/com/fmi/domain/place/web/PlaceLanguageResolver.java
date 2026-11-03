@@ -1,7 +1,7 @@
 package com.fmi.domain.place.web;
 
 import com.fmi.domain.place.exception.PlaceErrorStatus;
-import com.fmi.domain.user.data.enums.LanguageCode;
+import com.fmi.domain.user.user.data.enums.LanguageCode;
 import com.fmi.global.apiPayload.exception.GeneralException;
 
 public final class PlaceLanguageResolver {

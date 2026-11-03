@@ -8,7 +8,7 @@ import com.fmi.domain.place.web.dto.response.HomePlaceResponse;
 import com.fmi.domain.place.web.dto.response.PlaceFavoriteResponse;
 import com.fmi.domain.place.web.dto.response.PlaceSummaryResponse;
 import com.fmi.domain.place.web.swagger.PlaceSwagger;
-import com.fmi.domain.user.service.UserQueryService;
+import com.fmi.domain.user.user.service.UserQueryService;
 import com.fmi.global.apiPayload.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

@@ -1,6 +1,6 @@
 package com.fmi.domain.admin.web.dto.response;
 
-import com.fmi.domain.user.data.enums.Role;
+import com.fmi.domain.user.user.data.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;

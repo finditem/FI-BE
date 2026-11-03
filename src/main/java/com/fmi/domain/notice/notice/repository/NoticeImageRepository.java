@@ -1,0 +1,27 @@
+package com.fmi.domain.notice.notice.repository;
+
+import com.fmi.domain.notice.notice.data.Notice;
+import com.fmi.domain.notice.notice.data.NoticeImage;
+import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface NoticeImageRepository extends JpaRepository<NoticeImage, Long> {
+
+    List<NoticeImage> findByNotice(Notice notice);
+
+    @Query("""
+            SELECT ni FROM NoticeImage ni
+            WHERE ni.notice.noticeId IN :noticeIds
+              AND ni.imageType = com.fmi.domain.post.post.data.enums.ImageType.THUMBNAIL
+            """)
+    List<NoticeImage> findThumbnailsByNoticeIds(@Param("noticeIds") List<Long> noticeIds);
+
+    @Modifying
+    @Query("DELETE FROM NoticeImage ni WHERE ni.notice = :notice")
+    void deleteAllByNotice(@Param("notice") Notice notice);
+}

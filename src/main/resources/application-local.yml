@@ -80,7 +80,7 @@ logging:
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: TRACE
     org.springframework.web: info
-    com.fmi.domain.chatmessage: debug
+    com.fmi.domain.chat.message: debug
 
 cors:
   allowed-origin-patterns:

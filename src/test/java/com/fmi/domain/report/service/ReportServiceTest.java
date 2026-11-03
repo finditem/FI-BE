@@ -5,11 +5,11 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 
-import com.fmi.domain.chatroom.data.ChatRoom;
-import com.fmi.domain.chatroom.repository.ChatRoomRepository;
-import com.fmi.domain.comment.repository.CommentRepository;
+import com.fmi.domain.chat.room.data.ChatRoom;
+import com.fmi.domain.chat.room.repository.ChatRoomRepository;
 import com.fmi.domain.notification.service.NotificationService;
-import com.fmi.domain.post.repository.PostRepository;
+import com.fmi.domain.post.comment.repository.CommentRepository;
+import com.fmi.domain.post.post.repository.PostRepository;
 import com.fmi.domain.report.converter.ReportConverter;
 import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.data.enums.ReportTargetType;
@@ -18,10 +18,10 @@ import com.fmi.domain.report.repository.ReportAnswerImageRepository;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.report.service.internal.ReportEmailNotifier;
 import com.fmi.domain.report.web.dto.request.ReportCreateRequest;
-import com.fmi.domain.user.data.User;
-import com.fmi.domain.user.data.enums.Role;
-import com.fmi.domain.user.repository.UserRepository;
-import com.fmi.domain.userblock.service.BlockService;
+import com.fmi.domain.user.block.service.BlockService;
+import com.fmi.domain.user.user.data.User;
+import com.fmi.domain.user.user.data.enums.Role;
+import com.fmi.domain.user.user.repository.UserRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -141,7 +141,7 @@ class ReportServiceTest {
         given(userRepository.findByEmail(reporter.getEmail())).willReturn(Optional.of(reporter));
         given(reportRepository.findByReporterAndTargetTypeAndTargetId(reporter, ReportTargetType.POST, 99L))
                 .willReturn(Optional.empty());
-        given(postRepository.findById(99L)).willReturn(Optional.of(mock(com.fmi.domain.post.data.Post.class)));
+        given(postRepository.findById(99L)).willReturn(Optional.of(mock(com.fmi.domain.post.post.data.Post.class)));
 
         Report savedReport = Report.builder()
                 .reportId(101L)

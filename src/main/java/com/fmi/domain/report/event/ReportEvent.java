@@ -3,7 +3,7 @@ package com.fmi.domain.report.event;
 import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.data.enums.ReportType;
-import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.user.data.User;
 import java.time.LocalDateTime;
 
 public record ReportEvent(

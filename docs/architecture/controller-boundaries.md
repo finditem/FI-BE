@@ -44,7 +44,7 @@ HTTP API의 Controller 구성과 분리 시점을 정할 때 적용합니다. Se
 
 인기 선정이 일반 목록의 내부 처리이면 `HotPostController`를 만들지 않습니다. 독립적인 인기 목록 API 하나는 `PostController`에 둘 수 있고, 인기 API 묶음이 분리 조건을 만족하면 `HotPostController`를 검토합니다. 이미지가 게시글 생성과 수정의 일부이면 `PostImageController`를 만들지 않습니다.
 
-현재 [PostController](../../src/main/java/com/fmi/domain/post/web/controller/PostController.java)에는 일반 게시글, 임시저장과 번역 API가 함께 있습니다. [PostStatisticsController](../../src/main/java/com/fmi/domain/post/web/controller/PostStatisticsController.java)는 이미 분리되어 있습니다. [PostFavoriteController](../../src/main/java/com/fmi/domain/postfavorite/web/controller/PostFavoriteController.java)는 찜 목록 조회에 `PostQueryService`를 사용합니다. 이 문서 추가만으로 클래스나 호출 경계를 변경하지 않습니다.
+현재 [PostController](../../src/main/java/com/fmi/domain/post/post/web/controller/PostController.java)에는 일반 게시글, 임시저장과 번역 API가 함께 있습니다. [PostStatisticsController](../../src/main/java/com/fmi/domain/post/post/web/controller/PostStatisticsController.java)는 이미 분리되어 있습니다. [PostFavoriteController](../../src/main/java/com/fmi/domain/post/post/web/controller/PostFavoriteController.java)는 찜 목록 조회에 `PostQueryService`를 사용합니다. 이 문서 추가만으로 클래스나 호출 경계를 변경하지 않습니다.
 
 ## URL, 인증과 Swagger
 
