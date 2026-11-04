@@ -1,7 +1,5 @@
 package com.fmi.domain.place.web.controller;
 
-import com.fmi.domain.map.service.PostMapService;
-import com.fmi.domain.map.web.dto.response.PostMarkerResponse;
 import com.fmi.domain.place.data.PlaceMapSearchResult;
 import com.fmi.domain.place.data.PlaceSummary;
 import com.fmi.domain.place.service.PlaceService;
@@ -13,6 +11,8 @@ import com.fmi.domain.place.web.dto.response.NearbyPostResponse;
 import com.fmi.domain.place.web.dto.response.PlaceMapResponse;
 import com.fmi.domain.place.web.dto.response.PlaceSummaryResponse;
 import com.fmi.domain.place.web.swagger.MainPlaceSwagger;
+import com.fmi.domain.post.post.service.PostMapService;
+import com.fmi.domain.post.post.web.dto.response.PostMarkerResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;

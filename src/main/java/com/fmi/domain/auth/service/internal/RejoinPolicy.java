@@ -1,7 +1,7 @@
 package com.fmi.domain.auth.service.internal;
 
 import com.fmi.domain.auth.data.enums.RejoinType;
-import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.user.data.User;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.time.Clock;

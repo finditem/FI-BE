@@ -15,8 +15,8 @@ import com.fmi.domain.auth.web.dto.request.PasswordVerifyRequest;
 import com.fmi.domain.auth.web.dto.request.SignupRequest;
 import com.fmi.domain.auth.web.dto.response.LoginResponse;
 import com.fmi.domain.auth.web.swagger.AuthSwagger;
-import com.fmi.domain.user.service.NicknameService;
-import com.fmi.domain.user.web.dto.response.CheckResponse;
+import com.fmi.domain.user.user.service.NicknameService;
+import com.fmi.domain.user.user.web.dto.response.CheckResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -86,7 +86,7 @@ public class AuthController implements AuthSwagger {
     }
 
     private ResponseEntity<ApiResponse<LoginResponse>> buildTokenResponse(
-            HttpServletRequest request, com.fmi.domain.user.data.User user, boolean isTemporaryPassword) {
+            HttpServletRequest request, com.fmi.domain.user.user.data.User user, boolean isTemporaryPassword) {
         IssuedTokens issuedTokens = tokenService.issue(user, isTemporaryPassword, null);
 
         ResponseCookie accessCookie = authCookieFactory.createAccessCookie(

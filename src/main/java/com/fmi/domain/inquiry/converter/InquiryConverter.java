@@ -2,9 +2,9 @@ package com.fmi.domain.inquiry.converter;
 
 import com.fmi.domain.admin.web.dto.response.AdminInquiryDetailResponse;
 import com.fmi.domain.inquiry.data.Inquiry;
+import com.fmi.domain.inquiry.web.dto.response.InquiryCommentResponse;
 import com.fmi.domain.inquiry.web.dto.response.InquiryDetailResponse;
 import com.fmi.domain.inquiry.web.dto.response.InquiryListResponse;
-import com.fmi.domain.inquirycomment.web.dto.response.InquiryCommentResponse;
 import java.util.List;
 import org.springframework.stereotype.Component;
 

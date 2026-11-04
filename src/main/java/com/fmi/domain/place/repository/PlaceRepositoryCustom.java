@@ -2,7 +2,7 @@ package com.fmi.domain.place.repository;
 
 import com.fmi.domain.place.data.HomePlace;
 import com.fmi.domain.place.data.enums.PlaceType;
-import com.fmi.domain.user.data.enums.LanguageCode;
+import com.fmi.domain.user.user.data.enums.LanguageCode;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.List;

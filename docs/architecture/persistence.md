@@ -85,7 +85,7 @@ QueryDSL 코드가 복잡해져 조회 조건과 결과를 이해하는 데 병�
 
 ## 필요한 예시
 
-게시글 목록 조회는 [`PostRepositoryImpl`](../../src/main/java/com/fmi/domain/post/repository/PostRepositoryImpl.java)처럼 삭제 여부와 필터를 `where`에 명시하고, 즐겨찾기 데이터가 필요하면 JOIN으로 연결합니다. 조회 결과를 만든 뒤 도메인 메서드로 다시 필터링하지 않습니다.
+게시글 목록 조회는 [`PostRepositoryImpl`](../../src/main/java/com/fmi/domain/post/post/repository/PostRepositoryImpl.java)처럼 삭제 여부와 필터를 `where`에 명시하고, 즐겨찾기 데이터가 필요하면 JOIN으로 연결합니다. 조회 결과를 만든 뒤 도메인 메서드로 다시 필터링하지 않습니다.
 
 테이블 이름은 다음과 같이 명시합니다.
 

@@ -2,7 +2,7 @@
 
 Controller의 구성과 분리 시점은 [Controller 분리 기준](../architecture/controller-boundaries.md)을 따릅니다.
 
-새 HTTP API를 설계할 때 요청과 응답을 먼저 아래 형식으로 적습니다. 예시는 현재 [`PostController`](../../src/main/java/com/fmi/domain/post/web/controller/PostController.java)의 게시글 필터 검색을 바탕으로 합니다. 클라이언트 계약의 공통 기준은 DOCS의 [공통 API 스펙](https://github.com/finditem/DOCS/blob/main/00-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8/%EC%B0%BE%EC%95%84%EC%A4%98%21%20-%20%EC%9A%B4%EC%98%81%20%282%EC%B0%A8%20MVP%29/API%20%EC%8A%A4%ED%8E%99/%EA%B3%B5%ED%86%B5%20API%20%EC%8A%A4%ED%8E%99.md)을 따릅니다.
+새 HTTP API를 설계할 때 요청과 응답을 먼저 아래 형식으로 적습니다. 예시는 현재 [`PostController`](../../src/main/java/com/fmi/domain/post/post/web/controller/PostController.java)의 게시글 필터 검색을 바탕으로 합니다. 클라이언트 계약의 공통 기준은 DOCS의 [공통 API 스펙](https://github.com/finditem/DOCS/blob/main/00-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8/%EC%B0%BE%EC%95%84%EC%A4%98%21%20-%20%EC%9A%B4%EC%98%81%20%282%EC%B0%A8%20MVP%29/API%20%EC%8A%A4%ED%8E%99/%EA%B3%B5%ED%86%B5%20API%20%EC%8A%A4%ED%8E%99.md)을 따릅니다.
 
 ## 게시글 목록 조회 예시
 
@@ -21,7 +21,7 @@ Controller의 구성과 분리 시점은 [Controller 분리 기준](../architect
 다음 요청: GET /posts/search?address=서울&sortType=LATEST&cursor=98&size=20
 ```
 
-빈 결과 예시: [`PostPageResponse`](../../src/main/java/com/fmi/domain/post/web/dto/response/PostPageResponse.java). 필드명은 이 API 전용입니다.
+빈 결과 예시: [`PostPageResponse`](../../src/main/java/com/fmi/domain/post/post/web/dto/response/PostPageResponse.java). 필드명은 이 API 전용입니다.
 
 ```json
 {
@@ -37,7 +37,7 @@ Controller의 구성과 분리 시점은 [Controller 분리 기준](../architect
 }
 ```
 
-다음 페이지가 있으면 응답의 `nextCursor`를 다음 요청에 전달합니다. 마지막 페이지에는 `hasNext=false`, `nextCursor=null`을 사용합니다. 현재 조회 흐름은 [`PostQueryService`](../../src/main/java/com/fmi/domain/post/service/PostQueryService.java)와 [`PostRepositoryImpl`](../../src/main/java/com/fmi/domain/post/repository/PostRepositoryImpl.java)에서 확인합니다.
+다음 페이지가 있으면 응답의 `nextCursor`를 다음 요청에 전달합니다. 마지막 페이지에는 `hasNext=false`, `nextCursor=null`을 사용합니다. 현재 조회 흐름은 [`PostQueryService`](../../src/main/java/com/fmi/domain/post/post/service/PostQueryService.java)와 [`PostRepositoryImpl`](../../src/main/java/com/fmi/domain/post/post/repository/PostRepositoryImpl.java)에서 확인합니다.
 
 ## 새 API 설계에 사용할 틀
 

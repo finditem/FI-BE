@@ -2,7 +2,7 @@ package com.fmi.domain.notification.repository;
 
 import com.fmi.domain.notification.data.Notification;
 import com.fmi.domain.notification.data.enums.NotificationType;
-import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.user.data.User;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;

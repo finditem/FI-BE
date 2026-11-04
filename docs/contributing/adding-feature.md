@@ -23,7 +23,7 @@ Post Controller의 HTTP 요청
   -> 외부 이미지 저장이 있다면 호출 순서와 실패 뒤 상태 확인
 ```
 
-실제 코드에서 [`PostService`](../../src/main/java/com/fmi/domain/post/service/PostService.java), [`PostValidator`](../../src/main/java/com/fmi/domain/post/service/internal/PostValidator.java), [`PostRepository`](../../src/main/java/com/fmi/domain/post/repository/PostRepository.java)를 확인합니다. 호출 순서는 실제 구현에서 확인합니다.
+실제 코드에서 [`PostService`](../../src/main/java/com/fmi/domain/post/post/service/PostService.java), [`PostValidator`](../../src/main/java/com/fmi/domain/post/post/service/internal/PostValidator.java), [`PostRepository`](../../src/main/java/com/fmi/domain/post/post/repository/PostRepository.java)를 확인합니다. 호출 순서는 실제 구현에서 확인합니다.
 
 | 항목 | 변경 전에 적을 내용 |
 | --- | --- |

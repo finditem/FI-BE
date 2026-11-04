@@ -1,6 +1,6 @@
 package com.fmi.external.translation.client;
 
-import com.fmi.domain.user.data.enums.LanguageCode;
+import com.fmi.domain.user.user.data.enums.LanguageCode;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.time.Duration;

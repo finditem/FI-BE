@@ -1,7 +1,7 @@
 package com.fmi.domain.report.service.internal;
 
 import com.fmi.domain.report.data.Report;
-import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.user.data.User;
 import com.fmi.external.mail.EmailSender;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

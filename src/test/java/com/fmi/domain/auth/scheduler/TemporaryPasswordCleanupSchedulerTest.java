@@ -6,8 +6,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fmi.domain.user.data.User;
-import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.user.user.data.User;
+import com.fmi.domain.user.user.repository.UserRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;

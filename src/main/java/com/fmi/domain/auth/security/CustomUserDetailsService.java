@@ -1,7 +1,7 @@
 package com.fmi.domain.auth.security;
 
-import com.fmi.domain.user.data.User;
-import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.user.user.data.User;
+import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.util.Collection;

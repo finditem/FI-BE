@@ -60,7 +60,7 @@ Service의 책임과 분리 시점을 정할 때 적용합니다. 패키지와 �
 
 `PostStatisticsRecorder`는 통계 기록, `PostUpdateRateLimiter`는 수정 빈도 제한, `PostValidator`는 업무 검증을 담당하는 협력 객체로 구분합니다. `PostCleanupScheduler`는 정리 작업의 실행 진입점입니다.
 
-현재 구현은 [PostService](../../src/main/java/com/fmi/domain/post/service/PostService.java), [PostQueryService](../../src/main/java/com/fmi/domain/post/service/PostQueryService.java), [TemporaryPostService](../../src/main/java/com/fmi/domain/post/service/TemporaryPostService.java)에서 확인합니다. `PostQueryService.getPost()`에는 Redis 조회 기록과 DB 조회수 증가가 포함되어 있습니다. 이 흐름을 분리할 때는 순수 조회로 간주하지 않고 실패 처리와 트랜잭션을 함께 검토합니다.
+현재 구현은 [PostService](../../src/main/java/com/fmi/domain/post/post/service/PostService.java), [PostQueryService](../../src/main/java/com/fmi/domain/post/post/service/PostQueryService.java), [TemporaryPostService](../../src/main/java/com/fmi/domain/post/post/service/TemporaryPostService.java)에서 확인합니다. `PostQueryService.getPost()`에는 Redis 조회 기록과 DB 조회수 증가가 포함되어 있습니다. 이 흐름을 분리할 때는 순수 조회로 간주하지 않고 실패 처리와 트랜잭션을 함께 검토합니다.
 
 찜 등록, 취소와 내 찜 목록은 찜 기능으로 묶을 수 있습니다. 목록이 분리 조건을 만족하면 찜 QueryService로 분리합니다. 현재 `PostQueryService.getFavoritePost()`의 이동은 별도 리팩터링으로 검토하며 이 문서 추가만으로 변경하지 않습니다.
 

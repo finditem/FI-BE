@@ -4,7 +4,7 @@
 
 | 고민 | 먼저 볼 기준 | 결정 조건 |
 | --- | --- | --- |
-| 업무 패키지 구성 | [Domain Boundaries](domain-boundaries.md#업무-패키지-구성) | 기존 업무의 보조 기능입니까? 별도의 권한, 생명주기와 처리 흐름을 갖는 하위 업무입니까? |
+| 업무 패키지 구성 | [Domain Boundaries](domain-boundaries.md#업무-패키지-구성) | 기존 업무의 보조 기능입니까? 별도의 권한, 생명주기와 처리 흐름을 갖는 하위 업무입니까? 분리하면 기본 업무도 같은 깊이에 두고 상위 패키지에 계층을 섞지 않았습니까? |
 | 생성 검증과 매핑 | [Domain Boundaries](domain-boundaries.md#생성-검증과-객체-생성) | 필요한 데이터를 조회하고 Validator로 업무 조건을 확인한 뒤 Converter로 생성합니까? 상태 변경 검증과 VO 자체 검증 위치는 별도 논의합니다. |
 | Service 분리 | [서비스 분리 기준](service-boundaries.md) | 독립적인 업무 책임이 있고 의존성, 변경 또는 테스트에서 혼재 문제가 확인됩니까? |
 | Controller 분리 | [Controller 분리 기준](controller-boundaries.md) | 독립적인 API 기능이 있고 의존성, 계약 변경 또는 권한 요구의 혼재 문제가 확인됩니까? |

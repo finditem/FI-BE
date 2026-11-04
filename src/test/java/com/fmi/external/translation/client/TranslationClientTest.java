@@ -2,7 +2,7 @@ package com.fmi.external.translation.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fmi.domain.user.data.enums.LanguageCode;
+import com.fmi.domain.user.user.data.enums.LanguageCode;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;

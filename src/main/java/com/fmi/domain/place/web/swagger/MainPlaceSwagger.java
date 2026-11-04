@@ -1,12 +1,12 @@
 package com.fmi.domain.place.web.swagger;
 
-import com.fmi.domain.map.web.dto.response.PostMarkerResponse;
 import com.fmi.domain.place.web.dto.request.NearbyPostMarkerRequest;
 import com.fmi.domain.place.web.dto.request.NearbyPostRequest;
 import com.fmi.domain.place.web.dto.request.PlaceMapSearchRequest;
 import com.fmi.domain.place.web.dto.response.NearbyPostResponse;
 import com.fmi.domain.place.web.dto.response.PlaceMapResponse;
 import com.fmi.domain.place.web.dto.response.PlaceSummaryResponse;
+import com.fmi.domain.post.post.web.dto.response.PostMarkerResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

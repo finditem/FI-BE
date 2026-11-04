@@ -1,6 +1,6 @@
 package com.fmi.domain.auth.event;
 
-import com.fmi.domain.user.data.User;
+import com.fmi.domain.user.user.data.User;
 import java.time.LocalDateTime;
 
 public record UserSignedUpEvent(Long userId, String email, String nickname, LocalDateTime signedUpAt) {

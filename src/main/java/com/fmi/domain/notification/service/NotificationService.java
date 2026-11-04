@@ -10,10 +10,10 @@ import com.fmi.domain.notification.repository.NotificationSettingsRepository;
 import com.fmi.domain.notification.web.dto.request.NotificationSettingsUpdateRequest;
 import com.fmi.domain.notification.web.dto.response.NotificationListResponse;
 import com.fmi.domain.notification.web.dto.response.NotificationSettingsResponse;
-import com.fmi.domain.post.data.Post;
-import com.fmi.domain.user.data.User;
-import com.fmi.domain.user.repository.UserCategoryRepository;
-import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.post.post.data.Post;
+import com.fmi.domain.user.user.data.User;
+import com.fmi.domain.user.user.repository.UserCategoryRepository;
+import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
@@ -452,7 +452,7 @@ public class NotificationService {
     /**
      * 카테고리 이름 반환
      */
-    private String getCategoryName(com.fmi.domain.post.data.enums.Category category) {
+    private String getCategoryName(com.fmi.domain.post.post.data.enums.Category category) {
         return switch (category) {
             case ELECTRONICS -> "전자기기";
             case WALLET -> "지갑";

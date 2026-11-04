@@ -1,6 +1,5 @@
 package com.fmi.domain.place.service;
 
-import com.fmi.domain.map.data.enums.MapLevel;
 import com.fmi.domain.place.data.HomePlace;
 import com.fmi.domain.place.data.Place;
 import com.fmi.domain.place.data.PlaceDailySchedule;
@@ -20,8 +19,9 @@ import com.fmi.domain.place.service.internal.PlaceBusinessHourUpdater;
 import com.fmi.domain.place.service.internal.PlaceOperationStatusCalculator;
 import com.fmi.domain.place.service.internal.PlaceValidator;
 import com.fmi.domain.place.service.internal.PopupClosingAtCalculator;
-import com.fmi.domain.user.data.enums.LanguageCode;
-import com.fmi.domain.user.repository.UserRepository;
+import com.fmi.domain.post.post.data.enums.MapLevel;
+import com.fmi.domain.user.user.data.enums.LanguageCode;
+import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.dto.UploadedImage;
