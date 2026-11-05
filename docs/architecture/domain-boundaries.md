@@ -228,7 +228,9 @@ Entity 생성은 [Validator 검증 후 Converter로 생성하는 순서](#생성
 - 서비스와 `service/internal` 클래스 안에 결과 타입을 중첩 선언하지 않습니다.
 - 서비스 결과 타입은 다른 서비스와 Controller에서 사용할 수 있습니다. HTTP 응답 DTO는 `web`에서 서비스 결과를 변환해 만듭니다.
 - 독립적인 업무 의미와 불변식이 있는 값은 결과 전달 타입과 구분하여 해당 업무의 `data`에 VO로 둡니다.
-- Repository의 조회 결과와 저장소 전용 처리 타입은 서비스 결과라는 이유로 `service/result`에 모으지 않습니다.
+- 서비스가 필요한 조회 결과의 형식도 해당 서비스가 소유하며 `service/result`의 `*Result` record로 정의합니다. Repository는 QueryDSL 등의 projection을 이용해 이 타입을 직접 반환할 수 있습니다.
+- projection은 필요한 필드를 조회하는 방법입니다. QueryDSL로 생성한다는 이유로 서비스 결과 타입을 `repository`에 두거나 별도의 조회 타입과 매핑을 추가하지 않습니다.
+- 저장소 구현 안에서만 사용하는 기술 전용 중간 타입은 저장소에 두고 서비스 결과 타입과 구분합니다.
 
 JSON 요청과 응답 구조를 표현하는 `web` 계층의 DTO는 중첩 `record`를 사용할 수 있습니다.
 

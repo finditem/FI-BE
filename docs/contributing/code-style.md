@@ -335,9 +335,11 @@ tokenStore.save(userId, accessToken);
 | 값의 의미 | 위치 |
 | --- | --- |
 | 상태와 불변식이 있는 업무 개념 | 소유 업무 `data`의 Entity 또는 Value Object. [모델 작성 기준](#entity와-vo-작성) 적용 |
-| 유스케이스 실행 결과 | `service/result`의 `*Result` record. [서비스 결과 타입](../architecture/domain-boundaries.md#서비스-결과-타입) 적용 |
-| 목록과 집계의 조회 결과 | `repository`의 Projection 또는 Result |
+| 유스케이스 실행 결과와 서비스가 필요한 조회 결과 | `service/result`의 `*Result` record. [서비스 결과 타입](../architecture/domain-boundaries.md#서비스-결과-타입) 적용 |
+| 저장소 구현 내부에서만 사용하는 기술 전용 중간 결과 | 해당 `repository` |
 | HTTP 요청과 응답 | `web/dto/request`, `web/dto/response` |
+
+서비스가 사용할 데이터 형식을 먼저 `service/result`에 정의하고 Repository에서 필요한 필드를 이 타입으로 projection합니다. 조회 기술이 타입의 소유 위치를 결정하지 않습니다.
 
 최상위 HTTP response DTO는 별도 파일에 둡니다. 단순하고 불변인 HTTP DTO에는 `record`를 사용할 수 있지만 기존 class DTO를 형식만 맞추려고 바꾸지 않습니다.
 
@@ -390,7 +392,7 @@ public record PostSummaryResponse(Long id, String title) {
 - 중복 제거가 변경 이유가 다른 책임을 억지로 묶지는 않았습니까?
 - `Stream`이 반복과 부수 효과의 순서를 감추지 않습니까?
 - 여러 반환값의 의미와 owner가 타입으로 드러납니까?
-- DTO, Service 결과, 조회 Projection, Value Object의 경계가 구분됩니까?
+- HTTP DTO, 서비스가 소유한 조회 및 실행 결과, 저장소 내부 타입과 Value Object의 경계가 구분됩니까?
 - 근거 없는 `null` 방어, fallback이나 넓은 catch가 원래 실패를 숨기지 않습니까?
 
 테스트의 선택, 이름, DCI 구조와 Given, When, Then 기준은 [Testing](testing.md)을 따릅니다.

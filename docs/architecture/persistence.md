@@ -35,10 +35,10 @@ DB 스키마, Flyway migration, 조회 기술과 결과 타입, JPA 관계와 DB
 | 필요한 결과 | 반환 타입 |
 | --- | --- |
 | 상태 변경 등 Entity의 데이터와 동작 | Entity |
-| 목록과 지도에 표시할 일부 값 | Projection 또는 Result |
+| 목록과 지도 등 서비스가 필요한 일부 값 | `service/result`의 Result에 필요한 필드를 projection |
 | 개수, 합계와 순위 | 숫자 또는 집계 결과 타입 |
 
-값만 필요하면 필요한 필드를 직접 projection합니다. Entity 전체가 실제로 필요한 조회까지 일괄적으로 Projection으로 바꾸지 않습니다. 조회 결과를 전달하기 위해 Entity 그래프를 조립하지 않습니다. 결과 타입은 HTTP 응답 구조가 아니라 조회의 의미를 표현하고, 위치와 이름은 [Code Style](../contributing/code-style.md#여러-값을-반환하는-타입과-dto)을 따릅니다.
+값만 필요하면 필요한 필드를 직접 projection합니다. Entity 전체가 실제로 필요한 조회까지 일괄적으로 Projection으로 바꾸지 않습니다. 조회 결과를 전달하기 위해 Entity 그래프를 조립하지 않습니다. 서비스가 필요한 데이터 형식을 결과 타입으로 정의하고 Repository는 그 형식으로 조회합니다. QueryDSL의 projection을 사용해도 결과 타입은 서비스가 소유합니다. 결과 타입은 HTTP 응답 구조와 구분하며, 위치와 이름은 [Code Style](../contributing/code-style.md#여러-값을-반환하는-타입과-dto)을 따릅니다.
 
 ### 조회 방식
 
