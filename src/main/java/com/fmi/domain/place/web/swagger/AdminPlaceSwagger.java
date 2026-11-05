@@ -1,6 +1,9 @@
 package com.fmi.domain.place.web.swagger;
 
+import com.fmi.domain.place.web.dto.request.AdminPlaceListRequest;
 import com.fmi.domain.place.web.dto.request.PlaceUpsertRequest;
+import com.fmi.domain.place.web.dto.response.AdminPlacePageResponse;
+import com.fmi.domain.place.web.dto.response.DeletedPlacePageResponse;
 import com.fmi.domain.place.web.dto.response.PlaceIdResponse;
 import com.fmi.domain.place.web.dto.response.PlaceManagementResponse;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -8,13 +11,46 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Admin Place", description = "관리자 장소 관리 API")
 public interface AdminPlaceSwagger {
+    @Operation(
+            summary = "삭제된 장소 목록 조회",
+            description =
+                    "삭제된 장소를 최근 삭제순으로 20개씩 조회합니다. 응답의 placeId로 복구를 요청합니다. 한국어와 영문 이름을 부분 검색하며 영문 대소문자를 구분하지 않습니다. 검색 조건 변경 시 커서를 초기화합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공. 마지막 페이지는 hasNext=false, nextCursor=null"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "PLACE400-INVALID_REQUEST: 잘못된 유형 또는 커서"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증 필요"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+    })
+    ApiResponse<DeletedPlacePageResponse> listDeleted(@ParameterObject @ModelAttribute AdminPlaceListRequest request);
+
+    @Operation(
+            summary = "운영진 장소 목록 조회",
+            description =
+                    "삭제되지 않은 장소를 최근 등록순으로 20개씩 조회합니다. 종료된 팝업도 포함합니다. 한국어와 영문 이름을 부분 검색하며 영문 대소문자를 구분하지 않습니다. 검색 조건 변경 시 커서를 초기화합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공. 마지막 페이지는 hasNext=false, nextCursor=null"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "PLACE400-INVALID_REQUEST: 잘못된 유형 또는 커서"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증 필요"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+    })
+    ApiResponse<AdminPlacePageResponse> list(@ParameterObject @ModelAttribute AdminPlaceListRequest request);
 
     @Operation(
             summary = "장소 등록",

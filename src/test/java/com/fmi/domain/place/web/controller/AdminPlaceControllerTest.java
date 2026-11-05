@@ -32,6 +32,36 @@ class AdminPlaceControllerTest extends IntegrationTestSupport {
     private S3Service s3Service;
 
     @Nested
+    @DisplayName("관리자 장소 목록에 접근할 때")
+    class DescribeListSecurity {
+        @Test
+        @DisplayName("비로그인 요청은 두 목록 모두 401로 거절한다")
+        void itRejectsAnonymousRequests() throws Exception {
+            // given & when & then
+            mockMvc.perform(get("/admin/places")).andExpect(status().isUnauthorized());
+            mockMvc.perform(get("/admin/places/deleted")).andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @WithMockUser(roles = "USER")
+        @DisplayName("일반 회원은 두 목록 모두 403으로 거절한다")
+        void itRejectsNonAdminRequests() throws Exception {
+            // given & when & then
+            mockMvc.perform(get("/admin/places")).andExpect(status().isForbidden());
+            mockMvc.perform(get("/admin/places/deleted")).andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        @DisplayName("관리자는 두 목록에 접근할 수 있다")
+        void itAllowsAdminRequests() throws Exception {
+            // given & when & then
+            mockMvc.perform(get("/admin/places")).andExpect(status().isOk());
+            mockMvc.perform(get("/admin/places/deleted")).andExpect(status().isOk());
+        }
+    }
+
+    @Nested
     @DisplayName("POST /admin/places")
     class DescribeCreate {
 
