@@ -1,10 +1,10 @@
 package com.fmi.domain.user.user.service;
 
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
-import com.fmi.domain.inquiry.data.Inquiry;
-import com.fmi.domain.inquiry.data.InquiryComment;
-import com.fmi.domain.inquiry.repository.InquiryCommentRepository;
-import com.fmi.domain.inquiry.repository.InquiryRepository;
+import com.fmi.domain.inquiry.comment.data.InquiryComment;
+import com.fmi.domain.inquiry.comment.repository.InquiryCommentRepository;
+import com.fmi.domain.inquiry.inquiry.data.Inquiry;
+import com.fmi.domain.inquiry.inquiry.repository.InquiryRepository;
 import com.fmi.domain.post.comment.data.Comment;
 import com.fmi.domain.post.comment.repository.CommentRepository;
 import com.fmi.domain.post.comment.service.CommentImageService;

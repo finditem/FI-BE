@@ -14,10 +14,10 @@ import com.fmi.domain.auth.converter.AuthConverter;
 import com.fmi.domain.auth.data.enums.WithdrawalReason;
 import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.auth.web.dto.response.SignupResponse;
-import com.fmi.domain.inquiry.data.enums.InquiryStatus;
-import com.fmi.domain.inquiry.data.enums.InquiryType;
-import com.fmi.domain.inquiry.service.InquiryService;
-import com.fmi.domain.inquiry.web.dto.response.InquiryDetailResponse;
+import com.fmi.domain.inquiry.inquiry.data.enums.InquiryStatus;
+import com.fmi.domain.inquiry.inquiry.data.enums.InquiryType;
+import com.fmi.domain.inquiry.inquiry.service.InquiryService;
+import com.fmi.domain.inquiry.inquiry.web.dto.response.InquiryDetailResponse;
 import com.fmi.domain.notice.notice.service.NoticeService;
 import com.fmi.domain.notice.notice.web.dto.request.NoticeCreateRequest;
 import com.fmi.domain.notice.notice.web.dto.request.NoticeUpdateRequest;
@@ -333,7 +333,7 @@ public class AdminController {
     })
     public ApiResponse<String> updateInquiryStatus(
             @PathVariable Long inquiryId,
-            @Valid @RequestBody com.fmi.domain.inquiry.web.dto.request.InquiryStatusUpdateRequest request) {
+            @Valid @RequestBody com.fmi.domain.inquiry.inquiry.web.dto.request.InquiryStatusUpdateRequest request) {
         inquiryService.updateStatus(inquiryId, request.getStatus());
         return ApiResponse.onSuccess("OK");
     }

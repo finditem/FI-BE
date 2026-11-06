@@ -8,8 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fmi.domain.auth.repository.SocialAccountsRepository;
-import com.fmi.domain.inquiry.repository.InquiryCommentRepository;
-import com.fmi.domain.inquiry.repository.InquiryRepository;
+import com.fmi.domain.inquiry.comment.repository.InquiryCommentRepository;
+import com.fmi.domain.inquiry.inquiry.repository.InquiryRepository;
 import com.fmi.domain.post.comment.repository.CommentRepository;
 import com.fmi.domain.post.comment.service.CommentImageService;
 import com.fmi.domain.post.comment.service.CommentLikeService;

@@ -1,6 +1,6 @@
 package com.fmi.external.slack;
 
-import com.fmi.domain.inquiry.event.InquiryEvent;
+import com.fmi.domain.inquiry.inquiry.event.InquiryEvent;
 import com.fmi.domain.report.event.ReportEvent;
 import com.slack.api.Slack;
 import com.slack.api.model.Attachment;
