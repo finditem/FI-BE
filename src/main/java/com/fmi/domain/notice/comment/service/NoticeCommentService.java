@@ -3,7 +3,6 @@ package com.fmi.domain.notice.comment.service;
 import com.fmi.domain.notice.comment.converter.NoticeCommentConverter;
 import com.fmi.domain.notice.comment.data.NoticeComment;
 import com.fmi.domain.notice.comment.data.NoticeCommentImage;
-import com.fmi.domain.notice.comment.data.NoticeCommentLike;
 import com.fmi.domain.notice.comment.repository.NoticeCommentImageRepository;
 import com.fmi.domain.notice.comment.repository.NoticeCommentLikeRepository;
 import com.fmi.domain.notice.comment.repository.NoticeCommentRepository;
@@ -16,7 +15,6 @@ import com.fmi.domain.notice.notice.repository.NoticeRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationDeliveryService;
-import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.external.storage.S3Service;
@@ -42,13 +40,20 @@ public class NoticeCommentService {
     private final NotificationDeliveryService notificationDeliveryService;
 
     private final NoticeRepository noticeRepository;
+
     private final UserRepository userRepository;
+
     private final NoticeCommentRepository noticeCommentRepository;
+
     private final NoticeCommentConverter noticeCommentConverter;
+
     private final NoticeCommentLikeRepository noticeCommentLikeRepository;
+
     private final NoticeCommentImageRepository noticeCommentImageRepository;
+
     private final S3Service s3Service;
-    private final NotificationService notificationService;
+
+    private static final int REPLY_PAGE_SIZE = 10;
 
     @Transactional
     public NoticeCommentResponse createComment(
@@ -158,8 +163,6 @@ public class NoticeCommentService {
         return new NoticeCommentSliceResponse(result, comments.hasNext(), nextCursor);
     }
 
-    private static final int REPLY_PAGE_SIZE = 10;
-
     public NoticeCommentPageResponse getReplies(Long parentId, int page, UserDetails userDetails) {
         NoticeComment parent = noticeCommentRepository
                 .findById(parentId)
@@ -263,39 +266,6 @@ public class NoticeCommentService {
         } else {
             noticeCommentRepository.delete(comment);
         }
-    }
-
-    @Transactional
-    public void addCommentLike(Long commentId, String email) {
-        NoticeComment comment = noticeCommentRepository
-                .findById(commentId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
-
-        User user =
-                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
-        if (noticeCommentLikeRepository.findByUserAndComment(user, comment).isPresent()) {
-            return;
-        }
-
-        noticeCommentLikeRepository.save(
-                NoticeCommentLike.builder().user(user).comment(comment).build());
-        noticeCommentRepository.incrementLikeCount(commentId);
-    }
-
-    @Transactional
-    public void removeCommentLike(Long commentId, String email) {
-        NoticeComment comment = noticeCommentRepository
-                .findById(commentId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._COMMENT_NOT_FOUND));
-
-        User user =
-                userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
-        noticeCommentLikeRepository.findByUserAndComment(user, comment).ifPresent(like -> {
-            noticeCommentLikeRepository.delete(like);
-            noticeCommentRepository.decrementLikeCount(commentId);
-        });
     }
 
     private NoticeCommentResponse toResponse(

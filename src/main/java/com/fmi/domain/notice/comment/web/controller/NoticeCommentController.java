@@ -6,8 +6,6 @@ import com.fmi.domain.notice.comment.web.dto.response.NoticeCommentPageResponse;
 import com.fmi.domain.notice.comment.web.dto.response.NoticeCommentResponse;
 import com.fmi.domain.notice.comment.web.dto.response.NoticeCommentSliceResponse;
 import com.fmi.global.apiPayload.ApiResponse;
-import com.fmi.global.apiPayload.code.status.ErrorStatus;
-import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -131,28 +129,6 @@ public class NoticeCommentController {
 
         NoticeCommentResponse response = noticeCommentService.updateComment(commentId, request, images, userDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
-    }
-
-    @PostMapping("/comments/{commentId}/like")
-    @Operation(summary = "공지사항 댓글 추천 추가")
-    public ResponseEntity<ApiResponse<Void>> addCommentLike(
-            @PathVariable Long commentId, @AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
-            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
-        }
-        noticeCommentService.addCommentLike(commentId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
-    }
-
-    @DeleteMapping("/comments/{commentId}/like")
-    @Operation(summary = "공지사항 댓글 추천 취소")
-    public ResponseEntity<ApiResponse<Void>> removeCommentLike(
-            @PathVariable Long commentId, @AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
-            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
-        }
-        noticeCommentService.removeCommentLike(commentId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     @DeleteMapping("/comments/{commentId}")

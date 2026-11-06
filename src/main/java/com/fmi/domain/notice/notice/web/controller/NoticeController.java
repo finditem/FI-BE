@@ -2,17 +2,13 @@ package com.fmi.domain.notice.notice.web.controller;
 
 import com.fmi.domain.notice.notice.data.enums.NoticeCategory;
 import com.fmi.domain.notice.notice.data.enums.NoticeSortType;
-import com.fmi.domain.notice.notice.service.NoticeService;
+import com.fmi.domain.notice.notice.service.NoticeDetailService;
+import com.fmi.domain.notice.notice.service.NoticeQueryService;
 import com.fmi.domain.notice.notice.web.dto.response.NoticeListResponse;
 import com.fmi.domain.notice.notice.web.dto.response.NoticeMetaResponse;
 import com.fmi.domain.notice.notice.web.dto.response.NoticeResponse;
-import com.fmi.domain.notification.data.enums.NotificationType;
-import com.fmi.domain.notification.service.NotificationService;
-import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
-import com.fmi.global.apiPayload.code.status.ErrorStatus;
-import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,7 +16,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,10 +27,9 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "Notice", description = "공지사항 API")
 public class NoticeController {
+    private final NoticeDetailService noticeDetailService;
 
-    private final NoticeService noticeService;
-    private final NotificationService notificationService;
-    private final UserRepository userRepository;
+    private final NoticeQueryService noticeQueryService;
 
     /**
      * 공지사항 목록 조회
@@ -58,7 +52,7 @@ public class NoticeController {
             @RequestParam(defaultValue = "10") int size) {
 
         CursorPageResponse<NoticeListResponse> notices =
-                noticeService.getNoticeListCursor(category, keyword, sortType, cursor, size);
+                noticeQueryService.getNoticeListCursor(category, keyword, sortType, cursor, size);
         return ApiResponse.onSuccess(notices);
     }
 
@@ -75,7 +69,7 @@ public class NoticeController {
                 description = "NOTICE404-NOT_FOUND: 존재하지 않는 공지사항입니다")
     })
     public ApiResponse<NoticeMetaResponse> getNoticeMeta(@PathVariable Long noticeId) {
-        NoticeMetaResponse meta = noticeService.getNoticeMeta(noticeId);
+        NoticeMetaResponse meta = noticeQueryService.getNoticeMeta(noticeId);
         return ApiResponse.onSuccess(meta);
     }
 
@@ -115,56 +109,13 @@ public class NoticeController {
             userIdentifier = getClientIpAddress(request);
         }
 
-        NoticeResponse notice = noticeService.getNoticeDetail(noticeId, userIdentifier);
-
         UserDetails userDetails = (authentication != null && authentication.getPrincipal() instanceof UserDetails)
                 ? (UserDetails) authentication.getPrincipal()
                 : null;
 
-        // 공지사항 조회 시 관련 알림 자동 읽음처리
-        if (userDetails != null) {
-            userRepository
-                    .findByEmail(userDetails.getUsername())
-                    .ifPresent(user -> notificationService.markNotificationsAsReadByReference(
-                            user, noticeId, List.of(NotificationType.COMMENT, NotificationType.NOTICE)));
-        }
+        NoticeResponse notice = noticeDetailService.getNoticeDetail(noticeId, userIdentifier, userDetails);
 
         return ApiResponse.onSuccess(notice);
-    }
-
-    /**
-     * 공지사항 추천(좋아요) 추가
-     * POST /notices/{noticeId}/like
-     */
-    @PostMapping("/{noticeId}/like")
-    @Operation(summary = "공지사항 추천 추가", description = "공지사항을 추천합니다.")
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 성공")})
-    public ApiResponse<Void> addLike(
-            @PathVariable Long noticeId,
-            @org.springframework.security.core.annotation.AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
-            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
-        }
-        noticeService.addLike(noticeId, userDetails.getUsername());
-        return ApiResponse.onSuccess(null);
-    }
-
-    /**
-     * 공지사항 추천(좋아요) 취소
-     * DELETE /notices/{noticeId}/like
-     */
-    @DeleteMapping("/{noticeId}/like")
-    @Operation(summary = "공지사항 추천 취소", description = "공지사항 추천을 취소합니다.")
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 취소 성공")
-    })
-    public ApiResponse<Void> removeLike(
-            @PathVariable Long noticeId,
-            @org.springframework.security.core.annotation.AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
-            throw new GeneralException(ErrorStatus._UNAUTHORIZED);
-        }
-        noticeService.removeLike(noticeId, userDetails.getUsername());
-        return ApiResponse.onSuccess(null);
     }
 
     /**
