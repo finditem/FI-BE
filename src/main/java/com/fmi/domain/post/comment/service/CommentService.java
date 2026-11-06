@@ -3,7 +3,6 @@ package com.fmi.domain.post.comment.service;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationDeliveryService;
-import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.comment.converter.CommentConverter;
 import com.fmi.domain.post.comment.data.Comment;
 import com.fmi.domain.post.comment.repository.CommentRepository;
@@ -41,7 +40,6 @@ public class CommentService {
     private final UserQueryService userQueryService;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
-    private final NotificationService notificationService;
     private final CommentImageService commentImageService;
     private final CommentLikeService commentLikeService;
 

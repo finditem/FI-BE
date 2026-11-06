@@ -3,12 +3,11 @@ package com.fmi.domain.post.comment.service;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationDeliveryService;
-import com.fmi.domain.notification.service.NotificationService;
-import com.fmi.domain.post.comment.converter.CommentLikeConverter;
 import com.fmi.domain.post.comment.data.Comment;
 import com.fmi.domain.post.comment.data.CommentLike;
 import com.fmi.domain.post.comment.repository.CommentLikeRepository;
 import com.fmi.domain.post.comment.repository.CommentRepository;
+import com.fmi.domain.post.comment.repository.redis.CommentLikeQueueRedisRepository;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.domain.user.user.service.UserQueryService;
@@ -18,8 +17,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,14 +28,9 @@ public class CommentLikeService {
 
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
-    private final NotificationService notificationService;
-    private final StringRedisTemplate stringRedisTemplate;
-    private final TaskScheduler taskScheduler;
+    private final CommentLikeQueueRedisRepository likeQueueRedisRepository;
     private final UserRepository userRepository;
-    private final CommentLikeConverter commentLikeConverter;
     private final UserQueryService userQueryService;
-
-    private static final String LIKE_QUEUE_KEY = "comment:like:queue:";
 
     @Transactional(readOnly = true)
     public Map<Long, Long> buildLikeCountMap(List<Long> commentIds) {
@@ -172,15 +164,14 @@ public class CommentLikeService {
 
     private void sendAccumulatedLikeNotification(Long commentId) {
 
-        String key = LIKE_QUEUE_KEY + commentId;
-        Set<String> userIds = stringRedisTemplate.opsForSet().members(key);
+        Set<String> userIds = likeQueueRedisRepository.findUserIds(commentId);
         if (userIds == null || userIds.isEmpty()) return;
 
         userIds.remove("_init");
 
         Comment comment = commentRepository.findById(commentId).orElse(null);
         if (comment == null) {
-            stringRedisTemplate.delete(key);
+            likeQueueRedisRepository.delete(commentId);
             return;
         }
 
@@ -206,6 +197,6 @@ public class CommentLikeService {
                 ReferenceType.COMMENT,
                 comment.getPost().getId());
 
-        stringRedisTemplate.delete(key);
+        likeQueueRedisRepository.delete(commentId);
     }
 }

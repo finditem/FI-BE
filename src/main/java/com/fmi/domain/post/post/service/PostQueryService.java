@@ -14,6 +14,7 @@ import com.fmi.domain.post.post.repository.PostFavoriteRepository;
 import com.fmi.domain.post.post.repository.PostImageRepository;
 import com.fmi.domain.post.post.repository.PostRepository;
 import com.fmi.domain.post.post.repository.PostSearchRepository;
+import com.fmi.domain.post.post.repository.redis.PostViewStore;
 import com.fmi.domain.post.post.web.dto.response.*;
 import com.fmi.domain.post.post.web.dto.response.PostImageResponse;
 import com.fmi.domain.user.block.service.BlockService;
@@ -25,15 +26,9 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.enums.SortType;
 import com.fmi.global.util.IpUtil;
 import java.text.Normalizer;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +45,7 @@ public class PostQueryService {
     private final PostFavoriteRepository postFavoriteRepository;
     private final PostFavoriteService postFavoriteService;
     private final PostImageService postImageService;
-    private final StringRedisTemplate stringRedisTemplate;
+    private final PostViewStore postViewStore;
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
     private final CommentQueryService commentQueryService;
     private final BlockService blockService;
@@ -120,32 +115,14 @@ public class PostQueryService {
     }
 
     private boolean canIncreaseViewCount(Long postId, Long userId) {
-        return isFirstToday(postId, "user", String.valueOf(userId));
+        return postViewStore.isFirstToday(postId, "user", String.valueOf(userId));
     }
 
     private boolean canIncreaseViewCount(Long postId, String clientIp) {
         if (Objects.isNull(clientIp) || clientIp.isBlank() || "unknown".equalsIgnoreCase(clientIp)) {
             return false;
         }
-        return isFirstToday(postId, "not-user", IpUtil.hashIp(clientIp));
-    }
-
-    private boolean isFirstToday(Long postId, String sic, String value) {
-        String today = LocalDate.now(ZoneId.of("Asia/Seoul")).format(DateTimeFormatter.BASIC_ISO_DATE);
-        long ttlSeconds = secondsUntilMidnightSeoul();
-
-        String redisKey = "post:view:" + postId + ":" + today + ":sic:" + sic + ":value:" + value;
-
-        Boolean first = stringRedisTemplate.opsForValue().setIfAbsent(redisKey, "1", Duration.ofSeconds(ttlSeconds));
-
-        return Boolean.TRUE.equals(first);
-    }
-
-    private long secondsUntilMidnightSeoul() {
-        ZoneId zone = ZoneId.of("Asia/Seoul");
-        LocalDateTime now = LocalDateTime.now(zone);
-        LocalDateTime midnight = now.toLocalDate().plusDays(1).atStartOfDay();
-        return Duration.between(now, midnight).getSeconds();
+        return postViewStore.isFirstToday(postId, "not-user", IpUtil.hashIp(clientIp));
     }
 
     @Transactional(readOnly = true)
@@ -259,22 +236,6 @@ public class PostQueryService {
         Long commentCount = commentQueryService.countByPost(post);
 
         return PostConverter.toShareResponse(post, thumbnailImageUrl, likeCount, commentCount);
-    }
-
-    @Transactional(readOnly = true)
-    public PostPageResponse getFavoritePost(
-            UserDetails userDetails,
-            PostType postType,
-            Category category,
-            String address,
-            String keyword,
-            SortType sortType,
-            Long cursor,
-            int size) {
-        User user = userQueryService.findUser(userDetails.getUsername());
-
-        return postFavoriteRepository.searchMyFavorites(
-                user.getId(), postType, category, address, keyword, sortType, cursor, size);
     }
 
     @Transactional(readOnly = true)

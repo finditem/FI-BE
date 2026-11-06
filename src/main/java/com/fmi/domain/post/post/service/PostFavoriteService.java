@@ -2,13 +2,17 @@ package com.fmi.domain.post.post.service;
 
 import com.fmi.domain.post.post.data.Post;
 import com.fmi.domain.post.post.data.PostFavorite;
+import com.fmi.domain.post.post.data.enums.Category;
+import com.fmi.domain.post.post.data.enums.PostType;
 import com.fmi.domain.post.post.repository.PostFavoriteRepository;
 import com.fmi.domain.post.post.repository.PostRepository;
 import com.fmi.domain.post.post.web.dto.response.PostFavoriteResponse;
+import com.fmi.domain.post.post.web.dto.response.PostPageResponse;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.service.UserQueryService;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import com.fmi.global.enums.SortType;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +27,22 @@ public class PostFavoriteService {
     private final PostFavoriteRepository favoriteRepository;
     private final UserQueryService userQueryService;
     private final PostRepository postRepository;
+
+    @Transactional(readOnly = true)
+    public PostPageResponse getFavoritePost(
+            UserDetails userDetails,
+            PostType postType,
+            Category category,
+            String address,
+            String keyword,
+            SortType sortType,
+            Long cursor,
+            int size) {
+        User user = userQueryService.findUser(userDetails.getUsername());
+
+        return favoriteRepository.searchMyFavorites(
+                user.getId(), postType, category, address, keyword, sortType, cursor, size);
+    }
 
     @Transactional
     public PostFavoriteResponse addFavorite(Long postId, UserDetails userDetails) {

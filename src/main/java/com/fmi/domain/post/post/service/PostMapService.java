@@ -7,7 +7,6 @@ import com.fmi.domain.post.post.data.enums.PostStatus;
 import com.fmi.domain.post.post.data.enums.PostType;
 import com.fmi.domain.post.post.exception.MapErrorStatus;
 import com.fmi.domain.post.post.repository.PostMapRepository;
-import com.fmi.domain.post.post.repository.PostRepository;
 import com.fmi.domain.post.post.web.dto.request.LocationMapPostRequest;
 import com.fmi.domain.post.post.web.dto.request.MapPostRequest;
 import com.fmi.domain.post.post.web.dto.request.PostMarkerRequest;
@@ -29,13 +28,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class PostMapService {
-    private final PostMapRepository postMapRepository;
-
     private static final int NEARBY_POST_RADIUS_METERS = 500;
     private static final MapLevel NEARBY_POST_PREFILTER_MAP_LEVEL = MapLevel.LEVEL_5;
 
     private final UserQueryService userQueryService;
-    private final PostRepository postRepository;
+    private final PostMapRepository postMapRepository;
     private final BlockedUserRepository blockedUserRepository;
     private final PostQueryService postQueryService;
     private final HotPostService hotPostService;

@@ -6,7 +6,6 @@ import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationBroadcastService;
 import com.fmi.domain.notification.service.NotificationDeliveryService;
-import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.post.converter.util.PostConverter;
 import com.fmi.domain.post.post.data.Post;
 import com.fmi.domain.post.post.data.PostImage;
@@ -47,7 +46,6 @@ public class PostService {
     private final NotificationDeliveryService notificationDeliveryService;
 
     private final PostRepository postRepository;
-    private final NotificationService notificationService;
     private final PostFavoriteRepository postFavoriteRepository;
     private final PostImageService postImageService;
     private final ChatRoomRepository chatRoomRepository;

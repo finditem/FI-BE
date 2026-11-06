@@ -1,18 +1,13 @@
 package com.fmi.domain.post.post.web.controller;
 
-import com.fmi.domain.notification.data.enums.NotificationType;
-import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.post.data.enums.Category;
 import com.fmi.domain.post.post.data.enums.PostStatus;
 import com.fmi.domain.post.post.data.enums.PostType;
+import com.fmi.domain.post.post.service.PostDetailService;
 import com.fmi.domain.post.post.service.PostQueryService;
 import com.fmi.domain.post.post.service.PostService;
-import com.fmi.domain.post.post.service.PostTranslationService;
-import com.fmi.domain.post.post.service.TemporaryPostService;
 import com.fmi.domain.post.post.web.dto.request.*;
 import com.fmi.domain.post.post.web.dto.response.*;
-import com.fmi.domain.post.post.web.dto.response.TemporaryPostResponse;
-import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.enums.SortType;
 import com.fmi.global.util.IpUtil;
@@ -42,13 +37,10 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/posts")
 @Tag(name = "Post", description = "게시글 관련 API")
 public class PostController {
+    private final PostDetailService postDetailService;
 
     private final PostService postService;
     private final PostQueryService postQueryService;
-    private final TemporaryPostService temporaryPostService;
-    private final NotificationService notificationService;
-    private final UserRepository userRepository;
-    private final PostTranslationService postTranslationService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "게시글 생성")
@@ -224,52 +216,7 @@ public class PostController {
 
         String clientIp = (Objects.isNull(userDetails)) ? IpUtil.getClientIp(request) : null;
 
-        PostGetResponse response = postQueryService.getPost(postId, userDetails, clientIp);
-
-        // 게시글 조회 시 관련 알림 자동 읽음처리
-        if (userDetails != null) {
-            userRepository
-                    .findByEmail(userDetails.getUsername())
-                    .ifPresent(user -> notificationService.markNotificationsAsReadByReference(
-                            user,
-                            postId,
-                            List.of(NotificationType.COMMENT, NotificationType.FAVORITE, NotificationType.CATEGORY)));
-        }
-
-        return ResponseEntity.ok(ApiResponse.onSuccess(response));
-    }
-
-    @GetMapping("/{postId}/translate")
-    @Operation(summary = "게시글 번역 조회", description = """
-                    게시글 제목/본문을 조회자의 선호 언어로 번역해 반환합니다.
-                    원문 언어는 DeepL이 자동 감지하며, 대상 언어는 조회자의 선호 언어입니다.
-                    선호 언어가 설정되어 있지 않은 사용자는 한국어(KO)로 취급합니다.
-
-                    - 최초 요청 시 번역 후 결과를 저장하며, 이후 같은 게시글·대상 언어 요청은 저장된 값을 반환합니다.
-                    - 게시글 내용이 실질적으로 변경되면 다음 요청 시 재번역됩니다.
-                      특수문자나 띄어쓰기/줄바꿈만 바뀐 경우는 정규화 후 비교하여 실질적 변경으로 보지 않고 저장된 번역을 가져옵니다.
-                    """)
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "게시글 번역 조회 성공",
-                content =
-                        @Content(
-                                mediaType = "application/json",
-                                schema = @Schema(implementation = PostTranslationResponse.class))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "인증 실패",
-                content = @Content),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "POST404-NOT_FOUND: 존재하지 않는 게시글입니다",
-                content = @Content)
-    })
-    public ResponseEntity<ApiResponse<PostTranslationResponse>> translatePost(
-            @PathVariable Long postId, @AuthenticationPrincipal UserDetails userDetails) {
-
-        PostTranslationResponse response = postTranslationService.getOrTranslate(postId, userDetails);
+        PostGetResponse response = postDetailService.getPost(postId, userDetails, clientIp);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
@@ -443,156 +390,6 @@ public class PostController {
         List<PostSimilarResponse> response = postQueryService.getSimilarPostList(postId, userDetails);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
-    }
-
-    @PostMapping(value = "/temp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "임시 저장 게시글 생성/수정", description = """
-                    임시 저장 게시글을 생성하거나(없으면 생성) 기존 임시 저장 게시글을 업데이트합니다.
-
-                    - 회원당 임시 저장 게시글은 1개만 존재합니다.
-                    - request 파트(JSON)로 임시 저장 데이터를 전달합니다. (필드는 모두 nullable)
-                    - images 파트(파일)는 선택이며, 신규 업로드 이미지입니다.
-                    - keepImageIdList: 기존 임시 저장에 이미 저장되어 있던 이미지 중 '유지할 이미지 ID' 목록입니다.
-                      - 기존 임시 저장이 있는 경우에만 적용됩니다.
-                      - keepImageIdList에 포함되지 않은 기존 이미지는 S3/DB에서 삭제됩니다.
-
-                    요청 예)
-                    - 신규 임시저장 생성: request만 전송 또는 request + images 전송
-                    - 임시저장 수정(기존 이미지 유지 + 새 이미지 추가):
-                      - request.keepImageIdList=[1,2]
-                      - images에 신규 파일 추가
-                    """)
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "임시 저장 성공",
-                content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
-                                    {
-                                      "isSuccess": true,
-                                      "code": "COMMON200",
-                                      "message": "성공",
-                                      "result": null
-                                    }
-                                    """))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "잘못된 요청 (multipart 형식 오류/파라미터 오류)",
-                content = @Content),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "인증 실패",
-                content = @Content),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "500",
-                description = "서버 오류",
-                content = @Content)
-    })
-    public ResponseEntity<ApiResponse<Void>> saveTemporaryPost(
-            @RequestPart("request") TemporaryPostCreateRequest request,
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
-        temporaryPostService.create(request, userDetails, images);
-
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
-    }
-
-    @GetMapping("/temp")
-    @Operation(summary = "내 임시 저장 게시글 조회", description = """
-                    로그인한 사용자의 임시 저장 게시글(temporarySave=true)을 조회합니다.
-
-                    - 임시 저장 게시글이 없으면 result는 null로 반환됩니다.
-                    - images에는 임시 저장 게시글에 연결된 이미지 목록이 포함됩니다. (id/imgUrl/imageType)
-                    """)
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "조회 성공",
-                content =
-                        @Content(
-                                mediaType = "application/json",
-                                examples = {
-                                    @ExampleObject(name = "임시 저장 존재", value = """
-                                                    {
-                                                      "isSuccess": true,
-                                                      "code": "COMMON200",
-                                                      "message": "성공",
-                                                      "result": {
-                                                        "postId": 24,
-                                                        "postType": "LOST",
-                                                        "category": "WALLET",
-                                                        "radius": "RADIUS_1000",
-                                                        "date": "2026-02-20T10:30:00",
-                                                        "title": "지갑을 잃어버렸어요",
-                                                        "address": "서울 강남구",
-                                                        "latitude": 37.4979,
-                                                        "longitude": 127.0276,
-                                                        "content": "강남역 근처에서 검정 지갑 분실했습니다.",
-                                                        "images": [
-                                                          {
-                                                            "id": 12,
-                                                            "imgUrl": "https://example.com/image1.png",
-                                                            "imageType": "THUMBNAIL"
-                                                          },
-                                                          {
-                                                            "id": 13,
-                                                            "imgUrl": "https://example.com/image2.png",
-                                                            "imageType": "NORMAL"
-                                                          }
-                                                        ],
-                                                        "updatedAt": "2026-02-20T12:00:00",
-                                                        "createdAt": "2026-02-20T10:00:00"
-                                                      }
-                                                    }
-                                                    """),
-                                    @ExampleObject(name = "임시 저장 없음", value = """
-                                                    {
-                                                      "isSuccess": true,
-                                                      "code": "COMMON200",
-                                                      "message": "성공",
-                                                      "result": null
-                                                    }
-                                                    """)
-                                })),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "인증 실패",
-                content = @Content)
-    })
-    public ResponseEntity<ApiResponse<TemporaryPostResponse>> getTemporaryPost(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        TemporaryPostResponse response = temporaryPostService.getMyTemporaryPost(userDetails);
-
-        return ResponseEntity.ok(ApiResponse.onSuccess(response));
-    }
-
-    @DeleteMapping("/temp")
-    @Operation(summary = "내 임시 저장 게시글 삭제", description = """
-                    로그인한 사용자의 임시 저장 게시글(temporarySave=true)을 삭제합니다.
-
-                    - 임시 저장 게시글이 존재하면: 연결된 이미지(S3 + DB) 삭제 후 게시글을 삭제합니다.
-                    - 임시 저장 게시글이 없으면: _TEMP_POST_NOT_FOUND 예외를 반환합니다.
-                    """)
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "삭제 성공",
-                content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
-                                            {
-                                              "isSuccess": true,
-                                              "code": "COMMON200",
-                                              "message": "성공",
-                                              "result": null
-                                            }
-                                            """))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "인증 실패",
-                content = @Content)
-    })
-    public ResponseEntity<ApiResponse<Void>> deleteTemporaryPost(@AuthenticationPrincipal UserDetails userDetails) {
-        temporaryPostService.deleteTemporaryPost(userDetails);
-
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     @GetMapping("/{postId}/share")
