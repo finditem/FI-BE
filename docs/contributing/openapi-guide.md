@@ -14,7 +14,7 @@ Swagger의 태그는 화면이나 Controller가 아니라 API가 다루는 업�
 
 `@Tag`는 업무 분류를, `@Operation`의 `summary`는 사용자가 구분할 수 있는 동작을 표현합니다. `description`에는 호출 목적, 중요한 입력 조건과 결과를 적습니다. 구현 절차나 정책서의 상세 판단 규칙을 복사하지 않습니다. 요청 DTO와 응답 DTO의 필드 설명은 실제 JSON 이름, 타입, 필수 여부, 허용 값과 단위를 확인해 작성합니다.
 
-예를 들어 [`PostController`](../../src/main/java/com/fmi/domain/post/post/web/controller/PostController.java)는 `Post` 태그 아래에 게시글 작성과 목록 조회를 둡니다. 운영진 API도 Controller 이름이 아니라 자원에 맞는 태그를 고르는 사례는 [`AdminController`](../../src/main/java/com/fmi/domain/admin/web/controller/AdminController.java)에서 확인합니다.
+예를 들어 [`PostController`](../../src/main/java/com/fmi/domain/post/post/web/controller/PostController.java)는 `Post` 태그 아래에 게시글 작성과 목록 조회를 둡니다. 운영진 API도 Controller 이름이 아니라 자원에 맞는 태그를 고르는 사례는 [`AdminNoticeController`](../../src/main/java/com/fmi/domain/admin/web/controller/AdminNoticeController.java)에서 확인합니다.
 
 **적용 전**
 

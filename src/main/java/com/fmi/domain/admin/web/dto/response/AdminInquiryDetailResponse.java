@@ -1,7 +1,7 @@
 package com.fmi.domain.admin.web.dto.response;
 
-import com.fmi.domain.inquiry.data.enums.InquiryStatus;
-import com.fmi.domain.inquiry.web.dto.response.InquiryCommentResponse;
+import com.fmi.domain.inquiry.comment.web.dto.response.InquiryCommentResponse;
+import com.fmi.domain.inquiry.inquiry.data.enums.InquiryStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.List;

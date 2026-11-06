@@ -1,14 +1,9 @@
 package com.fmi.domain.notification.web.controller;
 
-import com.fmi.domain.notification.data.PushSubscription;
-import com.fmi.domain.notification.repository.PushSubscriptionRepository;
+import com.fmi.domain.notification.service.PushSubscriptionService;
 import com.fmi.domain.notification.service.WebPushService;
 import com.fmi.domain.notification.web.dto.request.PushSubscribeRequest;
-import com.fmi.domain.user.user.data.User;
-import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.global.apiPayload.ApiResponse;
-import com.fmi.global.apiPayload.code.status.ErrorStatus;
-import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,8 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Web Push", description = "Web Push 알림 구독 API")
 public class PushSubscriptionController {
 
-    private final PushSubscriptionRepository pushSubscriptionRepository;
-    private final UserRepository userRepository;
+    private final PushSubscriptionService pushSubscriptionService;
     private final WebPushService webPushService;
 
     /**
@@ -72,27 +65,13 @@ public class PushSubscriptionController {
                                                 value =
                                                         "{\"isSuccess\": false, \"code\": \"USER404-NOT_FOUND\", \"message\": \"사용자를 찾을 수 없습니다.\"}")))
     })
-    @Transactional
     public ApiResponse<String> subscribe(
             @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody PushSubscribeRequest request) {
 
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
-        // 이미 같은 endpoint가 등록되어 있으면 무시
-        if (pushSubscriptionRepository.existsByUserAndEndpoint(user, request.getEndpoint())) {
+        boolean subscribed = pushSubscriptionService.subscribe(userDetails, request);
+        if (!subscribed) {
             return ApiResponse.onSuccess("이미 등록된 구독입니다");
         }
-
-        PushSubscription subscription = PushSubscription.builder()
-                .user(user)
-                .endpoint(request.getEndpoint())
-                .p256dh(request.getP256dh())
-                .auth(request.getAuth())
-                .build();
-        pushSubscriptionRepository.save(subscription);
-
         return ApiResponse.onSuccess("푸시 구독이 등록되었습니다");
     }
 
@@ -116,16 +95,11 @@ public class PushSubscriptionController {
                                                 value =
                                                         "{\"isSuccess\": false, \"code\": \"USER404-NOT_FOUND\", \"message\": \"사용자를 찾을 수 없습니다.\"}")))
     })
-    @Transactional
     public ApiResponse<String> unsubscribe(
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "구독 해제할 푸시 endpoint URL") @RequestParam String endpoint) {
 
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-
-        pushSubscriptionRepository.deleteByUserAndEndpoint(user, endpoint);
+        pushSubscriptionService.unsubscribe(userDetails, endpoint);
         return ApiResponse.onSuccess("푸시 구독이 해제되었습니다");
     }
 }

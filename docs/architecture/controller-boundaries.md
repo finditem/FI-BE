@@ -36,7 +36,7 @@ HTTP API의 Controller 구성과 분리 시점을 정할 때 적용합니다. Se
 
 | Controller | API 기능 | 호출 대상 |
 | --- | --- | --- |
-| `PostController` | 일반 게시글 생성, 수정, 삭제, 상태와 반경 변경, 상세, 목록, 검색, 공유와 유사 글 조회 | `PostService`, `PostQueryService` |
+| `PostController` | 일반 게시글 생성, 수정, 삭제, 상태와 반경 변경, 상세, 목록, 검색, 공유와 유사 글 조회 | `PostService`, `PostQueryService`, `PostDetailService` |
 | `TemporaryPostController` | 임시저장 생성, 조회와 삭제 | `TemporaryPostService` |
 | `PostTranslationController` | 게시글 번역 요청 | `PostTranslationService` |
 | `PostStatisticsController` | 게시글 통계 조회 | `PostStatisticsService` |
@@ -44,7 +44,21 @@ HTTP API의 Controller 구성과 분리 시점을 정할 때 적용합니다. Se
 
 인기 선정이 일반 목록의 내부 처리이면 `HotPostController`를 만들지 않습니다. 독립적인 인기 목록 API 하나는 `PostController`에 둘 수 있고, 인기 API 묶음이 분리 조건을 만족하면 `HotPostController`를 검토합니다. 이미지가 게시글 생성과 수정의 일부이면 `PostImageController`를 만들지 않습니다.
 
-현재 [PostController](../../src/main/java/com/fmi/domain/post/post/web/controller/PostController.java)에는 일반 게시글, 임시저장과 번역 API가 함께 있습니다. [PostStatisticsController](../../src/main/java/com/fmi/domain/post/post/web/controller/PostStatisticsController.java)는 이미 분리되어 있습니다. [PostFavoriteController](../../src/main/java/com/fmi/domain/post/post/web/controller/PostFavoriteController.java)는 찜 목록 조회에 `PostQueryService`를 사용합니다. 이 문서 추가만으로 클래스나 호출 경계를 변경하지 않습니다.
+현재 [PostController](../../src/main/java/com/fmi/domain/post/post/web/controller/PostController.java)는 일반 게시글 API를, [TemporaryPostController](../../src/main/java/com/fmi/domain/post/post/web/controller/TemporaryPostController.java)와 [PostTranslationController](../../src/main/java/com/fmi/domain/post/post/web/controller/PostTranslationController.java)는 임시저장과 번역 API를 담당합니다. [PostStatisticsController](../../src/main/java/com/fmi/domain/post/post/web/controller/PostStatisticsController.java)는 통계 API를 담당합니다. [PostFavoriteController](../../src/main/java/com/fmi/domain/post/post/web/controller/PostFavoriteController.java)는 찜 등록, 취소와 목록 조회에 `PostFavoriteService`를 사용합니다.
+
+## 다른 업무의 적용 예시
+
+현재 구현의 기능별 구성입니다. 같은 수의 Controller를 만들라는 기준은 아닙니다.
+
+| 업무 | Controller 구성 |
+| --- | --- |
+| 관리자 | `AdminInquiryController`, `AdminReportController`, `AdminUserController`, `AdminNoticeController`, `AdminSignupController`, `AdminPostController` |
+| 회원 | `UserController`, `UserActivityController`, `UserLanguageController`, `UserImageController` |
+| 인증 | `AuthController`, `PasswordController`, `WithdrawalController` |
+| 알림 | `NotificationController`, `NotificationSettingsController`, `PushSubscriptionController` |
+| 공지 | `NoticeController`, `NoticeLikeController`, `NoticeCommentController`, `NoticeCommentLikeController` |
+
+회원 차단 API는 소유 업무의 [BlockController](../../src/main/java/com/fmi/domain/user/block/web/controller/BlockController.java)에 둡니다. 패키지 이동 후에도 기존 `/reports` 경로와 `Report` 태그를 유지합니다.
 
 ## URL, 인증과 Swagger
 

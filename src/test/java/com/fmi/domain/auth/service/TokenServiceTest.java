@@ -16,6 +16,7 @@ import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
 import com.fmi.domain.auth.security.token.RefreshTokenStore;
 import com.fmi.domain.auth.service.internal.TokenIssuer;
+import com.fmi.domain.auth.service.result.TokenIssueResult;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.data.enums.Role;
 import com.fmi.domain.user.user.repository.UserRepository;
@@ -70,7 +71,7 @@ class TokenServiceTest {
                     .role(Role.USER)
                     .build();
             IssuedTokens expected = issuedTokens();
-            TokenIssuer.IssueResult issueResult = new TokenIssuer.IssueResult(expected, "new-jti");
+            TokenIssueResult issueResult = new TokenIssueResult(expected, "new-jti");
             when(tokenIssuer.issue(user, true, Provider.KAKAO)).thenReturn(issueResult);
 
             // when
@@ -173,7 +174,7 @@ class TokenServiceTest {
                         .provider(Provider.KAKAO)
                         .build();
                 IssuedTokens expected = issuedTokens();
-                TokenIssuer.IssueResult issueResult = new TokenIssuer.IssueResult(expected, "new-jti");
+                TokenIssueResult issueResult = new TokenIssueResult(expected, "new-jti");
                 when(jwtTokenProvider.validateToken(refreshToken)).thenReturn(true);
                 when(jwtTokenProvider.getSubject(refreshToken)).thenReturn(user.getEmail());
                 when(jwtTokenProvider.getJti(refreshToken)).thenReturn(jti);

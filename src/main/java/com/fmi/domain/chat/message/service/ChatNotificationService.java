@@ -7,6 +7,7 @@ import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.repository.NotificationRepository;
 import com.fmi.domain.notification.repository.NotificationSettingsRepository;
+import com.fmi.domain.notification.service.NotificationDeliveryService;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.repository.UserRepository;
@@ -20,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 public class ChatNotificationService {
+    private final NotificationDeliveryService notificationDeliveryService;
+
     private final NotificationRepository notificationRepository;
     private final NotificationSettingsRepository notificationSettingsRepository;
     private final NotificationService notificationService;
@@ -45,9 +48,10 @@ public class ChatNotificationService {
                 notificationRepository.findByUserAndReferenceIdAndRoomIdAndType(receiver, postId, roomId, type);
 
         if (notification.isPresent()) {
-            notificationService.updateChatNotification(notification.get(), content);
+            notificationDeliveryService.updateChatNotification(notification.get(), content);
         } else {
-            notificationService.createNotification(receiver, type, title, content, ReferenceType.CHAT, postId, roomId);
+            notificationDeliveryService.createNotification(
+                    receiver, type, title, content, ReferenceType.CHAT, postId, roomId);
         }
     }
 

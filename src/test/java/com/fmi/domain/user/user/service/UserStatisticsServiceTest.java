@@ -3,9 +3,9 @@ package com.fmi.domain.user.user.service;
 import static org.assertj.core.api.Assertions.*;
 
 import com.fmi.domain.auth.data.enums.WithdrawalReason;
+import com.fmi.domain.auth.repository.redis.EmailVerificationStore;
 import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.auth.service.WithdrawalService;
-import com.fmi.domain.auth.service.internal.EmailVerificationStore;
 import com.fmi.domain.auth.web.dto.request.AccountDeleteRequest;
 import com.fmi.domain.auth.web.dto.request.SignupRequest;
 import com.fmi.domain.post.post.data.Post;
@@ -18,6 +18,7 @@ import com.fmi.domain.post.post.web.dto.request.PostCreateRequest;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.data.enums.Role;
 import com.fmi.domain.user.user.repository.*;
+import com.fmi.domain.user.user.service.result.UserStatisticsResult;
 import com.fmi.domain.user.user.web.dto.request.TermsAgreeRequest;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.support.IntegrationTestSupport;

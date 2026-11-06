@@ -6,7 +6,7 @@ import com.fmi.domain.post.post.data.enums.MapLevel;
 import com.fmi.domain.post.post.data.enums.PostStatus;
 import com.fmi.domain.post.post.data.enums.PostType;
 import com.fmi.domain.post.post.exception.MapErrorStatus;
-import com.fmi.domain.post.post.repository.PostRepository;
+import com.fmi.domain.post.post.repository.PostMapRepository;
 import com.fmi.domain.post.post.web.dto.request.LocationMapPostRequest;
 import com.fmi.domain.post.post.web.dto.request.MapPostRequest;
 import com.fmi.domain.post.post.web.dto.request.PostMarkerRequest;
@@ -32,7 +32,7 @@ public class PostMapService {
     private static final MapLevel NEARBY_POST_PREFILTER_MAP_LEVEL = MapLevel.LEVEL_5;
 
     private final UserQueryService userQueryService;
-    private final PostRepository postRepository;
+    private final PostMapRepository postMapRepository;
     private final BlockedUserRepository blockedUserRepository;
     private final PostQueryService postQueryService;
     private final HotPostService hotPostService;
@@ -45,7 +45,7 @@ public class PostMapService {
 
         Set<Long> excludedUserIds = getExcludedUserIds(user);
 
-        return postRepository.findPostMarker(request.latitude(), request.longitude(), mapLevel, excludedUserIds);
+        return postMapRepository.findPostMarker(request.latitude(), request.longitude(), mapLevel, excludedUserIds);
     }
 
     @Transactional(readOnly = true)
@@ -56,7 +56,7 @@ public class PostMapService {
 
         Set<Long> excludedUserIds = getExcludedUserIds(user);
 
-        return postRepository.findRecentFoundPostList(
+        return postMapRepository.findRecentFoundPostList(
                 request.latitude(), request.longitude(), mapLevel, excludedUserIds);
     }
 
@@ -78,7 +78,7 @@ public class PostMapService {
                 user != null ? user.getId() : null,
                 20);
 
-        return postRepository.findMapPosts(
+        return postMapRepository.findMapPosts(
                 post.getLatitude(),
                 post.getLongitude(),
                 mapLevel,
@@ -110,7 +110,7 @@ public class PostMapService {
                 user != null ? user.getId() : null,
                 20);
 
-        return postRepository.searchMapPostsByLocation(
+        return postMapRepository.searchMapPostsByLocation(
                 request.latitude(),
                 request.longitude(),
                 mapLevel,
@@ -140,7 +140,7 @@ public class PostMapService {
         }
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
         Set<Long> excludedUserIds = getExcludedUserIds(user);
-        return postRepository.findMapPosts(
+        return postMapRepository.findMapPosts(
                 latitude,
                 longitude,
                 NEARBY_POST_PREFILTER_MAP_LEVEL,
@@ -166,7 +166,7 @@ public class PostMapService {
             UserDetails userDetails) {
         User user = userQueryService.findUserIfNullReturnNull(userDetails);
         Set<Long> excludedUserIds = getExcludedUserIds(user);
-        return postRepository.findNearbyPostMarkers(
+        return postMapRepository.findNearbyPostMarkers(
                 latitude,
                 longitude,
                 NEARBY_POST_PREFILTER_MAP_LEVEL,

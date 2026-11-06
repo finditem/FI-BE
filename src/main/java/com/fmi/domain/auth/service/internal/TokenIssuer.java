@@ -3,6 +3,7 @@ package com.fmi.domain.auth.service.internal;
 import com.fmi.domain.auth.data.IssuedTokens;
 import com.fmi.domain.auth.data.enums.Provider;
 import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
+import com.fmi.domain.auth.service.result.TokenIssueResult;
 import com.fmi.domain.user.user.data.User;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,7 +18,7 @@ public class TokenIssuer {
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    public IssueResult issue(User user, boolean isTemporaryPassword, Provider provider) {
+    public TokenIssueResult issue(User user, boolean isTemporaryPassword, Provider provider) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
         claims.put("role", user.getRole().name());
@@ -36,8 +37,6 @@ public class TokenIssuer {
         Date refreshExpiration = jwtTokenProvider.getExpiration(refreshToken);
 
         IssuedTokens issuedTokens = new IssuedTokens(accessToken, accessExpiration, refreshToken, refreshExpiration);
-        return new IssueResult(issuedTokens, jti);
+        return new TokenIssueResult(issuedTokens, jti);
     }
-
-    public record IssueResult(IssuedTokens issuedTokens, String refreshTokenId) {}
 }

@@ -3,7 +3,6 @@ package com.fmi.domain.post.post.web.controller;
 import com.fmi.domain.post.post.data.enums.Category;
 import com.fmi.domain.post.post.data.enums.PostType;
 import com.fmi.domain.post.post.service.PostFavoriteService;
-import com.fmi.domain.post.post.service.PostQueryService;
 import com.fmi.domain.post.post.web.dto.response.PostFavoriteResponse;
 import com.fmi.domain.post.post.web.dto.response.PostPageResponse;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Post", description = "게시글 관련 API")
 public class PostFavoriteController {
     private final PostFavoriteService postFavoriteService;
-    private final PostQueryService postQueryService;
 
     @Operation(
             summary = "즐겨찾기 추가",
@@ -89,7 +87,7 @@ public class PostFavoriteController {
             @RequestParam(required = false, defaultValue = "LATEST") SortType sortType,
             @RequestParam(required = false) Long cursor,
             @RequestParam(required = false, defaultValue = "20") int size) {
-        PostPageResponse response = postQueryService.getFavoritePost(
+        PostPageResponse response = postFavoriteService.getFavoritePost(
                 userDetails, postType, category, address, keyword, sortType, cursor, size);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));

@@ -2,7 +2,8 @@ package com.fmi.domain.place.web.controller;
 
 import com.fmi.domain.place.data.PlaceMapSearchResult;
 import com.fmi.domain.place.data.PlaceSummary;
-import com.fmi.domain.place.service.PlaceService;
+import com.fmi.domain.place.service.PlaceMapQueryService;
+import com.fmi.domain.place.service.PlaceQueryService;
 import com.fmi.domain.place.web.PlaceLanguageResolver;
 import com.fmi.domain.place.web.dto.request.NearbyPostMarkerRequest;
 import com.fmi.domain.place.web.dto.request.NearbyPostRequest;
@@ -30,8 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/main/places")
 @RequiredArgsConstructor
 public class MainPlaceController implements MainPlaceSwagger {
+    private final PlaceQueryService placeQueryService;
 
-    private final PlaceService placeService;
+    private final PlaceMapQueryService placeMapQueryService;
+
     private final PostMapService postMapService;
 
     @Override
@@ -39,7 +42,7 @@ public class MainPlaceController implements MainPlaceSwagger {
     public ApiResponse<PlaceMapResponse> searchLocation(
             @Valid @ModelAttribute PlaceMapSearchRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         String userEmail = userDetails == null ? null : userDetails.getUsername();
-        PlaceMapSearchResult result = placeService.getMapPlaces(
+        PlaceMapSearchResult result = placeMapQueryService.getMapPlaces(
                 request.getLatitude(),
                 request.getLongitude(),
                 request.getLevel(),
@@ -57,7 +60,7 @@ public class MainPlaceController implements MainPlaceSwagger {
             @AuthenticationPrincipal UserDetails userDetails) {
         String userEmail = userDetails == null ? null : userDetails.getUsername();
         return ApiResponse.onSuccess(PlaceSummaryResponse.from(
-                placeService.getPlaceSummary(placeId, userEmail, PlaceLanguageResolver.resolve(language))));
+                placeQueryService.getPlaceSummary(placeId, userEmail, PlaceLanguageResolver.resolve(language))));
     }
 
     @Override
@@ -67,7 +70,7 @@ public class MainPlaceController implements MainPlaceSwagger {
             @Valid @ModelAttribute NearbyPostRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         String userEmail = userDetails == null ? null : userDetails.getUsername();
-        PlaceSummary place = placeService.getPlaceSummary(placeId, userEmail);
+        PlaceSummary place = placeQueryService.getPlaceSummary(placeId, userEmail);
         return ApiResponse.onSuccess(NearbyPostResponse.from(postMapService.getNearbyPosts(
                 place.latitude(),
                 place.longitude(),
@@ -86,7 +89,7 @@ public class MainPlaceController implements MainPlaceSwagger {
             @Valid @ModelAttribute NearbyPostMarkerRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         String userEmail = userDetails == null ? null : userDetails.getUsername();
-        PlaceSummary place = placeService.getPlaceSummary(placeId, userEmail);
+        PlaceSummary place = placeQueryService.getPlaceSummary(placeId, userEmail);
         return ApiResponse.onSuccess(postMapService.getNearbyPostMarkers(
                 place.latitude(),
                 place.longitude(),

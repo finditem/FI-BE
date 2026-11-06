@@ -6,6 +6,7 @@ import com.fmi.domain.auth.repository.SocialAccountsRepository;
 import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
 import com.fmi.domain.auth.security.token.RefreshTokenStore;
 import com.fmi.domain.auth.service.internal.TokenIssuer;
+import com.fmi.domain.auth.service.result.TokenIssueResult;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -28,7 +29,7 @@ public class TokenService {
     private final SocialAccountsRepository socialAccountsRepository;
 
     public IssuedTokens issue(User user, boolean isTemporaryPassword, Provider provider) {
-        TokenIssuer.IssueResult issueResult = tokenIssuer.issue(user, isTemporaryPassword, provider);
+        TokenIssueResult issueResult = tokenIssuer.issue(user, isTemporaryPassword, provider);
         IssuedTokens issuedTokens = issueResult.issuedTokens();
         refreshTokenStore.issue(
                 issueResult.refreshTokenId(),

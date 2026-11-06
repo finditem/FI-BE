@@ -3,7 +3,7 @@ package com.fmi.domain.post.review.service;
 import com.fmi.domain.chat.room.data.ChatRoom;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
-import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.domain.notification.service.NotificationDeliveryService;
 import com.fmi.domain.post.findcompletion.data.FindCompletion;
 import com.fmi.domain.post.findcompletion.exception.FindCompletionErrorStatus;
 import com.fmi.domain.post.findcompletion.repository.FindCompletionRepository;
@@ -30,13 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
+    private final NotificationDeliveryService notificationDeliveryService;
 
     private final UserRepository userRepository;
     private final FindCompletionRepository findCompletionRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewValidator reviewValidator;
     private final TemperatureService temperatureService;
-    private final NotificationService notificationService;
     private final PostRepository postRepository;
 
     @Transactional
@@ -68,7 +68,7 @@ public class ReviewService {
                 review.getRecipient().getId(),
                 review.getId(),
                 review.getCreatedAt());
-        notificationService.createNotification(
+        notificationDeliveryService.createNotification(
                 review.getRecipient(),
                 NotificationType.REVIEW,
                 "새로운 후기가 도착했어요.",

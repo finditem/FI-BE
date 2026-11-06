@@ -1,10 +1,11 @@
 package com.fmi.domain.chat.message.service;
 
-import com.fmi.domain.chat.message.service.ChatTranslationSourceService.Source;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Outcome;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Status;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Ticket;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Usage;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Outcome;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Status;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Ticket;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Usage;
+import com.fmi.domain.chat.message.service.result.ChatTranslationSourceResult;
 import com.fmi.domain.chat.message.web.dto.request.ChatTranslationRequest.TranslateRequest;
 import com.fmi.domain.chat.message.web.dto.response.ChatTranslationResponse.TranslationResponse;
 import com.fmi.domain.chat.message.web.dto.response.ChatTranslationResponse.UsageResponse;
@@ -28,7 +29,7 @@ public class ChatTranslationService {
     private final UserQueryService userQueryService;
 
     public TranslationResponse translate(Long roomId, Long messageId, String email, TranslateRequest request) {
-        Source source = chatTranslationSourceService.find(roomId, messageId, email);
+        ChatTranslationSourceResult source = chatTranslationSourceService.find(roomId, messageId, email);
         Ticket ticket = translationQuotaStore.reserve(source, roomId, messageId, request);
         Outcome outcome = ticket.outcome();
 
@@ -55,7 +56,7 @@ public class ChatTranslationService {
                 translationQuotaStore.usage(userQueryService.findUser(email).getId()));
     }
 
-    private String translateOrRelease(Ticket ticket, Source source, TranslateRequest request) {
+    private String translateOrRelease(Ticket ticket, ChatTranslationSourceResult source, TranslateRequest request) {
         try {
             String translatedText = translationClient.translate(source.text(), source.language());
             if (translatedText == null || translatedText.isBlank()) {

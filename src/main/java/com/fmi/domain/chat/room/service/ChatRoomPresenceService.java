@@ -1,41 +1,23 @@
 package com.fmi.domain.chat.room.service;
 
-import java.time.Duration;
+import com.fmi.domain.chat.room.repository.redis.ChatRoomPresenceRedisRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class ChatRoomPresenceService {
-    private final StringRedisTemplate redis;
-
-    private static final String ROOM_KEY = "presence:room:";
-    private static final String USER_KEY = "presence:user:";
-    private static final String SESS_KEY = "presence:sess:";
-    private static final Duration TTL = Duration.ofSeconds(45);
-
-    private String roomKey(Long roomId) {
-        return ROOM_KEY + roomId;
-    }
-
-    private String userKey(Long userId) {
-        return USER_KEY + userId;
-    }
-
-    private String sessKey(String sessionId) {
-        return SESS_KEY + sessionId;
-    }
+    private final ChatRoomPresenceRedisRepository presenceRedisRepository;
 
     /**
      * 방 입장 (Client가 /app/rooms/{roomId}/enter 호출)
      */
     public void enter(Long roomId, Long userId, String sessionId) {
-        redis.opsForSet().add(roomKey(roomId), userId.toString());
-        redis.opsForSet().add(userKey(userId), String.valueOf(roomId));
+        presenceRedisRepository.addRoomUser(roomId, userId.toString());
+        presenceRedisRepository.addUserRoom(userId, String.valueOf(roomId));
         // 세션 ↔ 방 매핑
-        redis.opsForHash().put(sessKey(sessionId), "userId", userId.toString());
-        redis.opsForSet().add(sessKey(sessionId) + ":rooms", String.valueOf(roomId));
+        presenceRedisRepository.saveSessionUser(sessionId, userId.toString());
+        presenceRedisRepository.addSessionRoom(sessionId, String.valueOf(roomId));
         touchTTL(sessionId, roomId, userId);
     }
 
@@ -46,47 +28,42 @@ public class ChatRoomPresenceService {
         String sRoomId = String.valueOf(roomId);
         String sUserId = String.valueOf(userId);
 
-        redis.opsForSet().remove(roomKey(roomId), sUserId);
-        redis.opsForSet().remove(userKey(userId), sRoomId);
-        redis.opsForSet().remove(sessKey(sessionId) + ":rooms", sRoomId);
+        presenceRedisRepository.removeRoomUser(roomId, sUserId);
+        presenceRedisRepository.removeUserRoom(userId, sRoomId);
+        presenceRedisRepository.removeSessionRoom(sessionId, sRoomId);
     }
 
     /**
      * 비정상 세션 종료 (Disconnect 이벤트용)
      */
     public void disconnect(String sessionId) {
-        var h = redis.opsForHash();
-        String sUserId = (String) h.get(sessKey(sessionId), "userId");
+        String sUserId = presenceRedisRepository.findSessionUser(sessionId);
 
         if (sUserId != null) {
             Long userId = Long.valueOf(sUserId);
-            var rooms = redis.opsForSet().members(sessKey(sessionId) + ":rooms");
+            var rooms = presenceRedisRepository.findSessionRooms(sessionId);
             if (rooms != null) {
                 for (String r : rooms) {
                     Long roomId = Long.valueOf(r);
-                    redis.opsForSet().remove(roomKey(roomId), sUserId);
-                    redis.opsForSet().remove(userKey(userId), r);
+                    presenceRedisRepository.removeRoomUser(roomId, sUserId);
+                    presenceRedisRepository.removeUserRoom(userId, r);
                 }
             }
         }
-        redis.delete(sessKey(sessionId));
-        redis.delete(sessKey(sessionId) + ":rooms");
+        presenceRedisRepository.deleteSession(sessionId);
     }
 
     /**
      * 유저가 방안에 있는지 확인
      */
     public boolean isUserPresent(Long roomId, Long userId) {
-        return Boolean.TRUE.equals(redis.opsForSet().isMember(userKey(userId), roomId.toString()));
+        return presenceRedisRepository.isUserPresent(roomId, userId);
     }
 
     /**
      * TTL 연장 (Client가 /app/rooms/{roomId}/ping 호출)
      */
     public void touchTTL(String sessionId, Long roomId, Long userId) {
-        redis.expire(roomKey(roomId), TTL);
-        redis.expire(userKey(userId), TTL);
-        redis.expire(sessKey(sessionId), TTL);
-        redis.expire(sessKey(sessionId) + ":rooms", TTL);
+        presenceRedisRepository.refreshTtl(sessionId, roomId, userId);
     }
 }

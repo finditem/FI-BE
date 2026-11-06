@@ -15,6 +15,7 @@ import com.fmi.domain.admin.web.dto.request.AdminSignupRequest;
 import com.fmi.domain.auth.event.UserSignedUpEvent;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.service.internal.RejoinPolicy;
+import com.fmi.domain.auth.service.result.AuthenticateResult;
 import com.fmi.domain.auth.web.dto.request.SignupRequest;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.data.enums.Role;
@@ -323,10 +324,10 @@ class AuthServiceTest {
                         .thenReturn(true);
 
                 // when
-                AuthService.AuthenticateResult result = authService.authenticate(email, "original-password");
+                AuthenticateResult result = authService.authenticate(email, "original-password");
 
                 // then
-                assertThat(result.getUser()).isSameAs(user);
+                assertThat(result.user()).isSameAs(user);
                 assertThat(result.isTemporaryPassword()).isFalse();
             }
         }

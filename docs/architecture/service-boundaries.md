@@ -52,6 +52,7 @@ Service의 책임과 분리 시점을 정할 때 적용합니다. 패키지와 �
 | --- | --- |
 | `PostService` | 일반 게시글 생성, 수정, 삭제, 상태와 반경 변경 |
 | `PostQueryService` | 일반 게시글 상세, 목록, 검색, 공유와 유사 게시글 조회 |
+| `PostDetailService` | 상세 조회 완료 후 관련 알림 읽음 처리 조정 |
 | `TemporaryPostService` | 임시저장 생성, 조회와 삭제 |
 | `HotPostService` | 인기 게시글 후보 조회와 선정 |
 | `PostTranslationService` | 번역 조회와 생성, 기존 번역 무효화 |
@@ -62,7 +63,22 @@ Service의 책임과 분리 시점을 정할 때 적용합니다. 패키지와 �
 
 현재 구현은 [PostService](../../src/main/java/com/fmi/domain/post/post/service/PostService.java), [PostQueryService](../../src/main/java/com/fmi/domain/post/post/service/PostQueryService.java), [TemporaryPostService](../../src/main/java/com/fmi/domain/post/post/service/TemporaryPostService.java)에서 확인합니다. `PostQueryService.getPost()`에는 Redis 조회 기록과 DB 조회수 증가가 포함되어 있습니다. 이 흐름을 분리할 때는 순수 조회로 간주하지 않고 실패 처리와 트랜잭션을 함께 검토합니다.
 
-찜 등록, 취소와 내 찜 목록은 찜 기능으로 묶을 수 있습니다. 목록이 분리 조건을 만족하면 찜 QueryService로 분리합니다. 현재 `PostQueryService.getFavoritePost()`의 이동은 별도 리팩터링으로 검토하며 이 문서 추가만으로 변경하지 않습니다.
+찜 등록, 취소와 내 찜 목록은 [PostFavoriteService](../../src/main/java/com/fmi/domain/post/post/service/PostFavoriteService.java)에서 찜 기능으로 묶습니다. 목록이 분리 조건을 만족하면 찜 QueryService로 분리합니다.
+
+## 다른 업무의 적용 예시
+
+현재 구현에서 의존성이 다른 업무 흐름을 분리한 사례입니다. 클래스 수와 조회·변경 분리를 모든 업무에 일괄 적용하지 않습니다.
+
+| 업무 | 책임 배치 |
+| --- | --- |
+| 관리자 | `AdminInquiryService`, `AdminReportQueryService`, `AdminUserQueryService`, `AdminPostQueryService`가 담당 업무의 조회와 처리를 소유합니다. |
+| 회원 | `UserService`는 내 프로필과 약관, `UserProfileQueryService`는 공개 프로필, `UserActivityQueryService`는 활동 목록, `UserLanguageService`는 언어 설정, `UserImageService`는 이미지 업로드를 담당합니다. |
+| 장소 | `PlaceService`는 관리 상세와 상태 변경, `PlaceHomeQueryService`, `PlaceMapQueryService`, `PlaceQueryService`는 홈, 지도와 장소 요약 조회를 담당합니다. |
+| 알림 | `NotificationService`는 수신함, `NotificationSettingsService`는 설정, `NotificationDeliveryService`는 개별 저장·전송, `NotificationBroadcastService`는 발송 대상 선정, `NotificationSubscriptionService`는 SSE 연결과 미읽은 알림 재전송을 담당합니다. |
+| 문의·신고 | `InquiryQueryService`, `ReportQueryService`는 목록과 상세 조회를 담당하며 생성과 상태 변경은 각 기본 Service에 둡니다. |
+| 채팅 | `ChatRoomQueryService`, `ChatMessageQueryService`는 방과 메시지 조회를 담당하며 생성, 퇴장과 메시지 읽음 처리는 각 기본 Service에 둡니다. |
+
+[PostDetailService](../../src/main/java/com/fmi/domain/post/post/service/PostDetailService.java), [InquiryDetailService](../../src/main/java/com/fmi/domain/inquiry/inquiry/service/InquiryDetailService.java), [NoticeDetailService](../../src/main/java/com/fmi/domain/notice/notice/service/NoticeDetailService.java)는 상세 조회와 후속 알림 읽음 처리를 조정합니다. 기존 동작을 유지하기 위해 상세 조회 트랜잭션이 종료된 뒤 알림을 별도 트랜잭션에서 처리합니다. 조정 Service에 전체를 묶는 트랜잭션을 추가하지 않습니다.
 
 ## Controller와의 관계
 

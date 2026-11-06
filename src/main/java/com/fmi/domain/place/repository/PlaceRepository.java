@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceRepositoryCustom {
+public interface PlaceRepository extends JpaRepository<Place, Long> {
 
     @EntityGraph(attributePaths = {"operationPeriod", "businessHours"})
     @Query("select distinct p from Place p where p.id in :placeIds")

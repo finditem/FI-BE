@@ -2,7 +2,7 @@ package com.fmi.domain.place.web.controller;
 
 import com.fmi.domain.place.data.enums.PlaceType;
 import com.fmi.domain.place.service.PlaceFavoriteService;
-import com.fmi.domain.place.service.PlaceService;
+import com.fmi.domain.place.service.PlaceHomeQueryService;
 import com.fmi.domain.place.web.PlaceLanguageResolver;
 import com.fmi.domain.place.web.dto.response.HomePlaceResponse;
 import com.fmi.domain.place.web.dto.response.PlaceFavoriteResponse;
@@ -25,8 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/places")
 @RequiredArgsConstructor
 public class PlaceController implements PlaceSwagger {
+    private final PlaceHomeQueryService placeHomeQueryService;
 
-    private final PlaceService placeService;
     private final PlaceFavoriteService placeFavoriteService;
     private final UserQueryService userQueryService;
 
@@ -40,7 +40,7 @@ public class PlaceController implements PlaceSwagger {
                 ? null
                 : userQueryService.findUser(userDetails.getUsername()).getId();
         return ApiResponse.onSuccess(new HomePlaceResponse(
-                placeService.getHomePlaces(type, userId, PlaceLanguageResolver.resolve(language)).stream()
+                placeHomeQueryService.getHomePlaces(type, userId, PlaceLanguageResolver.resolve(language)).stream()
                         .map(PlaceSummaryResponse::from)
                         .toList()));
     }

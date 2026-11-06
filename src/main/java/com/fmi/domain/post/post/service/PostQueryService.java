@@ -13,6 +13,8 @@ import com.fmi.domain.post.post.data.enums.PostType;
 import com.fmi.domain.post.post.repository.PostFavoriteRepository;
 import com.fmi.domain.post.post.repository.PostImageRepository;
 import com.fmi.domain.post.post.repository.PostRepository;
+import com.fmi.domain.post.post.repository.PostSearchRepository;
+import com.fmi.domain.post.post.repository.redis.PostViewStore;
 import com.fmi.domain.post.post.web.dto.response.*;
 import com.fmi.domain.post.post.web.dto.response.PostImageResponse;
 import com.fmi.domain.user.block.service.BlockService;
@@ -24,15 +26,9 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.enums.SortType;
 import com.fmi.global.util.IpUtil;
 import java.text.Normalizer;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,13 +37,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class PostQueryService {
+    private final PostSearchRepository postSearchRepository;
+
     private final PostRepository postRepository;
     private final PostImageRepository postImageRepository;
     private final UserQueryService userQueryService;
     private final PostFavoriteRepository postFavoriteRepository;
     private final PostFavoriteService postFavoriteService;
     private final PostImageService postImageService;
-    private final StringRedisTemplate stringRedisTemplate;
+    private final PostViewStore postViewStore;
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
     private final CommentQueryService commentQueryService;
     private final BlockService blockService;
@@ -117,32 +115,14 @@ public class PostQueryService {
     }
 
     private boolean canIncreaseViewCount(Long postId, Long userId) {
-        return isFirstToday(postId, "user", String.valueOf(userId));
+        return postViewStore.isFirstToday(postId, "user", String.valueOf(userId));
     }
 
     private boolean canIncreaseViewCount(Long postId, String clientIp) {
         if (Objects.isNull(clientIp) || clientIp.isBlank() || "unknown".equalsIgnoreCase(clientIp)) {
             return false;
         }
-        return isFirstToday(postId, "not-user", IpUtil.hashIp(clientIp));
-    }
-
-    private boolean isFirstToday(Long postId, String sic, String value) {
-        String today = LocalDate.now(ZoneId.of("Asia/Seoul")).format(DateTimeFormatter.BASIC_ISO_DATE);
-        long ttlSeconds = secondsUntilMidnightSeoul();
-
-        String redisKey = "post:view:" + postId + ":" + today + ":sic:" + sic + ":value:" + value;
-
-        Boolean first = stringRedisTemplate.opsForValue().setIfAbsent(redisKey, "1", Duration.ofSeconds(ttlSeconds));
-
-        return Boolean.TRUE.equals(first);
-    }
-
-    private long secondsUntilMidnightSeoul() {
-        ZoneId zone = ZoneId.of("Asia/Seoul");
-        LocalDateTime now = LocalDateTime.now(zone);
-        LocalDateTime midnight = now.toLocalDate().plusDays(1).atStartOfDay();
-        return Duration.between(now, midnight).getSeconds();
+        return postViewStore.isFirstToday(postId, "not-user", IpUtil.hashIp(clientIp));
     }
 
     @Transactional(readOnly = true)
@@ -161,7 +141,7 @@ public class PostQueryService {
 
         Set<Long> hotIds = hotPostService.resolveHotPostIdsForUser(postType, postStatus, category, address, userId, 5);
 
-        return postRepository.searchPostsByFiltersAndSort(
+        return postSearchRepository.searchPostsByFiltersAndSort(
                 postType, postStatus, category, address, sortType, cursor, size, userId, hotIds);
     }
 
@@ -174,9 +154,9 @@ public class PostQueryService {
 
         if (keyword.isBlank()) return new PostPageResponse(List.of(), 0L, null, false);
 
-        long postCount = postRepository.countByKeyword(keyword);
+        long postCount = postSearchRepository.countByKeyword(keyword);
 
-        List<Post> fetched = postRepository.searchByKeywordWithCursor(keyword, cursor, limit);
+        List<Post> fetched = postSearchRepository.searchByKeywordWithCursor(keyword, cursor, limit);
 
         boolean hasNext = fetched.size() > size;
 
@@ -259,26 +239,10 @@ public class PostQueryService {
     }
 
     @Transactional(readOnly = true)
-    public PostPageResponse getFavoritePost(
-            UserDetails userDetails,
-            PostType postType,
-            Category category,
-            String address,
-            String keyword,
-            SortType sortType,
-            Long cursor,
-            int size) {
-        User user = userQueryService.findUser(userDetails.getUsername());
-
-        return postRepository.searchMyFavorites(
-                user.getId(), postType, category, address, keyword, sortType, cursor, size);
-    }
-
-    @Transactional(readOnly = true)
     public List<PostSimilarResponse> getSimilarPostList(Long postId, UserDetails userDetails) {
         Post post = findById(postId);
 
-        List<Post> postList = postRepository.findSimilarPosts(post.getId(), 5);
+        List<Post> postList = postSearchRepository.findSimilarPosts(post.getId(), 5);
 
         Map<Long, String> thumbnailUrlByPostList = postImageService.findThumbnailUrlByPostList(postList);
         Map<Long, Long> favoriteCountMap = postFavoriteService.getFavoriteCountMap(postList);

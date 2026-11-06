@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface UserRepository extends JpaRepository<User, Long> {
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM User u WHERE u.email = :email AND u.deletedAt IS NULL")
     Optional<User> findActiveByEmailForUpdate(@Param("email") String email);
@@ -65,37 +66,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "SELECT u FROM User u WHERE u.temporaryPasswordExpiresAt IS NOT NULL AND u.temporaryPasswordExpiresAt < :now")
     List<User> findUsersWithExpiredTemporaryPassword(@Param("now") LocalDateTime now);
 
-    // 탈퇴한 사용자 조회 (관리자용)
-    @Query(
-            value = "SELECT * FROM users u WHERE u.deleted_at IS NOT NULL "
-                    + "AND (:reason IS NULL OR FIND_IN_SET(:reason, u.withdrawal_reason) > 0)",
-            countQuery = "SELECT COUNT(*) FROM users u WHERE u.deleted_at IS NOT NULL "
-                    + "AND (:reason IS NULL OR FIND_IN_SET(:reason, u.withdrawal_reason) > 0)",
-            nativeQuery = true)
-    Page<User> findDeletedUsers(@Param("reason") String reason, Pageable pageable);
-
     Optional<User> findByNickname(String nickname);
-
-    // 탈퇴한 사용자 커서 기반 조회 (관리자용)
-    @Query(
-            value = "SELECT * FROM users u WHERE u.deleted_at IS NOT NULL "
-                    + "AND (:reason IS NULL OR FIND_IN_SET(:reason, u.withdrawal_reason) > 0) "
-                    + "AND (:cursor IS NULL OR u.id < :cursor) "
-                    + "ORDER BY u.id DESC LIMIT :limit",
-            nativeQuery = true)
-    List<User> findDeletedUsersCursor(
-            @Param("reason") String reason, @Param("cursor") Long cursor, @Param("limit") int limit);
-
-    @Query(
-            value = "SELECT * FROM users u WHERE u.deleted_at IS NOT NULL "
-                    + "AND (:reason IS NULL OR FIND_IN_SET(:reason, u.withdrawal_reason) > 0) "
-                    + "AND (:keyword IS NULL OR u.email LIKE :keyword OR u.withdrawal_reason LIKE :keyword OR u.withdrawal_other_reason LIKE :keyword) "
-                    + "AND (:cursor IS NULL OR u.id < :cursor) "
-                    + "ORDER BY u.id DESC LIMIT :limit",
-            nativeQuery = true)
-    List<User> findDeletedUsersCursorWithKeyword(
-            @Param("reason") String reason,
-            @Param("keyword") String keyword,
-            @Param("cursor") Long cursor,
-            @Param("limit") int limit);
 }

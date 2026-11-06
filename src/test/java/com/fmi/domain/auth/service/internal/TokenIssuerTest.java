@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.fmi.domain.auth.data.IssuedTokens;
 import com.fmi.domain.auth.data.enums.Provider;
 import com.fmi.domain.auth.security.jwt.JwtTokenProvider;
+import com.fmi.domain.auth.service.result.TokenIssueResult;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.data.enums.Role;
 import java.time.Instant;
@@ -59,7 +60,7 @@ class TokenIssuerTest {
         when(jwtTokenProvider.getExpiration("refresh-token")).thenReturn(refreshExpiration);
 
         // when
-        TokenIssuer.IssueResult issueResult = tokenIssuer.issue(user, false, Provider.KAKAO);
+        TokenIssueResult issueResult = tokenIssuer.issue(user, false, Provider.KAKAO);
 
         // then
         IssuedTokens issuedTokens = issueResult.issuedTokens();

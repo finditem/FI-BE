@@ -4,7 +4,8 @@ import com.fmi.domain.chat.room.data.ChatRoom;
 import com.fmi.domain.chat.room.repository.ChatRoomRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
-import com.fmi.domain.notification.service.NotificationService;
+import com.fmi.domain.notification.service.NotificationBroadcastService;
+import com.fmi.domain.notification.service.NotificationDeliveryService;
 import com.fmi.domain.post.post.converter.util.PostConverter;
 import com.fmi.domain.post.post.data.Post;
 import com.fmi.domain.post.post.data.PostImage;
@@ -40,8 +41,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 public class PostService {
+    private final NotificationBroadcastService notificationBroadcastService;
+
+    private final NotificationDeliveryService notificationDeliveryService;
+
     private final PostRepository postRepository;
-    private final NotificationService notificationService;
     private final PostFavoriteRepository postFavoriteRepository;
     private final PostImageService postImageService;
     private final ChatRoomRepository chatRoomRepository;
@@ -74,7 +78,7 @@ public class PostService {
 
         postImageService.createPostImageAtS3AndDB(images, savePost);
 
-        notificationService.notifyCategoriesForPost(post);
+        notificationBroadcastService.notifyCategoriesForPost(post);
         if (!post.isTemporarySave()) {
             postStatisticsRecorder.recordPublication(post.getPostType(), occurredAt);
         }
@@ -211,7 +215,7 @@ public class PostService {
 
             if (user.getId().equals(postOwnerId)) continue;
 
-            notificationService.createNotification(
+            notificationDeliveryService.createNotification(
                     user, NotificationType.FAVORITE, title, message, ReferenceType.POST, post.getId());
             log.info("알림 생성: userId={}, postId={}, newStatus={}", user.getId(), post.getId(), newStatus);
         }
