@@ -53,7 +53,7 @@ public class SecurityConfig {
                                 "/health",
                                 "/api/health")
                         .permitAll()
-                        .requestMatchers("/auth/**", "/s3/**", "/chat-test.html", "/chat-test2.html", "/posts/filter")
+                        .requestMatchers("/auth/**", "/chat-test.html", "/chat-test2.html", "/posts/filter")
                         .permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**")
                         .permitAll()
@@ -86,7 +86,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/push/vapid-key")
                         .permitAll()
                         // 관리자 전용 API 보호
-                        .requestMatchers("/admin/**")
+                        .requestMatchers("/admin/**", "/s3/**")
                         .hasRole("ADMIN")
                         .anyRequest()
                         .authenticated())
