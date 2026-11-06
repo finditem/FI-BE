@@ -2,11 +2,10 @@ package com.fmi.domain.notification.web.controller;
 
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.service.NotificationService;
-import com.fmi.domain.notification.service.SseEmitterService;
+import com.fmi.domain.notification.service.NotificationSubscriptionService;
 import com.fmi.domain.notification.web.dto.response.NotificationListResponse;
-import com.fmi.domain.notification.web.dto.response.NotificationSettingsResponse;
 import com.fmi.domain.user.user.data.User;
-import com.fmi.domain.user.user.repository.UserRepository;
+import com.fmi.domain.user.user.service.UserQueryService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -30,10 +29,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @PreAuthorize("isAuthenticated()")
 @Tag(name = "Notification", description = "알림 API")
 public class NotificationController {
+    private final NotificationSubscriptionService notificationSubscriptionService;
 
     private final NotificationService notificationService;
-    private final SseEmitterService sseEmitterService;
-    private final UserRepository userRepository;
+
+    private final UserQueryService userQueryService;
+
     private static final int MAX_BATCH_SIZE = 1000;
 
     /**
@@ -48,15 +49,7 @@ public class NotificationController {
     @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SSE 연결 성공")
     })
     public SseEmitter subscribe(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        SseEmitter emitter = sseEmitterService.subscribe(user.getId());
-
-        // 재연결 시 미읽은 알림 전송
-        sseEmitterService.sendUnreadNotifications(user.getId(), notificationService.getUnreadNotificationDTOs(user));
-
-        return emitter;
+        return notificationSubscriptionService.subscribe(userDetails);
     }
 
     /**
@@ -81,51 +74,10 @@ public class NotificationController {
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size) {
 
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userQueryService.findUser(userDetails.getUsername());
         CursorPageResponse<NotificationListResponse> notifications =
                 notificationService.getMyNotificationsCursor(user, unreadOnly, notificationType, cursor, size);
         return ApiResponse.onSuccess(notifications);
-    }
-
-    /**
-     * 알림 설정 조회
-     * GET /api/notifications/settings
-     */
-    @GetMapping("/settings")
-    @Operation(summary = "내 알림 설정 조회")
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 설정 조회 성공")
-    })
-    public ApiResponse<NotificationSettingsResponse> getSettings(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        NotificationSettingsResponse settings = notificationService.getSettings(user);
-        return ApiResponse.onSuccess(settings);
-    }
-
-    /**
-     * 알림 설정 변경 (모든 알림 타입 변경 가능)
-     * PUT /notifications/settings
-     */
-    @PutMapping("/settings")
-    @Operation(
-            summary = "알림 설정 변경",
-            description = "모든 알림 타입을 개별적으로 설정/해제할 수 있습니다. "
-                    + "지원 필드: 댓글, 채팅, 즐겨찾기, 1:1문의 답변, 신고 처리 결과, 공지사항, 카테고리, 마케팅 이메일 수신 동의")
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 설정 변경 성공")
-    })
-    public ApiResponse<NotificationSettingsResponse> updateSettings(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody com.fmi.domain.notification.web.dto.request.NotificationSettingsUpdateRequest request) {
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
-        NotificationSettingsResponse settings = notificationService.updateSettings(user, request);
-        return ApiResponse.onSuccess(settings);
     }
 
     /**
@@ -149,9 +101,7 @@ public class NotificationController {
     })
     public ApiResponse<String> markAsReadBatch(
             @AuthenticationPrincipal UserDetails userDetails, @RequestBody IdsRequest request) {
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userQueryService.findUser(userDetails.getUsername());
         validateBatch(request);
         int updated = notificationService.markAsReadBatch(user, request.getIds());
         return ApiResponse.onSuccess(updated + "개의 알림을 읽음 처리했습니다.");
@@ -167,9 +117,7 @@ public class NotificationController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "알림 전체 삭제 성공")
     })
     public ApiResponse<String> deleteAll(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userQueryService.findUser(userDetails.getUsername());
         notificationService.deleteAllNotifications(user);
         return ApiResponse.onSuccess("모든 알림을 삭제했습니다.");
     }
@@ -205,12 +153,19 @@ public class NotificationController {
     })
     public ApiResponse<String> deleteBatch(
             @AuthenticationPrincipal UserDetails userDetails, @RequestBody IdsRequest request) {
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userQueryService.findUser(userDetails.getUsername());
         validateBatch(request);
         int deleted = notificationService.deleteBatch(user, request.getIds());
         return ApiResponse.onSuccess(deleted + "개의 알림을 삭제했습니다.");
+    }
+
+    private void validateBatch(IdsRequest request) {
+        if (request == null || request.getIds() == null || request.getIds().isEmpty()) {
+            throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
+        if (request.getIds().size() > MAX_BATCH_SIZE) {
+            throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
     }
 
     public static class IdsRequest {
@@ -222,15 +177,6 @@ public class NotificationController {
 
         public void setIds(java.util.List<Long> ids) {
             this.ids = ids;
-        }
-    }
-
-    private void validateBatch(IdsRequest request) {
-        if (request == null || request.getIds() == null || request.getIds().isEmpty()) {
-            throw new GeneralException(ErrorStatus._BAD_REQUEST);
-        }
-        if (request.getIds().size() > MAX_BATCH_SIZE) {
-            throw new GeneralException(ErrorStatus._BAD_REQUEST);
         }
     }
 }

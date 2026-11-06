@@ -17,6 +17,7 @@ import com.fmi.domain.notice.notice.web.dto.request.NoticeUpdateRequest;
 import com.fmi.domain.notice.notice.web.dto.response.NoticeListResponse;
 import com.fmi.domain.notice.notice.web.dto.response.NoticeMetaResponse;
 import com.fmi.domain.notice.notice.web.dto.response.NoticeResponse;
+import com.fmi.domain.notification.service.NotificationBroadcastService;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.post.data.enums.ImageType;
 import com.fmi.domain.user.user.data.User;
@@ -40,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class NoticeService {
+    private final NotificationBroadcastService notificationBroadcastService;
 
     private final NoticeRepository noticeRepository;
     private final NoticeImageRepository noticeImageRepository;
@@ -295,7 +297,7 @@ public class NoticeService {
 
         // draft가 아닌 경우에만 알림 발송
         if (!Boolean.TRUE.equals(request.getDraft())) {
-            notificationService.broadcastNotice(request.getTitle(), request.getContent(), saved.getNoticeId());
+            notificationBroadcastService.broadcastNotice(request.getTitle(), request.getContent(), saved.getNoticeId());
         }
 
         return saved.getNoticeId();
@@ -323,7 +325,7 @@ public class NoticeService {
 
         // draft → 발행 전환 시 알림 발송
         if (wasDraft && Boolean.FALSE.equals(request.getDraft())) {
-            notificationService.broadcastNotice(notice.getTitle(), notice.getContent(), notice.getNoticeId());
+            notificationBroadcastService.broadcastNotice(notice.getTitle(), notice.getContent(), notice.getNoticeId());
         }
 
         // 이미지 업데이트 (전달된 경우에만)

@@ -15,6 +15,7 @@ import com.fmi.domain.notice.notice.data.Notice;
 import com.fmi.domain.notice.notice.repository.NoticeRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.notification.service.NotificationDeliveryService;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.repository.UserRepository;
@@ -38,6 +39,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class NoticeCommentService {
+    private final NotificationDeliveryService notificationDeliveryService;
 
     private final NoticeRepository noticeRepository;
     private final UserRepository userRepository;
@@ -81,7 +83,7 @@ public class NoticeCommentService {
 
         // 공지 작성자(관리자)에게 알림 (본인 댓글 제외)
         if (notice.getAuthor() != null && !notice.getAuthor().getId().equals(user.getId())) {
-            notificationService.createNotification(
+            notificationDeliveryService.createNotification(
                     notice.getAuthor(),
                     NotificationType.COMMENT,
                     "새로운 댓글이 생겼어요.",
@@ -94,7 +96,7 @@ public class NoticeCommentService {
         if (parent != null
                 && parent.getUser() != null
                 && !parent.getUser().getId().equals(user.getId())) {
-            notificationService.createNotification(
+            notificationDeliveryService.createNotification(
                     parent.getUser(),
                     NotificationType.COMMENT,
                     "새로운 댓글이 생겼어요.",

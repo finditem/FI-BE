@@ -4,6 +4,7 @@ import com.fmi.domain.chat.room.data.ChatRoom;
 import com.fmi.domain.chat.room.repository.ChatRoomRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.notification.service.NotificationDeliveryService;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.comment.repository.CommentRepository;
 import com.fmi.domain.post.post.data.Post;
@@ -45,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ReportService {
+    private final NotificationDeliveryService notificationDeliveryService;
 
     private final ReportRepository reportRepository;
     private final PostRepository postRepository;
@@ -289,7 +291,7 @@ public class ReportService {
         // 신고자에게 상태 변경 알림
         User reporter = report.getReporter();
         if (reporter != null) {
-            notificationService.createNotification(
+            notificationDeliveryService.createNotification(
                     reporter,
                     NotificationType.REPORT_RESULT,
                     "신고에 대한 답변이 등록되었습니다.",
@@ -327,7 +329,7 @@ public class ReportService {
         // 신고자에게 답변 알림 및 이메일 발송
         User reporter = report.getReporter();
         if (reporter != null) {
-            notificationService.createNotification(
+            notificationDeliveryService.createNotification(
                     reporter,
                     NotificationType.REPORT_RESULT,
                     "신고에 대한 답변이 등록되었습니다",

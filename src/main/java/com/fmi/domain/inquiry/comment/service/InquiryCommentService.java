@@ -13,6 +13,7 @@ import com.fmi.domain.inquiry.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.inquiry.repository.InquiryRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.notification.service.NotificationDeliveryService;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.repository.UserRepository;
@@ -36,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 public class InquiryCommentService {
+    private final NotificationDeliveryService notificationDeliveryService;
 
     private final InquiryRepository inquiryRepository;
     private final InquiryCommentRepository inquiryCommentRepository;
@@ -302,7 +304,7 @@ public class InquiryCommentService {
     private void sendCommentNotification(Inquiry inquiry, InquiryComment comment, InquiryComment parent) {
         if (parent != null && parent.getUser() != null && comment.getUser() != null) {
             if (!parent.getUser().getId().equals(comment.getUser().getId())) {
-                notificationService.createNotification(
+                notificationDeliveryService.createNotification(
                         parent.getUser(),
                         NotificationType.COMMENT,
                         "문의하신 내용에 답변이 생겼어요.",
@@ -312,7 +314,7 @@ public class InquiryCommentService {
             }
         } else if (parent == null && inquiry.getUser() != null && comment.getUser() != null) {
             if (!inquiry.getUser().getId().equals(comment.getUser().getId())) {
-                notificationService.createNotification(
+                notificationDeliveryService.createNotification(
                         inquiry.getUser(),
                         NotificationType.COMMENT,
                         "문의하신 내용에 답변이 생겼어요.",

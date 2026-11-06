@@ -2,6 +2,7 @@ package com.fmi.domain.post.comment.service;
 
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
+import com.fmi.domain.notification.service.NotificationDeliveryService;
 import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.post.comment.converter.CommentLikeConverter;
 import com.fmi.domain.post.comment.data.Comment;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class CommentLikeService {
+    private final NotificationDeliveryService notificationDeliveryService;
 
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
@@ -148,7 +150,7 @@ public class CommentLikeService {
     //
     //        if (!comment.getUser().getId().equals(user.getId())) {
     //            if (!exists) {
-    //                notificationService.createNotification(
+    //                notificationDeliveryService.createNotification(
     //                        comment.getUser(),
     //                        NotificationType.LIKE,
     //                        "댓글에 좋아요가 달렸습니다.",
@@ -196,7 +198,7 @@ public class CommentLikeService {
             message = String.format("%s님 외 %d명이 회원님의 댓글을 좋아했습니다.", nicknames.get(0), nicknames.size() - 1);
         }
 
-        notificationService.createNotification(
+        notificationDeliveryService.createNotification(
                 comment.getUser(),
                 NotificationType.COMMENT,
                 "새로운 댓글이 생겼어요.",
