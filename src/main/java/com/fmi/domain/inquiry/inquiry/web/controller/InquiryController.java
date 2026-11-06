@@ -1,17 +1,15 @@
 package com.fmi.domain.inquiry.inquiry.web.controller;
 
 import com.fmi.domain.inquiry.inquiry.data.enums.InquiryStatus;
+import com.fmi.domain.inquiry.inquiry.service.InquiryDetailService;
+import com.fmi.domain.inquiry.inquiry.service.InquiryQueryService;
 import com.fmi.domain.inquiry.inquiry.service.InquiryService;
 import com.fmi.domain.inquiry.inquiry.web.dto.response.InquiryDetailResponse;
 import com.fmi.domain.inquiry.inquiry.web.dto.response.InquiryListResponse;
-import com.fmi.domain.notification.data.enums.NotificationType;
-import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.user.user.data.User;
-import com.fmi.domain.user.user.repository.UserRepository;
+import com.fmi.domain.user.user.service.UserQueryService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
-import com.fmi.global.apiPayload.code.status.ErrorStatus;
-import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,10 +32,11 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @Tag(name = "Inquiry", description = "문의 API")
 public class InquiryController {
+    private final InquiryDetailService inquiryDetailService;
+    private final InquiryQueryService inquiryQueryService;
 
     private final InquiryService inquiryService;
-    private final UserRepository userRepository;
-    private final NotificationService notificationService;
+    private final UserQueryService userQueryService;
 
     /**
      * 1:1 개인 문의 작성
@@ -99,11 +98,9 @@ public class InquiryController {
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size) {
 
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userQueryService.findUser(userDetails.getUsername());
         CursorPageResponse<InquiryListResponse> inquiries =
-                inquiryService.getMyInquiriesCursor(user, status, answered, keyword, cursor, size);
+                inquiryQueryService.getMyInquiriesCursor(user, status, answered, keyword, cursor, size);
         return ApiResponse.onSuccess(inquiries);
     }
 
@@ -140,15 +137,7 @@ public class InquiryController {
     public ApiResponse<InquiryDetailResponse> getInquiryDetail(
             @PathVariable Long inquiryId, @AuthenticationPrincipal UserDetails userDetails) {
 
-        InquiryDetailResponse inquiry = inquiryService.getInquiryDetail(inquiryId, userDetails);
-
-        // 문의 조회 시 관련 알림 자동 읽음처리
-        if (userDetails != null) {
-            userRepository
-                    .findByEmail(userDetails.getUsername())
-                    .ifPresent(user -> notificationService.markNotificationsAsReadByReference(
-                            user, inquiryId, List.of(NotificationType.COMMENT, NotificationType.INQUIRY_REPLY)));
-        }
+        InquiryDetailResponse inquiry = inquiryDetailService.getInquiryDetail(inquiryId, userDetails);
 
         return ApiResponse.onSuccess(inquiry);
     }

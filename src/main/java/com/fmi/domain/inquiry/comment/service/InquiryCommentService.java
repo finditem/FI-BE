@@ -14,7 +14,6 @@ import com.fmi.domain.inquiry.inquiry.repository.InquiryRepository;
 import com.fmi.domain.notification.data.enums.NotificationType;
 import com.fmi.domain.notification.data.enums.ReferenceType;
 import com.fmi.domain.notification.service.NotificationDeliveryService;
-import com.fmi.domain.notification.service.NotificationService;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.external.storage.S3Service;
@@ -44,7 +43,6 @@ public class InquiryCommentService {
     private final InquiryCommentImageRepository inquiryCommentImageRepository;
     private final UserRepository userRepository;
     private final InquiryCommentConverter inquiryCommentConverter;
-    private final NotificationService notificationService;
     private final S3Service s3Service;
     private final InquiryCommentEmailNotifier inquiryCommentEmailNotifier;
 
