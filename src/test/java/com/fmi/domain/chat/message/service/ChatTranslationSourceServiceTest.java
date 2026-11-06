@@ -8,7 +8,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import com.fmi.domain.chat.message.data.ChatMessage;
 import com.fmi.domain.chat.message.data.enums.MessageType;
 import com.fmi.domain.chat.message.repository.ChatMessageRepository;
-import com.fmi.domain.chat.message.service.ChatTranslationSourceService.Source;
+import com.fmi.domain.chat.message.service.result.ChatTranslationSourceResult;
 import com.fmi.domain.chat.room.data.ChatRoom;
 import com.fmi.domain.chat.room.data.ChatRoomParticipant;
 import com.fmi.domain.chat.room.repository.ChatRoomParticipantRepository;
@@ -90,9 +90,9 @@ class ChatTranslationSourceServiceTest {
             givenParticipant(null);
             givenMessage(ROOM_ID, MessageType.TEXT, ORIGINAL_TEXT);
 
-            Source source = chatTranslationSourceService.find(ROOM_ID, MESSAGE_ID, EMAIL);
+            ChatTranslationSourceResult source = chatTranslationSourceService.find(ROOM_ID, MESSAGE_ID, EMAIL);
 
-            assertThat(source).isEqualTo(new Source(USER_ID, ORIGINAL_TEXT, LanguageCode.EN));
+            assertThat(source).isEqualTo(new ChatTranslationSourceResult(USER_ID, ORIGINAL_TEXT, LanguageCode.EN));
         }
 
         @Test
@@ -102,7 +102,7 @@ class ChatTranslationSourceServiceTest {
             givenParticipant(null);
             givenMessage(ROOM_ID, MessageType.TEXT, ORIGINAL_TEXT);
 
-            Source source = chatTranslationSourceService.find(ROOM_ID, MESSAGE_ID, EMAIL);
+            ChatTranslationSourceResult source = chatTranslationSourceService.find(ROOM_ID, MESSAGE_ID, EMAIL);
 
             assertThat(source.language()).isEqualTo(LanguageCode.KO);
         }

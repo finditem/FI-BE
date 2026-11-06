@@ -1,12 +1,12 @@
-package com.fmi.domain.chat.message.service;
+package com.fmi.domain.chat.message.repository.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fmi.domain.chat.message.service.ChatTranslationSourceService.Source;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Outcome;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Status;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Ticket;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Usage;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Outcome;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Status;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Ticket;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Usage;
+import com.fmi.domain.chat.message.service.result.ChatTranslationSourceResult;
 import com.fmi.domain.chat.message.web.dto.request.ChatTranslationRequest.TranslateRequest;
 import com.fmi.domain.user.user.data.enums.LanguageCode;
 import java.net.ServerSocket;
@@ -49,7 +49,7 @@ class RedisTranslationQuotaStoreIntegrationTest {
     private static StringRedisTemplate redis;
     private static RedisTranslationQuotaStore store;
 
-    private Source source;
+    private ChatTranslationSourceResult source;
 
     @BeforeAll
     static void startRedis() throws Exception {
@@ -105,8 +105,8 @@ class RedisTranslationQuotaStoreIntegrationTest {
     /** 테스트마다 새 계정을 써서 일일 한도 키가 서로 간섭하지 않도록 한다. */
     @BeforeEach
     void useUniqueAccount() {
-        source =
-                new Source(UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE, ORIGINAL_TEXT, LanguageCode.EN);
+        source = new ChatTranslationSourceResult(
+                UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE, ORIGINAL_TEXT, LanguageCode.EN);
     }
 
     private TranslateRequest newRequest() {
@@ -170,7 +170,8 @@ class RedisTranslationQuotaStoreIntegrationTest {
             assertThat(store.reserve(source, 9L, 10L, newRequest()).outcome().status())
                     .isEqualTo(Status.LIMIT);
 
-            Source otherAccount = new Source(source.userId() + 1, ORIGINAL_TEXT, LanguageCode.EN);
+            ChatTranslationSourceResult otherAccount =
+                    new ChatTranslationSourceResult(source.userId() + 1, ORIGINAL_TEXT, LanguageCode.EN);
             assertThat(store.reserve(otherAccount, ROOM_ID, MESSAGE_ID, newRequest())
                             .outcome()
                             .status())
@@ -261,7 +262,7 @@ class RedisTranslationQuotaStoreIntegrationTest {
                             .status())
                     .isEqualTo(Status.CONFLICT);
             assertThat(store.reserve(
-                                    new Source(source.userId(), ORIGINAL_TEXT, LanguageCode.KO),
+                                    new ChatTranslationSourceResult(source.userId(), ORIGINAL_TEXT, LanguageCode.KO),
                                     ROOM_ID,
                                     MESSAGE_ID,
                                     request)
@@ -374,7 +375,8 @@ class RedisTranslationQuotaStoreIntegrationTest {
         void cacheIsScopedByTargetLanguage() {
             store.complete(reserve(), TRANSLATED_TEXT);
 
-            Source korean = new Source(source.userId(), ORIGINAL_TEXT, LanguageCode.KO);
+            ChatTranslationSourceResult korean =
+                    new ChatTranslationSourceResult(source.userId(), ORIGINAL_TEXT, LanguageCode.KO);
             Ticket other = store.reserve(korean, ROOM_ID, MESSAGE_ID, newRequest());
 
             assertThat(store.findCached(other)).isEmpty();
@@ -440,7 +442,8 @@ class RedisTranslationQuotaStoreIntegrationTest {
             TranslateRequest first = newRequest();
             store.complete(store.reserve(source, ROOM_ID, MESSAGE_ID, first), TRANSLATED_TEXT);
 
-            Source korean = new Source(source.userId(), ORIGINAL_TEXT, LanguageCode.KO);
+            ChatTranslationSourceResult korean =
+                    new ChatTranslationSourceResult(source.userId(), ORIGINAL_TEXT, LanguageCode.KO);
             TranslateRequest second = new TranslateRequest(UUID.randomUUID(), first.roomVisitId());
             store.complete(store.reserve(korean, ROOM_ID, MESSAGE_ID, second), "지갑을 보셨나요");
 

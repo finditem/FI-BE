@@ -2,6 +2,7 @@ package com.fmi.domain.chat.message.web.controller;
 
 import static com.fmi.domain.chat.message.web.dto.request.ChatMessageRequest.SendMessageRequest;
 
+import com.fmi.domain.chat.message.service.ChatMessageQueryService;
 import com.fmi.domain.chat.message.service.ChatMessageService;
 import com.fmi.domain.chat.message.web.dto.response.ChatMessageResponse;
 import com.fmi.domain.user.user.data.User;
@@ -32,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Tag(name = "ChatMessage", description = "채팅 메시지 관련 API")
 public class ChatMessageController {
+    private final ChatMessageQueryService chatMessageQueryService;
 
     private final ChatMessageService chatMessageService;
     private final UserQueryService userService;
@@ -93,7 +95,7 @@ public class ChatMessageController {
         String email = userDetails.getUsername();
         User user = userService.findUser(email);
         ChatMessageResponse.MessageSliceResponse messageSliceResponseDTO =
-                chatMessageService.messageSlice(roomId, user.getId(), cursor);
+                chatMessageQueryService.messageSlice(roomId, user.getId(), cursor);
         return ApiResponse.of(SuccessStatus._MESSAGE_LIST_FETCHED, messageSliceResponseDTO);
     }
 

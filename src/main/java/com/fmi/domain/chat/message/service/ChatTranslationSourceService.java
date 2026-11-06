@@ -3,6 +3,7 @@ package com.fmi.domain.chat.message.service;
 import com.fmi.domain.chat.message.data.ChatMessage;
 import com.fmi.domain.chat.message.data.enums.MessageType;
 import com.fmi.domain.chat.message.repository.ChatMessageRepository;
+import com.fmi.domain.chat.message.service.result.ChatTranslationSourceResult;
 import com.fmi.domain.chat.room.data.ChatRoomParticipant;
 import com.fmi.domain.chat.room.repository.ChatRoomParticipantRepository;
 import com.fmi.domain.user.user.data.User;
@@ -25,7 +26,7 @@ public class ChatTranslationSourceService {
     private final UserQueryService userQueryService;
 
     @Transactional(readOnly = true)
-    public Source find(Long roomId, Long messageId, String email) {
+    public ChatTranslationSourceResult find(Long roomId, Long messageId, String email) {
         User viewer = userQueryService.findUser(email);
         ChatRoomParticipant participant = chatRoomParticipantRepository
                 .findByChatRoom_IdAndUser_Id(roomId, viewer.getId())
@@ -43,7 +44,8 @@ public class ChatTranslationSourceService {
             throw new GeneralException(ErrorStatus._TRANSLATION_TEXT_REQUIRED);
         }
 
-        return new Source(viewer.getId(), message.getContent(), resolveLanguage(viewer.getPreferredLanguage()));
+        return new ChatTranslationSourceResult(
+                viewer.getId(), message.getContent(), resolveLanguage(viewer.getPreferredLanguage()));
     }
 
     private boolean isHiddenHistory(Long messageId, ChatRoomParticipant participant) {
@@ -54,6 +56,4 @@ public class ChatTranslationSourceService {
     private LanguageCode resolveLanguage(LanguageCode preferredLanguage) {
         return preferredLanguage == null ? DEFAULT_LANGUAGE : preferredLanguage;
     }
-
-    public record Source(Long userId, String text, LanguageCode language) {}
 }

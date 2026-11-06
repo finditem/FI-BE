@@ -10,11 +10,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-import com.fmi.domain.chat.message.service.ChatTranslationSourceService.Source;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Outcome;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Status;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Ticket;
-import com.fmi.domain.chat.message.service.RedisTranslationQuotaStore.Usage;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Outcome;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Status;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Ticket;
+import com.fmi.domain.chat.message.repository.redis.RedisTranslationQuotaStore.Usage;
+import com.fmi.domain.chat.message.service.result.ChatTranslationSourceResult;
 import com.fmi.domain.chat.message.web.dto.request.ChatTranslationRequest.TranslateRequest;
 import com.fmi.domain.chat.message.web.dto.response.ChatTranslationResponse.TranslationResponse;
 import com.fmi.domain.chat.message.web.dto.response.ChatTranslationResponse.UsageResponse;
@@ -64,7 +65,8 @@ class ChatTranslationServiceTest {
     private static final Instant RESET_AT = Instant.parse("2026-09-09T15:00:00Z");
 
     private final TranslateRequest request = new TranslateRequest(UUID.randomUUID(), UUID.randomUUID());
-    private final Source source = new Source(USER_ID, ORIGINAL_TEXT, LanguageCode.EN);
+    private final ChatTranslationSourceResult source =
+            new ChatTranslationSourceResult(USER_ID, ORIGINAL_TEXT, LanguageCode.EN);
     private final Usage usage =
             new Usage(LocalDate.of(2026, 9, 9), 19, RedisTranslationQuotaStore.LIMIT, RESET_AT, true);
 

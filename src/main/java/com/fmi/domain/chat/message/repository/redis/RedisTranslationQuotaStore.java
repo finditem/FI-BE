@@ -1,6 +1,6 @@
-package com.fmi.domain.chat.message.service;
+package com.fmi.domain.chat.message.repository.redis;
 
-import com.fmi.domain.chat.message.service.ChatTranslationSourceService.Source;
+import com.fmi.domain.chat.message.service.result.ChatTranslationSourceResult;
 import com.fmi.domain.chat.message.web.dto.request.ChatTranslationRequest.TranslateRequest;
 import com.fmi.domain.user.user.data.enums.LanguageCode;
 import com.fmi.external.translation.util.TranslationTextNormalizer;
@@ -42,7 +42,7 @@ public class RedisTranslationQuotaStore {
         return script;
     }
 
-    public Ticket reserve(Source source, Long roomId, Long messageId, TranslateRequest request) {
+    public Ticket reserve(ChatTranslationSourceResult source, Long roomId, Long messageId, TranslateRequest request) {
         String fingerprint = TranslationTextNormalizer.hash(
                 roomId + ":" + messageId + ":" + request.roomVisitId() + ":" + source.language() + ":" + source.text());
         String token = UUID.randomUUID().toString();

@@ -5,6 +5,7 @@ import static com.fmi.domain.chat.room.web.dto.response.ChatRoomResponse.MyChatL
 
 import com.fmi.domain.chat.message.service.ChatNotificationService;
 import com.fmi.domain.chat.room.service.ChatRoomPresenceService;
+import com.fmi.domain.chat.room.service.ChatRoomQueryService;
 import com.fmi.domain.chat.room.service.ChatRoomService;
 import com.fmi.domain.post.post.data.enums.PostType;
 import com.fmi.domain.user.user.data.User;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "ChatRoom", description = "채팅방 관련 API")
 public class ChatRoomController {
+    private final ChatRoomQueryService chatRoomQueryService;
 
     private final UserQueryService userService;
     private final ChatRoomService chatRoomService;
@@ -98,7 +100,8 @@ public class ChatRoomController {
             @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.findUser(userDetails.getUsername());
 
-        MyChatListResponse responseDTO = chatRoomService.getMyPostChatRooms(user, cursor, size, type, address, sort);
+        MyChatListResponse responseDTO =
+                chatRoomQueryService.getMyPostChatRooms(user, cursor, size, type, address, sort);
         return ApiResponse.of(SuccessStatus._CHATROOM_LIST_FETCHED, responseDTO);
     }
 
@@ -141,7 +144,7 @@ public class ChatRoomController {
         String email = userDetails.getUsername();
         User user = userService.findUser(email);
 
-        ChatRoomResultResponse responseDTO = chatRoomService.getChatRoomDetail(roomId, user);
+        ChatRoomResultResponse responseDTO = chatRoomQueryService.getChatRoomDetail(roomId, user);
 
         return ApiResponse.of(SuccessStatus._CHATROOM_FOUND, responseDTO);
     }
