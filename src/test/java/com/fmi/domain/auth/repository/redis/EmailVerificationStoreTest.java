@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.service.internal;
+package com.fmi.domain.auth.repository.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;

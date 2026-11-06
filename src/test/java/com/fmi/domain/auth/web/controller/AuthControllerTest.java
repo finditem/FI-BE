@@ -10,17 +10,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fmi.domain.auth.data.IssuedTokens;
-import com.fmi.domain.auth.data.enums.WithdrawalReason;
 import com.fmi.domain.auth.security.cookie.AuthCookieFactory;
 import com.fmi.domain.auth.security.cookie.AuthCookieResolver;
 import com.fmi.domain.auth.service.AuthService;
-import com.fmi.domain.auth.service.PasswordService;
 import com.fmi.domain.auth.service.TokenService;
-import com.fmi.domain.auth.service.WithdrawalService;
-import com.fmi.domain.auth.web.dto.request.AccountDeleteRequest;
+import com.fmi.domain.auth.service.result.AuthenticateResult;
 import com.fmi.domain.auth.web.dto.request.LoginRequest;
-import com.fmi.domain.auth.web.dto.request.PasswordChangeRequest;
-import com.fmi.domain.auth.web.dto.request.PasswordVerifyRequest;
 import com.fmi.domain.auth.web.dto.response.LoginResponse;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.data.enums.Role;
@@ -32,7 +27,6 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,9 +42,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
@@ -63,12 +54,6 @@ class AuthControllerTest {
 
     @Mock
     private TokenService tokenService;
-
-    @Mock
-    private PasswordService passwordService;
-
-    @Mock
-    private WithdrawalService withdrawalService;
 
     @Mock
     private AuthCookieFactory authCookieFactory;
@@ -285,7 +270,7 @@ class AuthControllerTest {
                 Date refreshExpiration = Date.from(Instant.now().plusSeconds(1_200));
 
                 when(authService.authenticate(email, "temporary-password"))
-                        .thenReturn(new AuthService.AuthenticateResult(user, true));
+                        .thenReturn(new AuthenticateResult(user, true));
                 when(tokenService.issue(user, true, null))
                         .thenReturn(new IssuedTokens(accessToken, accessExpiration, refreshToken, refreshExpiration));
                 when(authCookieFactory.createAccessCookie(httpRequest, accessToken, accessExpiration))
@@ -302,129 +287,6 @@ class AuthControllerTest {
                 assertThat(response.getHeaders().get("Set-Cookie"))
                         .containsExactly("access_token=" + accessToken, "refresh_token=" + refreshToken);
                 assertThat(response.getBody().getResult()).isEqualTo(new LoginResponse(1L, true, true));
-            }
-        }
-    }
-
-    @Nested
-    @DisplayName("비밀번호 검증")
-    class VerifyPassword {
-
-        @Test
-        @DisplayName("기존 비밀번호 검증 경로를 유지한다")
-        void keepsPasswordVerifyPath() throws NoSuchMethodException {
-            // given
-            Class<AuthController> controllerType = AuthController.class;
-
-            // when
-            PostMapping mapping = controllerType
-                    .getMethod("verifyPassword", UserDetails.class, PasswordVerifyRequest.class)
-                    .getAnnotation(PostMapping.class);
-
-            // then
-            assertThat(mapping.value()).containsExactly("/users/me/password/verify");
-        }
-
-        @Test
-        @DisplayName("현재 비밀번호 검증을 비밀번호 유스케이스에 전달한다")
-        void verifiesCurrentPassword() {
-            // given
-            String email = "member@finditem.kr";
-            PasswordVerifyRequest request = new PasswordVerifyRequest();
-            request.setCurrentPassword("CurrentPassword1!");
-            when(userDetails.getUsername()).thenReturn(email);
-
-            // when
-            authController.verifyPassword(userDetails, request);
-
-            // then
-            verify(passwordService).verify(email, request);
-        }
-    }
-
-    @Nested
-    @DisplayName("비밀번호 변경")
-    class ChangePassword {
-
-        @Test
-        @DisplayName("기존 비밀번호 변경 경로를 유지한다")
-        void keepsPasswordChangePath() throws NoSuchMethodException {
-            // given
-            Class<AuthController> controllerType = AuthController.class;
-
-            // when
-            PatchMapping mapping = controllerType
-                    .getMethod("changePassword", UserDetails.class, PasswordChangeRequest.class)
-                    .getAnnotation(PatchMapping.class);
-
-            // then
-            assertThat(mapping.value()).containsExactly("/users/me/password");
-        }
-
-        @Test
-        @DisplayName("요청 값을 해체해 비밀번호 유스케이스에 전달한다")
-        void changesPassword() {
-            // given
-            String email = "member@finditem.kr";
-            PasswordChangeRequest request = new PasswordChangeRequest();
-            request.setNewPassword("NewPassword1!");
-            request.setNewPasswordConfirm("NewPassword1!");
-            when(userDetails.getUsername()).thenReturn(email);
-
-            // when
-            authController.changePassword(userDetails, request);
-
-            // then
-            verify(passwordService).change(email, "NewPassword1!", "NewPassword1!");
-        }
-    }
-
-    @Nested
-    @DisplayName("회원 탈퇴")
-    class DeleteAccount {
-
-        @Test
-        @DisplayName("기존 회원 탈퇴 경로를 유지한다")
-        void keepsAccountDeletePath() throws NoSuchMethodException {
-            // given
-            Class<AuthController> controllerType = AuthController.class;
-
-            // when
-            DeleteMapping mapping = controllerType
-                    .getMethod(
-                            "deleteAccount",
-                            UserDetails.class,
-                            AccountDeleteRequest.class,
-                            jakarta.servlet.http.HttpServletRequest.class)
-                    .getAnnotation(DeleteMapping.class);
-
-            // then
-            assertThat(mapping.value()).containsExactly("/users/me");
-        }
-
-        @Nested
-        @DisplayName("탈퇴 요청이 유효하면")
-        class WithValidRequest {
-
-            @Test
-            @DisplayName("탈퇴를 처리하고 액세스 쿠키와 리프레시 쿠키를 순서대로 만료한다")
-            void deletesAccountAndExpiresCookiesInOrder() {
-                // given
-                String email = "member@finditem.kr";
-                AccountDeleteRequest request = new AccountDeleteRequest();
-                request.setReasons(List.of(WithdrawalReason.NOT_USING));
-                MockHttpServletRequest httpRequest = new MockHttpServletRequest();
-                when(userDetails.getUsername()).thenReturn(email);
-                when(authCookieFactory.expireAccessCookie(httpRequest)).thenReturn(accessCookie(""));
-                when(authCookieFactory.expireRefreshCookie(httpRequest)).thenReturn(refreshCookie(""));
-
-                // when
-                ResponseEntity<ApiResponse<Void>> response =
-                        authController.deleteAccount(userDetails, request, httpRequest);
-
-                // then
-                verify(withdrawalService).delete(email, request);
-                assertThat(response.getHeaders().get("Set-Cookie")).containsExactly("access_token=", "refresh_token=");
             }
         }
     }

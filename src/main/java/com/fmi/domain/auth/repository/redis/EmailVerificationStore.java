@@ -1,4 +1,4 @@
-package com.fmi.domain.auth.service.internal;
+package com.fmi.domain.auth.repository.redis;
 
 import java.time.Duration;
 import java.time.Instant;

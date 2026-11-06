@@ -1,10 +1,9 @@
 package com.fmi.external.mail;
 
-import java.time.Duration;
+import com.fmi.external.mail.repository.redis.EmailBounceRedisRepository;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 /**
@@ -17,9 +16,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EmailBounceRegistry {
 
-    private final StringRedisTemplate redis;
+    private final EmailBounceRedisRepository bounceRedisRepository;
 
-    private static final String BOUNCE_KEY_PREFIX = "email:bounce:";
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b");
 
@@ -37,8 +35,7 @@ public class EmailBounceRegistry {
         }
 
         // Bounce back 발생한 이메일 주소를 Redis에 저장 (24시간)
-        String bounceKey = BOUNCE_KEY_PREFIX + recipientEmail;
-        redis.opsForValue().set(bounceKey, "true", Duration.ofHours(24));
+        bounceRedisRepository.register(recipientEmail);
     }
 
     /**
@@ -84,9 +81,7 @@ public class EmailBounceRegistry {
      * @return bounce back을 받았으면 true
      */
     public boolean hasBounced(String email) {
-        String bounceKey = BOUNCE_KEY_PREFIX + email;
-        String bounced = redis.opsForValue().get(bounceKey);
-        return "true".equals(bounced);
+        return bounceRedisRepository.hasBounced(email);
     }
 
     /**
@@ -96,8 +91,7 @@ public class EmailBounceRegistry {
      * @param email bounce back으로 등록할 이메일 주소
      */
     public void registerBounce(String email) {
-        String bounceKey = BOUNCE_KEY_PREFIX + email;
-        redis.opsForValue().set(bounceKey, "true", Duration.ofHours(24));
+        bounceRedisRepository.register(email);
     }
 
     /**
@@ -106,7 +100,6 @@ public class EmailBounceRegistry {
      * @param email 이메일 주소
      */
     public void clearBounce(String email) {
-        String bounceKey = BOUNCE_KEY_PREFIX + email;
-        redis.delete(bounceKey);
+        bounceRedisRepository.delete(email);
     }
 }

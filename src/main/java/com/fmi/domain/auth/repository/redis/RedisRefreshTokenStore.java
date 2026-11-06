@@ -1,5 +1,6 @@
-package com.fmi.domain.auth.security.token;
+package com.fmi.domain.auth.repository.redis;
 
+import com.fmi.domain.auth.security.token.RefreshTokenStore;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;

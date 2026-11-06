@@ -5,13 +5,8 @@ import com.fmi.domain.auth.data.IssuedTokens;
 import com.fmi.domain.auth.security.cookie.AuthCookieFactory;
 import com.fmi.domain.auth.security.cookie.AuthCookieResolver;
 import com.fmi.domain.auth.service.AuthService;
-import com.fmi.domain.auth.service.PasswordService;
 import com.fmi.domain.auth.service.TokenService;
-import com.fmi.domain.auth.service.WithdrawalService;
-import com.fmi.domain.auth.web.dto.request.AccountDeleteRequest;
 import com.fmi.domain.auth.web.dto.request.LoginRequest;
-import com.fmi.domain.auth.web.dto.request.PasswordChangeRequest;
-import com.fmi.domain.auth.web.dto.request.PasswordVerifyRequest;
 import com.fmi.domain.auth.web.dto.request.SignupRequest;
 import com.fmi.domain.auth.web.dto.response.LoginResponse;
 import com.fmi.domain.auth.web.swagger.AuthSwagger;
@@ -26,8 +21,6 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -35,11 +28,13 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController implements AuthSwagger {
 
     private final AuthService authService;
+
     private final NicknameService nicknameService;
+
     private final TokenService tokenService;
-    private final PasswordService passwordService;
-    private final WithdrawalService withdrawalService;
+
     private final AuthCookieFactory authCookieFactory;
+
     private final AuthCookieResolver authCookieResolver;
 
     @PostMapping("/auth/signup")
@@ -55,7 +50,7 @@ public class AuthController implements AuthSwagger {
     public ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         var authResult = authService.authenticate(request.getEmail(), request.getPassword());
-        return buildTokenResponse(httpRequest, authResult.getUser(), authResult.isTemporaryPassword());
+        return buildTokenResponse(httpRequest, authResult.user(), authResult.isTemporaryPassword());
     }
 
     @GetMapping("/auth/check-nickname")
@@ -115,33 +110,5 @@ public class AuthController implements AuthSwagger {
                 .header("Set-Cookie", accessCookie.toString())
                 .header("Set-Cookie", refreshCookie.toString())
                 .body(ApiResponse.onSuccess("OK"));
-    }
-
-    @PostMapping("/users/me/password/verify")
-    public ApiResponse<Void> verifyPassword(
-            @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody PasswordVerifyRequest request) {
-        passwordService.verify(userDetails.getUsername(), request);
-        return ApiResponse.onSuccess(null);
-    }
-
-    @PatchMapping("/users/me/password")
-    public ApiResponse<Void> changePassword(
-            @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody PasswordChangeRequest request) {
-        passwordService.change(userDetails.getUsername(), request.getNewPassword(), request.getNewPasswordConfirm());
-        return ApiResponse.onSuccess(null);
-    }
-
-    @DeleteMapping("/users/me")
-    public ResponseEntity<ApiResponse<Void>> deleteAccount(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody AccountDeleteRequest request,
-            HttpServletRequest httpRequest) {
-        withdrawalService.delete(userDetails.getUsername(), request);
-        ResponseCookie accessCookie = authCookieFactory.expireAccessCookie(httpRequest);
-        ResponseCookie refreshCookie = authCookieFactory.expireRefreshCookie(httpRequest);
-        return ResponseEntity.ok()
-                .header("Set-Cookie", accessCookie.toString())
-                .header("Set-Cookie", refreshCookie.toString())
-                .body(ApiResponse.onSuccess(null));
     }
 }

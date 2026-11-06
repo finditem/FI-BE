@@ -5,9 +5,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fmi.domain.auth.repository.redis.EmailVerificationStore;
+import com.fmi.domain.auth.repository.redis.EmailVerificationStore.VerificationCode;
 import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
-import com.fmi.domain.auth.service.internal.EmailVerificationStore;
-import com.fmi.domain.auth.service.internal.EmailVerificationStore.VerificationCode;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.external.mail.EmailBounceRegistry;

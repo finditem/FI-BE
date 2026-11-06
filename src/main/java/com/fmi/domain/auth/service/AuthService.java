@@ -5,6 +5,7 @@ import com.fmi.domain.auth.data.enums.RejoinType;
 import com.fmi.domain.auth.event.UserSignedUpEvent;
 import com.fmi.domain.auth.service.internal.PasswordValidator;
 import com.fmi.domain.auth.service.internal.RejoinPolicy;
+import com.fmi.domain.auth.service.result.AuthenticateResult;
 import com.fmi.domain.auth.web.dto.request.SignupRequest;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.data.enums.Role;
@@ -16,7 +17,6 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -130,11 +130,5 @@ public class AuthService {
             throw new GeneralException(ErrorStatus._INVALID_CREDENTIALS);
         }
         return new AuthenticateResult(user, isTemporaryPassword);
-    }
-
-    @Data
-    public static class AuthenticateResult {
-        private final User user;
-        private final boolean isTemporaryPassword;
     }
 }

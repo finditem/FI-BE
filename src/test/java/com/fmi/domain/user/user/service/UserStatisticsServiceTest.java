@@ -3,9 +3,9 @@ package com.fmi.domain.user.user.service;
 import static org.assertj.core.api.Assertions.*;
 
 import com.fmi.domain.auth.data.enums.WithdrawalReason;
+import com.fmi.domain.auth.repository.redis.EmailVerificationStore;
 import com.fmi.domain.auth.service.AuthService;
 import com.fmi.domain.auth.service.WithdrawalService;
-import com.fmi.domain.auth.service.internal.EmailVerificationStore;
 import com.fmi.domain.auth.web.dto.request.AccountDeleteRequest;
 import com.fmi.domain.auth.web.dto.request.SignupRequest;
 import com.fmi.domain.post.post.data.Post;
