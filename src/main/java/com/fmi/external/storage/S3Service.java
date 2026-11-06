@@ -133,17 +133,18 @@ public class S3Service {
         // 변경된 파일
         String s3FileName = UUID.randomUUID().toString().substring(0, 10) + "_" + originalFilename;
 
-        // 이미지 파일 -> InputStream 변환
-        try (InputStream inputStream = file.getInputStream()) {
+        try {
+            // 촬영 위치, 촬영 시각, 기기 정보 등 메타데이터를 제거한 이미지
+            byte[] image = ImageMetadataRemover.remove(file.getBytes());
             // PutObjectRequest 객체 생성
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName) // 버킷 이름
                     .key(s3FileName) // 저장할 파일 이름
                     .contentType("image/" + extension) // 이미지 MIME 타입
-                    .contentLength(file.getSize()) // 파일 크기
+                    .contentLength((long) image.length) // 파일 크기
                     .build();
             // S3에 이미지 업로드
-            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(image));
         } catch (Exception exception) {
             log.error(exception.getMessage(), exception);
             throw new GeneralException(ErrorStatus._IO_EXCEPTION_UPLOAD_FILE);
