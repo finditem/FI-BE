@@ -14,6 +14,7 @@ import com.fmi.domain.inquiry.inquiry.data.Inquiry;
 import com.fmi.domain.inquiry.inquiry.data.InquiryImage;
 import com.fmi.domain.inquiry.inquiry.data.enums.InquiryStatus;
 import com.fmi.domain.inquiry.inquiry.data.enums.InquiryType;
+import com.fmi.domain.inquiry.inquiry.repository.AdminInquiryRepository;
 import com.fmi.domain.inquiry.inquiry.repository.InquiryImageRepository;
 import com.fmi.domain.inquiry.inquiry.repository.InquiryRepository;
 import com.fmi.domain.inquiry.inquiry.web.dto.response.InquiryDetailResponse;
@@ -23,6 +24,7 @@ import com.fmi.domain.post.post.converter.util.PostConverter;
 import com.fmi.domain.post.post.data.Post;
 import com.fmi.domain.post.post.data.enums.Category;
 import com.fmi.domain.post.post.data.enums.PostStatus;
+import com.fmi.domain.post.post.repository.PostContentPolicyRepository;
 import com.fmi.domain.post.post.repository.PostRepository;
 import com.fmi.domain.post.post.service.HotPostService;
 import com.fmi.domain.post.post.service.PostFavoriteService;
@@ -33,12 +35,14 @@ import com.fmi.domain.report.data.Report;
 import com.fmi.domain.report.data.ReportAnswerImage;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
+import com.fmi.domain.report.repository.AdminReportRepository;
 import com.fmi.domain.report.repository.ReportAnswerImageRepository;
 import com.fmi.domain.report.repository.ReportRepository;
 import com.fmi.domain.report.service.ReportService;
 import com.fmi.domain.report.web.dto.response.ReportResponse;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.data.UserCategory;
+import com.fmi.domain.user.user.repository.AdminUserRepository;
 import com.fmi.domain.user.user.repository.UserCategoryRepository;
 import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.global.apiPayload.CursorPageResponse;
@@ -64,6 +68,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AdminService {
+    private final AdminReportRepository adminReportRepository;
+
+    private final AdminInquiryRepository adminInquiryRepository;
+
+    private final AdminUserRepository adminUserRepository;
+
+    private final PostContentPolicyRepository postContentPolicyRepository;
 
     private final InquiryRepository inquiryRepository;
     private final InquiryImageRepository inquiryImageRepository;
@@ -89,10 +100,10 @@ public class AdminService {
             String typeStr = type != null ? type.name() : null;
             String statusStr = status != null ? status.name() : null;
             Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-            inquiries = inquiryRepository.findMemberInquiriesForAdminWithKeyword(
+            inquiries = adminInquiryRepository.findMemberInquiriesForAdminWithKeyword(
                     typeStr, statusStr, sanitizeFulltextKeyword(keyword), unsorted);
         } else {
-            inquiries = inquiryRepository.findMemberInquiriesForAdmin(type, status, pageable);
+            inquiries = adminInquiryRepository.findMemberInquiriesForAdmin(type, status, pageable);
         }
         return inquiries.map(inquiry -> AdminInquiryResponse.builder()
                 .inquiryId(inquiry.getId())
@@ -119,10 +130,10 @@ public class AdminService {
             String statusStr = status != null ? status.name() : null;
             String targetTypeStr = targetType != null ? targetType.name() : null;
             Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-            reports = reportRepository.findAllForAdminWithKeyword(
+            reports = adminReportRepository.findAllForAdminWithKeyword(
                     statusStr, targetTypeStr, answered, sanitizeFulltextKeyword(keyword), unsorted);
         } else {
-            reports = reportRepository.findAllForAdmin(status, targetType, answered, pageable);
+            reports = adminReportRepository.findAllForAdmin(status, targetType, answered, pageable);
         }
         return reports.map(report -> AdminReportResponse.builder()
                 .reportId(report.getReportId())
@@ -252,18 +263,19 @@ public class AdminService {
         if (sanitizedKeyword != null) {
             String statusStr = effectiveStatus != null ? effectiveStatus.name() : null;
             inquirySlice = notAnsweredFilter
-                    ? inquiryRepository.findGuestInquiriesNotAnsweredWithKeywordSlice(
+                    ? adminInquiryRepository.findGuestInquiriesNotAnsweredWithKeywordSlice(
                             sanitizedKeyword, cursor, pageRequest)
-                    : inquiryRepository.findGuestInquiriesForAdminWithKeywordSlice(
+                    : adminInquiryRepository.findGuestInquiriesForAdminWithKeywordSlice(
                             statusStr, sanitizedKeyword, cursor, pageRequest);
         } else if (notAnsweredFilter) {
             inquirySlice = (cursor == null)
-                    ? inquiryRepository.findGuestInquiriesNotAnsweredOrderByIdDesc(pageRequest)
-                    : inquiryRepository.findGuestInquiriesNotAnsweredBeforeCursorOrderByIdDesc(cursor, pageRequest);
+                    ? adminInquiryRepository.findGuestInquiriesNotAnsweredOrderByIdDesc(pageRequest)
+                    : adminInquiryRepository.findGuestInquiriesNotAnsweredBeforeCursorOrderByIdDesc(
+                            cursor, pageRequest);
         } else {
             inquirySlice = (cursor == null)
-                    ? inquiryRepository.findGuestInquiriesOrderByIdDesc(effectiveStatus, pageRequest)
-                    : inquiryRepository.findGuestInquiriesBeforeCursorOrderByIdDesc(
+                    ? adminInquiryRepository.findGuestInquiriesOrderByIdDesc(effectiveStatus, pageRequest)
+                    : adminInquiryRepository.findGuestInquiriesBeforeCursorOrderByIdDesc(
                             effectiveStatus, cursor, pageRequest);
         }
 
@@ -303,7 +315,7 @@ public class AdminService {
      */
     public Page<AdminDeletedUserResponse> getDeletedUsers(WithdrawalReason reason, Pageable pageable) {
         String reasonStr = reason != null ? reason.name() : null;
-        Page<User> deletedUsers = userRepository.findDeletedUsers(reasonStr, pageable);
+        Page<User> deletedUsers = adminUserRepository.findDeletedUsers(reasonStr, pageable);
 
         return deletedUsers.map(user -> AdminDeletedUserResponse.builder()
                 .userId(user.getId())
@@ -326,11 +338,11 @@ public class AdminService {
         if (sanitizedKeyword != null) {
             String typeStr = type != null ? type.name() : null;
             String statusStr = status != null ? status.name() : null;
-            inquiries = inquiryRepository.findAllForAdminWithKeywordCursor(
+            inquiries = adminInquiryRepository.findAllForAdminWithKeywordCursor(
                     typeStr, statusStr, answered, sanitizedKeyword, cursor, fetchSize);
         } else {
             Pageable limit = PageRequest.of(0, fetchSize);
-            inquiries = inquiryRepository.findAllForAdminCursor(type, status, answered, cursor, limit);
+            inquiries = adminInquiryRepository.findAllForAdminCursor(type, status, answered, cursor, limit);
         }
 
         boolean hasNext = inquiries.size() > size;
@@ -369,11 +381,11 @@ public class AdminService {
         if (sanitizedKeyword != null) {
             String statusStr = status != null ? status.name() : null;
             String targetTypeStr = targetType != null ? targetType.name() : null;
-            reports = reportRepository.findAllForAdminWithKeywordCursor(
+            reports = adminReportRepository.findAllForAdminWithKeywordCursor(
                     statusStr, targetTypeStr, answered, sanitizedKeyword, cursor, fetchSize);
         } else {
             Pageable limit = PageRequest.of(0, fetchSize);
-            reports = reportRepository.findAllForAdminCursor(status, targetType, answered, cursor, limit);
+            reports = adminReportRepository.findAllForAdminCursor(status, targetType, answered, cursor, limit);
         }
 
         boolean hasNext = reports.size() > size;
@@ -416,7 +428,8 @@ public class AdminService {
         int fetchSize = size + 1;
         String reasonStr = reason != null ? reason.name() : null;
         String keywordParam = (keyword != null && !keyword.isBlank()) ? "%" + keyword.trim() + "%" : null;
-        List<User> users = userRepository.findDeletedUsersCursorWithKeyword(reasonStr, keywordParam, cursor, fetchSize);
+        List<User> users =
+                adminUserRepository.findDeletedUsersCursorWithKeyword(reasonStr, keywordParam, cursor, fetchSize);
 
         boolean hasNext = users.size() > size;
         List<User> content = hasNext ? users.subList(0, size) : users;
@@ -463,10 +476,10 @@ public class AdminService {
 
         posts = switch (sortType) {
             case OLDEST ->
-                postRepository.findContentPolicyPostsByOldest(
+                postContentPolicyRepository.findContentPolicyPostsByOldest(
                         categoryStr, postStatusStr, trimmedKeyword, startDateTime, endDateTime, cursor, fetchSize);
             case MOST_VIEWED ->
-                postRepository.findContentPolicyPostsByMostViewed(
+                postContentPolicyRepository.findContentPolicyPostsByMostViewed(
                         categoryStr,
                         postStatusStr,
                         trimmedKeyword,
@@ -476,7 +489,7 @@ public class AdminService {
                         cursor,
                         fetchSize);
             case MOST_FAVORITED ->
-                postRepository.findContentPolicyPostsByMostFavorited(
+                postContentPolicyRepository.findContentPolicyPostsByMostFavorited(
                         categoryStr,
                         postStatusStr,
                         trimmedKeyword,
@@ -486,7 +499,7 @@ public class AdminService {
                         cursor,
                         fetchSize);
             default ->
-                postRepository.findContentPolicyPostsByLatest(
+                postContentPolicyRepository.findContentPolicyPostsByLatest(
                         categoryStr, postStatusStr, trimmedKeyword, startDateTime, endDateTime, cursor, fetchSize);
         };
 

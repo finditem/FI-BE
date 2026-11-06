@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class PostImageRepositoryImpl implements PostImageRepositoryCustom {
+public class PostImageRepositoryCustomImpl implements PostImageRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override

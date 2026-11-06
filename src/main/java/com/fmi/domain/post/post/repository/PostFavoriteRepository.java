@@ -15,7 +15,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long> {
+public interface PostFavoriteRepository extends JpaRepository<PostFavorite, Long>, PostFavoriteRepositoryCustom {
     Optional<PostFavorite> findByUserAndPost(User user, Post post);
 
     List<PostFavorite> findByUserAndIsFavoriteTrue(User user);

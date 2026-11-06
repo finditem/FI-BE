@@ -8,7 +8,7 @@ import com.fmi.domain.post.post.web.dto.response.*;
 import java.util.List;
 import java.util.Set;
 
-public interface PostMapCustom {
+public interface PostMapRepositoryCustom {
 
     List<PostMarkerResponse> findPostMarker(double lat, double lng, MapLevel mapLevel, Set<Long> excludedUserIds);
 

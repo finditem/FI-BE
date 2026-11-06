@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
-public interface PostRepositoryCustom {
+public interface PostSearchRepositoryCustom {
     PostPageResponse searchPostsByFiltersAndSort(
             PostType postType,
             PostStatus postStatus,
@@ -31,16 +31,6 @@ public interface PostRepositoryCustom {
             LocalDate startDate,
             LocalDate endDate,
             String keyword,
-            Long cursor,
-            int size);
-
-    PostPageResponse searchMyFavorites(
-            Long userId,
-            PostType postType,
-            Category category,
-            String address,
-            String keyword,
-            SortType sortType,
             Long cursor,
             int size);
 

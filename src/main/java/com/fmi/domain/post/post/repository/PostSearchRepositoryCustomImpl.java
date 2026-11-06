@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class PostRepositoryImpl implements PostRepositoryCustom {
+public class PostSearchRepositoryCustomImpl implements PostSearchRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
     private final BlockedUserRepository blockedUserRepository;
@@ -228,83 +228,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         } else {
             posts = queryFactory
                     .selectFrom(post)
-                    .where(pageWhere)
-                    .orderBy(orderBySortType(post, sortType))
-                    .limit(size + 1)
-                    .fetch();
-        }
-
-        boolean hasNext = posts.size() > size;
-        if (hasNext) {
-            posts = posts.subList(0, size);
-        }
-
-        Long nextCursor =
-                (hasNext && !posts.isEmpty()) ? posts.get(posts.size() - 1).getId() : null;
-
-        if (posts.isEmpty()) {
-            return new PostPageResponse(List.of(), 0L, null, false);
-        }
-
-        return buildPostPageResponse(posts, postCount, nextCursor, hasNext, userId);
-    }
-
-    @Override
-    public PostPageResponse searchMyFavorites(
-            Long userId,
-            PostType postType,
-            Category category,
-            String address,
-            String keyword,
-            SortType sortType,
-            Long cursor,
-            int size) {
-        QPost post = QPost.post;
-        QPostFavorite postFavorite = QPostFavorite.postFavorite;
-
-        BooleanBuilder baseBuilder = new BooleanBuilder();
-        baseBuilder.and(postFavorite.user.id.eq(userId));
-        baseBuilder.and(postFavorite.isFavorite.isTrue());
-        baseBuilder.and(post.deleted.isFalse());
-        baseBuilder.and(equalsPostType(post, postType));
-        baseBuilder.and(equalsCategory(post, category));
-        baseBuilder.and(addressStartsWith(post, address));
-
-        if (hasText(keyword)) {
-            baseBuilder.and(buildKeywordCondition(post, keyword));
-        }
-
-        BooleanBuilder pageWhere = new BooleanBuilder(baseBuilder);
-        pageWhere.and(cursorCondition(post, sortType, cursor));
-
-        Long postCount = queryFactory
-                .select(post.id.countDistinct())
-                .from(postFavorite)
-                .join(postFavorite.post, post)
-                .where(baseBuilder)
-                .fetchOne();
-
-        if (Objects.isNull(postCount)) postCount = 0L;
-
-        List<Post> posts;
-        if (Objects.equals(sortType, SortType.MOST_FAVORITED)) {
-            QPostFavorite favCount = new QPostFavorite("favCount");
-            posts = queryFactory
-                    .select(post)
-                    .from(postFavorite)
-                    .join(postFavorite.post, post)
-                    .leftJoin(favCount)
-                    .on(favCount.post.eq(post), favCount.isFavorite.isTrue())
-                    .where(pageWhere)
-                    .groupBy(post.id)
-                    .orderBy(favCount.favorite_id.count().desc(), post.id.desc())
-                    .limit(size + 1)
-                    .fetch();
-        } else {
-            posts = queryFactory
-                    .select(post)
-                    .from(postFavorite)
-                    .join(postFavorite.post, post)
                     .where(pageWhere)
                     .orderBy(orderBySortType(post, sortType))
                     .limit(size + 1)

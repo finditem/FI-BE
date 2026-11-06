@@ -1,6 +1,7 @@
-package com.fmi.domain.post.post.repository;
+package com.fmi.domain.user.user.repository;
 
-import com.fmi.domain.post.post.data.QPostStatisticsDaily;
+import com.fmi.domain.user.user.data.QUserStatisticsDaily;
+import com.fmi.domain.user.user.service.result.UserStatisticsResult;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -8,30 +9,29 @@ import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class PostStatisticsRepositoryImpl implements PostStatisticsRepositoryCustom {
+public class UserStatisticsRepositoryCustomImpl implements UserStatisticsRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public PostStatisticsResult aggregate(LocalDate startDate, LocalDate endDate) {
-        var daily = QPostStatisticsDaily.postStatisticsDaily;
+    public UserStatisticsResult aggregate(LocalDate startDate, LocalDate endDate) {
+        var daily = QUserStatisticsDaily.userStatisticsDaily;
         return queryFactory
                 .select(Projections.constructor(
-                        PostStatisticsResult.class,
-                        daily.openingPostCount
-                                .add(daily.lostPostCount)
-                                .add(daily.foundPostCount)
-                                .subtract(daily.removedCount)
+                        UserStatisticsResult.class,
+                        daily.openingUserCount
+                                .add(daily.signupCount)
+                                .subtract(daily.withdrawalCount)
                                 .sum()
                                 .coalesce(0L),
                         new CaseBuilder()
                                 .when(daily.statisticsDate.goe(startDate))
-                                .then(daily.lostPostCount)
+                                .then(daily.signupCount)
                                 .otherwise(0L)
                                 .sum()
                                 .coalesce(0L),
                         new CaseBuilder()
                                 .when(daily.statisticsDate.goe(startDate))
-                                .then(daily.foundPostCount)
+                                .then(daily.withdrawalCount)
                                 .otherwise(0L)
                                 .sum()
                                 .coalesce(0L)))

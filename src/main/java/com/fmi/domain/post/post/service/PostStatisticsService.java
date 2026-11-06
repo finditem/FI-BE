@@ -1,7 +1,7 @@
 package com.fmi.domain.post.post.service;
 
 import com.fmi.domain.post.post.repository.PostStatisticsRepository;
-import com.fmi.domain.post.post.repository.PostStatisticsResult;
+import com.fmi.domain.post.post.service.result.PostStatisticsResult;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.time.*;

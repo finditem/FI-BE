@@ -7,6 +7,7 @@ import com.fmi.domain.post.post.data.enums.Category;
 import com.fmi.domain.post.post.data.enums.PostType;
 import com.fmi.domain.post.post.data.enums.Radius;
 import com.fmi.domain.post.post.repository.*;
+import com.fmi.domain.post.post.service.result.PostStatisticsResult;
 import com.fmi.domain.post.post.web.dto.request.*;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.data.enums.Role;

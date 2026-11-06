@@ -1,7 +1,7 @@
 package com.fmi.domain.user.user.service;
 
 import com.fmi.domain.user.user.repository.UserStatisticsRepository;
-import com.fmi.domain.user.user.repository.UserStatisticsResult;
+import com.fmi.domain.user.user.service.result.UserStatisticsResult;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import java.time.*;

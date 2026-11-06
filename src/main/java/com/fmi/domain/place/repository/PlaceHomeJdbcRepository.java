@@ -12,7 +12,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
+public class PlaceHomeJdbcRepository implements PlaceHomeRepository {
+
     private static final String FIND_HOME_PLACES = """
             WITH selected_places AS (
                 SELECT p.id, p.name, p.address, p.latitude, p.longitude,
@@ -82,20 +83,6 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
             ORDER BY selected.created_at DESC, selected.id DESC, pbh.day_of_week, pbh.start_time
             """;
 
-    private static final String FIND_MAP_CANDIDATE_IDS = """
-            SELECT id
-            FROM place
-            WHERE entity_status = 'ACTIVE'
-              AND type = ?
-              AND latitude BETWEEN ? AND ?
-              AND longitude BETWEEN ? AND ?
-            ORDER BY ST_Distance_Sphere(
-                        POINT(longitude, latitude),
-                        POINT(?, ?)
-                     ) ASC,
-                     id DESC
-            """;
-
     private final JdbcTemplate jdbcTemplate;
 
     @Override
@@ -128,26 +115,5 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                 today.name(),
                 yesterday.name(),
                 userId);
-    }
-
-    @Override
-    public List<Long> findMapCandidateIds(
-            PlaceType type,
-            double latitude,
-            double longitude,
-            double minLatitude,
-            double maxLatitude,
-            double minLongitude,
-            double maxLongitude) {
-        return jdbcTemplate.queryForList(
-                FIND_MAP_CANDIDATE_IDS,
-                Long.class,
-                type.name(),
-                minLatitude,
-                maxLatitude,
-                minLongitude,
-                maxLongitude,
-                longitude,
-                latitude);
     }
 }

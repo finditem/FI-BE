@@ -1,6 +1,6 @@
 package com.fmi.domain.post.post.web.dto.response;
 
-import com.fmi.domain.post.post.repository.PostStatisticsResult;
+import com.fmi.domain.post.post.service.result.PostStatisticsResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record PostStatisticsResponse(

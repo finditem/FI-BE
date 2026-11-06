@@ -21,7 +21,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRepositoryCustom {
+public class ChatRoomParticipantRepositoryCustomImpl implements ChatRoomParticipantRepositoryCustom {
 
     private static final Map<String, String> ADDRESS_ALIASES = Map.ofEntries(
             Map.entry("서울시", "서울특별시"),
@@ -38,7 +38,7 @@ public class ChatRoomParticipantRepositoryImpl implements ChatRoomParticipantRep
 
     private final JPAQueryFactory queryFactory;
 
-    public ChatRoomParticipantRepositoryImpl(EntityManager em) {
+    public ChatRoomParticipantRepositoryCustomImpl(EntityManager em) {
         this.queryFactory = new JPAQueryFactory(em);
     }
 

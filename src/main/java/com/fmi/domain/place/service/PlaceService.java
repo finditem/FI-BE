@@ -13,6 +13,8 @@ import com.fmi.domain.place.data.PlaceUpsertCommand;
 import com.fmi.domain.place.data.enums.PlaceType;
 import com.fmi.domain.place.exception.PlaceErrorStatus;
 import com.fmi.domain.place.repository.PlaceFavoriteRepository;
+import com.fmi.domain.place.repository.PlaceHomeRepository;
+import com.fmi.domain.place.repository.PlaceMapRepository;
 import com.fmi.domain.place.repository.PlaceRepository;
 import com.fmi.domain.place.repository.PlaceTranslationRepository;
 import com.fmi.domain.place.service.internal.PlaceBusinessHourUpdater;
@@ -46,6 +48,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PlaceService {
+    private final PlaceMapRepository placeMapRepository;
+
+    private final PlaceHomeRepository placeHomeRepository;
 
     private final PlaceRepository placeRepository;
     private final PlaceTranslationRepository placeTranslationRepository;
@@ -140,9 +145,10 @@ public class PlaceService {
         // 타입별로 조회
         List<HomePlace> places;
         if (type == null) {
-            places = placeRepository.findHomePlaces(now, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
+            places = placeHomeRepository.findHomePlaces(now, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
         } else {
-            places = placeRepository.findHomePlaces(type, now, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
+            places =
+                    placeHomeRepository.findHomePlaces(type, now, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
         }
 
         // 운영 상태 계산
@@ -181,7 +187,7 @@ public class PlaceService {
         DayOfWeek todayDayOfWeek = today.getDayOfWeek();
         DayOfWeek yesterdayDayOfWeek = today.minusDays(1).getDayOfWeek();
         List<DayOfWeek> relevantDayOfWeeks = List.of(todayDayOfWeek, yesterdayDayOfWeek);
-        List<Long> candidateIds = placeRepository.findMapCandidateIds(
+        List<Long> candidateIds = placeMapRepository.findMapCandidateIds(
                 type,
                 latitude,
                 longitude,

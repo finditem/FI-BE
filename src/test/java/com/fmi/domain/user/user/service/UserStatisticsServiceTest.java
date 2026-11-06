@@ -18,6 +18,7 @@ import com.fmi.domain.post.post.web.dto.request.PostCreateRequest;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.domain.user.user.data.enums.Role;
 import com.fmi.domain.user.user.repository.*;
+import com.fmi.domain.user.user.service.result.UserStatisticsResult;
 import com.fmi.domain.user.user.web.dto.request.TermsAgreeRequest;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.support.IntegrationTestSupport;

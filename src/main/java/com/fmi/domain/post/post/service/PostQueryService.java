@@ -13,6 +13,7 @@ import com.fmi.domain.post.post.data.enums.PostType;
 import com.fmi.domain.post.post.repository.PostFavoriteRepository;
 import com.fmi.domain.post.post.repository.PostImageRepository;
 import com.fmi.domain.post.post.repository.PostRepository;
+import com.fmi.domain.post.post.repository.PostSearchRepository;
 import com.fmi.domain.post.post.web.dto.response.*;
 import com.fmi.domain.post.post.web.dto.response.PostImageResponse;
 import com.fmi.domain.user.block.service.BlockService;
@@ -41,6 +42,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class PostQueryService {
+    private final PostSearchRepository postSearchRepository;
+
     private final PostRepository postRepository;
     private final PostImageRepository postImageRepository;
     private final UserQueryService userQueryService;
@@ -161,7 +164,7 @@ public class PostQueryService {
 
         Set<Long> hotIds = hotPostService.resolveHotPostIdsForUser(postType, postStatus, category, address, userId, 5);
 
-        return postRepository.searchPostsByFiltersAndSort(
+        return postSearchRepository.searchPostsByFiltersAndSort(
                 postType, postStatus, category, address, sortType, cursor, size, userId, hotIds);
     }
 
@@ -174,9 +177,9 @@ public class PostQueryService {
 
         if (keyword.isBlank()) return new PostPageResponse(List.of(), 0L, null, false);
 
-        long postCount = postRepository.countByKeyword(keyword);
+        long postCount = postSearchRepository.countByKeyword(keyword);
 
-        List<Post> fetched = postRepository.searchByKeywordWithCursor(keyword, cursor, limit);
+        List<Post> fetched = postSearchRepository.searchByKeywordWithCursor(keyword, cursor, limit);
 
         boolean hasNext = fetched.size() > size;
 
@@ -270,7 +273,7 @@ public class PostQueryService {
             int size) {
         User user = userQueryService.findUser(userDetails.getUsername());
 
-        return postRepository.searchMyFavorites(
+        return postFavoriteRepository.searchMyFavorites(
                 user.getId(), postType, category, address, keyword, sortType, cursor, size);
     }
 
@@ -278,7 +281,7 @@ public class PostQueryService {
     public List<PostSimilarResponse> getSimilarPostList(Long postId, UserDetails userDetails) {
         Post post = findById(postId);
 
-        List<Post> postList = postRepository.findSimilarPosts(post.getId(), 5);
+        List<Post> postList = postSearchRepository.findSimilarPosts(post.getId(), 5);
 
         Map<Long, String> thumbnailUrlByPostList = postImageService.findThumbnailUrlByPostList(postList);
         Map<Long, Long> favoriteCountMap = postFavoriteService.getFavoriteCountMap(postList);

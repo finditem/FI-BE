@@ -1,6 +1,6 @@
 package com.fmi.domain.user.user.web.dto.response;
 
-import com.fmi.domain.user.user.repository.UserStatisticsResult;
+import com.fmi.domain.user.user.service.result.UserStatisticsResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record UserStatisticsResponse(

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class PlaceFavoriteRepositoryImpl implements PlaceFavoriteRepositoryCustom {
+public class PlaceFavoriteRepositoryCustomImpl implements PlaceFavoriteRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 

@@ -17,6 +17,7 @@ import com.fmi.domain.post.post.data.enums.PostStatus;
 import com.fmi.domain.post.post.data.enums.PostType;
 import com.fmi.domain.post.post.repository.PostFavoriteRepository;
 import com.fmi.domain.post.post.repository.PostRepository;
+import com.fmi.domain.post.post.repository.PostSearchRepository;
 import com.fmi.domain.post.post.service.PostQueryService;
 import com.fmi.domain.post.post.web.dto.response.PostBriefResponse;
 import com.fmi.domain.post.post.web.dto.response.PostPageResponse;
@@ -67,6 +68,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @Transactional
 public class UserService {
+    private final PostSearchRepository postSearchRepository;
 
     private final UserRepository userRepository;
     private final S3Service s3Service;
@@ -347,7 +349,7 @@ public class UserService {
         User user =
                 userRepository.findByEmail(email).orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        return postRepository.searchMyPosts(
+        return postSearchRepository.searchMyPosts(
                 user.getId(), postType, postStatus, category, sortType, startDate, endDate, keyword, cursor, size);
     }
 

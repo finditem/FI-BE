@@ -15,20 +15,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class ChatRoomParticipantRepositoryImplTest {
+class ChatRoomParticipantRepositoryCustomImplTest {
 
     @Mock
     private EntityManager entityManager;
 
-    private ChatRoomParticipantRepositoryImpl repository;
+    private ChatRoomParticipantRepositoryCustomImpl repository;
 
     @BeforeEach
     void setUp() {
-        repository = new ChatRoomParticipantRepositoryImpl(entityManager);
+        repository = new ChatRoomParticipantRepositoryCustomImpl(entityManager);
     }
 
     private BooleanExpression invokeAddressEq(String address) throws Exception {
-        Method method = ChatRoomParticipantRepositoryImpl.class.getDeclaredMethod(
+        Method method = ChatRoomParticipantRepositoryCustomImpl.class.getDeclaredMethod(
                 "addressEq", String.class, QPost.class, QChatRoom.class);
         method.setAccessible(true);
         return (BooleanExpression) method.invoke(repository, address, QPost.post, QChatRoom.chatRoom);

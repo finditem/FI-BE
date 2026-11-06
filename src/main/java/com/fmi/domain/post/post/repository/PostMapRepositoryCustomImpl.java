@@ -22,7 +22,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class PostMapCustomImpl implements PostMapCustom {
+public class PostMapRepositoryCustomImpl implements PostMapRepositoryCustom {
     private final JPAQueryFactory jpaQueryFactory;
 
     private static final int MAP_CARD_PAGE_SIZE = 10;

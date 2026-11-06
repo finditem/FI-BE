@@ -7,7 +7,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface PlaceRepositoryCustom {
+public interface PlaceHomeRepository {
+
     default List<HomePlace> findHomePlaces(LocalDateTime now, DayOfWeek today, DayOfWeek yesterday, Long userId) {
         return findHomePlaces(now, today, yesterday, userId, LanguageCode.KO);
     }
@@ -27,13 +28,4 @@ public interface PlaceRepositoryCustom {
             DayOfWeek yesterday,
             Long userId,
             LanguageCode language);
-
-    List<Long> findMapCandidateIds(
-            PlaceType type,
-            double latitude,
-            double longitude,
-            double minLatitude,
-            double maxLatitude,
-            double minLongitude,
-            double maxLongitude);
 }
