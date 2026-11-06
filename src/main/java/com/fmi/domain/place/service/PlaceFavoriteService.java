@@ -36,8 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PlaceFavoriteService {
+    private final PlaceQueryService placeQueryService;
 
-    private final PlaceService placeService;
     private final PlaceTranslationRepository placeTranslationRepository;
     private final PlaceRepository placeRepository;
     private final PlaceFavoriteStateRepository placeFavoriteStateRepository;
@@ -48,7 +48,7 @@ public class PlaceFavoriteService {
 
     @Transactional
     public void save(Long placeId, String userEmail) {
-        placeService.getPlaceSummary(placeId, null);
+        placeQueryService.getPlaceSummary(placeId, null);
         User user = userRepository
                 .findByEmail(userEmail)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));

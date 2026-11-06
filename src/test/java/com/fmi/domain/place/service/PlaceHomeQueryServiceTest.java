@@ -1,23 +1,25 @@
 package com.fmi.domain.place.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 import com.fmi.domain.place.data.PlaceDailySchedule;
-import com.fmi.domain.place.data.PlaceMapSearchResult;
+import com.fmi.domain.place.data.PlaceFavorite;
+import com.fmi.domain.place.data.PlaceSummary;
 import com.fmi.domain.place.data.PlaceTimeRange;
 import com.fmi.domain.place.data.PlaceUpsertCommand;
 import com.fmi.domain.place.data.enums.PlaceBusinessHourType;
+import com.fmi.domain.place.data.enums.PlaceOperationStatus;
 import com.fmi.domain.place.data.enums.PlaceType;
-import com.fmi.domain.place.exception.PlaceErrorStatus;
 import com.fmi.domain.place.repository.PlaceBusinessHourRepository;
 import com.fmi.domain.place.repository.PlaceFavoriteRepository;
 import com.fmi.domain.place.repository.PlaceRepository;
+import com.fmi.domain.user.user.data.User;
+import com.fmi.domain.user.user.data.enums.Role;
+import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.external.storage.S3Service;
-import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.dto.UploadedImage;
 import com.fmi.support.IntegrationTestSupport;
 import java.time.DayOfWeek;
@@ -34,8 +36,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-@DisplayName("PlaceService 지도 장소 조회")
-class PlaceMapServiceTest extends IntegrationTestSupport {
+@DisplayName("PlaceHomeQueryService")
+class PlaceHomeQueryServiceTest extends IntegrationTestSupport {
+    @Autowired
+    private PlaceHomeQueryService placeHomeQueryService;
 
     @Autowired
     private PlaceService placeService;
@@ -48,6 +52,9 @@ class PlaceMapServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private PlaceFavoriteRepository placeFavoriteRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private S3Service s3Service;
@@ -63,16 +70,16 @@ class PlaceMapServiceTest extends IntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("지도 범위의 장소를 조회할 때")
-    class DescribeGetMapPlaces {
+    @DisplayName("홈 장소를 조회할 때")
+    class DescribeGetHomePlaces {
 
         @Nested
-        @DisplayName("범위 안에 장소가 10개보다 많으면")
-        class ContextWithMoreThanTenPlaces {
+        @DisplayName("노출 가능한 장소가 5개보다 많으면")
+        class ContextWithMoreThanFiveVisiblePlaces {
 
             @Test
-            @DisplayName("중심에서 가까운 순서로 10개를 반환하고 범위 내 전체 개수를 유지한다")
-            void itReturnsNearestTenPlacesAndTotalCount() {
+            @DisplayName("종료된 팝업은 제외하고 최신 장소를 5개까지 유형별로 반환한다")
+            void itReturnsLatestFiveVisiblePlacesByType() {
                 // given
                 List<PlaceDailySchedule> schedules = Arrays.stream(DayOfWeek.values())
                         .map(day -> new PlaceDailySchedule(
@@ -81,58 +88,56 @@ class PlaceMapServiceTest extends IntegrationTestSupport {
                                 List.of(new PlaceTimeRange(
                                         PlaceBusinessHourType.BUSINESS, LocalTime.of(10, 0), LocalTime.of(22, 0)))))
                         .toList();
-                for (int index = 0; index < 11; index++) {
+                for (int index = 1; index <= 6; index++) {
                     placeService.create(
                             new PlaceUpsertCommand(
-                                    "지도 카페 " + index,
+                                    "카페 " + index,
                                     "서울 성동구",
-                                    37.5421 + index * 0.00001,
-                                    127.0549,
+                                    37.54,
+                                    127.05,
                                     "성수역",
                                     100,
                                     PlaceType.CAFE,
                                     null,
                                     null,
                                     schedules),
-                            new MockMultipartFile("thumbnail", "map-" + index + ".png", "image/png", new byte[] {1}));
+                            new MockMultipartFile("thumbnail", "cafe-" + index + ".png", "image/png", new byte[] {1}));
                 }
-                placeService.create(
+                Long expiredPopupId = placeService.create(
                         new PlaceUpsertCommand(
-                                "범위 밖 카페",
+                                "종료 팝업",
                                 "서울 성동구",
-                                37.55,
-                                127.0549,
+                                37.54,
+                                127.05,
                                 "성수역",
                                 100,
-                                PlaceType.CAFE,
-                                null,
-                                null,
+                                PlaceType.POPUP,
+                                LocalDate.of(2026, 9, 1),
+                                LocalDate.of(2026, 9, 9),
                                 schedules),
-                        new MockMultipartFile("thumbnail", "outside.png", "image/png", new byte[] {1}));
+                        new MockMultipartFile("thumbnail", "expired.png", "image/png", new byte[] {1}));
 
                 // when
-                PlaceMapSearchResult result = placeService.getMapPlaces(37.5421, 127.0549, 1, PlaceType.CAFE, null);
+                List<PlaceSummary> result = placeHomeQueryService.getHomePlaces(null, null);
 
                 // then
-                assertThat(result.totalCount()).isEqualTo(11);
-                assertThat(result.places()).hasSize(10);
-                assertThat(result.places().get(0).name()).isEqualTo("지도 카페 0");
-                assertThat(result.places()).extracting(place -> place.name()).doesNotContain("범위 밖 카페", "지도 카페 10");
+                assertThat(result).hasSize(5);
+                assertThat(result)
+                        .extracting(PlaceSummary::name)
+                        .containsExactly("카페 6", "카페 5", "카페 4", "카페 3", "카페 2");
+                assertThat(result).extracting(PlaceSummary::placeId).doesNotContain(expiredPopupId);
+                assertThat(result).allMatch(place -> place.operationState().status() == PlaceOperationStatus.OPEN);
+                assertThat(result).allMatch(place -> !place.favorite());
             }
         }
-    }
-
-    @Nested
-    @DisplayName("장소 동네 정보를 조회할 때")
-    class DescribeGetPlaceSummary {
 
         @Nested
-        @DisplayName("팝업 운영이 종료되었으면")
-        class ContextWithExpiredPopup {
+        @DisplayName("로그인 사용자가 장소를 저장했으면")
+        class ContextWithFavoritePlace {
 
             @Test
-            @DisplayName("PLACE404-NOT_FOUND를 반환한다")
-            void itReturnsPlaceNotFound() {
+            @DisplayName("저장 여부를 true로 반환한다")
+            void itReturnsFavoriteAsTrue() {
                 // given
                 List<PlaceDailySchedule> schedules = Arrays.stream(DayOfWeek.values())
                         .map(day -> new PlaceDailySchedule(
@@ -143,22 +148,25 @@ class PlaceMapServiceTest extends IntegrationTestSupport {
                         .toList();
                 Long placeId = placeService.create(
                         new PlaceUpsertCommand(
-                                "종료된 팝업",
-                                "서울 성동구",
-                                37.5421,
-                                127.0549,
-                                "성수역",
-                                100,
-                                PlaceType.POPUP,
-                                LocalDate.of(2026, 9, 1),
-                                LocalDate.of(2026, 9, 9),
-                                schedules),
-                        new MockMultipartFile("thumbnail", "popup.png", "image/png", new byte[] {1}));
+                                "저장한 카페", "서울 성동구", 37.54, 127.05, "성수역", 100, PlaceType.CAFE, null, null, schedules),
+                        new MockMultipartFile("thumbnail", "favorite.png", "image/png", new byte[] {1}));
+                User user = userRepository.save(User.builder()
+                        .nickname("장소사용자")
+                        .email("place-user@test.com")
+                        .password("password")
+                        .role(Role.USER)
+                        .build());
+                placeFavoriteRepository.save(PlaceFavorite.builder()
+                        .userId(user.getId())
+                        .placeId(placeId)
+                        .build());
 
-                // when & then
-                assertThatThrownBy(() -> placeService.getPlaceSummary(placeId, null))
-                        .isInstanceOfSatisfying(GeneralException.class, exception -> assertThat(exception.getCode())
-                                .isEqualTo(PlaceErrorStatus.NOT_FOUND));
+                // when
+                List<PlaceSummary> result = placeHomeQueryService.getHomePlaces(null, user.getId());
+
+                // then
+                assertThat(result).singleElement().satisfies(place -> assertThat(place.favorite())
+                        .isTrue());
             }
         }
     }

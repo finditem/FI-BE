@@ -1,44 +1,25 @@
 package com.fmi.domain.place.service;
 
-import com.fmi.domain.place.data.HomePlace;
 import com.fmi.domain.place.data.Place;
 import com.fmi.domain.place.data.PlaceDailySchedule;
 import com.fmi.domain.place.data.PlaceManagementDetail;
-import com.fmi.domain.place.data.PlaceMapSearchResult;
 import com.fmi.domain.place.data.PlaceOperationPeriod;
-import com.fmi.domain.place.data.PlaceOperationState;
-import com.fmi.domain.place.data.PlaceSummary;
 import com.fmi.domain.place.data.PlaceTranslation;
 import com.fmi.domain.place.data.PlaceUpsertCommand;
 import com.fmi.domain.place.data.enums.PlaceType;
 import com.fmi.domain.place.exception.PlaceErrorStatus;
-import com.fmi.domain.place.repository.PlaceFavoriteRepository;
-import com.fmi.domain.place.repository.PlaceHomeRepository;
-import com.fmi.domain.place.repository.PlaceMapRepository;
 import com.fmi.domain.place.repository.PlaceRepository;
 import com.fmi.domain.place.repository.PlaceTranslationRepository;
 import com.fmi.domain.place.service.internal.PlaceBusinessHourUpdater;
-import com.fmi.domain.place.service.internal.PlaceOperationStatusCalculator;
 import com.fmi.domain.place.service.internal.PlaceValidator;
 import com.fmi.domain.place.service.internal.PopupClosingAtCalculator;
-import com.fmi.domain.post.post.data.enums.MapLevel;
 import com.fmi.domain.user.user.data.enums.LanguageCode;
-import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.dto.UploadedImage;
 import java.time.Clock;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,19 +29,19 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PlaceService {
-    private final PlaceMapRepository placeMapRepository;
-
-    private final PlaceHomeRepository placeHomeRepository;
 
     private final PlaceRepository placeRepository;
+
     private final PlaceTranslationRepository placeTranslationRepository;
-    private final PlaceFavoriteRepository placeFavoriteRepository;
-    private final UserRepository userRepository;
+
     private final PlaceValidator placeValidator;
+
     private final PlaceBusinessHourUpdater placeBusinessHourUpdater;
-    private final PlaceOperationStatusCalculator placeOperationStatusCalculator;
+
     private final PopupClosingAtCalculator popupClosingAtCalculator;
+
     private final S3Service s3Service;
+
     private final Clock clock;
 
     @Transactional
@@ -129,166 +110,6 @@ public class PlaceService {
                 translation == null ? null : translation.getTranslatedName(),
                 translation == null ? null : translation.getTranslatedAddress(),
                 translation == null ? null : translation.getTranslatedStation());
-    }
-
-    public List<PlaceSummary> getHomePlaces(PlaceType type, Long userId) {
-        return getHomePlaces(type, userId, LanguageCode.KO);
-    }
-
-    public List<PlaceSummary> getHomePlaces(PlaceType type, Long userId, LanguageCode language) {
-        // 자정을 넘긴 전날 영업시간을 판단하기 위해 오늘과 전날 요일을 조회
-        LocalDateTime now = LocalDateTime.now(clock);
-        LocalDate today = now.toLocalDate();
-        DayOfWeek todayDayOfWeek = today.getDayOfWeek();
-        DayOfWeek yesterdayDayOfWeek = today.minusDays(1).getDayOfWeek();
-
-        // 타입별로 조회
-        List<HomePlace> places;
-        if (type == null) {
-            places = placeHomeRepository.findHomePlaces(now, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
-        } else {
-            places =
-                    placeHomeRepository.findHomePlaces(type, now, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
-        }
-
-        // 운영 상태 계산
-        List<PlaceSummary> summaries = new ArrayList<>(places.size());
-        for (HomePlace place : places) {
-            PlaceOperationPeriod operationPeriod = null;
-            if (place.type() == PlaceType.POPUP) {
-                operationPeriod = PlaceOperationPeriod.builder()
-                        .startDate(place.operationStartDate())
-                        .endDate(place.operationEndDate())
-                        .build();
-            }
-
-            PlaceOperationState operationState = placeOperationStatusCalculator.calculate(
-                    place.type(), operationPeriod, place.dailySchedules(), now);
-            // 운영 상태와 함께 응답 VO 변환
-            summaries.add(PlaceSummary.from(place, operationState));
-        }
-        return summaries;
-    }
-
-    public PlaceMapSearchResult getMapPlaces(
-            double latitude, double longitude, int level, PlaceType type, String userEmail) {
-        return getMapPlaces(latitude, longitude, level, type, userEmail, LanguageCode.KO);
-    }
-
-    public PlaceMapSearchResult getMapPlaces(
-            double latitude, double longitude, int level, PlaceType type, String userEmail, LanguageCode language) {
-        MapLevel mapLevel = MapLevel.from(level);
-        double latitudeDelta = mapLevel.getHalfHeightMeter() / 111_320.0;
-        double latitudeRadian = Math.toRadians(latitude);
-        double longitudeScale = Math.max(Math.abs(Math.cos(latitudeRadian)), 1e-8);
-        double longitudeDelta = mapLevel.getHalfWidthMeter() / (111_320.0 * longitudeScale);
-        LocalDateTime now = LocalDateTime.now(clock);
-        LocalDate today = now.toLocalDate();
-        DayOfWeek todayDayOfWeek = today.getDayOfWeek();
-        DayOfWeek yesterdayDayOfWeek = today.minusDays(1).getDayOfWeek();
-        List<DayOfWeek> relevantDayOfWeeks = List.of(todayDayOfWeek, yesterdayDayOfWeek);
-        List<Long> candidateIds = placeMapRepository.findMapCandidateIds(
-                type,
-                latitude,
-                longitude,
-                latitude - latitudeDelta,
-                latitude + latitudeDelta,
-                longitude - longitudeDelta,
-                longitude + longitudeDelta);
-        if (candidateIds.isEmpty()) {
-            return new PlaceMapSearchResult(List.of(), 0);
-        }
-
-        List<Place> candidates =
-                placeRepository.findAllWithSchedulesByIdInAndDayOfWeekIn(candidateIds, relevantDayOfWeeks);
-        candidates.sort(Comparator.comparingInt(place -> candidateIds.indexOf(place.getId())));
-        List<Place> visiblePlaces = candidates.stream()
-                .filter(place -> {
-                    if (place.getType() != PlaceType.POPUP) {
-                        return true;
-                    }
-                    PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
-                    LocalDateTime closingAt = operationPeriod.getClosingAt();
-                    return now.isBefore(closingAt);
-                })
-                .toList();
-        List<Place> places = visiblePlaces.stream().limit(10).toList();
-        List<Long> placeIds = places.stream().map(Place::getId).toList();
-        Set<Long> favoritePlaceIds = new HashSet<>();
-        if (userEmail != null) {
-            userRepository
-                    .findByEmail(userEmail)
-                    .ifPresent(user -> favoritePlaceIds.addAll(
-                            placeFavoriteRepository.findFavoritePlaceIds(user.getId(), placeIds)));
-        }
-
-        Map<Long, PlaceTranslation> translations = Map.of();
-        if (language == LanguageCode.EN && !placeIds.isEmpty()) {
-            translations = placeTranslationRepository.findAllByPlace_IdInAndLanguageCode(placeIds, language).stream()
-                    .collect(Collectors.toMap(
-                            translation -> translation.getPlace().getId(), Function.identity()));
-        }
-        Map<Long, PlaceTranslation> translationsById = translations;
-        List<PlaceSummary> summaries = places.stream()
-                .map(place -> {
-                    PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
-                    List<PlaceDailySchedule> dailySchedules = place.dailySchedules(relevantDayOfWeeks);
-                    PlaceType placeType = place.getType();
-                    PlaceOperationState operationState =
-                            placeOperationStatusCalculator.calculate(placeType, operationPeriod, dailySchedules, now);
-                    Long placeId = place.getId();
-                    boolean favorite = favoritePlaceIds.contains(placeId);
-                    return PlaceSummary.from(place, operationState, favorite).translated(translationsById.get(placeId));
-                })
-                .toList();
-        return new PlaceMapSearchResult(summaries, visiblePlaces.size());
-    }
-
-    public PlaceSummary getPlaceSummary(Long placeId, String userEmail) {
-        return getPlaceSummary(placeId, userEmail, LanguageCode.KO);
-    }
-
-    public PlaceSummary getPlaceSummary(Long placeId, String userEmail, LanguageCode language) {
-        LocalDateTime now = LocalDateTime.now(clock);
-        LocalDate today = now.toLocalDate();
-        DayOfWeek todayDayOfWeek = today.getDayOfWeek();
-        DayOfWeek yesterdayDayOfWeek = today.minusDays(1).getDayOfWeek();
-        List<DayOfWeek> relevantDayOfWeeks = List.of(todayDayOfWeek, yesterdayDayOfWeek);
-        List<Long> placeIds = List.of(placeId);
-        Place place = placeRepository.findAllWithSchedulesByIdInAndDayOfWeekIn(placeIds, relevantDayOfWeeks).stream()
-                .findFirst()
-                .orElseThrow(() -> new GeneralException(PlaceErrorStatus.NOT_FOUND));
-        if (place.isDeleted()) {
-            throw new GeneralException(PlaceErrorStatus.NOT_FOUND);
-        }
-        if (place.getType() == PlaceType.POPUP) {
-            PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
-            LocalDateTime closingAt = operationPeriod.getClosingAt();
-            if (!now.isBefore(closingAt)) {
-                throw new GeneralException(PlaceErrorStatus.NOT_FOUND);
-            }
-        }
-
-        boolean favorite = false;
-        if (userEmail != null) {
-            favorite = userRepository
-                    .findByEmail(userEmail)
-                    .flatMap(user -> placeFavoriteRepository.findByUserIdAndPlaceId(user.getId(), placeId))
-                    .filter(placeFavorite -> placeFavorite.isActive() && placeFavorite.isFavorite())
-                    .isPresent();
-        }
-        PlaceOperationPeriod operationPeriod = place.getOperationPeriod();
-        List<PlaceDailySchedule> dailySchedules = place.dailySchedules(relevantDayOfWeeks);
-        PlaceType placeType = place.getType();
-        PlaceOperationState operationState =
-                placeOperationStatusCalculator.calculate(placeType, operationPeriod, dailySchedules, now);
-        PlaceTranslation translation = null;
-        if (language == LanguageCode.EN) {
-            translation = placeTranslationRepository
-                    .findByPlace_IdAndLanguageCode(placeId, language)
-                    .orElse(null);
-        }
-        return PlaceSummary.from(place, operationState, favorite).translated(translation);
     }
 
     @Transactional

@@ -39,6 +39,15 @@ import org.springframework.transaction.support.TransactionTemplate;
 @DisplayName("PlaceTranslationService")
 class PlaceTranslationServiceTest extends IntegrationTestSupport {
     @Autowired
+    private PlaceQueryService placeQueryService;
+
+    @Autowired
+    private PlaceMapQueryService placeMapQueryService;
+
+    @Autowired
+    private PlaceHomeQueryService placeHomeQueryService;
+
+    @Autowired
     PlaceService placeService;
 
     @Autowired
@@ -131,11 +140,11 @@ class PlaceTranslationServiceTest extends IntegrationTestSupport {
             Long otherId = placeService.create(command, thumbnail);
             favoriteService.save(otherId, user.getEmail());
             // when
-            PlaceSummary english = placeService.getPlaceSummary(id, user.getEmail(), LanguageCode.EN);
-            PlaceSummary korean = placeService.getPlaceSummary(id, user.getEmail());
-            List<PlaceSummary> home = placeService.getHomePlaces(null, user.getId(), LanguageCode.EN);
-            PlaceMapSearchResult map =
-                    placeService.getMapPlaces(37.5421, 127.0549, 6, PlaceType.CAFE, user.getEmail(), LanguageCode.EN);
+            PlaceSummary english = placeQueryService.getPlaceSummary(id, user.getEmail(), LanguageCode.EN);
+            PlaceSummary korean = placeQueryService.getPlaceSummary(id, user.getEmail());
+            List<PlaceSummary> home = placeHomeQueryService.getHomePlaces(null, user.getId(), LanguageCode.EN);
+            PlaceMapSearchResult map = placeMapQueryService.getMapPlaces(
+                    37.5421, 127.0549, 6, PlaceType.CAFE, user.getEmail(), LanguageCode.EN);
             FavoritePlacePage englishFavorites =
                     favoriteService.getFavorites(user.getEmail(), null, 1, LanguageCode.EN);
             FavoritePlacePage koreanFavorites = favoriteService.getFavorites(user.getEmail(), null, 1);
@@ -228,7 +237,9 @@ class PlaceTranslationServiceTest extends IntegrationTestSupport {
             assertThat(partial.addressEn()).isEqualTo("New Address");
             assertThat(partial.stationEn()).isNull();
             assertThat(translations.count()).isZero();
-            assertThat(placeService.getPlaceSummary(id, null, LanguageCode.EN).name())
+            assertThat(placeQueryService
+                            .getPlaceSummary(id, null, LanguageCode.EN)
+                            .name())
                     .isEqualTo("새 카페");
             var json = mapper.valueToTree(PlaceManagementResponse.from(placeService.getManagementDetail(id)));
             assertThat(json.has("nameEn")).isTrue();
