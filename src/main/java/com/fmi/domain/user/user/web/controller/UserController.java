@@ -1,29 +1,16 @@
 package com.fmi.domain.user.user.web.controller;
 
-import com.fmi.domain.post.post.data.enums.Category;
-import com.fmi.domain.post.post.data.enums.PostStatus;
-import com.fmi.domain.post.post.data.enums.PostType;
-import com.fmi.domain.post.post.web.dto.response.PostPageResponse;
-import com.fmi.domain.user.user.data.enums.ActivityType;
 import com.fmi.domain.user.user.data.enums.UserOtherPageType;
+import com.fmi.domain.user.user.service.UserProfileQueryService;
 import com.fmi.domain.user.user.service.UserService;
-import com.fmi.domain.user.user.web.dto.request.PreferredLanguageUpdateRequest;
 import com.fmi.domain.user.user.web.dto.request.UserUpdateRequest;
-import com.fmi.domain.user.user.web.dto.response.ImageUploadResponse;
-import com.fmi.domain.user.user.web.dto.response.MyActivityPageResponse;
-import com.fmi.domain.user.user.web.dto.response.MyCommentPageResponse;
-import com.fmi.domain.user.user.web.dto.response.PreferredLanguageResponse;
 import com.fmi.domain.user.user.web.dto.response.UserMetaResponse;
 import com.fmi.domain.user.user.web.dto.response.UserOtherPageResponse;
 import com.fmi.domain.user.user.web.dto.response.UserProfileResponse;
 import com.fmi.domain.user.user.web.swagger.UserSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
-import com.fmi.global.enums.SortType;
 import jakarta.validation.Valid;
-import java.time.LocalDate;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,15 +21,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController implements UserSwagger {
+    private final UserProfileQueryService userProfileQueryService;
 
     private final UserService userService;
-
-    @PostMapping("/uploads/images")
-    @Override
-    public ApiResponse<ImageUploadResponse> uploadImages(@RequestPart(value = "images") List<MultipartFile> images) {
-        ImageUploadResponse response = userService.uploadImages(images);
-        return ApiResponse.onSuccess(response);
-    }
 
     @GetMapping("/me")
     @Override
@@ -62,80 +43,10 @@ public class UserController implements UserSwagger {
         return ApiResponse.onSuccess(null);
     }
 
-    @GetMapping("/me/preferred-language")
-    @Override
-    public ApiResponse<PreferredLanguageResponse> getPreferredLanguage(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername();
-        PreferredLanguageResponse response = userService.getPreferredLanguage(email);
-        return ApiResponse.onSuccess(response);
-    }
-
-    @PatchMapping("/me/preferred-language")
-    @Override
-    public ApiResponse<PreferredLanguageResponse> updatePreferredLanguage(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody PreferredLanguageUpdateRequest request) {
-        String email = userDetails.getUsername();
-        PreferredLanguageResponse response = userService.updatePreferredLanguage(email, request);
-        return ApiResponse.onSuccess(response);
-    }
-
-    @GetMapping("/me/comments")
-    @Override
-    public ApiResponse<MyCommentPageResponse> getMyComments(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false, defaultValue = "LATEST") SortType sort,
-            @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "20") int size) {
-        String email = userDetails.getUsername();
-        MyCommentPageResponse response =
-                userService.getMyComments(email, sort, startDate, endDate, keyword, cursor, size);
-        return ApiResponse.onSuccess(response);
-    }
-
-    @GetMapping("/me/posts")
-    @Override
-    public ApiResponse<PostPageResponse> getMyPosts(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(required = false) PostType postType,
-            @RequestParam(required = false) PostStatus postStatus,
-            @RequestParam(required = false) Category category,
-            @RequestParam(required = false, defaultValue = "LATEST") SortType sortType,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "20") int size) {
-        String email = userDetails.getUsername();
-        PostPageResponse response = userService.getMyPosts(
-                email, postType, postStatus, category, sortType, startDate, endDate, keyword, cursor, size);
-        return ApiResponse.onSuccess(response);
-    }
-
-    @GetMapping("/me/activities")
-    @Override
-    public ApiResponse<MyActivityPageResponse> getMyActivities(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(required = false) ActivityType type,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "20") int size) {
-        String email = userDetails.getUsername();
-        MyActivityPageResponse response =
-                userService.getMyActivities(email, type, startDate, endDate, keyword, cursor, size);
-        return ApiResponse.onSuccess(response);
-    }
-
     @GetMapping("/{userId}/meta")
     @Override
     public ApiResponse<UserMetaResponse> getUserMeta(@PathVariable Long userId) {
-        UserMetaResponse meta = userService.getUserMeta(userId);
+        UserMetaResponse meta = userProfileQueryService.getUserMeta(userId);
         return ApiResponse.onSuccess(meta);
     }
 
@@ -147,7 +58,8 @@ public class UserController implements UserSwagger {
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "10") int size) {
-        UserOtherPageResponse response = userService.getOtherUserPage(userId, type, userDetails, cursor, size);
+        UserOtherPageResponse response =
+                userProfileQueryService.getOtherUserPage(userId, type, userDetails, cursor, size);
         return ApiResponse.onSuccess(response);
     }
 

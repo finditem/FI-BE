@@ -1,13 +1,11 @@
-package com.fmi.domain.report.web.controller;
+package com.fmi.domain.user.block.web.controller;
 
 import com.fmi.domain.user.block.service.BlockService;
 import com.fmi.domain.user.block.web.dto.response.BlockedUserResponse;
 import com.fmi.domain.user.user.data.User;
-import com.fmi.domain.user.user.repository.UserRepository;
+import com.fmi.domain.user.user.service.UserQueryService;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.CursorPageResponse;
-import com.fmi.global.apiPayload.code.status.ErrorStatus;
-import com.fmi.global.apiPayload.exception.GeneralException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class BlockController {
 
     private final BlockService blockService;
-    private final UserRepository userRepository;
+    private final UserQueryService userQueryService;
 
     @PostMapping("/{userId}/block")
     @Operation(summary = "유저 차단", description = "로그인 사용자가 대상 유저를 차단합니다.")
@@ -42,9 +40,7 @@ public class BlockController {
                 description = "USER409-ALREADY_BLOCKED: 이미 차단한 사용자입니다")
     })
     public ApiResponse<String> block(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long userId) {
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userQueryService.findUser(userDetails.getUsername());
         blockService.block(user.getId(), userId);
         return ApiResponse.onSuccess("OK");
     }
@@ -61,9 +57,7 @@ public class BlockController {
                 description = "USER404-NOT_BLOCKED: 차단되지 않은 사용자입니다")
     })
     public ApiResponse<String> unblock(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long userId) {
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userQueryService.findUser(userDetails.getUsername());
         blockService.unblock(user.getId(), userId);
         return ApiResponse.onSuccess("OK");
     }
@@ -77,9 +71,7 @@ public class BlockController {
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size) {
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+        User user = userQueryService.findUser(userDetails.getUsername());
         CursorPageResponse<BlockedUserResponse> blockedUsers =
                 blockService.listWithUserInfoCursor(user.getId(), cursor, size);
         return ApiResponse.onSuccess(blockedUsers);
