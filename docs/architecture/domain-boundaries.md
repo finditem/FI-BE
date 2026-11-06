@@ -73,6 +73,8 @@ domain/
 │   ├── notice/
 │   └── comment/
 ├── inquiry/
+│   ├── inquiry/
+│   └── comment/
 ├── report/
 ├── place/
 ├── notification/
@@ -80,7 +82,7 @@ domain/
 └── ipblock/
 ```
 
-게시글 즐겨찾기와 지도 조회는 `post/post`의 각 계층에 포함합니다. 게시글 댓글 좋아요는 `post/comment`, 공지 좋아요는 `notice/notice`, 공지 댓글 좋아요는 `notice/comment`, 문의 답변은 `inquiry`의 각 계층에 포함합니다.
+게시글 즐겨찾기와 지도 조회는 `post/post`의 각 계층에 포함합니다. 게시글 댓글 좋아요는 `post/comment`, 공지 좋아요는 `notice/notice`, 공지 댓글 좋아요는 `notice/comment`, 문의 본문과 비회원 문의 답변은 `inquiry/inquiry`, 문의 댓글과 대댓글은 `inquiry/comment`의 각 계층에 포함합니다.
 
 하위 업무의 분리는 별도 서버, DB 또는 완전히 독립된 도메인을 뜻하지 않습니다.
 

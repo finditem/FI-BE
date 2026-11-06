@@ -37,7 +37,7 @@ Controller의 구성과 분리 시점은 [Controller 분리 기준](../architect
 }
 ```
 
-다음 페이지가 있으면 응답의 `nextCursor`를 다음 요청에 전달합니다. 마지막 페이지에는 `hasNext=false`, `nextCursor=null`을 사용합니다. 현재 조회 흐름은 [`PostQueryService`](../../src/main/java/com/fmi/domain/post/post/service/PostQueryService.java)와 [`PostRepositoryImpl`](../../src/main/java/com/fmi/domain/post/post/repository/PostRepositoryImpl.java)에서 확인합니다.
+다음 페이지가 있으면 응답의 `nextCursor`를 다음 요청에 전달합니다. 마지막 페이지에는 `hasNext=false`, `nextCursor=null`을 사용합니다. 현재 조회 흐름은 [`PostQueryService`](../../src/main/java/com/fmi/domain/post/post/service/PostQueryService.java)와 [`PostSearchRepositoryCustomImpl`](../../src/main/java/com/fmi/domain/post/post/repository/PostSearchRepositoryCustomImpl.java)에서 확인합니다.
 
 ## 새 API 설계에 사용할 틀
 
