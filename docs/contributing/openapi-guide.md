@@ -44,4 +44,4 @@ HTTP 계약이 바뀌면 Controller, DTO, 관련 테스트, Swagger 주석과 DO
 
 ## 배포 환경 접근
 
-dev와 prod의 Swagger UI 및 OpenAPI 명세는 공개 도메인에서 차단합니다. SSM 포트 포워딩으로 애플리케이션 서버의 localhost 포트에 접속합니다. 접속 명령과 환경별 포트는 팀 Confluence 운영 문서에서 관리합니다. 개인 개발용 local 프로필의 Swagger 접근은 유지합니다.
+dev와 prod의 Swagger UI 및 OpenAPI 명세는 공개 도메인에서 차단합니다. SSM 포트 포워딩으로 애플리케이션 서버의 localhost 포트에 접속합니다. 접속 명령과 환경별 포트는 팀 Confluence 운영 문서에서 관리합니다. 개인 개발용 local 프로필의 Swagger 접근은 유지합니다. dev 프로필에서는 Swagger의 API 서버 주소를 `https://dev-api.finditem.kr`로 지정합니다. 화면과 명세는 SSM 터널로 읽고, `Try it out` 요청은 공개 dev 도메인으로 전송합니다. prod와 local 프로필에는 이 주소를 적용하지 않습니다.
