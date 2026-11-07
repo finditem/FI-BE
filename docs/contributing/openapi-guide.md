@@ -41,3 +41,7 @@ Swagger의 태그는 화면이나 Controller가 아니라 API가 다루는 업�
 HTTP 계약이 바뀌면 Controller, DTO, 관련 테스트, Swagger 주석과 DOCS API 스펙을 함께 확인합니다. 특히 경로와 메서드, 인증, 요청 필드, 응답 형식, HTTP 상태, 오류 코드, 목록 커서를 비교합니다.
 
 로컬 실행 후 [Swagger UI](http://localhost:8080/swagger-ui/index.html) 또는 `/v3/api-docs`에서 태그 소속, 설명, 요청과 응답 모델을 확인합니다. 태그를 바꿨다면 해당 API가 기존 분류에서 사라지고 새 분류에 나타나는지 확인하고, 프론트엔드 담당자와 합의한 결과를 PR에 적습니다. 문서만 바꿨을 때도 실제 API 동작이 달라졌다고 주장하지 않습니다.
+
+## 배포 환경 접근
+
+dev와 prod의 Swagger UI 및 OpenAPI 명세는 공개 도메인에서 차단합니다. SSM 포트 포워딩으로 애플리케이션 서버의 localhost 포트에 접속합니다. 접속 명령과 환경별 포트는 팀 Confluence 운영 문서에서 관리합니다. 개인 개발용 local 프로필의 Swagger 접근은 유지합니다. dev 프로필에서는 Swagger의 API 서버 주소를 `https://dev-api.finditem.kr`로 지정합니다. 화면과 명세는 SSM 터널로 읽고, `Try it out` 요청은 공개 dev 도메인으로 전송합니다. prod와 local 프로필에는 이 주소를 적용하지 않습니다.

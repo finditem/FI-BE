@@ -5,12 +5,14 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.tags.Tag;
 import java.util.Comparator;
 import java.util.List;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 @Configuration
 public class SwaggerConfig {
@@ -33,6 +35,13 @@ public class SwaggerConfig {
                         new Tag().name("Notice").description("공지 API"),
                         new Tag().name("Report").description("신고 API"),
                         new Tag().name("Notification").description("알림 API")));
+    }
+
+    @Bean
+    @Profile("dev")
+    public OpenApiCustomizer devApiServer() {
+        return openApi -> openApi.setServers(
+                List.of(new Server().url("https://dev-api.finditem.kr").description("Development API")));
     }
 
     @Bean
