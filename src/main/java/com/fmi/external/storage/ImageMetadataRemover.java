@@ -15,7 +15,7 @@ import java.util.Set;
  */
 final class ImageMetadataRemover {
 
-    private static final byte[] PNG_SIGNATURE = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+    private static final int PNG_SIGNATURE_LENGTH = 8;
 
     // 표시에 필요한 PNG chunk. 텍스트(tEXt, zTXt, iTXt), eXIf, tIME 등은 버린다.
     private static final Set<String> PNG_KEPT_CHUNKS = Set.of(
@@ -40,23 +40,12 @@ final class ImageMetadataRemover {
 
     private ImageMetadataRemover() {}
 
-    static byte[] remove(byte[] image) {
-        if (isJpeg(image)) {
-            return removeFromJpeg(image);
-        }
-        if (isPng(image)) {
-            return removeFromPng(image);
-        }
-        throw new IllegalArgumentException("지원하지 않는 이미지 형식입니다.");
-    }
-
-    private static boolean isJpeg(byte[] image) {
-        return image.length >= 3 && (image[0] & 0xFF) == 0xFF && (image[1] & 0xFF) == JPEG_SOI;
-    }
-
-    private static boolean isPng(byte[] image) {
-        return image.length >= PNG_SIGNATURE.length
-                && Arrays.equals(image, 0, PNG_SIGNATURE.length, PNG_SIGNATURE, 0, PNG_SIGNATURE.length);
+    // 구조가 깨진 이미지는 IllegalArgumentException으로 거절한다.
+    static byte[] remove(byte[] image, ImageFormat format) {
+        return switch (format) {
+            case JPEG -> removeFromJpeg(image);
+            case PNG -> removeFromPng(image);
+        };
     }
 
     private static byte[] removeFromJpeg(byte[] image) {
@@ -253,8 +242,8 @@ final class ImageMetadataRemover {
 
     private static byte[] removeFromPng(byte[] image) {
         ByteArrayOutputStream output = new ByteArrayOutputStream(image.length);
-        output.write(image, 0, PNG_SIGNATURE.length);
-        int position = PNG_SIGNATURE.length;
+        output.write(image, 0, PNG_SIGNATURE_LENGTH);
+        int position = PNG_SIGNATURE_LENGTH;
 
         while (position + 8 <= image.length) {
             long dataLength = readUnsignedInt(image, position, false);

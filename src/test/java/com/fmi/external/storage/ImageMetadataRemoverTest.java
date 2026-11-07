@@ -119,7 +119,7 @@ class ImageMetadataRemoverTest {
             jpeg.write("trailing-motion-video".getBytes(StandardCharsets.UTF_8));
 
             // when
-            byte[] result = ImageMetadataRemover.remove(jpeg.toByteArray());
+            byte[] result = ImageMetadataRemover.remove(jpeg.toByteArray(), ImageFormat.JPEG);
 
             // then
             String resultText = new String(result, StandardCharsets.ISO_8859_1);
@@ -144,7 +144,7 @@ class ImageMetadataRemoverTest {
             BufferedImage expected = ImageIO.read(new ByteArrayInputStream(plainJpeg));
 
             // when
-            byte[] result = ImageMetadataRemover.remove(jpeg.toByteArray());
+            byte[] result = ImageMetadataRemover.remove(jpeg.toByteArray(), ImageFormat.JPEG);
 
             // then
             BufferedImage actual = ImageIO.read(new ByteArrayInputStream(result));
@@ -167,7 +167,7 @@ class ImageMetadataRemoverTest {
             jpeg.write(plainJpeg, 2, plainJpeg.length - 2);
 
             // when
-            byte[] result = ImageMetadataRemover.remove(jpeg.toByteArray());
+            byte[] result = ImageMetadataRemover.remove(jpeg.toByteArray(), ImageFormat.JPEG);
 
             // then
             assertThat(new String(result, StandardCharsets.ISO_8859_1))
@@ -188,7 +188,7 @@ class ImageMetadataRemoverTest {
                 jpeg.write(plainJpeg, 2, plainJpeg.length - 2);
 
                 // when
-                byte[] result = ImageMetadataRemover.remove(jpeg.toByteArray());
+                byte[] result = ImageMetadataRemover.remove(jpeg.toByteArray(), ImageFormat.JPEG);
 
                 // then
                 String resultText = new String(result, StandardCharsets.ISO_8859_1);
@@ -213,7 +213,7 @@ class ImageMetadataRemoverTest {
                 jpeg.write(plainJpeg, 2, plainJpeg.length - 2);
 
                 // when
-                byte[] result = ImageMetadataRemover.remove(jpeg.toByteArray());
+                byte[] result = ImageMetadataRemover.remove(jpeg.toByteArray(), ImageFormat.JPEG);
 
                 // then
                 assertThat(new String(result, StandardCharsets.ISO_8859_1)).doesNotContain("Exif");
@@ -253,7 +253,7 @@ class ImageMetadataRemoverTest {
             png.write("trailing-data".getBytes(StandardCharsets.US_ASCII));
 
             // when
-            byte[] result = ImageMetadataRemover.remove(png.toByteArray());
+            byte[] result = ImageMetadataRemover.remove(png.toByteArray(), ImageFormat.PNG);
 
             // then
             assertThat(result).containsExactly(plainPng);
@@ -264,17 +264,28 @@ class ImageMetadataRemoverTest {
     }
 
     @Nested
-    @DisplayName("JPEG나 PNG가 아닌 파일의 메타데이터를 제거할 때")
-    class DescribeRemoveFromUnsupportedFormat {
+    @DisplayName("구조가 깨진 이미지의 메타데이터를 제거할 때")
+    class DescribeRemoveFromBrokenImage {
 
         @Test
-        @DisplayName("IllegalArgumentException으로 거절한다")
-        void itThrowsIllegalArgumentException() {
-            // given
-            byte[] notImage = "<html>not image</html>".getBytes(StandardCharsets.UTF_8);
+        @DisplayName("JPEG segment 길이가 파일보다 길면 IllegalArgumentException으로 거절한다")
+        void itRejectsJpegWithOverflowingSegment() {
+            // given: 길이가 0x7FFF라고 적혀 있지만 실제 데이터가 없는 APP0 segment
+            byte[] brokenJpeg = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0x7F, (byte) 0xFF, 'J', 'F'};
 
             // when & then
-            assertThatThrownBy(() -> ImageMetadataRemover.remove(notImage))
+            assertThatThrownBy(() -> ImageMetadataRemover.remove(brokenJpeg, ImageFormat.JPEG))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("PNG에 IEND chunk가 없으면 IllegalArgumentException으로 거절한다")
+        void itRejectsPngWithoutIend() {
+            // given: IEND 앞에서 잘린 PNG
+            byte[] truncatedPng = Arrays.copyOf(plainPng, plainPng.length - 12);
+
+            // when & then
+            assertThatThrownBy(() -> ImageMetadataRemover.remove(truncatedPng, ImageFormat.PNG))
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }

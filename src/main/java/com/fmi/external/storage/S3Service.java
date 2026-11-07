@@ -3,7 +3,9 @@ package com.fmi.external.storage;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
 import com.fmi.global.dto.UploadedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
@@ -11,7 +13,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,27 +55,23 @@ public class S3Service {
 
     private UploadedImage uploadImageWithThumbnail(MultipartFile file) {
         validateFile(file.getOriginalFilename());
-        String originalUrl = uploadImageToS3(file);
-        String thumbnailUrl = uploadThumbnailToS3(file);
+        byte[] image = readImage(file);
+        ImageFormat format = detectImageFormat(image);
+        String originalUrl = uploadImageToS3(image, format);
+        String thumbnailUrl = uploadThumbnailToS3(image, format);
         return new UploadedImage(originalUrl, thumbnailUrl);
     }
 
     // 원본을 축소한 썸네일을 생성하여 S3에 업로드하고 public url을 반환
-    private String uploadThumbnailToS3(MultipartFile file) {
-        String originalFilename = Objects.requireNonNull(file.getOriginalFilename());
-        String extension = originalFilename
-                .substring(originalFilename.lastIndexOf(".") + 1)
-                .toLowerCase();
-        String format = extension.equals("jpeg") ? "jpg" : extension;
-        String baseName = originalFilename.substring(0, originalFilename.lastIndexOf("."));
-        String s3FileName = "thumb_" + UUID.randomUUID().toString().substring(0, 10) + "_" + baseName + "." + format;
+    private String uploadThumbnailToS3(byte[] image, ImageFormat format) {
+        String s3FileName = "thumb_" + UUID.randomUUID() + "." + format.extension();
 
-        try (InputStream inputStream = file.getInputStream();
+        try (InputStream inputStream = new ByteArrayInputStream(image);
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             Thumbnails.of(inputStream)
                     .size(THUMBNAIL_SIZE, THUMBNAIL_SIZE) // 비율 유지하며 최대 변이 THUMBNAIL_SIZE가 되도록 축소
                     .outputQuality(THUMBNAIL_QUALITY)
-                    .outputFormat(format)
+                    .outputFormat(format.extension())
                     .toOutputStream(outputStream);
 
             byte[] thumbnailBytes = outputStream.toByteArray();
@@ -82,7 +79,7 @@ public class S3Service {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
                     .key(s3FileName)
-                    .contentType("image/" + format)
+                    .contentType(format.contentType())
                     .contentLength((long) thumbnailBytes.length)
                     .build();
             s3Client.putObject(putObjectRequest, RequestBody.fromBytes(thumbnailBytes));
@@ -99,7 +96,23 @@ public class S3Service {
     // validateFile메서드를 호출하여 유효성 검증 후 uploadImageToS3메서드에 데이터를 반환하여 S3에 파일 업로드, public url을 받아 서비스 로직에 반환
     private String uploadImage(MultipartFile file) {
         validateFile(file.getOriginalFilename()); // 파일 유효성 검증
-        return uploadImageToS3(file); // 이미지를 S3에 업로드하고, 저장된 파일의 public url을 서비스 로직에 반환
+        byte[] image = readImage(file);
+        ImageFormat format = detectImageFormat(image); // 파일 내용으로 이미지 형식 판별
+        return uploadImageToS3(image, format); // 이미지를 S3에 업로드하고, 저장된 파일의 public url을 서비스 로직에 반환
+    }
+
+    private byte[] readImage(MultipartFile file) {
+        try {
+            return file.getBytes();
+        } catch (IOException exception) {
+            log.error(exception.getMessage(), exception);
+            throw new GeneralException(ErrorStatus._IO_EXCEPTION_UPLOAD_FILE);
+        }
+    }
+
+    // 확장자와 관계없이 파일 내용이 JPEG 또는 PNG가 아니면 허용되지 않는 형식으로 거절
+    private ImageFormat detectImageFormat(byte[] image) {
+        return ImageFormat.detect(image).orElseThrow(() -> new GeneralException(ErrorStatus._INVALID_FILE_EXTENSION));
     }
 
     // 파일 유효성 검증
@@ -125,26 +138,29 @@ public class S3Service {
     }
 
     // 직접적으로 S3에 업로드
-    private String uploadImageToS3(MultipartFile file) {
-        // 원본 파일 명
-        String originalFilename = file.getOriginalFilename();
-        // 확장자 명
-        String extension = Objects.requireNonNull(originalFilename).substring(originalFilename.lastIndexOf(".") + 1);
-        // 변경된 파일
-        String s3FileName = UUID.randomUUID().toString().substring(0, 10) + "_" + originalFilename;
+    private String uploadImageToS3(byte[] image, ImageFormat format) {
+        // 원본 파일명을 노출하지 않도록 UUID와 실제 형식의 확장자로 저장
+        String s3FileName = UUID.randomUUID() + "." + format.extension();
+
+        // 촬영 위치, 촬영 시각, 기기 정보 등 메타데이터를 제거한 이미지
+        byte[] cleanedImage;
+        try {
+            cleanedImage = ImageMetadataRemover.remove(image, format);
+        } catch (IllegalArgumentException exception) {
+            log.warn("이미지 구조를 읽을 수 없습니다: {}", exception.getMessage());
+            throw new GeneralException(ErrorStatus._INVALID_FILE_EXTENSION);
+        }
 
         try {
-            // 촬영 위치, 촬영 시각, 기기 정보 등 메타데이터를 제거한 이미지
-            byte[] image = ImageMetadataRemover.remove(file.getBytes());
             // PutObjectRequest 객체 생성
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName) // 버킷 이름
                     .key(s3FileName) // 저장할 파일 이름
-                    .contentType("image/" + extension) // 이미지 MIME 타입
-                    .contentLength((long) image.length) // 파일 크기
+                    .contentType(format.contentType()) // 이미지 MIME 타입
+                    .contentLength((long) cleanedImage.length) // 파일 크기
                     .build();
             // S3에 이미지 업로드
-            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(image));
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(cleanedImage));
         } catch (Exception exception) {
             log.error(exception.getMessage(), exception);
             throw new GeneralException(ErrorStatus._IO_EXCEPTION_UPLOAD_FILE);
