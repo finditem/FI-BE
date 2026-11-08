@@ -1,6 +1,5 @@
 package com.fmi.global.apiPayload.code.status;
 
-
 import com.fmi.global.apiPayload.code.BaseCode;
 import com.fmi.global.apiPayload.code.ReasonDTO;
 import lombok.AllArgsConstructor;
@@ -31,11 +30,7 @@ public enum SuccessStatus implements BaseCode {
 
     @Override
     public ReasonDTO getReason() {
-        return ReasonDTO.builder()
-                .message(message)
-                .code(code)
-                .isSuccess(true)
-                .build();
+        return ReasonDTO.builder().message(message).code(code).isSuccess(true).build();
     }
 
     @Override
@@ -47,5 +42,4 @@ public enum SuccessStatus implements BaseCode {
                 .httpStatus(httpStatus)
                 .build();
     }
-
 }

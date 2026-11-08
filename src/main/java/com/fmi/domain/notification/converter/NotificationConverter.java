@@ -2,15 +2,15 @@ package com.fmi.domain.notification.converter;
 
 import com.fmi.domain.notification.data.Notification;
 import com.fmi.domain.notification.data.NotificationSettings;
-import com.fmi.domain.notification.web.dto.response.NotificationListDTO;
-import com.fmi.domain.notification.web.dto.response.NotificationSettingsDTO;
+import com.fmi.domain.notification.web.dto.response.NotificationListResponse;
+import com.fmi.domain.notification.web.dto.response.NotificationSettingsResponse;
 import org.springframework.stereotype.Component;
 
 @Component
 public class NotificationConverter {
-    
-    public NotificationListDTO toListDTO(Notification notification) {
-        return NotificationListDTO.builder()
+
+    public NotificationListResponse toListDTO(Notification notification) {
+        return NotificationListResponse.builder()
                 .notificationId(notification.getNotificationId())
                 .type(notification.getType())
                 .title(notification.getTitle())
@@ -22,9 +22,10 @@ public class NotificationConverter {
                 .createdAt(notification.getCreatedAt())
                 .build();
     }
-    
-    public NotificationSettingsDTO toSettingsDTO(NotificationSettings settings, com.fmi.domain.auth.data.User user) {
-        return NotificationSettingsDTO.builder()
+
+    public NotificationSettingsResponse toSettingsDTO(
+            NotificationSettings settings, com.fmi.domain.user.user.data.User user) {
+        return NotificationSettingsResponse.builder()
                 .commentEnabled(settings.getCommentEnabled())
                 .chatEnabled(settings.getChatEnabled())
                 .inquiryReplyEnabled(settings.getInquiryReplyEnabled())
@@ -40,4 +41,3 @@ public class NotificationConverter {
                 .build();
     }
 }
-

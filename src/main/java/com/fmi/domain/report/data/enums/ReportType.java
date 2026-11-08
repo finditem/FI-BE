@@ -18,4 +18,3 @@ public enum ReportType {
         this.description = description;
     }
 }
-

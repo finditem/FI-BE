@@ -15,4 +15,3 @@ public enum ReportTargetType {
         this.description = description;
     }
 }
-

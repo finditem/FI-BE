@@ -1,6 +1,9 @@
 # Gradle
 .gradle/
 build/
+
+# Node.js
+node_modules/
 !gradle/wrapper/gradle-wrapper.jar
 
 # IntelliJ / IDEA
@@ -9,9 +12,7 @@ build/
 out/
 
 # yml 설정
-/src/main/resources/application.yml
 /src/main/resources/application.properties
-/src/main/resources/application-*.yml
 
 # Eclipse
 .project
@@ -73,3 +74,5 @@ out/
 
 ## env
 .env
+.env.*
+!.env.example

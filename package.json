@@ -1,0 +1,11 @@
+{
+  "name": "fi-be",
+  "private": true,
+  "scripts": {
+    "commitlint": "commitlint"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "20.3.1",
+    "@commitlint/config-conventional": "20.3.1"
+  }
+}

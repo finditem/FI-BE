@@ -1,0 +1,84 @@
+package com.fmi.domain.place.web.swagger;
+
+import com.fmi.domain.place.web.dto.request.AdminPlaceListRequest;
+import com.fmi.domain.place.web.dto.request.PlaceUpsertRequest;
+import com.fmi.domain.place.web.dto.response.AdminPlacePageResponse;
+import com.fmi.domain.place.web.dto.response.DeletedPlacePageResponse;
+import com.fmi.domain.place.web.dto.response.PlaceIdResponse;
+import com.fmi.domain.place.web.dto.response.PlaceManagementResponse;
+import com.fmi.global.apiPayload.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
+
+@Tag(name = "Admin Place", description = "관리자 장소 관리 API")
+public interface AdminPlaceSwagger {
+    @Operation(
+            summary = "삭제된 장소 목록 조회",
+            description =
+                    "삭제된 장소를 최근 삭제순으로 20개씩 조회합니다. 응답의 placeId로 복구를 요청합니다. 한국어와 영문 이름을 부분 검색하며 영문 대소문자를 구분하지 않습니다. 검색 조건 변경 시 커서를 초기화합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공. 마지막 페이지는 hasNext=false, nextCursor=null"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "PLACE400-INVALID_REQUEST: 잘못된 유형 또는 커서"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증 필요"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+    })
+    ApiResponse<DeletedPlacePageResponse> listDeleted(@ParameterObject @ModelAttribute AdminPlaceListRequest request);
+
+    @Operation(
+            summary = "운영진 장소 목록 조회",
+            description =
+                    "삭제되지 않은 장소를 최근 등록순으로 20개씩 조회합니다. 종료된 팝업도 포함합니다. 한국어와 영문 이름을 부분 검색하며 영문 대소문자를 구분하지 않습니다. 검색 조건 변경 시 커서를 초기화합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공. 마지막 페이지는 hasNext=false, nextCursor=null"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "PLACE400-INVALID_REQUEST: 잘못된 유형 또는 커서"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "COMMON401: 인증 필요"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 필요")
+    })
+    ApiResponse<AdminPlacePageResponse> list(@ParameterObject @ModelAttribute AdminPlaceListRequest request);
+
+    @Operation(
+            summary = "장소 등록",
+            description = "장소 정보, 운영 일정과 썸네일을 등록합니다. 영문 이름, 주소와 역 이름은 선택 입력이며 미등록 영문은 null로 반환합니다.")
+    @ApiResponses(@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 등록 성공"))
+    ResponseEntity<ApiResponse<PlaceManagementResponse>> create(
+            @Valid @RequestPart("request") PlaceUpsertRequest request,
+            @RequestPart("thumbnail") MultipartFile thumbnail);
+
+    @Operation(summary = "수정용 장소 조회", description = "장소 수정 화면에 필요한 장소 정보와 운영 일정을 조회합니다.")
+    @ApiResponses(@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 조회 성공"))
+    ApiResponse<PlaceManagementResponse> get(@PathVariable Long placeId);
+
+    @Operation(
+            summary = "장소 수정",
+            description =
+                    "장소 정보와 운영 일정을 전체 수정합니다. 영문 필드는 생략 또는 null이면 기존 값을 제거합니다. 응답은 한국어와 영문 원본을 함께 제공하며 미등록 영문은 null입니다.")
+    @ApiResponses(@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 수정 성공"))
+    ApiResponse<PlaceManagementResponse> update(
+            @PathVariable Long placeId,
+            @Valid @RequestPart("request") PlaceUpsertRequest request,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail);
+
+    @Operation(summary = "장소 삭제", description = "장소를 삭제 상태로 변경합니다.")
+    @ApiResponses(@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 삭제 성공"))
+    ApiResponse<PlaceIdResponse> delete(@PathVariable Long placeId);
+
+    @Operation(summary = "장소 복구", description = "삭제된 장소를 활성 상태로 복구합니다.")
+    @ApiResponses(@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "장소 복구 성공"))
+    ApiResponse<PlaceIdResponse> restore(@PathVariable Long placeId);
+}

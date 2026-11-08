@@ -1,10 +1,14 @@
 package com.fmi.domain.notification.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.notification.data.PushSubscription;
 import com.fmi.domain.notification.repository.PushSubscriptionRepository;
+import com.fmi.domain.user.user.data.User;
 import jakarta.annotation.PostConstruct;
+import java.security.GeneralSecurityException;
+import java.security.Security;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.martijndwars.webpush.Notification;
@@ -13,11 +17,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.security.GeneralSecurityException;
-import java.security.Security;
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -90,15 +89,10 @@ public class WebPushService {
                     "title", title != null ? title : "",
                     "body", body != null ? body : "",
                     "url", url != null ? url : "/",
-                    "type", type != null ? type : ""
-            ));
+                    "type", type != null ? type : ""));
 
-            Notification notification = new Notification(
-                    sub.getEndpoint(),
-                    sub.getP256dh(),
-                    sub.getAuth(),
-                    payload.getBytes()
-            );
+            Notification notification =
+                    new Notification(sub.getEndpoint(), sub.getP256dh(), sub.getAuth(), payload.getBytes());
 
             var response = pushService.send(notification);
             int statusCode = response.getStatusLine().getStatusCode();

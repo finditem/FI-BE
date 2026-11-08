@@ -1,0 +1,2 @@
+ALTER TABLE social_accounts
+    MODIFY COLUMN provider ENUM('GOOGLE', 'KAKAO', 'NAVER', 'APPLE') NOT NULL;

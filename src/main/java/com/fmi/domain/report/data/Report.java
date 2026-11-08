@@ -1,13 +1,12 @@
 package com.fmi.domain.report.data;
 
-import com.fmi.domain.auth.data.User;
 import com.fmi.domain.report.data.enums.ReportStatus;
 import com.fmi.domain.report.data.enums.ReportTargetType;
 import com.fmi.domain.report.data.enums.ReportType;
+import com.fmi.domain.user.user.data.User;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "report")
@@ -103,4 +102,3 @@ public class Report {
         this.answeredAt = LocalDateTime.now();
     }
 }
-

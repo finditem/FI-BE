@@ -1,11 +1,11 @@
 package com.fmi.domain.auth.data;
 
-import com.fmi.domain.Enum.Provider;
+import com.fmi.domain.auth.data.enums.Provider;
+import com.fmi.domain.user.user.data.User;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -35,7 +35,4 @@ public class SocialAccounts {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-
 }
-

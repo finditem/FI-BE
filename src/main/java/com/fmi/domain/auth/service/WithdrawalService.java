@@ -1,0 +1,93 @@
+package com.fmi.domain.auth.service;
+
+import com.fmi.domain.auth.data.enums.Provider;
+import com.fmi.domain.auth.data.enums.WithdrawalReason;
+import com.fmi.domain.auth.repository.SocialAccountsRepository;
+import com.fmi.domain.auth.security.token.RefreshTokenStore;
+import com.fmi.domain.auth.service.internal.AuthEmailNotifier;
+import com.fmi.domain.auth.web.dto.request.AccountDeleteRequest;
+import com.fmi.domain.post.post.service.PostService;
+import com.fmi.domain.user.user.data.User;
+import com.fmi.domain.user.user.repository.UserRepository;
+import com.fmi.domain.user.user.service.UserStatisticsRecorder;
+import com.fmi.external.oauth.kakao.KakaoOAuthClient;
+import com.fmi.external.storage.S3Service;
+import com.fmi.global.apiPayload.code.status.ErrorStatus;
+import com.fmi.global.apiPayload.exception.GeneralException;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class WithdrawalService {
+
+    private final UserRepository userRepository;
+    private final UserStatisticsRecorder userStatisticsRecorder;
+    private final Clock clock;
+    private final S3Service s3Service;
+    private final AuthEmailNotifier authEmailNotifier;
+    private final RefreshTokenStore refreshTokenStore;
+    private final PostService postService;
+    private final SocialAccountsRepository socialAccountsRepository;
+    private final KakaoOAuthClient kakaoOAuthClient;
+
+    public void delete(String email, AccountDeleteRequest request) {
+        User user = userRepository
+                .findActiveByEmailForUpdate(email)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
+
+        deleteProfileImage(user);
+        validateOtherReason(request);
+        socialAccountsRepository
+                .findByUser(user)
+                .filter(account -> account.getProvider() == Provider.KAKAO)
+                .ifPresent(account -> kakaoOAuthClient.unlinkUser(account.getProviderId()));
+
+        LocalDateTime occurredAt = LocalDateTime.now(clock);
+        user.withdraw(request.getReasons(), request.getOtherReason(), occurredAt);
+        userRepository.save(user);
+        refreshTokenStore.revokeAllForUser(email);
+        postService.softDeleteAllByUser(user, occurredAt);
+        userStatisticsRecorder.recordWithdrawal(user, occurredAt);
+        sendDeletionEmail(user);
+        log.info("사용자 탈퇴 완료: userId={}, email={}, reasons={}", user.getId(), email, request.getReasons());
+    }
+
+    private void deleteProfileImage(User user) {
+        if (user.getProfile_img() == null || user.getProfile_img().isEmpty()) {
+            return;
+        }
+        if (!s3Service.isValidS3Url(user.getProfile_img())) {
+            log.warn("유효하지 않은 프로필 이미지 URL, S3 삭제 생략: {}", user.getProfile_img());
+            return;
+        }
+        try {
+            s3Service.delete(List.of(user.getProfile_img()));
+        } catch (Exception e) {
+            log.warn("프로필 이미지 삭제 실패: {}", e.getMessage());
+        }
+    }
+
+    private void validateOtherReason(AccountDeleteRequest request) {
+        if (request.getReasons().contains(WithdrawalReason.OTHER)
+                && (request.getOtherReason() == null || request.getOtherReason().isBlank())) {
+            throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
+    }
+
+    private void sendDeletionEmail(User user) {
+        try {
+            String nickname = user.getNickname() != null ? user.getNickname() : "회원";
+            authEmailNotifier.sendWithdrawal(user.getEmail(), nickname, LocalDateTime.now());
+        } catch (Exception e) {
+            log.warn("계정 삭제 이메일 발송 실패: {}", e.getMessage());
+        }
+    }
+}

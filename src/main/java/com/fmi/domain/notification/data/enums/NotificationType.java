@@ -12,8 +12,8 @@ public enum NotificationType {
     FAVORITE("즐겨찾기"),
     CATEGORY("카테고리"),
     NOTICE("공지사항"),
+    REVIEW("후기"),
     SYSTEM("시스템");
-
 
     private final String description;
 
@@ -21,4 +21,3 @@ public enum NotificationType {
         this.description = description;
     }
 }
-

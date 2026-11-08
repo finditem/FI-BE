@@ -1,0 +1,32 @@
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    target_label  = "container"
+    regex         = "/(.*)"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    target_label  = "job"
+    regex         = "/fmi-(.*)"
+    replacement   = "fmi-$1"
+  }
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://10.0.1.49:3100/loki/api/v1/push"
+  }
+}
