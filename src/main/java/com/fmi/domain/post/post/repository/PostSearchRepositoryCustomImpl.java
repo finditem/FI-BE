@@ -48,7 +48,7 @@ public class PostSearchRepositoryCustomImpl implements PostSearchRepositoryCusto
 
         BooleanExpression baseWhere = Expressions.allOf(
                 post.deleted.isFalse(),
-                addressStartsWith(post, address),
+                addressContains(post, address),
                 equalsPostType(post, postType),
                 equalsPostStatus(post, postStatus),
                 equalsCategory(post, category),
@@ -434,12 +434,12 @@ public class PostSearchRepositoryCustomImpl implements PostSearchRepositoryCusto
         return value != null && !value.isBlank();
     }
 
-    private BooleanExpression addressStartsWith(QPost post, String address) {
+    private BooleanExpression addressContains(QPost post, String address) {
         if (Objects.isNull(address) || address.isBlank()) {
             return null;
         }
 
-        return post.address.startsWith(address);
+        return post.address.contains(address);
     }
 
     private BooleanExpression equalsPostType(QPost post, PostType postType) {
