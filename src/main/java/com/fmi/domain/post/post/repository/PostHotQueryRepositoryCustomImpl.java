@@ -31,7 +31,7 @@ public class PostHotQueryRepositoryCustomImpl implements PostHotQueryRepositoryC
 
         BooleanExpression where = Expressions.allOf(
                 post.temporarySave.isFalse(),
-                addressStartsWith(address),
+                addressContains(address),
                 equalsPostType(postType),
                 equalsPostStatus(postStatus),
                 equalsCategory(category));
@@ -67,9 +67,9 @@ public class PostHotQueryRepositoryCustomImpl implements PostHotQueryRepositoryC
                         t -> Objects.requireNonNull(t.get(post.id)), t -> Objects.requireNonNull(t.get(post.user.id))));
     }
 
-    private BooleanExpression addressStartsWith(String address) {
+    private BooleanExpression addressContains(String address) {
         if (address == null || address.isBlank()) return null;
-        return post.address.startsWith(address);
+        return post.address.contains(address);
     }
 
     private BooleanExpression equalsPostType(PostType postType) {
