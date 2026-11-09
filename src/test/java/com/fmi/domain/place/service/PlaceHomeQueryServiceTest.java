@@ -86,7 +86,7 @@ class PlaceHomeQueryServiceTest extends IntegrationTestSupport {
                                 day,
                                 false,
                                 List.of(new PlaceTimeRange(
-                                        PlaceBusinessHourType.BUSINESS, LocalTime.of(10, 0), LocalTime.of(22, 0)))))
+                                        PlaceBusinessHourType.BUSINESS, LocalTime.of(8, 0), LocalTime.of(22, 0)))))
                         .toList();
                 for (int index = 1; index <= 6; index++) {
                     placeService.create(
@@ -127,8 +127,54 @@ class PlaceHomeQueryServiceTest extends IntegrationTestSupport {
                         .containsExactly("카페 6", "카페 5", "카페 4", "카페 3", "카페 2");
                 assertThat(result).extracting(PlaceSummary::placeId).doesNotContain(expiredPopupId);
                 assertThat(result).allMatch(place -> place.operationState().status() == PlaceOperationStatus.OPEN);
+                assertThat(result)
+                        .allSatisfy(place -> assertThat(place.operationState().todayBusinessHours())
+                                .singleElement()
+                                .satisfies(range -> {
+                                    assertThat(range.getStartTime()).isEqualTo(LocalTime.of(8, 0));
+                                    assertThat(range.getEndTime()).isEqualTo(LocalTime.of(22, 0));
+                                }));
                 assertThat(result).allMatch(place -> !place.favorite());
             }
+        }
+
+        @Test
+        @DisplayName("팝업은 서울 시각 기준 종료 직전까지 홈에 노출한다")
+        void itReturnsPopupsUntilClosingTime() {
+            // given
+            LocalDate today = LocalDate.of(2026, 9, 10);
+            for (int closingMinute : List.of(0, 1)) {
+                List<PlaceDailySchedule> schedules = Arrays.stream(DayOfWeek.values())
+                        .map(day -> new PlaceDailySchedule(
+                                day,
+                                false,
+                                List.of(new PlaceTimeRange(
+                                        PlaceBusinessHourType.BUSINESS,
+                                        LocalTime.of(11, 0),
+                                        LocalTime.of(12, closingMinute)))))
+                        .toList();
+                placeService.create(
+                        new PlaceUpsertCommand(
+                                "팝업 " + closingMinute,
+                                "서울 성동구",
+                                37.54,
+                                127.05,
+                                "성수역",
+                                100,
+                                PlaceType.POPUP,
+                                today,
+                                today,
+                                schedules),
+                        new MockMultipartFile("thumbnail", "popup.png", "image/png", new byte[] {1}));
+            }
+
+            // when
+            List<PlaceSummary> allPlaces = placeHomeQueryService.getHomePlaces(null, null);
+            List<PlaceSummary> popups = placeHomeQueryService.getHomePlaces(PlaceType.POPUP, null);
+
+            // then
+            assertThat(allPlaces).extracting(PlaceSummary::name).containsExactly("팝업 1");
+            assertThat(popups).extracting(PlaceSummary::name).containsExactly("팝업 1");
         }
 
         @Nested
