@@ -10,8 +10,10 @@ import com.fmi.domain.place.service.internal.PlaceOperationStatusCalculator;
 import com.fmi.domain.user.user.data.enums.LanguageCode;
 import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +36,9 @@ public class PlaceHomeQueryService {
 
     public List<PlaceSummary> getHomePlaces(PlaceType type, Long userId, LanguageCode language) {
         // 자정을 넘긴 전날 영업시간을 판단하기 위해 오늘과 전날 요일을 조회
-        LocalDateTime now = LocalDateTime.now(clock);
+        Instant currentInstant = clock.instant();
+        LocalDateTime now = LocalDateTime.ofInstant(currentInstant, clock.getZone());
+        LocalDateTime nowInUtc = LocalDateTime.ofInstant(currentInstant, ZoneOffset.UTC);
         LocalDate today = now.toLocalDate();
         DayOfWeek todayDayOfWeek = today.getDayOfWeek();
         DayOfWeek yesterdayDayOfWeek = today.minusDays(1).getDayOfWeek();
@@ -42,10 +46,10 @@ public class PlaceHomeQueryService {
         // 타입별로 조회
         List<HomePlace> places;
         if (type == null) {
-            places = placeHomeRepository.findHomePlaces(now, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
+            places = placeHomeRepository.findHomePlaces(nowInUtc, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
         } else {
-            places =
-                    placeHomeRepository.findHomePlaces(type, now, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
+            places = placeHomeRepository.findHomePlaces(
+                    type, nowInUtc, todayDayOfWeek, yesterdayDayOfWeek, userId, language);
         }
 
         // 운영 상태 계산
