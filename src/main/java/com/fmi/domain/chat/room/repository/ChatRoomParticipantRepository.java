@@ -32,6 +32,7 @@ public interface ChatRoomParticipantRepository
                 FROM ChatRoomParticipant crp
                 WHERE crp.user = :user
                   AND crp.participantState = 'ACTIVE'
+                  AND crp.lastMessage IS NOT NULL
             """)
     long countActiveChatRoomsByUser(@Param("user") User user);
 }
