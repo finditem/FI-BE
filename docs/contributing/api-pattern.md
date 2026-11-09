@@ -14,7 +14,7 @@ Controller의 구성과 분리 시점은 [Controller 분리 기준](../architect
 | 인증 | 선택 인증. 로그인하지 않아도 조회 가능하며, 로그인하면 사용자별 정보를 반영 |
 | 주요 입력 | `postType`, `postStatus`, `category`, `address`, `sortType`, `cursor`, `size` |
 | 성공 | HTTP `200 OK`, `ApiResponse<PostPageResponse>` |
-| 오류 | 현재 Swagger에는 `400`, `401`이 기재되어 있습니다. 발생 조건과 응답 코드는 구현을 확인해 개별 API 스펙에 적습니다. |
+| 오류 | 요청 파라미터가 올바르지 않으면 HTTP `400`을 반환합니다. 발생 조건과 응답 코드는 구현을 확인해 개별 API 스펙에 적습니다. |
 
 ```text
 첫 요청: GET /posts/search?address=서울&sortType=LATEST&size=20

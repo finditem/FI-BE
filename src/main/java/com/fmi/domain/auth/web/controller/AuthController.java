@@ -55,7 +55,8 @@ public class AuthController implements AuthSwagger {
 
     @GetMapping("/auth/check-nickname")
     @Override
-    public ResponseEntity<ApiResponse<?>> checkNickname(@RequestParam("nickname") @NotBlank String nickname) {
+    public ResponseEntity<ApiResponse<CheckResponse>> checkNickname(
+            @RequestParam("nickname") @NotBlank String nickname) {
         CheckResponse response = nicknameService.check(nickname);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }

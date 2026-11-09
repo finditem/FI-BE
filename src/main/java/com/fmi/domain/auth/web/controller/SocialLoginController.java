@@ -9,7 +9,7 @@ import com.fmi.domain.auth.service.TokenService;
 import com.fmi.domain.auth.web.dto.request.AppleLoginRequest;
 import com.fmi.domain.auth.web.dto.request.KakaoLoginRequest;
 import com.fmi.domain.auth.web.dto.response.LoginResponse;
-import com.fmi.domain.auth.web.swagger.KakaoAuthSwagger;
+import com.fmi.domain.auth.web.swagger.SocialLoginSwagger;
 import com.fmi.domain.user.user.data.User;
 import com.fmi.external.oauth.apple.AppleOAuthClient;
 import com.fmi.external.oauth.kakao.KakaoOAuthClient;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-public class SocialLoginController implements KakaoAuthSwagger {
+public class SocialLoginController implements SocialLoginSwagger {
 
     private final KakaoOAuthClient kakaoOAuthService;
     private final AppleOAuthClient appleOAuthService;
@@ -60,6 +60,7 @@ public class SocialLoginController implements KakaoAuthSwagger {
     }
 
     @PostMapping("/auth/apple")
+    @Override
     public ResponseEntity<ApiResponse<LoginResponse>> loginWithApple(
             @Valid @RequestBody AppleLoginRequest request, HttpServletRequest httpServletRequest) {
         String subject = appleOAuthService.exchangeCodeForSubject(request.getCode(), request.getEnvironment());

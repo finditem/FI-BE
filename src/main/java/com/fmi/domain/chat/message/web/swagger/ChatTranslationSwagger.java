@@ -8,13 +8,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Tag(name = "ChatMessage")
-public interface ChatTranslationApi {
+public interface ChatTranslationSwagger {
 
     @Operation(summary = "채팅 메시지 번역", description = """
                     채팅 메시지 한 건을 조회자의 선호 언어로 번역합니다.
@@ -37,11 +36,8 @@ public interface ChatTranslationApi {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
-                description = "채팅 메시지 번역 성공",
-                content =
-                        @Content(
-                                mediaType = "application/json",
-                                schema = @Schema(implementation = TranslationResponse.class))),
+                useReturnTypeSchema = true,
+                description = "채팅 메시지 번역 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
                 description = "TRANSLATION400-TEXT_REQUIRED: 본문이 있는 텍스트 메시지만 번역할 수 있습니다",
@@ -87,11 +83,8 @@ public interface ChatTranslationApi {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
-                description = "번역 사용량 조회 성공",
-                content =
-                        @Content(
-                                mediaType = "application/json",
-                                schema = @Schema(implementation = UsageResponse.class))),
+                useReturnTypeSchema = true,
+                description = "번역 사용량 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "503",
                 description = "TRANSLATION503-UNAVAILABLE: 번역 상태를 확인할 수 없습니다",

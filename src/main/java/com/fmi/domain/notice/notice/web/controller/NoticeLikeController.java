@@ -1,12 +1,10 @@
 package com.fmi.domain.notice.notice.web.controller;
 
 import com.fmi.domain.notice.notice.service.NoticeLikeService;
+import com.fmi.domain.notice.notice.web.swagger.NoticeLikeSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/notices")
 @RequiredArgsConstructor
-@Tag(name = "Notice", description = "공지사항 API")
-public class NoticeLikeController {
+public class NoticeLikeController implements NoticeLikeSwagger {
 
     private final NoticeLikeService noticeLikeService;
 
@@ -24,8 +21,7 @@ public class NoticeLikeController {
      * POST /notices/{noticeId}/like
      */
     @PostMapping("/{noticeId}/like")
-    @Operation(summary = "공지사항 추천 추가", description = "공지사항을 추천합니다.")
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 성공")})
+    @Override
     public ApiResponse<Void> addLike(
             @PathVariable Long noticeId,
             @org.springframework.security.core.annotation.AuthenticationPrincipal UserDetails userDetails) {
@@ -41,9 +37,7 @@ public class NoticeLikeController {
      * DELETE /notices/{noticeId}/like
      */
     @DeleteMapping("/{noticeId}/like")
-    @Operation(summary = "공지사항 추천 취소", description = "공지사항 추천을 취소합니다.")
-    @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 취소 성공")
-    })
+    @Override
     public ApiResponse<Void> removeLike(
             @PathVariable Long noticeId,
             @org.springframework.security.core.annotation.AuthenticationPrincipal UserDetails userDetails) {

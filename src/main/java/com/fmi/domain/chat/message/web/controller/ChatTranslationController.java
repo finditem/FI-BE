@@ -4,7 +4,7 @@ import com.fmi.domain.chat.message.service.ChatTranslationService;
 import com.fmi.domain.chat.message.web.dto.request.ChatTranslationRequest.TranslateRequest;
 import com.fmi.domain.chat.message.web.dto.response.ChatTranslationResponse.TranslationResponse;
 import com.fmi.domain.chat.message.web.dto.response.ChatTranslationResponse.UsageResponse;
-import com.fmi.domain.chat.message.web.swagger.ChatTranslationApi;
+import com.fmi.domain.chat.message.web.swagger.ChatTranslationSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-public class ChatTranslationController implements ChatTranslationApi {
+public class ChatTranslationController implements ChatTranslationSwagger {
 
     private final ChatTranslationService chatTranslationService;
 

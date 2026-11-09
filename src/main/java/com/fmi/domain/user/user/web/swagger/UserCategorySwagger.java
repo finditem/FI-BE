@@ -22,6 +22,12 @@ public interface UserCategorySwagger {
     ApiResponse<List<UserCategoryResponse>> list(@AuthenticationPrincipal UserDetails principal);
 
     @Operation(summary = "전체 카테고리 목록", description = "게시글 작성 및 구독에 사용할 수 있는 모든 카테고리(Type) 값을 반환합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카테고리 목록 조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "COMMON401: 로그인이 필요합니다.")
+    })
     ApiResponse<List<Category>> availableCategories();
 
     @Operation(summary = "카테고리 추가", description = "요청 바디에 전달한 게시글 카테고리를 내 구독 목록에 추가합니다. 이미 존재하면 무시합니다.")
