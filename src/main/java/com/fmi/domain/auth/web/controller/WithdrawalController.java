@@ -3,6 +3,7 @@ package com.fmi.domain.auth.web.controller;
 import com.fmi.domain.auth.security.cookie.AuthCookieFactory;
 import com.fmi.domain.auth.service.WithdrawalService;
 import com.fmi.domain.auth.web.dto.request.AccountDeleteRequest;
+import com.fmi.domain.auth.web.swagger.WithdrawalSwagger;
 import com.fmi.global.apiPayload.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -15,14 +16,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@io.swagger.v3.oas.annotations.tags.Tag(name = "Auth")
-public class WithdrawalController {
+public class WithdrawalController implements WithdrawalSwagger {
 
     private final WithdrawalService withdrawalService;
 
     private final AuthCookieFactory authCookieFactory;
 
     @DeleteMapping("/users/me")
+    @Override
     public ResponseEntity<ApiResponse<Void>> deleteAccount(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody AccountDeleteRequest request,

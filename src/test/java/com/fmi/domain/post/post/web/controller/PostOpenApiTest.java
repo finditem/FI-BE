@@ -25,6 +25,17 @@ class PostOpenApiTest extends IntegrationTestSupport {
     class DescribeGetOpenApi {
 
         @Test
+        @DisplayName("게시글 검색은 선택 인증이며 성공 응답에 공통 응답 구조를 표시한다")
+        void itDocumentsOptionalAuthenticationAndResponseEnvelope() throws Exception {
+            mockMvc.perform(get("/v3/api-docs"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.paths['/posts/search'].get.security").isArray())
+                    .andExpect(jsonPath("$.paths['/posts/search'].get.security").isEmpty())
+                    .andExpect(jsonPath("$.paths['/posts/search'].get.responses['200'].content['*/*'].schema['$ref']")
+                            .value("#/components/schemas/ApiResponsePostPageResponse"));
+        }
+
+        @Test
         @DisplayName("분리된 임시저장과 번역 API의 경로, 메서드, Post 태그와 operationId를 유지한다")
         void itPreservesTemporaryPostAndTranslationContracts() throws Exception {
             // given: 전체 애플리케이션이 시작되므로 중복된 Spring MVC 매핑은 context 로딩 시 거절된다.
