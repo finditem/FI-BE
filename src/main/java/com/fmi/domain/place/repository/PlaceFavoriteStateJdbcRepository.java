@@ -19,11 +19,11 @@ public class PlaceFavoriteStateJdbcRepository implements PlaceFavoriteStateRepos
                 created_at,
                 updated_at
             )
-            VALUES (?, ?, TRUE, 'ACTIVE', CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6))
+            VALUES (?, ?, TRUE, 'ACTIVE', ?, ?)
             ON DUPLICATE KEY UPDATE
                 updated_at = IF(
                     is_favorite = FALSE OR entity_status <> 'ACTIVE',
-                    CURRENT_TIMESTAMP(6),
+                    ?,
                     updated_at
                 ),
                 is_favorite = TRUE,
@@ -33,7 +33,7 @@ public class PlaceFavoriteStateJdbcRepository implements PlaceFavoriteStateRepos
 
     private static final String CANCEL_FAVORITE = """
             UPDATE place_favorite
-            SET updated_at = IF(is_favorite = TRUE, CURRENT_TIMESTAMP(6), updated_at),
+            SET updated_at = IF(is_favorite = TRUE, ?, updated_at),
                 is_favorite = FALSE
             WHERE place_id = ?
               AND user_id = ?
@@ -66,13 +66,13 @@ public class PlaceFavoriteStateJdbcRepository implements PlaceFavoriteStateRepos
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public void save(Long placeId, Long userId) {
-        jdbcTemplate.update(SAVE_FAVORITE, placeId, userId);
+    public void save(Long placeId, Long userId, LocalDateTime favoritedAt) {
+        jdbcTemplate.update(SAVE_FAVORITE, placeId, userId, favoritedAt, favoritedAt, favoritedAt);
     }
 
     @Override
-    public void cancel(Long placeId, Long userId) {
-        jdbcTemplate.update(CANCEL_FAVORITE, placeId, userId);
+    public void cancel(Long placeId, Long userId, LocalDateTime canceledAt) {
+        jdbcTemplate.update(CANCEL_FAVORITE, canceledAt, placeId, userId);
     }
 
     @Override
@@ -81,15 +81,13 @@ public class PlaceFavoriteStateJdbcRepository implements PlaceFavoriteStateRepos
             return jdbcTemplate.query(
                     FIND_FAVORITES,
                     (resultSet, rowNumber) -> new FavoritePlaceCandidate(
-                            resultSet.getLong("place_id"),
-                            resultSet.getTimestamp("updated_at").toLocalDateTime()),
+                            resultSet.getLong("place_id"), resultSet.getObject("updated_at", LocalDateTime.class)),
                     userId);
         }
         return jdbcTemplate.query(
                 FIND_FAVORITES_AFTER,
                 (resultSet, rowNumber) -> new FavoritePlaceCandidate(
-                        resultSet.getLong("place_id"),
-                        resultSet.getTimestamp("updated_at").toLocalDateTime()),
+                        resultSet.getLong("place_id"), resultSet.getObject("updated_at", LocalDateTime.class)),
                 userId,
                 lastFavoriteUpdatedAt);
     }

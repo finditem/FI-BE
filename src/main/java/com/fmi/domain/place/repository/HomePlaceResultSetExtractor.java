@@ -24,14 +24,13 @@ final class HomePlaceResultSetExtractor implements ResultSetExtractor<List<HomeP
         while (resultSet.next()) {
             long placeId = resultSet.getLong("id");
             Builder place = places.computeIfAbsent(placeId, ignored -> createBuilder(resultSet));
-            // 영업시간은 Hibernate가 UTC로 저장하므로 홈 JDBC 조회에서 서울 시각을 복원한다.
             place.addSchedule(
                     DayOfWeek.valueOf(resultSet.getString("day_of_week")),
                     resultSet.getBoolean("is_closed"),
                     new PlaceTimeRange(
                             PlaceBusinessHourType.valueOf(resultSet.getString("business_hour_type")),
-                            resultSet.getObject("start_time", LocalTime.class).plusHours(9),
-                            resultSet.getObject("end_time", LocalTime.class).plusHours(9)));
+                            resultSet.getObject("start_time", LocalTime.class),
+                            resultSet.getObject("end_time", LocalTime.class)));
         }
         return places.values().stream().map(Builder::build).toList();
     }

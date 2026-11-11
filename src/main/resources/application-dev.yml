@@ -15,7 +15,7 @@ spring:
       hibernate:
         format_sql: true
         jdbc:
-          time_zone: UTC
+          time_zone: Asia/Seoul
     database-platform: org.hibernate.dialect.MySQL8Dialect
   flyway:
     enabled: true
