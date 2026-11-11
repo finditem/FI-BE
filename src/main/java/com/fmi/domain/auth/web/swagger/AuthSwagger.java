@@ -3,11 +3,13 @@ package com.fmi.domain.auth.web.swagger;
 import com.fmi.domain.auth.web.dto.request.LoginRequest;
 import com.fmi.domain.auth.web.dto.request.SignupRequest;
 import com.fmi.domain.auth.web.dto.response.LoginResponse;
+import com.fmi.domain.user.user.web.dto.response.CheckResponse;
 import com.fmi.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -86,33 +88,18 @@ public interface AuthSwagger {
     ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest);
 
-    @Operation(
-            summary = "닉네임 유효성 및 중복 확인",
-            description = "닉네임 길이(2-10자), 금칙어, 중복 여부를 확인합니다. 부적절하거나 중복이면 400과 에러 메시지를 반환합니다.")
+    @Operation(summary = "닉네임 유효성 및 중복 확인", description = "닉네임 길이, 허용 문자, 금칙어와 중복 여부를 확인합니다.")
+    @SecurityRequirements
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "사용 가능한 닉네임"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
-                description = "NICKNAME_INVALID: 부적절한 닉네임 (길이, 금칙어 등)",
-                content =
-                        @Content(
-                                mediaType = "application/json",
-                                examples =
-                                        @ExampleObject(
-                                                value =
-                                                        "{\"isSuccess\": false, \"code\": \"NICKNAME_INVALID\", \"message\": \"부적절한 닉네임입니다.\"}"))),
+                description = "AUTH400-INVALID_NICKNAME: 길이, 허용 문자 또는 금칙어 조건을 충족하지 않습니다."),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "NICKNAME_DUPLICATE: 이미 사용 중인 닉네임",
-                content =
-                        @Content(
-                                mediaType = "application/json",
-                                examples =
-                                        @ExampleObject(
-                                                value =
-                                                        "{\"isSuccess\": false, \"code\": \"NICKNAME_DUPLICATE\", \"message\": \"중복된 닉네임입니다.\"}")))
+                responseCode = "409",
+                description = "AUTH409-NICKNAME_DUPLICATED: 이미 사용 중인 닉네임입니다.")
     })
-    ResponseEntity<ApiResponse<?>> checkNickname(@RequestParam("nickname") @NotBlank String nickname);
+    ResponseEntity<ApiResponse<CheckResponse>> checkNickname(@RequestParam("nickname") @NotBlank String nickname);
 
     @Operation(summary = "토큰 리프레시", description = "쿠키의 refresh_token(JWT)으로 액세스 토큰을 갱신합니다.")
     @ApiResponses({

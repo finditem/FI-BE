@@ -19,7 +19,13 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     Optional<ChatRoom> findChatRoomByPostAndUsers(
             @Param("postId") Long postId, @Param("userId1") Long userId1, @Param("userId2") Long userId2);
 
-    long countByPostId(Long postId);
+    @Query("""
+            SELECT COUNT(cr)
+            FROM ChatRoom cr
+            WHERE cr.post.id = :postId
+              AND EXISTS (SELECT cm.id FROM ChatMessage cm WHERE cm.chatRoom = cr)
+            """)
+    long countChatRoomsWithMessageByPostId(@Param("postId") Long postId);
 
     List<ChatRoom> findAllByPost(Post post);
 }

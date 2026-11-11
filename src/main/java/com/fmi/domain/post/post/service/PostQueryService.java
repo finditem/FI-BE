@@ -1,6 +1,6 @@
 package com.fmi.domain.post.post.service;
 
-import com.fmi.domain.chat.room.repository.ChatRoomParticipantRepository;
+import com.fmi.domain.chat.room.repository.ChatRoomRepository;
 import com.fmi.domain.post.comment.service.CommentQueryService;
 import com.fmi.domain.post.post.converter.util.PostConverter;
 import com.fmi.domain.post.post.converter.util.PostImageConverter;
@@ -46,7 +46,7 @@ public class PostQueryService {
     private final PostFavoriteService postFavoriteService;
     private final PostImageService postImageService;
     private final PostViewStore postViewStore;
-    private final ChatRoomParticipantRepository chatRoomParticipantRepository;
+    private final ChatRoomRepository chatRoomRepository;
     private final CommentQueryService commentQueryService;
     private final BlockService blockService;
     private final HotPostService hotPostService;
@@ -100,7 +100,7 @@ public class PostQueryService {
 
         User user = post.getUser();
         long userPostCount = postRepository.countByUserAndTemporarySaveFalseAndDeletedFalse(user);
-        long chatRoomCount = chatRoomParticipantRepository.countActiveChatRoomsByUser(user);
+        long chatRoomCount = chatRoomRepository.countChatRoomsWithMessageByPostId(post.getId());
 
         return PostConverter.toGetResponse(
                 post,

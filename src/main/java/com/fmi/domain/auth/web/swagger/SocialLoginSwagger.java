@@ -1,5 +1,6 @@
 package com.fmi.domain.auth.web.swagger;
 
+import com.fmi.domain.auth.web.dto.request.AppleLoginRequest;
 import com.fmi.domain.auth.web.dto.request.KakaoLoginRequest;
 import com.fmi.domain.auth.web.dto.response.LoginResponse;
 import com.fmi.global.apiPayload.ApiResponse;
@@ -7,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -14,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Auth")
-public interface KakaoAuthSwagger {
+public interface SocialLoginSwagger {
 
     @Operation(summary = "카카오 로그인", description = """
                        카카오 인증 코드를 사용하여 로그인합니다.
@@ -64,25 +66,39 @@ public interface KakaoAuthSwagger {
                                                         "{\"isSuccess\": false, \"code\": \"AUTH400-KAKAO_CODE_INVALID\", \"message\": \"카카오 인증 코드가 유효하지 않거나 이미 사용되었습니다. 다시 로그인해주세요.\"}"))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "500",
-                description = "AUTH500-KAKAO_TOKEN_FAILED: 카카오 토큰 교환에 실패했습니다",
+                description = """
+                        - AUTH500-KAKAO_TOKEN_FAILED: 카카오 토큰 교환에 실패했습니다.
+                        - AUTH500-KAKAO_USERINFO_FAILED: 카카오 사용자 정보 조회에 실패했습니다.
+                        """,
                 content =
                         @Content(
                                 mediaType = "application/json",
-                                examples =
-                                        @ExampleObject(
-                                                value =
-                                                        "{\"isSuccess\": false, \"code\": \"AUTH500-KAKAO_TOKEN_FAILED\", \"message\": \"카카오 토큰 교환에 실패했습니다.\"}"))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "500",
-                description = "AUTH500-KAKAO_USERINFO_FAILED: 카카오 사용자 정보 조회에 실패했습니다",
-                content =
-                        @Content(
-                                mediaType = "application/json",
-                                examples =
-                                        @ExampleObject(
-                                                value =
-                                                        "{\"isSuccess\": false, \"code\": \"AUTH500-KAKAO_USERINFO_FAILED\", \"message\": \"카카오 사용자 정보 조회에 실패했습니다.\"}")))
+                                examples = {
+                                    @ExampleObject(name = "토큰 교환 실패", value = """
+                            {"isSuccess": false, "code": "AUTH500-KAKAO_TOKEN_FAILED", "message": "카카오 토큰 교환에 실패했습니다."}
+                            """),
+                                    @ExampleObject(name = "사용자 정보 조회 실패", value = """
+                            {"isSuccess": false, "code": "AUTH500-KAKAO_USERINFO_FAILED", "message": "카카오 사용자 정보 조회에 실패했습니다."}
+                            """)
+                                }))
     })
     ResponseEntity<ApiResponse<LoginResponse>> loginWithKakao(
             @Valid @RequestBody KakaoLoginRequest req, HttpServletRequest request);
+
+    @SecurityRequirements
+    @Operation(summary = "Apple 로그인", description = "Apple 인가 코드로 로그인합니다. 성공하면 인증 쿠키를 전달합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Apple 로그인 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "AUTH400-APPLE_CODE_INVALID: Apple 인가 코드가 유효하지 않거나 이미 사용됐습니다."),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "AUTH401-APPLE_ID_TOKEN_INVALID: Apple ID 토큰이 유효하지 않습니다."),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "500",
+                description = "AUTH500-APPLE_TOKEN_FAILED: Apple 토큰 교환에 실패했습니다.")
+    })
+    ResponseEntity<ApiResponse<LoginResponse>> loginWithApple(
+            AppleLoginRequest request, HttpServletRequest httpServletRequest);
 }

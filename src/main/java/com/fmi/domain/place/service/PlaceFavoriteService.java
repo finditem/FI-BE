@@ -53,7 +53,7 @@ public class PlaceFavoriteService {
                 .findByEmail(userEmail)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        placeFavoriteStateRepository.save(placeId, user.getId());
+        placeFavoriteStateRepository.save(placeId, user.getId(), LocalDateTime.now(clock));
     }
 
     @Transactional
@@ -67,7 +67,7 @@ public class PlaceFavoriteService {
                 .findByEmail(userEmail)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._USER_NOT_FOUND));
 
-        placeFavoriteStateRepository.cancel(placeId, user.getId());
+        placeFavoriteStateRepository.cancel(placeId, user.getId(), LocalDateTime.now(clock));
     }
 
     public FavoritePlacePage getFavorites(String userEmail, LocalDateTime lastFavoriteUpdatedAt, int size) {

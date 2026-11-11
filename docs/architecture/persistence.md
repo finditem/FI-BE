@@ -24,6 +24,14 @@ DB 스키마, Flyway migration, 조회 기술과 결과 타입, JPA 관계와 DB
 
 비즈니스 검증은 애플리케이션에 두고 DB `CHECK`에 중복 정의하지 않습니다.
 
+### 시간 저장
+
+`DATETIME`과 `TIME` 컬럼은 `Asia/Seoul` 시각으로 저장합니다.
+
+- `hibernate.jdbc.time_zone`과 JDBC URL의 `serverTimezone`은 `Asia/Seoul`로 설정합니다.
+- 현재 시각은 애플리케이션의 `Clock`으로 만들어 바인딩합니다. SQL에서 `NOW()`, `CURRENT_TIMESTAMP` 같은 DB 함수로 저장 시각을 만들지 않습니다.
+- `JdbcTemplate` 조회는 `LocalDateTime`, `LocalTime`으로 직접 읽고 시간대 보정을 하지 않습니다.
+
 ### 조회 기술 선택
 
 단순 저장, Entity 조회와 존재 확인에는 Spring Data JPA를 사용합니다. 목록, 정렬, 커서, 집계처럼 복잡한 조회에는 QueryDSL을 사용합니다. native SQL의 선택 조건은 [조회 방식](#조회-방식)을 따릅니다. JDBC 등 다른 기술의 도입은 해당 업무의 요구와 선택 근거를 확인한 뒤 결정하며, Repository를 분리한다는 이유로 저장 기술을 바꾸지 않습니다.

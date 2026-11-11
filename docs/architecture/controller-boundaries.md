@@ -9,7 +9,7 @@ HTTP API의 Controller 구성과 분리 시점을 정할 때 적용합니다. Se
 - Service마다 Controller를 만들거나 Query와 Command에 맞춰 Controller를 기계적으로 분리하지 않습니다.
 - 하나의 Controller가 같은 API 기능에 필요한 여러 Service를 호출할 수 있습니다.
 - 내부 협력 객체, 스케줄러와 독립 HTTP API가 없는 기능을 위해 Controller를 추가하지 않습니다.
-- 기존 영역의 명명과 Swagger 주석 방식을 유지합니다. 일괄적인 클래스 이동은 별도 리팩터링으로 다룹니다.
+- 기존 영역의 명명 방식을 유지합니다. Swagger 주석은 [OpenAPI 작성 가이드](../contributing/openapi-guide.md#주석-위치)에 따라 인터페이스에 둡니다.
 
 ## 분리 판단
 
