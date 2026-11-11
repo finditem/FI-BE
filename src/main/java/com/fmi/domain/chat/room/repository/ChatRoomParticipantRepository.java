@@ -1,7 +1,6 @@
 package com.fmi.domain.chat.room.repository;
 
 import com.fmi.domain.chat.room.data.ChatRoomParticipant;
-import com.fmi.domain.user.user.data.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -26,13 +25,4 @@ public interface ChatRoomParticipantRepository
             + "AND ns.chatEnabled = true "
             + "AND cp.lastRemindedAt IS NULL")
     List<ChatRoomParticipant> findParticipantsForReminder(@Param("threshold") LocalDateTime threshold);
-
-    @Query("""
-                SELECT COUNT(crp)
-                FROM ChatRoomParticipant crp
-                WHERE crp.user = :user
-                  AND crp.participantState = 'ACTIVE'
-                  AND crp.lastMessage IS NOT NULL
-            """)
-    long countActiveChatRoomsByUser(@Param("user") User user);
 }

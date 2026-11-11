@@ -24,11 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-@DisplayName("ChatRoomParticipantRepository")
-class ChatRoomParticipantRepositoryTest extends IntegrationTestSupport {
-
-    @Autowired
-    private ChatRoomParticipantRepository chatRoomParticipantRepository;
+@DisplayName("ChatRoomRepository")
+class ChatRoomRepositoryTest extends IntegrationTestSupport {
 
     @Autowired
     private ChatRoomRepository chatRoomRepository;
@@ -43,32 +40,32 @@ class ChatRoomParticipantRepositoryTest extends IntegrationTestSupport {
     private UserRepository userRepository;
 
     @Nested
-    @DisplayName("사용자의 참여 중인 채팅방 수를 셀 때")
-    class DescribeCountActiveChatRoomsByUser {
+    @DisplayName("게시글의 메시지가 있는 채팅방 수를 셀 때")
+    class DescribeCountChatRoomsWithMessageByPostId {
 
         @Nested
-        @DisplayName("메시지 없이 생성만 된 채팅방이 있으면")
-        class ContextWithChatRoomWithoutMessage {
+        @DisplayName("메시지 없는 채팅방과 다른 게시글의 채팅방이 있으면")
+        class ContextWithEmptyRoomAndOtherPostRoom {
 
             @Test
-            @DisplayName("메시지가 있는 채팅방만 센다")
-            void itCountsOnlyChatRoomsWithMessage() {
+            @DisplayName("해당 게시글에서 메시지가 있는 채팅방만 센다")
+            void itCountsOnlyRoomsWithMessageOfPost() {
                 // given
                 User author = userRepository.save(User.builder()
-                        .nickname("채팅수작성자")
-                        .email("chat-count-author@test.com")
+                        .nickname("게시글채팅작성자")
+                        .email("post-chat-count-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User messagedUser = userRepository.save(User.builder()
                         .nickname("메시지보낸사용자")
-                        .email("chat-count-messaged@test.com")
+                        .email("post-chat-count-messaged@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User silentUser = userRepository.save(User.builder()
                         .nickname("메시지없는사용자")
-                        .email("chat-count-silent@test.com")
+                        .email("post-chat-count-silent@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
@@ -78,8 +75,20 @@ class ChatRoomParticipantRepositoryTest extends IntegrationTestSupport {
                         37.5422,
                         127.0549,
                         PostType.LOST,
-                        Category.ELECTRONICS,
+                        Category.WALLET,
                         "검은색 지갑입니다.",
+                        false,
+                        LocalDateTime.of(2026, 9, 10, 10, 0),
+                        Radius.DISTANCE_1000,
+                        author));
+                Post otherPost = postRepository.save(Post.create(
+                        "우산을 주웠어요",
+                        "서울 성동구",
+                        37.5422,
+                        127.0549,
+                        PostType.FOUND,
+                        Category.ETC,
+                        "파란색 우산입니다.",
                         false,
                         LocalDateTime.of(2026, 9, 10, 10, 0),
                         Radius.DISTANCE_1000,
@@ -90,37 +99,51 @@ class ChatRoomParticipantRepositoryTest extends IntegrationTestSupport {
                         .createdAt(LocalDateTime.of(2026, 9, 10, 11, 0))
                         .build();
                 messagedRoom.initFromPost(post);
-                ChatRoomParticipant authorInMessagedRoom =
-                        ChatRoomParticipant.builder().user(author).build();
-                ChatRoomParticipant messagedUserParticipant =
-                        ChatRoomParticipant.builder().user(messagedUser).build();
-                messagedRoom.addParticipant(authorInMessagedRoom);
-                messagedRoom.addParticipant(messagedUserParticipant);
+                messagedRoom.addParticipant(
+                        ChatRoomParticipant.builder().user(author).build());
+                messagedRoom.addParticipant(
+                        ChatRoomParticipant.builder().user(messagedUser).build());
                 chatRoomRepository.save(messagedRoom);
-                ChatMessage message = chatMessageRepository.save(ChatMessage.builder()
+                chatMessageRepository.save(ChatMessage.builder()
                         .user(messagedUser)
                         .chatRoom(messagedRoom)
                         .content("지갑 찾았어요")
                         .messageType(MessageType.TEXT)
                         .createdAt(LocalDateTime.of(2026, 9, 10, 11, 5))
                         .build());
-                authorInMessagedRoom.updateLastMessage(message);
-                messagedUserParticipant.updateLastMessage(message);
 
-                ChatRoom silentRoom = ChatRoom.builder()
+                ChatRoom emptyRoom = ChatRoom.builder()
                         .post(post)
                         .createdAt(LocalDateTime.of(2026, 9, 10, 12, 0))
                         .build();
-                silentRoom.initFromPost(post);
-                silentRoom.addParticipant(
+                emptyRoom.initFromPost(post);
+                emptyRoom.addParticipant(
                         ChatRoomParticipant.builder().user(author).build());
-                silentRoom.addParticipant(
+                emptyRoom.addParticipant(
                         ChatRoomParticipant.builder().user(silentUser).build());
-                chatRoomRepository.save(silentRoom);
-                chatRoomRepository.flush();
+                chatRoomRepository.save(emptyRoom);
+
+                ChatRoom otherPostRoom = ChatRoom.builder()
+                        .post(otherPost)
+                        .createdAt(LocalDateTime.of(2026, 9, 10, 13, 0))
+                        .build();
+                otherPostRoom.initFromPost(otherPost);
+                otherPostRoom.addParticipant(
+                        ChatRoomParticipant.builder().user(author).build());
+                otherPostRoom.addParticipant(
+                        ChatRoomParticipant.builder().user(messagedUser).build());
+                chatRoomRepository.save(otherPostRoom);
+                chatMessageRepository.save(ChatMessage.builder()
+                        .user(messagedUser)
+                        .chatRoom(otherPostRoom)
+                        .content("제 우산 같아요")
+                        .messageType(MessageType.TEXT)
+                        .createdAt(LocalDateTime.of(2026, 9, 10, 13, 5))
+                        .build());
+                chatMessageRepository.flush();
 
                 // when
-                long result = chatRoomParticipantRepository.countActiveChatRoomsByUser(author);
+                long result = chatRoomRepository.countChatRoomsWithMessageByPostId(post.getId());
 
                 // then
                 assertThat(result).isEqualTo(1);
@@ -128,33 +151,33 @@ class ChatRoomParticipantRepositoryTest extends IntegrationTestSupport {
         }
 
         @Nested
-        @DisplayName("메시지가 있던 채팅방을 나갔으면")
-        class ContextWithLeftChatRoom {
+        @DisplayName("메시지가 있던 채팅방에서 참여자가 모두 나갔으면")
+        class ContextWithAllParticipantsLeft {
 
             @Test
-            @DisplayName("나간 채팅방은 세지 않는다")
-            void itExcludesLeftChatRooms() {
+            @DisplayName("나간 채팅방도 센다")
+            void itCountsRoomsAllParticipantsLeft() {
                 // given
                 User author = userRepository.save(User.builder()
                         .nickname("나간방작성자")
-                        .email("chat-count-left-author@test.com")
+                        .email("post-chat-count-left-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User contactUser = userRepository.save(User.builder()
                         .nickname("나간방상대")
-                        .email("chat-count-left-contact@test.com")
+                        .email("post-chat-count-left-contact@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 Post post = postRepository.save(Post.create(
-                        "우산을 주웠어요",
+                        "카드를 잃어버렸어요",
                         "서울 성동구",
                         37.5422,
                         127.0549,
-                        PostType.FOUND,
-                        Category.ELECTRONICS,
-                        "파란색 우산입니다.",
+                        PostType.LOST,
+                        Category.WALLET,
+                        "파란색 카드지갑입니다.",
                         false,
                         LocalDateTime.of(2026, 9, 10, 10, 0),
                         Radius.DISTANCE_1000,
@@ -174,20 +197,19 @@ class ChatRoomParticipantRepositoryTest extends IntegrationTestSupport {
                 ChatMessage message = chatMessageRepository.save(ChatMessage.builder()
                         .user(contactUser)
                         .chatRoom(chatRoom)
-                        .content("제 우산 같아요")
+                        .content("제 카드지갑 같아요")
                         .messageType(MessageType.TEXT)
                         .createdAt(LocalDateTime.of(2026, 9, 10, 11, 5))
                         .build());
-                authorParticipant.updateLastMessage(message);
-                contactParticipant.updateLastMessage(message);
                 authorParticipant.leftChatRoom(message.getId());
+                contactParticipant.leftChatRoom(message.getId());
                 chatRoomRepository.flush();
 
                 // when
-                long result = chatRoomParticipantRepository.countActiveChatRoomsByUser(author);
+                long result = chatRoomRepository.countChatRoomsWithMessageByPostId(post.getId());
 
                 // then
-                assertThat(result).isZero();
+                assertThat(result).isEqualTo(1);
             }
         }
     }
