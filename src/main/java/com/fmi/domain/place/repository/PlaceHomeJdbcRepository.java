@@ -87,11 +87,11 @@ public class PlaceHomeJdbcRepository implements PlaceHomeRepository {
 
     @Override
     public List<HomePlace> findHomePlaces(
-            LocalDateTime nowInUtc, DayOfWeek today, DayOfWeek yesterday, Long userId, LanguageCode language) {
+            LocalDateTime now, DayOfWeek today, DayOfWeek yesterday, Long userId, LanguageCode language) {
         return jdbcTemplate.query(
                 FIND_HOME_PLACES,
                 new HomePlaceResultSetExtractor(),
-                nowInUtc,
+                now,
                 language.name(),
                 today.name(),
                 yesterday.name(),
@@ -101,7 +101,7 @@ public class PlaceHomeJdbcRepository implements PlaceHomeRepository {
     @Override
     public List<HomePlace> findHomePlaces(
             PlaceType type,
-            LocalDateTime nowInUtc,
+            LocalDateTime now,
             DayOfWeek today,
             DayOfWeek yesterday,
             Long userId,
@@ -110,7 +110,7 @@ public class PlaceHomeJdbcRepository implements PlaceHomeRepository {
                 FIND_HOME_PLACES_BY_TYPE,
                 new HomePlaceResultSetExtractor(),
                 type.name(),
-                nowInUtc,
+                now,
                 language.name(),
                 today.name(),
                 yesterday.name(),
