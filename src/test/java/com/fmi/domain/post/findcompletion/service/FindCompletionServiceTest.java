@@ -88,12 +88,14 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
             void itSavesCompletionAndMarksPostFound() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("완료작성자")
                         .email("completion-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("완료도움자")
                         .email("completion-helper@test.com")
                         .password("password")
@@ -141,12 +143,14 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
             void itRecordsReturnCompletedForHelper() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("온도작성자")
                         .email("temperature-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("온도도움자")
                         .email("temperature-helper@test.com")
                         .password("password")
@@ -184,12 +188,12 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
                                         && activity.getActivityType() == TemperatureActivityType.RETURN_COMPLETED))
                         .singleElement()
                         .satisfies(activity -> {
-                            assertThat(activity.getUserId()).isEqualTo(helper.getId());
+                            assertThat(activity.getUser().getId()).isEqualTo(helper.getId());
                             assertThat(activity.getDeltaTenths()).isEqualTo(20);
                             assertThat(activity.getOccurredAt()).isEqualTo(result.getCreatedAt());
                         });
                 assertThat(temperatureActivityRepository.findAll().stream()
-                                .filter(activity -> activity.getUserId().equals(author.getId())))
+                                .filter(activity -> activity.getUser().getId().equals(author.getId())))
                         .isEmpty();
             }
 
@@ -198,18 +202,21 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
             void itNotifiesFavoriteUsers() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("알림작성자")
                         .email("notify-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("알림도움자")
                         .email("notify-helper@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User favoriteUser = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("즐겨찾기사용자")
                         .email("notify-favorite@test.com")
                         .password("password")
@@ -258,12 +265,14 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
             void itThrowsAccessDenied() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("권한작성자")
                         .email("auth-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("권한도움자")
                         .email("auth-helper@test.com")
                         .password("password")
@@ -309,12 +318,14 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
             void itThrowsInvalidPostType() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("습득작성자")
                         .email("found-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User owner = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("습득주인")
                         .email("found-owner@test.com")
                         .password("password")
@@ -360,18 +371,21 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
             void itThrowsAlreadyCompleted() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("중복작성자")
                         .email("duplicate-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User firstHelper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("첫도움자")
                         .email("duplicate-first@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User secondHelper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("둘째도움자")
                         .email("duplicate-second@test.com")
                         .password("password")
@@ -432,12 +446,14 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
             void itThrowsNotAllowed() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("탈퇴상대작성자")
                         .email("탈퇴상대-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("탈퇴상대도움자")
                         .email("탈퇴상대-helper@test.com")
                         .password("password")
@@ -484,12 +500,14 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
             void itThrowsNotAllowed() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("차단상대작성자")
                         .email("차단상대-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("차단상대도움자")
                         .email("차단상대-helper@test.com")
                         .password("password")
@@ -538,18 +556,21 @@ class FindCompletionServiceTest extends IntegrationTestSupport {
             void itCompletesOnlyOnce() throws Exception {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("동시작성자")
                         .email("concurrent-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User firstHelper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("동시첫도움자")
                         .email("concurrent-first@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User secondHelper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("동시둘째도움자")
                         .email("concurrent-second@test.com")
                         .password("password")

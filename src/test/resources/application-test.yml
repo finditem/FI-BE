@@ -10,7 +10,7 @@ spring:
     show-sql: false
     open-in-view: false
     hibernate:
-      ddl-auto: create
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: false
@@ -18,7 +18,7 @@ spring:
           time_zone: Asia/Seoul
     database-platform: org.hibernate.dialect.MySQL8Dialect
   flyway:
-    enabled: false
+    enabled: true
     locations: classpath:db/migration
   data:
     redis:

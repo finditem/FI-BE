@@ -41,6 +41,7 @@ class NotificationSettingsServiceTest extends IntegrationTestSupport {
         @DisplayName("첫 조회에 기본 설정을 저장하고 변경한 댓글 알림 설정을 유지한다")
         void itCreatesAndUpdatesSettings() throws Exception {
             User member = userRepository.save(User.builder()
+                    .profile_img("")
                     .email("structure-settings@test.com")
                     .nickname("구조설정회원")
                     .password("test-password")

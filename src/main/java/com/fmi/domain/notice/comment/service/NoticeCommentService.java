@@ -228,7 +228,7 @@ public class NoticeCommentService {
             List<String> oldUrls =
                     existingImages.stream().map(NoticeCommentImage::getImgUrl).toList();
             s3Service.delete(oldUrls);
-            noticeCommentImageRepository.deleteAllByCommentId(commentId);
+            noticeCommentImageRepository.deleteAll(existingImages);
         }
 
         List<NoticeCommentImage> savedImages = uploadImages(images, comment);
@@ -257,11 +257,11 @@ public class NoticeCommentService {
         List<NoticeCommentImage> images = noticeCommentImageRepository.findByComment_Id(commentId);
         if (!images.isEmpty()) {
             s3Service.delete(images.stream().map(NoticeCommentImage::getImgUrl).toList());
-            noticeCommentImageRepository.deleteAllByCommentId(commentId);
+            noticeCommentImageRepository.deleteAll(images);
         }
 
         // 대댓글이 있으면 소프트 삭제, 없으면 하드 삭제
-        if (!comment.getReplies().isEmpty()) {
+        if (noticeCommentRepository.existsByParent_Id(commentId)) {
             comment.softDelete();
         } else {
             noticeCommentRepository.delete(comment);

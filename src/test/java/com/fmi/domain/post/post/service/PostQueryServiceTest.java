@@ -56,6 +56,7 @@ class PostQueryServiceTest extends IntegrationTestSupport {
         void itCountsDailyViewsOnce(boolean authenticated) {
             // given
             User author = userRepository.save(User.builder()
+                    .profile_img("")
                     .nickname("조회수작성자")
                     .email("view-author@test.com")
                     .password("password")
@@ -114,6 +115,7 @@ class PostQueryServiceTest extends IntegrationTestSupport {
         void itSkipsUnknownGuestIp(String clientIp) {
             // given
             User author = userRepository.save(User.builder()
+                    .profile_img("")
                     .nickname("비회원조회작성자")
                     .email("guest-view-author@test.com")
                     .password("password")

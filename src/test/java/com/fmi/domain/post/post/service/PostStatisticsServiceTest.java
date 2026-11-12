@@ -124,6 +124,7 @@ class PostStatisticsServiceTest extends IntegrationTestSupport {
         @DisplayName("공개 작성과 삭제를 기록하고 동시 삭제는 한 번만 집계한다")
         void itRecordsCreationAndConcurrentDeletionOnce() throws Exception {
             User user = User.builder()
+                    .profile_img("")
                     .email("post-stats-" + UUID.randomUUID() + "@example.com")
                     .nickname("글통계" + UUID.randomUUID().toString().substring(0, 8))
                     .password("test-password")
@@ -174,6 +175,7 @@ class PostStatisticsServiceTest extends IntegrationTestSupport {
         @DisplayName("임시저장의 최초 공개만 기록하고 공개 취소를 거부한다")
         void itRecordsFirstPublicationAndRejectsDraftReversion() {
             User user = User.builder()
+                    .profile_img("")
                     .email("draft-stats-" + UUID.randomUUID() + "@example.com")
                     .nickname("임시통계" + UUID.randomUUID().toString().substring(0, 8))
                     .password("test-password")
@@ -216,6 +218,7 @@ class PostStatisticsServiceTest extends IntegrationTestSupport {
         @DisplayName("일괄 삭제는 공개 글만 집계하고 rollback 후 통계와 삭제 상태를 복원한다")
         void itCountsPublishedBulkRemovalAndRollsBack() {
             User user = User.builder()
+                    .profile_img("")
                     .email("bulk-stats-" + UUID.randomUUID() + "@example.com")
                     .nickname("일괄통계" + UUID.randomUUID().toString().substring(0, 8))
                     .password("test-password")
@@ -272,6 +275,7 @@ class PostStatisticsServiceTest extends IntegrationTestSupport {
         void itRollsBackPostWhenStatisticsSqlFails() {
             jdbc.update("DELETE FROM post_statistics");
             User user = User.builder()
+                    .profile_img("")
                     .email("failure-stats-" + UUID.randomUUID() + "@example.com")
                     .nickname("실패통계" + UUID.randomUUID().toString().substring(0, 8))
                     .password("test-password")

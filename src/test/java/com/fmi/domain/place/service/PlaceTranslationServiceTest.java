@@ -130,6 +130,7 @@ class PlaceTranslationServiceTest extends IntegrationTestSupport {
                     "Seongsu Station");
             Long id = placeService.create(command, thumbnail);
             User user = users.save(User.builder()
+                    .profile_img("")
                     .nickname("번역 조회")
                     .email("place-language@test.com")
                     .password("password")
@@ -393,6 +394,7 @@ class PlaceTranslationServiceTest extends IntegrationTestSupport {
                 }
             }
             User viewer = users.save(User.builder()
+                    .profile_img("")
                     .nickname("영문 선호 관리자")
                     .email("place-http-admin@test.com")
                     .password("password")

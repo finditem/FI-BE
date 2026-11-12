@@ -147,6 +147,7 @@ class UserStatisticsServiceTest extends IntegrationTestSupport {
         void itPreservesZeroOpeningAndStartTime() {
             jdbc.update("UPDATE user_statistics SET opening_user_count=0");
             User user = User.builder()
+                    .profile_img("")
                     .role(Role.USER)
                     .privacyPolicyAgreed(true)
                     .termsOfServiceAgreed(true)
@@ -197,6 +198,7 @@ class UserStatisticsServiceTest extends IntegrationTestSupport {
         @DisplayName("동시 약관 동의를 한 번 집계하고 회원 정보 삭제 후에도 과거 수치를 유지한다")
         void itCountsConcurrentTermsOnceAndPreservesAfterDeletion() throws Exception {
             User user = User.builder()
+                    .profile_img("")
                     .email("social-stats-" + UUID.randomUUID() + "@example.com")
                     .nickname("소셜" + UUID.randomUUID().toString().substring(0, 8))
                     .password("test-password")
@@ -238,6 +240,7 @@ class UserStatisticsServiceTest extends IntegrationTestSupport {
         @DisplayName("같은 날짜의 동시 증가를 유실하지 않고 관리자와 미동의 회원은 제외한다")
         void itKeepsConcurrentIncrementsAndExcludesIneligibleUsers() throws Exception {
             User user = User.builder()
+                    .profile_img("")
                     .role(Role.USER)
                     .privacyPolicyAgreed(true)
                     .termsOfServiceAgreed(true)
@@ -254,11 +257,12 @@ class UserStatisticsServiceTest extends IntegrationTestSupport {
                 pool.shutdownNow();
             }
             User admin = User.builder()
+                    .profile_img("")
                     .role(Role.ADMIN)
                     .privacyPolicyAgreed(true)
                     .termsOfServiceAgreed(true)
                     .build();
-            User pending = User.builder().role(Role.USER).build();
+            User pending = User.builder().profile_img("").role(Role.USER).build();
             new TransactionTemplate(transactions).executeWithoutResult(status -> {
                 recorder.recordSignup(admin, LocalDateTime.of(2026, 9, 10, 12, 0));
                 recorder.recordSignup(pending, LocalDateTime.of(2026, 9, 10, 12, 0));
@@ -357,6 +361,7 @@ class UserStatisticsServiceTest extends IntegrationTestSupport {
             jdbc.update(
                     "INSERT INTO post_statistics (statistics_date,started_at,opening_post_count) VALUES ('2026-09-08','2026-09-08 12:00:00',1)");
             User user = User.builder()
+                    .profile_img("")
                     .email("withdraw-stats-" + UUID.randomUUID() + "@example.com")
                     .nickname("탈퇴통계" + UUID.randomUUID().toString().substring(0, 8))
                     .password("test-password")

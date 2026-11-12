@@ -72,12 +72,14 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itPagesWithCursor() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("페이지작성자")
                         .email("page-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("페이지수신자")
                         .email("page-recipient@test.com")
                         .password("password")
@@ -129,12 +131,14 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itReturnsSentReviews() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("보낸탭작성자")
                         .email("sent-tab-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("보낸탭수신자")
                         .email("sent-tab-recipient@test.com")
                         .password("password")
@@ -175,12 +179,14 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itExcludesHiddenReviews() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("내목록작성자")
                         .email("my-hidden-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("내목록수신자")
                         .email("my-hidden-recipient@test.com")
                         .password("password")
@@ -227,12 +233,14 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itIncludesHiddenReviewsWithoutCount() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("프로필작성자")
                         .email("profile-hidden-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("프로필수신자")
                         .email("profile-hidden-recipient@test.com")
                         .password("password")
@@ -278,12 +286,14 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itReturnsReviewWithPost() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("상세작성자")
                         .email("상세-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("상세도움자")
                         .email("상세-helper@test.com")
                         .password("password")
@@ -342,12 +352,14 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itReturnsSnapshotThumbnail() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("삭제글작성자")
                         .email("삭제글-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("삭제글도움자")
                         .email("삭제글-helper@test.com")
                         .password("password")
@@ -406,12 +418,14 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itReturnsChatRoomSnapshot() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("스냅샷작성자")
                         .email("스냅샷-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("스냅샷도움자")
                         .email("스냅샷-helper@test.com")
                         .password("password")
@@ -459,12 +473,14 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itReturnsHiddenReview() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("숨김상세작성자")
                         .email("숨김상세-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("숨김상세도움자")
                         .email("숨김상세-helper@test.com")
                         .password("password")
@@ -501,18 +517,21 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itReturnsChatRoomId() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("당사자작성자")
                         .email("당사자-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("당사자도움자")
                         .email("당사자-helper@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User other = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("당사자제3자")
                         .email("당사자-other@test.com")
                         .password("password")
@@ -552,18 +571,21 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itThrowsAccessDenied() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("제3자조회작성자")
                         .email("제3자조회-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("제3자조회도움자")
                         .email("제3자조회-helper@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User other = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("제3자조회제3자")
                         .email("제3자조회-other@test.com")
                         .password("password")
@@ -602,12 +624,14 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itReadsHelpTypesWithoutSession() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("세션밖작성자")
                         .email("outside-tx-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("세션밖도움자")
                         .email("outside-tx-helper@test.com")
                         .password("password")
@@ -648,12 +672,14 @@ class ReviewQueryServiceTest extends IntegrationTestSupport {
             void itThrowsNotFound() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("삭제후기작성자")
                         .email("삭제후기-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User helper = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("삭제후기도움자")
                         .email("삭제후기-helper@test.com")
                         .password("password")

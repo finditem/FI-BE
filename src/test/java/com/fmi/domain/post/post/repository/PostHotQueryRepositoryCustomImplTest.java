@@ -40,6 +40,7 @@ class PostHotQueryRepositoryCustomImplTest extends IntegrationTestSupport {
         void itFiltersByAddressAndOtherConditions(String address) {
             // given
             User author = userRepository.save(User.builder()
+                    .profile_img("")
                     .nickname("주소검색작성자")
                     .email("address@test.com")
                     .password("password")

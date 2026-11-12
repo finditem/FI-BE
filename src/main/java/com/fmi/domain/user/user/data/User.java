@@ -1,7 +1,6 @@
 package com.fmi.domain.user.user.data;
 
 import com.fmi.domain.auth.data.enums.WithdrawalReason;
-import com.fmi.domain.chat.room.data.ChatRoomParticipant;
 import com.fmi.domain.user.user.data.enums.LanguageCode;
 import com.fmi.domain.user.user.data.enums.Role;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
@@ -9,7 +8,6 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.*;
@@ -83,10 +81,6 @@ public class User {
     private boolean termsOfServiceAgreed; // 이용약관 동의
     private boolean contentPolicyAgreed; // 콘텐츠 활용 동의
     private boolean marketingConsent; // 마케팅 수신 동의
-
-    @OneToMany(mappedBy = "user")
-    @Builder.Default
-    private List<ChatRoomParticipant> chatRoomParticipants = new ArrayList<>();
 
     public boolean isStatisticsMember() {
         return role == Role.USER && deletedAt == null && privacyPolicyAgreed && termsOfServiceAgreed;
