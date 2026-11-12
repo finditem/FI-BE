@@ -53,12 +53,14 @@ class ReviewRepositoryTest extends IntegrationTestSupport {
             void itOrdersByCreatedAtAndId() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("목록작성자")
                         .email("order-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("목록수신자")
                         .email("order-recipient@test.com")
                         .password("password")
@@ -110,12 +112,14 @@ class ReviewRepositoryTest extends IntegrationTestSupport {
             void itReturnsReviewsAfterCursor() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("목록작성자")
                         .email("cursor-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("목록수신자")
                         .email("cursor-recipient@test.com")
                         .password("password")
@@ -162,12 +166,14 @@ class ReviewRepositoryTest extends IntegrationTestSupport {
             void itExcludesHiddenReviews() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("숨김제외작성자")
                         .email("숨김제외-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("숨김제외수신자")
                         .email("숨김제외-recipient@test.com")
                         .password("password")
@@ -210,12 +216,14 @@ class ReviewRepositoryTest extends IntegrationTestSupport {
             void itIncludesHiddenReviews() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("숨김포함작성자")
                         .email("숨김포함-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("숨김포함수신자")
                         .email("숨김포함-recipient@test.com")
                         .password("password")
@@ -258,6 +266,7 @@ class ReviewRepositoryTest extends IntegrationTestSupport {
             void itIncludesReviewsOfWithdrawnAuthors() {
                 // given
                 User softDeletedAuthor = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("탈퇴작성자")
                         .email("withdrawn-soft@test.com")
                         .password("password")
@@ -265,12 +274,14 @@ class ReviewRepositoryTest extends IntegrationTestSupport {
                         .deletedAt(LocalDateTime.of(2026, 9, 1, 10, 0))
                         .build());
                 User hardDeletedAuthor = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("하드삭제작성자")
                         .email("withdrawn-harddeletedauthor@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("탈퇴후기수신자")
                         .email("withdrawn-recipient@test.com")
                         .password("password")
@@ -321,12 +332,14 @@ class ReviewRepositoryTest extends IntegrationTestSupport {
             void itExcludesDeletedReviews() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("목록작성자")
                         .email("deleted-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("목록수신자")
                         .email("deleted-recipient@test.com")
                         .password("password")
@@ -374,12 +387,14 @@ class ReviewRepositoryTest extends IntegrationTestSupport {
             void itExcludesHiddenByAuthor() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("목록작성자")
                         .email("sent-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User recipient = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("목록수신자")
                         .email("sent-recipient@test.com")
                         .password("password")
@@ -424,12 +439,14 @@ class ReviewRepositoryTest extends IntegrationTestSupport {
         void itGroupsHelpTypesByReview() {
             // given
             User author = userRepository.save(User.builder()
+                    .profile_img("")
                     .nickname("목록작성자")
                     .email("help-author@test.com")
                     .password("password")
                     .role(Role.USER)
                     .build());
             User recipient = userRepository.save(User.builder()
+                    .profile_img("")
                     .nickname("목록수신자")
                     .email("help-recipient@test.com")
                     .password("password")

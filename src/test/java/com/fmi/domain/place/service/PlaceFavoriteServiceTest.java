@@ -84,6 +84,7 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
             void itKeepsOneFavoriteWithoutUpdatingTimestamp() {
                 // given
                 User user = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("즐겨찾기반복사용자")
                         .email("favorite-repeat@test.com")
                         .password("password")
@@ -111,18 +112,18 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
                 // when
                 placeFavoriteService.save(place.getId(), user.getEmail());
                 PlaceFavorite first = placeFavoriteRepository
-                        .findByUserIdAndPlaceId(user.getId(), place.getId())
+                        .findByUser_IdAndPlace_Id(user.getId(), place.getId())
                         .orElseThrow();
                 LocalDateTime firstUpdatedAt = first.getUpdatedAt();
                 placeFavoriteService.save(place.getId(), user.getEmail());
                 PlaceFavorite repeated = placeFavoriteRepository
-                        .findByUserIdAndPlaceId(user.getId(), place.getId())
+                        .findByUser_IdAndPlace_Id(user.getId(), place.getId())
                         .orElseThrow();
 
                 // then
                 assertThat(placeFavoriteRepository.findAll())
-                        .filteredOn(favorite -> favorite.getUserId().equals(user.getId())
-                                && favorite.getPlaceId().equals(place.getId()))
+                        .filteredOn(favorite -> favorite.getUser().getId().equals(user.getId())
+                                && favorite.getPlace().getId().equals(place.getId()))
                         .hasSize(1);
                 assertThat(repeated.isFavorite()).isTrue();
                 assertThat(repeated.getUpdatedAt()).isEqualTo(firstUpdatedAt);
@@ -138,6 +139,7 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
             void itCreatesOneFavoriteWithoutConflict() throws Exception {
                 // given
                 User user = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("즐겨찾기동시사용자")
                         .email("favorite-concurrent@test.com")
                         .password("password")
@@ -190,8 +192,8 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
                     executor.shutdownNow();
                 }
                 assertThat(placeFavoriteRepository.findAll())
-                        .filteredOn(favorite -> favorite.getUserId().equals(user.getId())
-                                && favorite.getPlaceId().equals(place.getId()))
+                        .filteredOn(favorite -> favorite.getUser().getId().equals(user.getId())
+                                && favorite.getPlace().getId().equals(place.getId()))
                         .hasSize(1);
             }
         }
@@ -205,6 +207,7 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
             void itRejectsDeletedPlace() {
                 // given
                 User user = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("삭제장소저장사용자")
                         .email("favorite-deleted@test.com")
                         .password("password")
@@ -244,6 +247,7 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
             void itKeepsCanceledStateWithoutUpdatingTimestampAgain() {
                 // given
                 User user = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("즐겨찾기취소사용자")
                         .email("favorite-cancel@test.com")
                         .password("password")
@@ -259,20 +263,18 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
                         .type(PlaceType.CAFE)
                         .thumbnailUrl("thumbnail-url")
                         .build());
-                placeFavoriteRepository.saveAndFlush(PlaceFavorite.builder()
-                        .userId(user.getId())
-                        .placeId(place.getId())
-                        .build());
+                placeFavoriteRepository.saveAndFlush(
+                        PlaceFavorite.builder().user(user).place(place).build());
 
                 // when
                 placeFavoriteService.cancel(place.getId(), user.getEmail());
                 PlaceFavorite canceled = placeFavoriteRepository
-                        .findByUserIdAndPlaceId(user.getId(), place.getId())
+                        .findByUser_IdAndPlace_Id(user.getId(), place.getId())
                         .orElseThrow();
                 LocalDateTime canceledAt = canceled.getUpdatedAt();
                 placeFavoriteService.cancel(place.getId(), user.getEmail());
                 PlaceFavorite repeated = placeFavoriteRepository
-                        .findByUserIdAndPlaceId(user.getId(), place.getId())
+                        .findByUser_IdAndPlace_Id(user.getId(), place.getId())
                         .orElseThrow();
 
                 // then
@@ -295,6 +297,7 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
             void itPaginatesVisiblePlacesWithoutDuplicates() {
                 // given
                 User user = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("즐겨찾기목록사용자")
                         .email("favorite-list@test.com")
                         .password("password")
@@ -372,13 +375,11 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
                 allPlaces.add(deletedPlace);
                 allPlaces.add(canceledPlace);
                 for (Place place : allPlaces) {
-                    placeFavoriteRepository.save(PlaceFavorite.builder()
-                            .userId(user.getId())
-                            .placeId(place.getId())
-                            .build());
+                    placeFavoriteRepository.save(
+                            PlaceFavorite.builder().user(user).place(place).build());
                 }
                 PlaceFavorite canceledFavorite = placeFavoriteRepository
-                        .findByUserIdAndPlaceId(user.getId(), canceledPlace.getId())
+                        .findByUser_IdAndPlace_Id(user.getId(), canceledPlace.getId())
                         .orElseThrow();
                 canceledFavorite.unfavorite();
                 placeFavoriteRepository.saveAndFlush(canceledFavorite);
@@ -437,6 +438,7 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
             void itReturnsZeroCount() {
                 // given
                 User user = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("빈목록사용자")
                         .email("favorite-empty@test.com")
                         .password("password")
@@ -464,6 +466,7 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
             void itCountsOnlyPopupBeforeClosing(long secondsUntilClosing, long expectedCount) {
                 // given
                 User user = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("팝업찜사용자" + secondsUntilClosing)
                         .email("favorite-boundary-" + secondsUntilClosing + "@test.com")
                         .password("password")
@@ -494,10 +497,8 @@ class PlaceFavoriteServiceTest extends IntegrationTestSupport {
                                         PlaceBusinessHourType.BUSINESS, LocalTime.of(10, 0), LocalTime.of(22, 0)))
                                 .build()));
                 placeRepository.save(popup);
-                placeFavoriteRepository.saveAndFlush(PlaceFavorite.builder()
-                        .userId(user.getId())
-                        .placeId(popup.getId())
-                        .build());
+                placeFavoriteRepository.saveAndFlush(
+                        PlaceFavorite.builder().user(user).place(popup).build());
 
                 // when
                 FavoritePlacePage page = placeFavoriteService.getFavorites(user.getEmail(), null, 20);

@@ -50,12 +50,14 @@ class PostFavoriteServiceTest extends IntegrationTestSupport {
         void itReturnsFilteredActiveFavoritesWithCursor() {
             // given
             User requester = userRepository.save(User.builder()
+                    .profile_img("")
                     .nickname("조회자")
                     .email("post-favorite-requester@test.com")
                     .password("password")
                     .role(Role.USER)
                     .build());
             User other = userRepository.save(User.builder()
+                    .profile_img("")
                     .nickname("다른회원")
                     .email("post-favorite-other@test.com")
                     .password("password")
@@ -131,6 +133,7 @@ class PostFavoriteServiceTest extends IntegrationTestSupport {
         void itReturnsEmptyPage() {
             // given
             User requester = userRepository.save(User.builder()
+                    .profile_img("")
                     .nickname("빈목록조회자")
                     .email("post-favorite-empty@test.com")
                     .password("password")

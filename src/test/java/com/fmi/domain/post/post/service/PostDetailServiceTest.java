@@ -54,12 +54,14 @@ class PostDetailServiceTest extends IntegrationTestSupport {
         @DisplayName("알림 처리 실패 여부와 관계없이 먼저 집계된 조회수는 유지한다")
         void itPreservesCommittedViewCountWhenNotificationFails(boolean failNotification) {
             User author = userRepository.save(User.builder()
+                    .profile_img("")
                     .email("structure-detail-author@test.com")
                     .nickname("구조상세작성자")
                     .password("test-password")
                     .role(Role.USER)
                     .build());
             User viewer = userRepository.save(User.builder()
+                    .profile_img("")
                     .email("structure-detail-viewer@test.com")
                     .nickname("구조상세조회자")
                     .password("test-password")

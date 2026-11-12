@@ -411,8 +411,3 @@ CREATE TABLE IF NOT EXISTS `ip_blacklist` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `UKgrg4if1re8s6hk4pitsdjrgpq` (`ip`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- FULLTEXT 인덱스 (ngram parser, 한국어 검색 지원)
-ALTER TABLE notice ADD FULLTEXT INDEX ft_notice_title_content (title, content) WITH PARSER ngram;
-ALTER TABLE customer_inquiry ADD FULLTEXT INDEX ft_inquiry_title_content (title, content) WITH PARSER ngram;
-ALTER TABLE report ADD FULLTEXT INDEX ft_report_reason (reason) WITH PARSER ngram;

@@ -49,7 +49,7 @@ class PostServiceCreateTest extends IntegrationTestSupport {
 
             // then
             assertThat(temperatureActivityRepository.findAll().stream()
-                            .filter(activity -> activity.getUserId().equals(author.getId())))
+                            .filter(activity -> activity.getUser().getId().equals(author.getId())))
                     .singleElement()
                     .satisfies(activity -> {
                         assertThat(activity.getActivityType()).isEqualTo(TemperatureActivityType.FOUND_POST);
@@ -70,13 +70,14 @@ class PostServiceCreateTest extends IntegrationTestSupport {
 
             // then
             assertThat(temperatureActivityRepository.findAll().stream()
-                            .filter(activity -> activity.getUserId().equals(author.getId())))
+                            .filter(activity -> activity.getUser().getId().equals(author.getId())))
                     .isEmpty();
         }
     }
 
     private User saveUser(String email) {
         return userRepository.save(User.builder()
+                .profile_img("")
                 .nickname("게시글작성자")
                 .email(email)
                 .password("password")

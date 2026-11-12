@@ -1,13 +1,17 @@
 package com.fmi.domain.user.temperature.data;
 
 import com.fmi.domain.user.temperature.data.enums.TemperatureActivityType;
+import com.fmi.domain.user.user.data.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
@@ -15,6 +19,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 // 온도 산정 원장. 원본 게시글이나 후기가 삭제되어도 기록은 유지한다.
 @Entity
@@ -32,8 +38,10 @@ public class TemperatureActivity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false, updatable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "user_id", nullable = false, updatable = false)
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "activity_type", nullable = false, updatable = false, length = 30)
@@ -51,8 +59,8 @@ public class TemperatureActivity {
 
     @Builder
     private TemperatureActivity(
-            Long userId, TemperatureActivityType activityType, Long sourceId, LocalDateTime occurredAt) {
-        this.userId = userId;
+            User user, TemperatureActivityType activityType, Long sourceId, LocalDateTime occurredAt) {
+        this.user = user;
         this.activityType = activityType;
         this.sourceId = sourceId;
         this.deltaTenths = activityType.getDeltaTenths();

@@ -38,6 +38,7 @@ class UserLanguageServiceTest extends IntegrationTestSupport {
         @DisplayName("회원의 언어를 변경하고 후속 조회에서도 유지한다")
         void itPersistsPreferredLanguage() throws Exception {
             User member = userRepository.save(User.builder()
+                    .profile_img("")
                     .email("structure-language@test.com")
                     .nickname("구조언어회원")
                     .password("test-password")

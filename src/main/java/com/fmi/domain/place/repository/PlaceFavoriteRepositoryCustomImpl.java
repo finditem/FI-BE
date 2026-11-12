@@ -20,14 +20,13 @@ public class PlaceFavoriteRepositoryCustomImpl implements PlaceFavoriteRepositor
         return queryFactory
                 .select(placeFavorite.count())
                 .from(placeFavorite)
-                .join(place)
-                .on(place.id.eq(placeFavorite.placeId))
+                .join(placeFavorite.place, place)
                 .leftJoin(placeOperationPeriod)
                 .on(
                         placeOperationPeriod.place.id.eq(place.id),
                         placeOperationPeriod.entityStatus.eq(EntityStatus.ACTIVE))
                 .where(
-                        placeFavorite.userId.eq(userId),
+                        placeFavorite.user.id.eq(userId),
                         placeFavorite.favorite.isTrue(),
                         placeFavorite.entityStatus.eq(EntityStatus.ACTIVE),
                         place.entityStatus.eq(EntityStatus.ACTIVE),

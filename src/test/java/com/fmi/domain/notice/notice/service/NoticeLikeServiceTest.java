@@ -41,6 +41,7 @@ class NoticeLikeServiceTest extends IntegrationTestSupport {
         @DisplayName("중복 좋아요는 한 번만 집계하고 취소하면 원래 개수로 돌아간다")
         void itKeepsDuplicateLikesIdempotent() throws Exception {
             User member = userRepository.save(User.builder()
+                    .profile_img("")
                     .email("structure-notice-like@test.com")
                     .nickname("구조공지회원")
                     .password("test-password")

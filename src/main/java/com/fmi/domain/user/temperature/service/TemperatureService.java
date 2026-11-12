@@ -5,6 +5,7 @@ import com.fmi.domain.user.temperature.data.TemperatureActivity;
 import com.fmi.domain.user.temperature.data.enums.TemperatureActivityType;
 import com.fmi.domain.user.temperature.repository.TemperatureActivityRepository;
 import com.fmi.domain.user.temperature.repository.UserTemperatureRepository;
+import com.fmi.domain.user.user.repository.UserRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class TemperatureService {
     private final TemperatureActivityRepository temperatureActivityRepository;
     private final UserTemperatureRepository userTemperatureRepository;
     private final Clock clock;
+    private final UserRepository userRepository;
 
     // 활동을 만든 Use Case의 transaction에 참여해 원장이 빠지지 않게 한다. 온도는 다음 정기 계산에 반영된다.
     @Transactional
@@ -29,7 +31,7 @@ public class TemperatureService {
             return;
         }
         temperatureActivityRepository.save(TemperatureActivity.builder()
-                .userId(userId)
+                .user(userRepository.getReferenceById(userId))
                 .activityType(type)
                 .sourceId(sourceId)
                 .occurredAt(occurredAt)

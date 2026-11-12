@@ -12,7 +12,7 @@
 | `service/internal` 분리 | [Domain Boundaries](domain-boundaries.md) | 조회, 검증, 계산 등의 독립 책임과 재사용 필요가 실제로 있습니까? 분리 시점은 팀과 논의합니다. |
 | Repository 구성과 분리 | [Repository 분리 기준](repository-boundaries.md) | 기존 업무 Repository 또는 기본 Repository의 책임입니까? 업무 고유의 조회가 독립적인 책임을 이룹니까? |
 | JPA Repository, QueryDSL, native SQL, JDBC | [Persistence](persistence.md#조회-기술-선택) | 단순 저장입니까, 목록과 집계입니까? 복잡한 QueryDSL보다 SQL이 의도를 명확히 드러냅니까? 선택 이유를 작업 보고에서 설명하고 MySQL 테스트를 작성합니다. |
-| JPA 연관관계 | [Persistence](persistence.md) | ID만 필요합니까, 연관 객체의 의미와 데이터가 필요합니까? 필요한 관계를 매핑하고 조회 시 N+1과 과도한 로딩을 방지합니다. |
+| JPA 연관관계 | [Persistence](persistence.md) | 다대일 단방향을 기본으로 관계를 표현합니까? 양방향 유지와 ID 참조 예외가 영속성 기준에 맞으며 N+1과 과도한 로딩을 방지합니까? |
 | DB 제약 | [Persistence](persistence.md) | 참조 무결성과 유일성을 동시 요청에서도 보장해야 합니까? |
 | port와 외부 client | [Domain Boundaries](domain-boundaries.md) | 도입 기준은 팀 논의 대상입니다. 공급자 API를 업무 규칙으로 끌어오지 않습니다. |
 | 오류 발생 위치 | [Error Handling](../contributing/error-handling.md) | 입력 형식, 업무 검증, 조회 부재, 인프라 실패 중 어디서 결정할 오류입니까? |

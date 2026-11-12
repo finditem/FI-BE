@@ -21,6 +21,8 @@ Web 테스트는 보안과 쿠키 계약만 검증합니다. DTO 바인딩, Bean
 
 통합 테스트 설정은 `src/test/resources/application-test.yml`에서 관리합니다. 통합 테스트는 `test` 프로필로 실행합니다.
 
+통합 테스트는 빈 MySQL에 Flyway migration을 적용하고 `ddl-auto=validate`로 전체 Entity 매핑을 검증한 뒤 실행합니다. `./gradlew test`에 스키마 정합성 검증을 포함하며, HTTP와 WebSocket 회귀 테스트도 같은 설정을 사용합니다.
+
 애플리케이션 설정 항목을 추가하거나 삭제할 때는 `application-local.yml`과 `application-test.yml`을 함께 확인합니다. 포트, 로깅, 데이터베이스 초기화 방식처럼 환경마다 다른 동작이 필요한 값은 테스트 환경에 맞게 설정합니다.
 
 인증 정보와 외부 서비스 설정에는 실제 값을 사용하지 않습니다. `test-` 접두사를 붙인 임의 값처럼 운영 환경에서 사용할 수 없는 테스트 전용 값을 입력합니다. 외부 HTTP 연동 주소는 WireMock 서버를 가리키도록 설정합니다.
