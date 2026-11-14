@@ -53,7 +53,7 @@ public class User {
     @Column(name = "temporary_password_expires_at")
     private LocalDateTime temporaryPasswordExpiresAt; // 임시 비밀번호 만료 시간
 
-    @Column(name = "profile_img")
+    @Column(name = "profile_img", length = 1000)
     private String profile_img;
 
     @CreatedDate
