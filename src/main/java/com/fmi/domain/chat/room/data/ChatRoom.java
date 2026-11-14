@@ -47,6 +47,7 @@ public class ChatRoom {
     @Enumerated(EnumType.STRING)
     private PostStatus sourcePostStatus;
 
+    @Column(length = 512)
     private String sourceThumbnailUrl;
 
     private boolean sourcePostDeleted;
