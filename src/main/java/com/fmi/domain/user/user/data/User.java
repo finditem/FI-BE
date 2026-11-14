@@ -34,7 +34,7 @@ public class User {
     @Email @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "email_verified")
+    @Column(name = "email_verified", nullable = false)
     private boolean email_verified;
 
     @Enumerated(EnumType.STRING) // 여기서 STRING으로 매핑
