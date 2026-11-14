@@ -30,19 +30,19 @@ public class Notice {
     @Builder.Default
     private NoticeCategory category = NoticeCategory.GENERAL;
 
-    @Column(name = "pinned")
+    @Column(name = "pinned", nullable = false)
     @Builder.Default
     private Boolean pinned = false;
 
-    @Column(name = "view_cnt")
+    @Column(name = "view_cnt", nullable = false)
     @Builder.Default
     private Integer viewCount = 0;
 
-    @Column(name = "like_count")
+    @Column(name = "like_count", nullable = false)
     @Builder.Default
     private Integer likeCount = 0;
 
-    @Column(name = "draft")
+    @Column(name = "draft", nullable = false)
     @Builder.Default
     private Boolean draft = false;
 
