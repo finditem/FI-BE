@@ -1,5 +1,3 @@
--- 채팅방의 게시글 썸네일 URL은 V4에서 varchar(512)로 정의했다.
--- 개발 환경의 ddl-auto=update가 Entity 기준으로 먼저 만든 컬럼은 255이므로, 512 미만일 때만 확장한다.
 SET @finditem_chat_room_thumbnail_ddl = (
     SELECT IF(
         COUNT(*) > 0,
