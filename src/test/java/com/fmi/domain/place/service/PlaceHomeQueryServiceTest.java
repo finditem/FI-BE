@@ -197,14 +197,15 @@ class PlaceHomeQueryServiceTest extends IntegrationTestSupport {
                                 "저장한 카페", "서울 성동구", 37.54, 127.05, "성수역", 100, PlaceType.CAFE, null, null, schedules),
                         new MockMultipartFile("thumbnail", "favorite.png", "image/png", new byte[] {1}));
                 User user = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("장소사용자")
                         .email("place-user@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 placeFavoriteRepository.save(PlaceFavorite.builder()
-                        .userId(user.getId())
-                        .placeId(placeId)
+                        .user(user)
+                        .place(placeRepository.getReferenceById(placeId))
                         .build());
 
                 // when

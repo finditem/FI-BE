@@ -58,7 +58,7 @@ class TemperatureQueryServiceTest extends IntegrationTestSupport {
             // given
             User user = saveUser("query-before@test.com");
             temperatureActivityRepository.saveAndFlush(TemperatureActivity.builder()
-                    .userId(user.getId())
+                    .user(user)
                     .activityType(TemperatureActivityType.FOUND_POST)
                     .sourceId(980001L)
                     .occurredAt(LocalDateTime.of(2026, 9, 1, 10, 0))
@@ -77,7 +77,7 @@ class TemperatureQueryServiceTest extends IntegrationTestSupport {
             // given
             User user = saveUser("query-after@test.com");
             temperatureActivityRepository.saveAndFlush(TemperatureActivity.builder()
-                    .userId(user.getId())
+                    .user(user)
                     .activityType(TemperatureActivityType.FOUND_POST)
                     .sourceId(980002L)
                     .occurredAt(LocalDateTime.of(2026, 9, 1, 10, 0))
@@ -95,6 +95,7 @@ class TemperatureQueryServiceTest extends IntegrationTestSupport {
 
     private User saveUser(String email) {
         return userRepository.save(User.builder()
+                .profile_img("")
                 .nickname("조회사용자")
                 .email(email)
                 .password("password")

@@ -36,6 +36,7 @@ class AdminUserQueryServiceTest extends IntegrationTestSupport {
         @DisplayName("관리자에게 해당 회원 정보를 반환하고 일반 회원의 조회는 거부한다")
         void itPreservesAdministratorBoundary() throws Exception {
             User member = userRepository.save(User.builder()
+                    .profile_img("")
                     .email("structure-admin-target@test.com")
                     .nickname("구조조회대상")
                     .password("test-password")

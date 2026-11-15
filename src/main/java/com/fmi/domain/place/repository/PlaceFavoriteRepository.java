@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PlaceFavoriteRepository extends JpaRepository<PlaceFavorite, Long>, PlaceFavoriteRepositoryCustom {
-    Optional<PlaceFavorite> findByUserIdAndPlaceId(Long userId, Long placeId);
+    Optional<PlaceFavorite> findByUser_IdAndPlace_Id(Long userId, Long placeId);
 
     @Query(
-            "select pf.placeId from PlaceFavorite pf where pf.userId = :userId and pf.placeId in :placeIds and pf.favorite = true")
+            "select pf.place.id from PlaceFavorite pf where pf.user.id = :userId and pf.place.id in :placeIds and pf.favorite = true")
     List<Long> findFavoritePlaceIds(@Param("userId") Long userId, @Param("placeIds") List<Long> placeIds);
 }

@@ -41,12 +41,14 @@ class PushSubscriptionServiceTest extends IntegrationTestSupport {
         @DisplayName("중복 등록은 기존 키를 유지하고 해제는 요청 회원의 구독만 삭제한다")
         void itPreservesDuplicateAndDeletesOnlyOwnedSubscription() throws Exception {
             User owner = userRepository.save(User.builder()
+                    .profile_img("")
                     .email("push-owner@test.com")
                     .nickname("구독자")
                     .role(Role.USER)
                     .password("test-password")
                     .build());
             User other = userRepository.save(User.builder()
+                    .profile_img("")
                     .email("push-other@test.com")
                     .nickname("다른 구독자")
                     .role(Role.USER)

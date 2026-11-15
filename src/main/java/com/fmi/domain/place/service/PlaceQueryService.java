@@ -70,7 +70,7 @@ public class PlaceQueryService {
         if (userEmail != null) {
             favorite = userRepository
                     .findByEmail(userEmail)
-                    .flatMap(user -> placeFavoriteRepository.findByUserIdAndPlaceId(user.getId(), placeId))
+                    .flatMap(user -> placeFavoriteRepository.findByUser_IdAndPlace_Id(user.getId(), placeId))
                     .filter(placeFavorite -> placeFavorite.isActive() && placeFavorite.isFavorite())
                     .isPresent();
         }

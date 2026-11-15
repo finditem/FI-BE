@@ -4,8 +4,6 @@ import com.fmi.domain.inquiry.inquiry.data.Inquiry;
 import com.fmi.domain.user.user.data.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.*;
 
 @Entity
@@ -39,10 +37,6 @@ public class InquiryComment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private InquiryComment parent;
-
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<InquiryComment> replies = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

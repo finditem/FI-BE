@@ -16,6 +16,8 @@ public interface NoticeCommentRepository extends JpaRepository<NoticeComment, Lo
 
     long countByParentId(Long parentId);
 
+    boolean existsByParent_Id(Long parentId);
+
     @Query("SELECT c.parent.id, COUNT(c) FROM NoticeComment c WHERE c.parent.id IN :parentIds GROUP BY c.parent.id")
     List<Object[]> countByParentIds(@Param("parentIds") List<Long> parentIds);
 

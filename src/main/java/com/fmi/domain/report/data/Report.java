@@ -67,10 +67,6 @@ public class Report {
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 
-    @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private java.util.List<ReportAnswerImage> answerImages = new java.util.ArrayList<>();
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

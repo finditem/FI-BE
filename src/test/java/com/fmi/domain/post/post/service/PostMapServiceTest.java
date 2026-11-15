@@ -58,24 +58,28 @@ class PostMapServiceTest extends IntegrationTestSupport {
             void itReturnsOnlyPostsFromVisibleAuthors() {
                 // given
                 User requester = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("주변조회자")
                         .email("nearby-requester@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User visibleAuthor = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("노출작성자")
                         .email("visible-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User blockedAuthor = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("차단작성자")
                         .email("blocked-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User blockingAuthor = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("역차단작성자")
                         .email("blocking-author@test.com")
                         .password("password")

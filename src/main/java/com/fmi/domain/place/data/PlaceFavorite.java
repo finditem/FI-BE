@@ -1,11 +1,15 @@
 package com.fmi.domain.place.data;
 
+import com.fmi.domain.user.user.data.User;
 import com.fmi.global.data.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -28,19 +32,21 @@ public class PlaceFavorite extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "place_id", nullable = false)
-    private Long placeId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "place_id", nullable = false)
+    private Place place;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(name = "is_favorite", nullable = false)
     private boolean favorite;
 
     @Builder
-    private PlaceFavorite(Long userId, Long placeId) {
-        this.userId = userId;
-        this.placeId = placeId;
+    private PlaceFavorite(User user, Place place) {
+        this.user = user;
+        this.place = place;
         this.favorite = true;
     }
 

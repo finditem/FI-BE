@@ -19,6 +19,8 @@ import com.fmi.domain.user.user.repository.UserRepository;
 import com.fmi.external.storage.S3Service;
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -207,14 +209,27 @@ public class InquiryCommentService {
             throw new GeneralException(ErrorStatus._FORBIDDEN);
         }
 
-        // 이미지 S3 삭제
-        List<InquiryCommentImage> imgs = inquiryCommentImageRepository.findByComment_Id(commentId);
-        if (!imgs.isEmpty()) {
-            s3Service.delete(imgs.stream().map(InquiryCommentImage::getImgUrl).toList());
-            inquiryCommentImageRepository.deleteAllByCommentId(commentId);
+        List<InquiryComment> deletionOrder = new ArrayList<>();
+        List<InquiryComment> descendants = List.of(comment);
+        while (!descendants.isEmpty()) {
+            deletionOrder.addAll(descendants);
+            List<Long> parentIds =
+                    descendants.stream().map(InquiryComment::getId).toList();
+            descendants = inquiryCommentRepository.findByParentIdInOrderByIdAsc(parentIds);
         }
-
-        inquiryCommentRepository.delete(comment);
+        List<Long> commentIds =
+                deletionOrder.stream().map(InquiryComment::getId).toList();
+        List<InquiryCommentImage> images = inquiryCommentImageRepository.findByComment_IdIn(commentIds);
+        if (!images.isEmpty()) {
+            List<String> imageUrls =
+                    images.stream().map(InquiryCommentImage::getImgUrl).toList();
+            s3Service.delete(imageUrls);
+            inquiryCommentImageRepository.deleteAll(images);
+        }
+        Collections.reverse(deletionOrder);
+        for (InquiryComment target : deletionOrder) {
+            inquiryCommentRepository.delete(target);
+        }
 
         return toResponse(comment, userDetails, List.of());
     }

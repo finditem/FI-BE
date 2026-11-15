@@ -16,10 +16,6 @@ public interface NoticeCommentImageRepository extends JpaRepository<NoticeCommen
     List<NoticeCommentImage> findByComment_Id(Long commentId);
 
     @Modifying(clearAutomatically = true)
-    @Query("DELETE FROM NoticeCommentImage i WHERE i.comment.id = :commentId")
-    void deleteAllByCommentId(@Param("commentId") Long commentId);
-
-    @Modifying(clearAutomatically = true)
     @Query(
             "DELETE FROM NoticeCommentImage i WHERE i.comment.id IN (SELECT c.id FROM NoticeComment c WHERE c.notice.noticeId = :noticeId)")
     void deleteAllByNoticeId(@Param("noticeId") Long noticeId);

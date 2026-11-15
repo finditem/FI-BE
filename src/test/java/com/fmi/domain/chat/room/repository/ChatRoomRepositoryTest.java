@@ -52,18 +52,21 @@ class ChatRoomRepositoryTest extends IntegrationTestSupport {
             void itCountsOnlyRoomsWithMessageOfPost() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("게시글채팅작성자")
                         .email("post-chat-count-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User messagedUser = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("메시지보낸사용자")
                         .email("post-chat-count-messaged@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User silentUser = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("메시지없는사용자")
                         .email("post-chat-count-silent@test.com")
                         .password("password")
@@ -159,12 +162,14 @@ class ChatRoomRepositoryTest extends IntegrationTestSupport {
             void itCountsRoomsAllParticipantsLeft() {
                 // given
                 User author = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("나간방작성자")
                         .email("post-chat-count-left-author@test.com")
                         .password("password")
                         .role(Role.USER)
                         .build());
                 User contactUser = userRepository.save(User.builder()
+                        .profile_img("")
                         .nickname("나간방상대")
                         .email("post-chat-count-left-contact@test.com")
                         .password("password")

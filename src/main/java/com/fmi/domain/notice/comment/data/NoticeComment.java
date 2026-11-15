@@ -4,8 +4,6 @@ import com.fmi.domain.notice.notice.data.Notice;
 import com.fmi.domain.user.user.data.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.*;
 
 @Entity
@@ -33,14 +31,6 @@ public class NoticeComment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private NoticeComment parent;
-
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<NoticeComment> replies = new ArrayList<>();
-
-    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<NoticeCommentImage> images = new ArrayList<>();
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
