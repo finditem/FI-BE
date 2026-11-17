@@ -15,6 +15,11 @@ services:
       retries: 10
     volumes:
       - redis_data:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
 
   fmi-prod:
     image: ${ECR_IMAGE_URL}:prod
@@ -81,6 +86,11 @@ services:
     depends_on:
       - fmi-prod
       - fmi-dev
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
 
 volumes:
   redis_data:
