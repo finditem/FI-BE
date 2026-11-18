@@ -5,6 +5,7 @@ import com.fmi.global.apiPayload.exception.GeneralException;
 import jakarta.mail.internet.MimeMessage;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -12,6 +13,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailSender {
@@ -31,7 +33,8 @@ public class EmailSender {
             message.setText(body);
 
             mailSender.send(message);
-        } catch (Exception ignored) {
+        } catch (Exception exception) {
+            log.error("이메일 발송 실패: subject={}", subject, exception);
             throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
         }
     }
@@ -78,7 +81,8 @@ public class EmailSender {
 
             mailSender.send(message);
 
-        } catch (Exception ignored) {
+        } catch (Exception exception) {
+            log.error("이메일 발송 실패: subject={}, template={}", subject, templateName, exception);
             throw new GeneralException(ErrorStatus._EMAIL_SEND_FAILED);
         }
     }
