@@ -1,0 +1,419 @@
+apiVersion: 1
+
+# 등급 기준은 docs/operations/monitoring.md의 알림 기준을 따릅니다.
+# Grafana가 provisioning 파일의 $ 문자를 환경 변수로 해석하므로 annotation에서 $labels, $values 대신 .Labels, .Values를 사용합니다.
+groups:
+  - orgId: 1
+    name: fi-be-1m
+    folder: monitoring
+    interval: 1m
+    rules:
+      - uid: bg4koxm8i5p1ce
+        title: 5xx 응답 증가
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: sum(increase(http_server_requests_seconds_count{env="prod",status=~"5..",uri!~"/actuator/.*"}[5m]))
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [2.5] }
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: 업무 API에서 최근 5분간 5xx 응답이 {{ humanize .Values.A.Value }}건 발생했습니다.
+        labels:
+          severity: warning
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: fi-5xx-ratio-critical
+        title: 5xx 응답 비율 급증
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: >-
+                (
+                  sum(increase(http_server_requests_seconds_count{env="prod",status=~"5..",uri!~"/actuator/.*"}[5m]))
+                  / sum(increase(http_server_requests_seconds_count{env="prod",uri!~"/actuator/.*"}[5m]))
+                )
+                and
+                (sum(increase(http_server_requests_seconds_count{env="prod",status=~"5..",uri!~"/actuator/.*"}[5m])) > 4.5)
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.1] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: 업무 API 5xx 응답이 5분 이상 5건 이상이고 비율이 {{ humanizePercentage .Values.A.Value }}입니다.
+        labels:
+          severity: critical
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: fi-social-login-5xx
+        title: 소셜 로그인 실패
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: sum by (uri) (increase(http_server_requests_seconds_count{env="prod",status=~"5..",uri=~"/auth/(kakao|apple)"}[10m]))
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [2.5] }
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: '{{ .Labels.uri }}에서 최근 10분간 5xx 응답이 {{ humanize .Values.A.Value }}건 발생했습니다.'
+        labels:
+          severity: critical
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: fg4kwy0nfy9kwd
+        title: prod 서비스 다운
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: up{job="fmi-prod"}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+        noDataState: Alerting
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: fmi-prod 지표 수집이 2분 이상 실패했습니다. 앱 컨테이너 상태를 확인하세요.
+        labels:
+          severity: critical
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: dg4kwy0q5cb28e
+        title: DB 커넥션 대기
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: max(hikaricp_connections_pending{job="fmi-prod"})
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: fmi-prod에서 DB 커넥션을 기다리는 요청이 2분 이상 있습니다. (현재 {{ humanize .Values.A.Value }}건)
+        labels:
+          severity: critical
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: fg4kwy0sn8ni8a
+        title: DB 커넥션 타임아웃
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: sum(increase(hikaricp_connections_timeout_total{job="fmi-prod"}[5m]))
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: fmi-prod에서 최근 5분간 DB 커넥션 획득 타임아웃이 {{ humanize .Values.A.Value }}건 발생했습니다.
+        labels:
+          severity: warning
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: cg4kwy0v7mwaoc
+        title: ERROR 로그 발생
+        condition: C
+        data:
+          - refId: A
+            queryType: instant
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: cfhvkdv7k0cn4d
+            model:
+              refId: A
+              queryType: instant
+              expr: sum by (logger_name) (count_over_time({job="fmi-prod"} | json | level="ERROR" [5m]))
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: '{{ .Labels.logger_name }}에서 최근 5분간 ERROR 로그가 {{ humanize .Values.A.Value }}건 발생했습니다.'
+        labels:
+          severity: warning
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: dg4kwy0y9ifi8b
+        title: JVM 힙 사용률 90% 초과
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: sum(jvm_memory_used_bytes{job="fmi-prod",area="heap"}) / sum(jvm_memory_max_bytes{job="fmi-prod",area="heap"} > 0)
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.9] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: fmi-prod JVM 힙 사용률이 5분 이상 {{ humanizePercentage .Values.A.Value }}입니다.
+        labels:
+          severity: critical
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: bg4kwy10rery8f
+        title: 앱 서버 디스크 90% 초과
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: 1 - (disk_free_bytes{job="fmi-prod"} / disk_total_bytes{job="fmi-prod"})
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.9] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: 앱 서버({{ .Labels.instance }}) 디스크 사용률이 {{ humanizePercentage .Values.A.Value }}입니다.
+        labels:
+          severity: critical
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: fg4kwy13eax34a
+        title: 트랜잭션 롤백 발생
+        condition: C
+        data:
+          - refId: A
+            queryType: instant
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: cfhvkdv7k0cn4d
+            model:
+              refId: A
+              queryType: instant
+              expr: sum(count_over_time({job="fmi-prod"} |~ "UnexpectedRollbackException|rollback-only" [5m])) or vector(0)
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: fmi-prod에서 최근 5분간 트랜잭션 롤백 관련 로그가 {{ humanize .Values.A.Value }}건 발생했습니다.
+        labels:
+          severity: warning
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: eg4kwy15yp5vkf
+        title: 평균 응답시간 1초 초과
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: >-
+                sum(rate(http_server_requests_seconds_sum{env="prod",uri!~"/notifications/subscribe|/actuator/.*"}[5m]))
+                / sum(rate(http_server_requests_seconds_count{env="prod",uri!~"/notifications/subscribe|/actuator/.*"}[5m]))
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [1] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: fmi-prod 평균 응답시간이 5분 이상 {{ humanize .Values.A.Value }}초입니다. (SSE와 actuator 제외)
+        labels:
+          severity: warning
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: bg4kwy18llb0ga
+        title: CPU 사용률 85% 초과
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: process_cpu_usage{job="fmi-prod"}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.85] }
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        annotations:
+          summary: fmi-prod 프로세스 CPU 사용률이 10분 이상 {{ humanizePercentage .Values.A.Value }}입니다.
+        labels:
+          severity: warning
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: cg4kwy1b8hg5cf
+        title: WARN 로그 급증
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: sum(increase(logback_events_total{job="fmi-prod",level="warn"}[5m]))
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [20] }
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: fmi-prod에서 최근 5분간 WARN 로그가 {{ humanize .Values.A.Value }}건 발생했습니다.
+        labels:
+          severity: warning
+        notification_settings:
+          receiver: slack-monitoring
+
+      - uid: eg4kwy1dnvw8wf
+        title: 앱 서버 디스크 80% 초과
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: bfhox3ttrtla8c
+            model:
+              refId: A
+              instant: true
+              expr: 1 - (disk_free_bytes{job="fmi-prod"} / disk_total_bytes{job="fmi-prod"})
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.8] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: 앱 서버({{ .Labels.instance }}) 디스크 사용률이 {{ humanizePercentage .Values.A.Value }}입니다.
+        labels:
+          severity: warning
+        notification_settings:
+          receiver: slack-monitoring

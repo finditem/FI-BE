@@ -1,0 +1,13 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: slack-monitoring
+    receivers:
+      - uid: dg4kny3nx6y9se
+        type: slack
+        settings:
+          url: ${SLACK_MONITORING_WEBHOOK_URL}
+          title: '{{ template "fi.slack.title" . }}'
+          text: '{{ template "fi.slack.text" . }}'
+        disableResolveMessage: false
