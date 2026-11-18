@@ -2,6 +2,7 @@ package com.fmi.external.oauth.apple;
 
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import java.time.Duration;
 import java.util.Map;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,7 @@ import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.lang.JoseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -29,8 +31,16 @@ public class AppleOAuthClient {
     private final AppleOAuthProperties oauthProperties;
 
     public AppleOAuthClient(RestClient.Builder restClientBuilder, AppleOAuthProperties oauthProperties) {
-        this.restClient = restClientBuilder.build();
+        this.restClient =
+                restClientBuilder.requestFactory(createRequestFactory()).build();
         this.oauthProperties = oauthProperties;
+    }
+
+    private static SimpleClientHttpRequestFactory createRequestFactory() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(3));
+        factory.setReadTimeout(Duration.ofSeconds(5));
+        return factory;
     }
 
     public String exchangeCodeForSubject(String code, String environment) {

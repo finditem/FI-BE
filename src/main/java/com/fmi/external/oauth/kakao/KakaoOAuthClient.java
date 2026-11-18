@@ -2,6 +2,7 @@ package com.fmi.external.oauth.kakao;
 
 import com.fmi.global.apiPayload.code.status.ErrorStatus;
 import com.fmi.global.apiPayload.exception.GeneralException;
+import java.time.Duration;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -25,6 +27,14 @@ import org.springframework.web.client.RestTemplate;
 public class KakaoOAuthClient {
 
     private final KakaoOAuthProperties oauthProperties;
+    private final RestTemplate restTemplate = createRestTemplate();
+
+    private static RestTemplate createRestTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(3));
+        factory.setReadTimeout(Duration.ofSeconds(5));
+        return new RestTemplate(factory);
+    }
 
     private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String USERINFO_URL = "https://kapi.kakao.com/v2/user/me";
@@ -35,7 +45,6 @@ public class KakaoOAuthClient {
     }
 
     public KakaoToken exchangeCodeForToken(String code, String environment) {
-        RestTemplate rt = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -55,7 +64,7 @@ public class KakaoOAuthClient {
         HttpEntity<MultiValueMap<String, String>> req = new HttpEntity<>(params, headers);
 
         try {
-            ResponseEntity<KakaoToken> response = rt.postForEntity(TOKEN_URL, req, KakaoToken.class);
+            ResponseEntity<KakaoToken> response = restTemplate.postForEntity(TOKEN_URL, req, KakaoToken.class);
             KakaoToken token = response.getBody();
 
             if (token == null || token.getAccess_token() == null) {
@@ -88,13 +97,12 @@ public class KakaoOAuthClient {
     }
 
     public KakaoUser getUserInfo(String accessToken) {
-        RestTemplate rt = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + accessToken);
         HttpEntity<Void> req = new HttpEntity<>(headers);
 
         try {
-            ResponseEntity<KakaoUser> response = rt.postForEntity(USERINFO_URL, req, KakaoUser.class);
+            ResponseEntity<KakaoUser> response = restTemplate.postForEntity(USERINFO_URL, req, KakaoUser.class);
             KakaoUser user = response.getBody();
 
             if (user == null || user.getId() == null) {
@@ -127,7 +135,6 @@ public class KakaoOAuthClient {
     }
 
     public void unlinkUser(String kakaoUserId) {
-        RestTemplate rt = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.set("Authorization", "KakaoAK " + oauthProperties.adminKey());
@@ -139,7 +146,7 @@ public class KakaoOAuthClient {
         HttpEntity<MultiValueMap<String, String>> req = new HttpEntity<>(params, headers);
 
         try {
-            rt.postForEntity(UNLINK_URL, req, String.class);
+            restTemplate.postForEntity(UNLINK_URL, req, String.class);
             log.info("카카오 연결 끊기 성공: kakaoUserId={}", kakaoUserId);
         } catch (RestClientException e) {
             log.warn("카카오 연결 끊기 실패: kakaoUserId={}, error={}", kakaoUserId, e.getMessage());
