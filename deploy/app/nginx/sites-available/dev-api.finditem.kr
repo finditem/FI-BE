@@ -1,4 +1,6 @@
 server {
+    server_tokens off;
+
     server_name dev-api.finditem.kr;
 
     client_max_body_size 10M;
@@ -67,6 +69,8 @@ server {
 }
 
 server {
+    server_tokens off;
+
     if ($host = dev-api.finditem.kr) {
         return 301 https://$host$request_uri;
     } # managed by Certbot
