@@ -1,0 +1,28 @@
+# 빌드에는 Gradle wrapper, build 스크립트와 src만 필요하다.
+.git
+.github
+.githooks
+.claude
+.gradle
+.idea
+.vscode
+.worktrees
+build
+bin
+out
+node_modules
+src/main/generated
+
+# 비밀정보
+.env
+.env.*
+
+# 운영 설정과 문서
+deploy
+docs
+scripts
+*.md
+*.png
+package.json
+package-lock.json
+commitlint.config.cjs
