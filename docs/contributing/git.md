@@ -111,8 +111,7 @@ feat: 로그인 기능 구현
 ## 담당자와 리뷰
 
 - Issue와 PR의 Assignee는 작성자로 지정합니다.
-- PR의 Reviewer에는 작성자를 제외한 백엔드 팀원을 지정합니다.
-- 백엔드 팀원의 GitHub 아이디는 `sangcci`, `Yoosejeong`입니다. 팀원이 바뀌면 이 목록을 수정합니다.
+- PR의 Reviewer에는 작성자를 제외한 GitHub `@finditem/backend` 팀 구성원을 지정합니다. 팀 구성원은 GitHub 조직의 팀 설정에서 관리합니다.
 
 ### 리뷰 기한 라벨
 
