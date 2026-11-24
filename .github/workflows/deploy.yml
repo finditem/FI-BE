@@ -25,15 +25,29 @@ jobs:
       cancel-in-progress: ${{ github.ref_name == 'develop' }}
     environment:
       name: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+    # OIDC로 배포 Role을 받을 때 필요하다.
+    permissions:
+      contents: read
+      id-token: write
     env:
       TARGET: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+      # 환경 변수 DEPLOY_VIA_SSM이 true인 환경만 OIDC와 SSM으로 배포한다. 배포 문서와 서버 설정은 FI-INFRA에서 관리한다.
+      VIA_SSM: ${{ vars.DEPLOY_VIA_SSM == 'true' }}
       RUNTIME_CONFIG: ${{ vars.RUNTIME_CONFIG }}
       RUNTIME_SECRET: ${{ secrets.RUNTIME_SECRET }}
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: AWS 인증 설정 (OIDC)
+        if: env.VIA_SSM == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-northeast-2
+
       - name: AWS 인증 설정
+        if: env.VIA_SSM != 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
@@ -51,9 +65,13 @@ jobs:
         run: |
           docker build -t "$ECR_REGISTRY/fmi-backend:${{ github.sha }}" -t "$ECR_REGISTRY/fmi-backend:$IMAGE_TAG" .
           docker push "$ECR_REGISTRY/fmi-backend:${{ github.sha }}"
-          docker push "$ECR_REGISTRY/fmi-backend:$IMAGE_TAG"
+          # SSM 배포는 커밋 SHA 태그만 쓴다. 환경 태그는 기존 SSH 배포에서만 필요하다.
+          if [ "$VIA_SSM" != "true" ]; then
+            docker push "$ECR_REGISTRY/fmi-backend:$IMAGE_TAG"
+          fi
 
       - name: runtime env 파일 생성
+        if: env.VIA_SSM != 'true'
         env:
           ECR_IMAGE_URL: ${{ steps.login-ecr.outputs.registry }}/fmi-backend
         run: |
@@ -65,6 +83,7 @@ jobs:
           } > "deploy/app/.env.$TARGET"
 
       - name: EC2에 배포 파일 전송
+        if: env.VIA_SSM != 'true'
         uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -74,6 +93,7 @@ jobs:
           target: ~/FMI-BE
 
       - name: EC2 배포
+        if: env.VIA_SSM != 'true'
         uses: appleboy/ssh-action@v1.0.3
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -93,3 +113,33 @@ jobs:
             docker compose --env-file ".env.$TARGET" pull "fmi-$TARGET"
             docker compose --env-file ".env.$TARGET" up -d --no-deps "fmi-$TARGET"
             docker image prune -f
+
+      - name: SSM으로 배포
+        if: env.VIA_SSM == 'true'
+        env:
+          INSTANCE_ID: ${{ vars.APP_INSTANCE_ID }}
+        run: |
+          set -euo pipefail
+          command_id=$(aws ssm send-command \
+            --document-name "FI-Deploy-$TARGET" \
+            --instance-ids "$INSTANCE_ID" \
+            --parameters "imageTag=$GITHUB_SHA" \
+            --comment "$GITHUB_REPOSITORY run $GITHUB_RUN_ID" \
+            --query Command.CommandId --output text)
+          echo "SSM 명령: $command_id"
+
+          status=Pending
+          for _ in $(seq 1 90); do
+            sleep 10
+            status=$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || echo Pending)
+            case "$status" in Success|Failed|Cancelled|TimedOut) break ;; esac
+          done
+
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query StandardOutputContent --output text || true
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query StandardErrorContent --output text >&2 || true
+
+          echo "배포 결과: $status"
+          [ "$status" = Success ]

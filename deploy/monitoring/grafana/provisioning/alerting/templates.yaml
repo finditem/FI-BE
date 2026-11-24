@@ -1,0 +1,13 @@
+apiVersion: 1
+
+# Grafana가 provisioning 파일의 $ 문자를 환경 변수로 해석하므로 템플릿에서 $ 변수를 사용하지 않습니다.
+templates:
+  - orgId: 1
+    name: fi-slack
+    template: |
+      {{ define "fi.slack.title" }}{{ if eq .Status "firing" }}FIRING{{ else }}RESOLVED{{ end }}{{ end }}
+
+      {{ define "fi.slack.text" }}{{ range .Alerts }}[{{ or .Labels.severity "unknown" | toUpper }}] {{ or .Labels.rulename .Labels.alertname }}{{ if eq .Status "firing" }}
+      {{ if or (eq .Labels.alertname "DatasourceError") (eq .Labels.alertname "DatasourceNoData") }}{{ .Labels.alertname }}: 쿼리가 실패했거나 결과가 없습니다.{{ else }}{{ or .Annotations.summary .Labels.alertname }}{{ end }}{{ end }}
+
+      {{ end }}{{ end }}

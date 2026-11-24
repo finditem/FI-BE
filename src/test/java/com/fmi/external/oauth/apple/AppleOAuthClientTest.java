@@ -46,6 +46,7 @@ class AppleOAuthClientTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        when(restClientBuilder.requestFactory(any())).thenReturn(restClientBuilder);
         when(restClientBuilder.build()).thenReturn(restClient);
 
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");

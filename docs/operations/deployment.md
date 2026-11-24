@@ -70,7 +70,14 @@
 - 실제 값을 제외한 설정은 Git으로 관리합니다.
 - 보안상 노출해도 되는 값은 마스킹하지 않고 설정 파일에 기록합니다.
 
-Secret은 코드, Git, Docker 이미지, 로그에 남기지 않습니다. 배포 환경에는 Secret 관리 체계로 값을 주입합니다. 현재는 GitHub Actions Environment Secrets를 사용합니다.
+Secret은 코드, Git, Docker 이미지, 로그에 남기지 않습니다. 배포 환경에는 Secret 관리 체계로 값을 주입합니다. 배포 경로에 따라 값을 관리하는 곳이 다릅니다.
+
+| 배포 경로 | 사용 환경 | 비밀값 | 비밀값이 아닌 설정값 |
+| --- | --- | --- | --- |
+| SSM 배포 | GitHub 환경 변수 `DEPLOY_VIA_SSM`이 `true`인 환경 | 앱 서버의 `secret.*.env` (FI-INFRA admin 관리) | FI-INFRA `server/app/config.*.env` |
+| SSH 배포 | 그 외 환경 | GitHub Actions Environment Secrets `RUNTIME_SECRET` | GitHub Actions Environment Variables `RUNTIME_CONFIG` |
+
+SSM 배포의 배포 Role, 배포 문서, 롤백과 값 변경 절차는 FI-INFRA의 [앱 배포](https://github.com/finditem/FI-INFRA/blob/main/docs/operations/deploy.md)를 따릅니다. 새 설정값이나 비밀값이 필요한 변경은 값을 먼저 반영한 뒤 배포합니다.
 
 설정을 변경하면 PR 설명에 다음 내용을 기록합니다.
 
