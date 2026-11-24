@@ -1,18 +1,21 @@
 name: "📝 Task"
 description: "일반적인 작업(리팩터링, 문서화, 설정 변경 등)을 기록하는 템플릿"
-title: "[TASK] "
 assignees: []
 body:
   - type: markdown
     attributes:
-      value: | 
+      value: |
+        ### 🏷️ 제목과 라벨
+        - 제목 prefix와 라벨은 [Git 컨벤션의 작업 성격](https://github.com/finditem/FI-BE/blob/develop/docs/contributing/git.md#작업-성격)에서 고릅니다. 예) `[CHORE] 제목`, `:building_construction: chore`
+        - Assignee는 작성자로 지정합니다.
+
         ### ⚠️ 브랜치 전략
         이 프로젝트는 **Git Flow** 전략을 따릅니다. 아래 규칙을 준수해주세요. 
         
         - 모든 작업은 이슈 기반 브랜치에서 진행합니다.
         - main, develop 브랜치에 직접 push/commit 금지, PR로만 머지합니다.
-        - 작업 브랜치는 develop에서 생성하며 이름은 타입/이슈번호 형식을 사용합니다. 예) feature/#1
-        - 의존 이슈가 있을 경우, 필요한 작업물이 있는 브랜치에서 분기합니다. 예) feature/#2 → feature/#1에서 분기
+        - 작업 브랜치는 develop에서 생성하며 이름은 타입/이슈번호 형식을 사용합니다. 예) feat/#1
+        - 의존 이슈가 있을 경우, 필요한 작업물이 있는 브랜치에서 분기합니다. 예) feat/#2 → feat/#1에서 분기
         - 커밋 메시지는 Conventional Commits 양식을 사용합니다. 예) feat: 기능 추가 
         
         #### 🚀 브랜치 생성 가이드

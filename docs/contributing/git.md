@@ -20,9 +20,10 @@ Issue와 PR에는 작업 성격 라벨을 1개 적용합니다.
 
 - `style`은 코드 포맷, 공백, 줄바꿈, import처럼 기능에 영향을 주지 않는 변경에 사용합니다.
 - `rename`은 파일, 패키지, 클래스, 메서드 이름을 바꾸거나 위치를 옮길 때 사용합니다.
-- `bug`, `documentation`, `enhancement`, `question`, `D-*`는 작업 성격 라벨과 함께 붙일 수 있는 보조 라벨입니다.
+- `bug`, `documentation`, `enhancement`, `question`은 작업 성격 라벨과 함께 붙일 수 있는 보조 라벨입니다.
 - 버그를 제보할 때는 `[BUG] 제목`과 `bug` 라벨을 사용합니다. 버그를 고칠 때는 `[FIX] 제목`과 `:bug: fix` 라벨을 사용합니다.
-- `:rocket: release`는 현재 커밋 type과 Commitlint 허용 type에 없으므로 사용하지 않습니다.
+- `:rocket: release`는 배포를 위해 `main`에 병합하는 PR에만 붙입니다. Issue에는 사용하지 않습니다.
+- 리뷰 기한 라벨 `D-*`는 [담당자와 리뷰](#담당자와-리뷰)를 따릅니다.
 
 ## 브랜치
 
@@ -106,6 +107,16 @@ feat: 로그인 기능 구현
     - Require an additional approval for unattributed Copilot pull requests: ON(Copilot이 혼자 만든 PR은 사람이 만든 PR보다 승인을 1명 더 받아야 한다)
 - Allowed merge methods(Merge commit / Squash / Rebase 허용)
 - Block force pushes(강제 푸시 방지)
+
+## 담당자와 리뷰
+
+- Issue와 PR의 Assignee는 작성자로 지정합니다.
+- PR의 Reviewer에는 작성자를 제외한 GitHub `@finditem/backend` 팀 구성원을 지정합니다. 팀 구성원은 GitHub 조직의 팀 설정에서 관리합니다.
+
+### 리뷰 기한 라벨
+
+- `D-0`은 리뷰 없이 병합하는 PR에 붙입니다. `review-gate`는 `D-0` 라벨이 있으면 승인 없이 통과합니다.
+- `D-5`, `D-3`, `D-1`은 리뷰 기한을 알릴 때 자유롭게 사용합니다. 매일 오전 9시에 다음 단계로 바뀌고, 승인을 받으면 제거됩니다.
 
 ## Issue
 
@@ -270,7 +281,7 @@ PR 본문에는 변경 목적, 핵심 결과와 검토 지점을 적습니다. �
 - Squash and merge 방식으로 병합합니다.
     - title에 `{PR 제목} (#{PR번호})`를 적습니다.
     - body에는 기본적으로 적지 않습니다.
-- 최소 1명의 승인을 받은 뒤 병합합니다.
+- 최소 1명의 승인을 받은 뒤 병합합니다. `D-0` 라벨을 붙인 PR은 예외입니다.
 - 모든 리뷰 대화를 해결한 뒤 병합합니다. AI 리뷰도 포함합니다.
 - 리뷰 뒤 변경 사항을 추가하면 다시 검토받습니다.
 
