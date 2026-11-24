@@ -92,36 +92,6 @@ public class SseEmitterService {
         }
     }
 
-    public void sendUnreadNotifications(Long userId, List<?> unreadNotifications) {
-        if (unreadNotifications == null || unreadNotifications.isEmpty()) {
-            return;
-        }
-
-        List<SseEmitter> userEmitters = emitters.get(userId);
-        if (userEmitters == null || userEmitters.isEmpty()) {
-            return;
-        }
-
-        // 가장 최근 연결된 emitter에만 미읽은 알림 전송 (중복 방지)
-        SseEmitter latestEmitter;
-        try {
-            latestEmitter = userEmitters.get(userEmitters.size() - 1);
-        } catch (IndexOutOfBoundsException e) {
-            return;
-        }
-        for (Object notification : unreadNotifications) {
-            try {
-                latestEmitter.send(SseEmitter.event().name("notification").data(notification));
-            } catch (IOException e) {
-                log.error("SSE 미읽은 알림 전송 실패: userId={}", userId, e);
-                removeEmitter(userId, latestEmitter);
-                latestEmitter.completeWithError(e);
-                return;
-            }
-        }
-        log.info("SSE 미읽은 알림 {} 건 전송: userId={}", unreadNotifications.size(), userId);
-    }
-
     public void disconnect(Long userId) {
         List<SseEmitter> userEmitters = emitters.remove(userId);
         if (userEmitters != null) {
