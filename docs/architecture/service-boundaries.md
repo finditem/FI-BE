@@ -74,7 +74,7 @@ Service의 책임과 분리 시점을 정할 때 적용합니다. 패키지와 �
 | 관리자 | `AdminInquiryService`, `AdminReportQueryService`, `AdminUserQueryService`, `AdminPostQueryService`가 담당 업무의 조회와 처리를 소유합니다. |
 | 회원 | `UserService`는 내 프로필과 약관, `UserProfileQueryService`는 공개 프로필, `UserActivityQueryService`는 활동 목록, `UserLanguageService`는 언어 설정, `UserImageService`는 이미지 업로드를 담당합니다. |
 | 장소 | `PlaceService`는 관리 상세와 상태 변경, `PlaceHomeQueryService`, `PlaceMapQueryService`, `PlaceQueryService`는 홈, 지도와 장소 요약 조회를 담당합니다. |
-| 알림 | `NotificationService`는 수신함, `NotificationSettingsService`는 설정, `NotificationDeliveryService`는 개별 저장·전송, `NotificationBroadcastService`는 발송 대상 선정, `NotificationSubscriptionService`는 SSE 연결과 미읽은 알림 재전송을 담당합니다. |
+| 알림 | `NotificationService`는 수신함, `NotificationSettingsService`는 설정, `NotificationDeliveryService`는 개별 저장·전송, `NotificationBroadcastService`는 발송 대상 선정, `NotificationSubscriptionService`는 SSE 연결을 담당합니다. 미읽은 알림은 SSE로 재전송하지 않고 `NotificationService`의 목록 조회로 제공합니다. |
 | 문의·신고 | `InquiryQueryService`, `ReportQueryService`는 목록과 상세 조회를 담당하며 생성과 상태 변경은 각 기본 Service에 둡니다. |
 | 채팅 | `ChatRoomQueryService`, `ChatMessageQueryService`는 방과 메시지 조회를 담당하며 생성, 퇴장과 메시지 읽음 처리는 각 기본 Service에 둡니다. |
 
