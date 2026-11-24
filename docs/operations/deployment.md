@@ -70,14 +70,15 @@
 - 실제 값을 제외한 설정은 Git으로 관리합니다.
 - 보안상 노출해도 되는 값은 마스킹하지 않고 설정 파일에 기록합니다.
 
-Secret은 코드, Git, Docker 이미지, 로그에 남기지 않습니다. 배포 환경에는 Secret 관리 체계로 값을 주입합니다. 배포 경로에 따라 값을 관리하는 곳이 다릅니다.
+Secret은 코드, Git, Docker 이미지, 로그에 남기지 않습니다. 배포에 쓰는 값은 다음 위치에서 관리합니다.
 
-| 배포 경로 | 사용 환경 | 비밀값 | 비밀값이 아닌 설정값 |
-| --- | --- | --- | --- |
-| SSM 배포 | GitHub 환경 변수 `DEPLOY_VIA_SSM`이 `true`인 환경 | 앱 서버의 `secret.*.env` (FI-INFRA admin 관리) | FI-INFRA `server/app/config.*.env` |
-| SSH 배포 | 그 외 환경 | GitHub Actions Environment Secrets `RUNTIME_SECRET` | GitHub Actions Environment Variables `RUNTIME_CONFIG` |
+| 값 | 관리 위치 |
+| --- | --- |
+| 비밀값 | 앱 서버의 `/srv/finditem/app/secret.*.env` (FI-INFRA admin 관리) |
+| 비밀값이 아닌 설정값 | FI-INFRA `server/app/config.*.env` |
+| 배포 Role ARN | GitHub Actions 환경 변수 `AWS_DEPLOY_ROLE_ARN` |
 
-SSM 배포의 배포 Role, 배포 문서, 롤백과 값 변경 절차는 FI-INFRA의 [앱 배포](https://github.com/finditem/FI-INFRA/blob/main/docs/operations/deploy.md)를 따릅니다. 새 설정값이나 비밀값이 필요한 변경은 값을 먼저 반영한 뒤 배포합니다.
+배포 workflow는 GitHub OIDC로 배포 Role을 받아 이미지를 push하고 SSM으로 앱 서버의 배포 문서를 실행합니다. 배포 Role, 배포 문서, 롤백과 값 변경 절차는 FI-INFRA의 [앱 배포](https://github.com/finditem/FI-INFRA/blob/main/docs/operations/deploy.md)를 따릅니다. 새 설정값이나 비밀값이 필요한 변경은 값을 먼저 반영한 뒤 배포합니다.
 
 설정을 변경하면 PR 설명에 다음 내용을 기록합니다.
 
@@ -90,5 +91,3 @@ SSM 배포의 배포 Role, 배포 문서, 롤백과 값 변경 절차는 FI-INFR
 [dev 설정](../../deploy/app/nginx/sites-available/dev-api.finditem.kr)과 [prod 설정](../../deploy/app/nginx/sites-available/api.finditem.kr)은 공개 Swagger와 Actuator 경로를 차단합니다. 애플리케이션 포트는 localhost 바인딩을 유지하며 진단 접근은 SSM 터널을 사용합니다.
 
 현재 배포 workflow는 Nginx 파일을 자동 전송하지 않습니다. 승인된 Nginx 설정 변경 시 저장소 설정과 서버 설정을 함께 반영합니다. 변경 전 실제 설정을 백업하고 `nginx -t` 통과 후 reload합니다. 검사 또는 reload에 실패하면 백업을 복원합니다. 적용 후 공개 경로 차단, SSM 진단 접근, `/health`, 컨테이너 health와 내부 Prometheus 수집을 확인합니다.
-
-이 설정은 기존 SSH와 SCP 기반 CI/CD를 SSM 배포로 전환하지 않습니다.
