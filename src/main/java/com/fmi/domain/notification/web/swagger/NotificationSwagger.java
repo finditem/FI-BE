@@ -19,7 +19,9 @@ public interface NotificationSwagger {
 
     @Operation(
             summary = "실시간 알림 구독 (SSE)",
-            description = "Server-Sent Events를 통해 실시간으로 알림을 수신합니다. " + "연결 시 미읽은 알림을 자동으로 전송합니다. "
+            description = "Server-Sent Events를 통해 실시간으로 알림을 수신합니다. "
+                    + "연결 시 connect 이벤트만 전송하며, 연결 중 새로 생성되거나 갱신된 알림을 notification 이벤트로 전송합니다. "
+                    + "미읽은 알림은 connect 수신 후 알림 목록 조회 API(unreadOnly=true)로 조회합니다. "
                     + "연결이 끊기면 클라이언트에서 자동으로 재연결해야 합니다.")
     @ApiResponses({@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SSE 연결 성공")
     })
