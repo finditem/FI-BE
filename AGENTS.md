@@ -41,7 +41,7 @@ FI-BE/
 | Java 코드 또는 설정 | [Contributing Overview](docs/contributing/overview.md), [Code Style](docs/contributing/code-style.md), 필요하면 [Configuration](docs/contributing/configuration.md) |
 | 배포와 운영 | [Operations Overview](docs/operations/overview.md), [Deployment](docs/operations/deployment.md) |
 | 문서 변경 | [Documentation](docs/contributing/documentation.md) |
-| Issue, 브랜치, 커밋, PR | [Git Guide](docs/contributing/git.md) |
+| Issue, 브랜치, 커밋, PR | [Git Guide](docs/contributing/git.md), DOCS의 [Issue와 PR 작성 가이드](https://github.com/finditem/DOCS/blob/main/guide/Issue%EC%99%80%20PR%20%EC%9E%91%EC%84%B1%20%EA%B0%80%EC%9D%B4%EB%93%9C.md) |
 
 업무 정책은 [Policies Overview](docs/policies/overview.md)에 적힌 소유 원칙을 확인하고 DOCS의 관련 확정 정책서를 읽습니다. FI-BE 코드는 현재 동작의 증거이며 정책을 확정하는 근거는 아닙니다.
 
