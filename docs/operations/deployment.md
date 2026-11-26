@@ -76,6 +76,7 @@ Secret은 코드, Git, Docker 이미지, 로그에 남기지 않습니다. 배�
 | --- | --- |
 | 비밀값 | 앱 서버의 `/srv/finditem/app/secret.*.env` (FI-INFRA admin 관리) |
 | 비밀값이 아닌 설정값 | FI-INFRA `server/app/config.*.env` |
+| S3 접근 권한 | 앱 서버의 인스턴스 역할 (FI-INFRA `deploy.tf`). 설정과 서버 파일에 키를 두지 않음 |
 | 배포 Role ARN | GitHub Actions 환경 변수 `AWS_DEPLOY_ROLE_ARN` |
 
 배포 workflow는 GitHub OIDC로 배포 Role을 받아 이미지를 push하고 SSM으로 앱 서버의 배포 문서를 실행합니다. 배포 Role, 배포 문서, 롤백과 값 변경 절차는 FI-INFRA의 [앱 배포](https://github.com/finditem/FI-INFRA/blob/main/docs/operations/deploy.md)를 따릅니다. 새 설정값이나 비밀값이 필요한 변경은 값을 먼저 반영한 뒤 배포합니다.
