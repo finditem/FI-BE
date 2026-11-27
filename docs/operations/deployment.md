@@ -89,6 +89,6 @@ Secret은 코드, Git, Docker 이미지, 로그에 남기지 않습니다. 배�
 
 ## Nginx 진단 경로 제한
 
-[dev 설정](../../deploy/app/nginx/sites-available/dev-api.finditem.kr)과 [prod 설정](../../deploy/app/nginx/sites-available/api.finditem.kr)은 공개 Swagger와 Actuator 경로를 차단합니다. 애플리케이션 포트는 localhost 바인딩을 유지하며 진단 접근은 SSM 터널을 사용합니다.
+FI-INFRA의 [dev 설정](https://github.com/finditem/FI-INFRA/blob/main/server/nginx/dev-api.finditem.kr)과 [prod 설정](https://github.com/finditem/FI-INFRA/blob/main/server/nginx/api.finditem.kr)은 공개 Swagger와 Actuator 경로를 차단합니다. 애플리케이션 포트는 localhost 바인딩을 유지하며 진단 접근은 SSM 터널을 사용합니다.
 
-현재 배포 workflow는 Nginx 파일을 자동 전송하지 않습니다. 승인된 Nginx 설정 변경 시 저장소 설정과 서버 설정을 함께 반영합니다. 변경 전 실제 설정을 백업하고 `nginx -t` 통과 후 reload합니다. 검사 또는 reload에 실패하면 백업을 복원합니다. 적용 후 공개 경로 차단, SSM 진단 접근, `/health`, 컨테이너 health와 내부 Prometheus 수집을 확인합니다.
+배포 workflow는 Nginx 파일을 전송하지 않습니다. 설정 변경, 서버 반영, 적용 후 확인과 되돌리기는 FI-INFRA의 [서버 설정 반영](https://github.com/finditem/FI-INFRA/blob/main/docs/operations/server-config.md)을 따릅니다.

@@ -19,7 +19,7 @@ Grafana 포트 바인딩이나 provisioning 파일을 변경할 때 데이터 �
 
 ## 애플리케이션 진단 경로
 
-공개 dev/prod 도메인에서 Swagger UI, OpenAPI 명세와 Actuator를 차단합니다. 최소 상태 확인용 `/health`는 유지하며, Docker 헬스체크는 컨테이너 내부의 `/actuator/health`를 사용합니다. Prometheus는 [내부 수집 설정](../../deploy/app/nginx/sites-available/monitoring.conf)을 사용하므로 공개 도메인 제한과 별도로 유지합니다.
+공개 dev/prod 도메인에서 Swagger UI, OpenAPI 명세와 Actuator를 차단합니다. 최소 상태 확인용 `/health`는 유지하며, Docker 헬스체크는 컨테이너 내부의 `/actuator/health`를 사용합니다. Prometheus는 FI-INFRA의 [내부 수집 설정](https://github.com/finditem/FI-INFRA/blob/main/server/nginx/monitoring.conf)을 사용하므로 공개 도메인 제한과 별도로 유지합니다.
 
 Swagger와 Actuator의 운영 접속 절차는 팀 Confluence 운영 문서에서 관리합니다. Loki 네트워크 설정과 애플리케이션 SSH 배포 경로는 변경하지 않습니다.
 
