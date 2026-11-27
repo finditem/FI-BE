@@ -1,6 +1,6 @@
 # Monitoring
 
-기술 구성은 [Stack](../architecture/stack.md), 실제 컨테이너 설정은 [모니터링 Docker Compose](../../deploy/monitoring/docker-compose.yml)에서 관리합니다.
+기술 구성은 [Stack](../architecture/stack.md), 실제 컨테이너 설정은 FI-INFRA의 [모니터링 compose](https://github.com/finditem/FI-INFRA/blob/main/server/monitoring/compose.yml)에서 관리합니다.
 
 ## 수집과 접근 경로
 
@@ -13,7 +13,7 @@
 
 ## 설정 변경
 
-Grafana 포트 바인딩이나 provisioning 파일을 변경할 때 데이터 볼륨을 유지하고 Grafana 컨테이너만 재생성합니다. 볼륨을 삭제하는 명령을 사용하지 않습니다. 변경 후 SSM 터널의 Grafana 접속과 상태 API, Prometheus 수집 대상, Loki 로그 유입을 확인합니다. provisioning 파일을 변경했다면 알림 규칙이 provisioning으로 표시되는지와 연락처의 테스트 알림도 확인합니다. 실패하면 이전 Compose 설정과 provisioning 파일로 Grafana 컨테이너를 다시 생성합니다.
+설정 변경, 서버 반영, 적용 후 확인과 되돌리기는 FI-INFRA의 [서버 설정 반영](https://github.com/finditem/FI-INFRA/blob/main/docs/operations/server-config.md#모니터링)을 따릅니다.
 
 애플리케이션 서버의 SSH, CI/CD와 Nginx 접근 정책은 이 모니터링 접속 설정과 별도로 관리합니다.
 
@@ -54,12 +54,12 @@ Actuator health에는 애플리케이션이 동작하는 데 필요한 DB, Redis
 | DB 커넥션 타임아웃, 트랜잭션 롤백 | WARNING | `DB 커넥션 타임아웃`, `트랜잭션 롤백 발생` |
 | 응답 지연, CPU와 디스크 사용률 증가, WARN 로그 급증 | WARNING | `평균 응답시간 1초 초과`, `CPU 사용률 85% 초과`, `앱 서버 디스크 80% 초과`, `WARN 로그 급증` |
 
-임계값과 지속 시간은 [알림 규칙](../../deploy/monitoring/grafana/provisioning/alerting/rules.yaml)에서 관리합니다. 현재 값은 prod 트래픽을 기준으로 정한 초기값이며 운영하면서 조정합니다.
+임계값과 지속 시간은 FI-INFRA의 [알림 규칙](https://github.com/finditem/FI-INFRA/blob/main/server/monitoring/grafana/provisioning/alerting/rules.yaml)에서 관리합니다. 현재 값은 prod 트래픽을 기준으로 정한 초기값이며 운영하면서 조정합니다.
 
 ## 알림 규칙 관리
 
-- Grafana의 데이터소스, 알림 규칙, 연락처와 알림 템플릿은 [provisioning 파일](../../deploy/monitoring/grafana/provisioning)로 관리합니다. Grafana UI에서는 수정하지 않습니다.
-- 규칙을 추가하거나 변경하는 PR에는 [상황별 등급](#상황별-등급)을 함께 갱신합니다.
+- Grafana의 데이터소스, 알림 규칙, 연락처와 알림 템플릿은 FI-INFRA의 [provisioning 파일](https://github.com/finditem/FI-INFRA/tree/main/server/monitoring/grafana/provisioning)로 관리합니다. Grafana UI에서는 수정하지 않습니다.
+- 규칙은 FI-INFRA의 PR로 추가하거나 변경합니다. 규칙의 등급이나 상황이 바뀌면 이 문서의 [상황별 등급](#상황별-등급)을 FI-BE PR로 갱신하고 두 PR을 서로 연결합니다.
 - Grafana는 provisioning 파일의 `$` 문자를 환경 변수로 해석합니다. 알림 템플릿과 annotation에서는 `$labels`, `$values` 대신 `.Labels`, `.Values`를 사용합니다.
 - Slack 웹훅 URL은 모니터링 서버 `.env`의 `SLACK_MONITORING_WEBHOOK_URL`에 둡니다.
 - 변경 사항은 [설정 변경](#설정-변경) 절차로 반영합니다.
