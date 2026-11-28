@@ -30,7 +30,7 @@
 ## 아키텍처
 
 <p align="center">
-  <img src="./architecture.png" width="100%" alt="Architecture" />
+  <img src="./docs/diagrams/architecture.png" width="100%" alt="Architecture" />
 </p>
 
 ## 주요 도메인
@@ -50,7 +50,7 @@
 > [바로가기](https://dbdiagram.io/d/6a5200f636d348d120bcdf20)
 
 <p align="center">
-  <img src="dbdiagram.png" width="100%" alt="ERD" />
+  <img src="./docs/diagrams/erd.png" width="100%" alt="ERD" />
 </p>
 
 ## 개발 기간
@@ -61,84 +61,77 @@
 
 ## 팀 구성
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <a href="https://github.com/Yoosejeong">
-        <img src="https://github.com/Yoosejeong.png" width="120" height="120" style="border-radius:50%"/>
-      </a>
-    </td>
-    <td align="center" width="33%">
-      <a href="https://github.com/kkch1012">
-        <img src="https://github.com/kkch1012.png" width="120" height="120" style="border-radius:50%"/>
-      </a>
-    </td>
-    <td align="center" width="34%">
-      <a href="https://github.com/hyeonjaez">
-        <img src="https://github.com/hyeonjaez.png" width="120" height="120" style="border-radius:50%"/>
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td align="center"><b>세정 (Lead)</b></td>
-    <td align="center"><b>찬호</b></td>
-    <td align="center"><b>재현</b></td>
-  </tr>
- <tr>
-  <td align="center">
-    - 채팅<br/>
-    - AWS 운영 인프라 구축<br/>
-    - 모니터링·로깅 서버 및 수집 파이프라인 구축<br/>
-    - CI/CD 파이프라인 구축<br/>
-    - 문의·신고 Slack 알림<br/>
-    - 환경별 인증 쿠키·도메인 설정<br/>
-    - 공통 응답 구조 설계<br/>
-    - S3 스토리지 구축 및 업로드
-  </td>
+<details>
+<summary>1차, 2차 MVP 백엔드 멤버</summary>
 
-  <td align="center">
-    - 회원가입·로그인<br/>
-    - 회원·마이페이지<br/>
-    - 알림<br/>
-    - 공지사항<br/>
-    - 문의·신고<br/>
-    - 관리자 기능<br/>
-    - Flyway 기반 DB 마이그레이션<br/>
-    - Zoho SMTP 메일 전환<br/>
-    - PR 리뷰 리마인더 자동화
-  </td>
+<br/>
 
-  <td align="center">
-    - 분실물·습득물 게시글<br/>
-    - 게시글 검색·추천·즐겨찾기<br/>
-    - 댓글·대댓글·좋아요<br/>
-    - 지도 기반 주변 게시글 탐색
-  </td>
-</tr>
-</table>
+- **1차 MVP**: [세정 (Lead)](https://github.com/Yoosejeong), [찬호](https://github.com/kkch1012), [재현](https://github.com/hyeonjaez)
+- **2차 MVP**: [세정](https://github.com/Yoosejeong), [상혁](https://github.com/sangcci)
 
-## API 문서
+</details>
 
-로컬 실행 시 확인 가능: `http://localhost:8080/swagger-ui/index.html`
+## 로컬 실행
 
-## Git 브랜치 전략
+### 1. JDK 17
 
-- main, develop 브랜치에 직접 push 금지 — PR로만 머지
-- 작업 브랜치: `타입/이슈번호` 형식 (예: `feature/#1`)
-- 의존 이슈가 있을 경우 해당 브랜치에서 분기 (예: `feature/#2` → `feature/#1`)
-- 커밋 메시지: `type: 변경내용요약` 형식 (예: `feat: 기능 추가`)
+- SDKMAN
 
-### Commitlint Git 훅 설정
+```bash
+sdk use java <Java 17 버전>
+```
 
-의존성을 설치한 뒤 아래 명령을 한 번 실행하면 commitlint가 git hook으로 등록되어 커밋할 때 마다 메시지 형식를 검증합니다.
+- Local JDK
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+export PATH="$JAVA_HOME/bin:$PATH"
+```
+
+### 2. MySQL, Redis
+
+`local` 프로필은 `localhost:3306`의 `fmi` 데이터베이스(사용자 `fmi`, 비밀번호 `fmi`)와 `localhost:6379`의 Redis에 연결합니다. 스키마는 Hibernate가 생성하고, Flyway는 실행하지 않습니다.
+
+```bash
+docker run -d --name fmi-mysql \
+  -p 127.0.0.1:3306:3306 \
+  -e MYSQL_ROOT_PASSWORD=root \
+  -e MYSQL_DATABASE=fmi \
+  -e MYSQL_USER=fmi \
+  -e MYSQL_PASSWORD=fmi \
+  -v fmi-mysql-data:/var/lib/mysql \
+  mysql:8.4
+docker run -d --name fmi-redis \
+  -p 127.0.0.1:6379:6379 redis:7-alpine
+```
+
+### 3. Git 훅 설정
+
+최초 1회 실행하면 commitlint가 git hook으로 등록되어 커밋할 때마다 메시지 형식을 검증합니다.
 
 ```bash
 npm ci
 git config --local core.hooksPath .githooks
 ```
 
-허용 type: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `rename`, `perf`
+### 4. 환경 변수
 
-- scope는 사용하지 않습니다. 예: `feat(auth): 로그인 구현`은 허용하지 않습니다.
-- 커밋 메시지는 `type: 변경내용요약` 형식을 사용합니다.
-- 내용 자체를 검증하진 않습니다.
+DB, Redis와 JWT는 `application-local.yml`의 기본값으로 동작합니다. 아래 기능을 확인할 때만 환경 변수를 설정합니다. `dev`, `prod`의 값은 사용하지 않습니다.
+
+| 기능 | 환경 변수 |
+|---|---|
+| Kakao 로그인 | `KAKAO_TEST_CLIENT_ID`, `KAKAO_TEST_CLIENT_SECRET`, `KAKAO_ADMIN_KEY` |
+| Apple 로그인 | `APPLE_TEAM_ID`, `APPLE_CLIENT_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY_BASE64` |
+| 메일 | `MAIL_USERNAME`, `MAIL_PASSWORD` |
+| 문의, 신고 Slack 알림 | `SLACK_WEBHOOK_INQUIRY_URL`, `SLACK_WEBHOOK_REPORT_URL` |
+| 번역 | `DEEPL_API_KEY` |
+
+### 5. Spring Boot 실행
+
+```bash
+SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
+```
+
+### 6. API 확인
+
+실행 후 [Swagger UI](http://localhost:8080/swagger-ui/index.html)에서 API를 확인합니다.
